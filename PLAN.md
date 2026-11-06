@@ -1,49 +1,78 @@
 # Bauplan – Weltraum_Game
 
-Weltraum-Survival- und Bauspiel von oben gesehen. Inspiriert von den Mechaniken aus Ostranauts und Probably Stolen, ergänzt um eigene Ideen.
-Läuft im Browser (HTML + JavaScript).
+Düstere Weltraum-Survival- und Raumschiff-Simulation (Ansicht von oben), spielmechanisch an Ostranauts angelehnt,
+mit eigener Welt, eigenen Inhalten und eigenen Ideen. Der Spieler startet als mittelloser Schrotthändler mit Schulden
+und arbeitet sich hoch: Wracks bergen, handeln, Schiffe umbauen, Crew anheuern, ein eigenes Unternehmen aufbauen.
 
-## Etappe 1 – Fundament
-- [x] Raumschiff aus Kacheln, Ansicht von oben
-- [x] Charakter läuft herum
-- [x] Baumodus: Böden, Wände, Türen bauen/abreißen
-- [x] Zeitsteuerung: Pause, 1x, 2x, 4x vorspulen
-- [x] Speichern und Laden
+Jede Etappe endet mit einer spielbaren, getesteten Version.
 
-## Etappe 2 – Überleben
-- [x] Luft pro Kachel (O₂, N₂, CO₂ in kPa), Lecks ins All, Türen mit Lüftungsschlitzen
+## Erledigt
+
+### Etappe 1 – Fundament
+- [x] Schiff aus Kacheln, Kamera (verschieben, zoomen)
+- [x] Charakter mit Wegfindung, Baumodus (Boden, Wand, Tür, Abreißen), Baupläne
+- [x] Zeitsteuerung, Speichern/Laden, Autosave
+
+### Etappe 2 – Lebenserhaltung
+- [x] Luft pro Feld (O₂, N₂, CO₂ in kPa), Druck, Lecks ins All
 - [x] Sauerstoff-Generator, CO₂-Filter, Lufttank
-- [x] Strom: Generator, Kabel, Batterien, Stromnetze
-- [x] Bedürfnisse: Hunger, Durst, Hygiene (Waschbecken), Schlaf, Atmung, Gesundheit
+- [x] Strom: Generator, Batterien, Kabel, Stromnetze
+- [x] Bedürfnisse: Hunger, Durst, Energie, Hygiene, Atmung, Gesundheit
 
-## Etappe 3 – Weltraum & Schaden
-- [x] Luftschleuse mit Pumpe (pumpt ab und wieder auf, nie beide Türen offen)
-- [x] Raumanzüge mit Anzugschrank, Außeneinsätze, Außensteg
-- [x] Tragbare Batterie-Ladestation + Werkzeug "Versetzen"
-- [x] Generator braucht Brennstoff, Solarpanel als Alternative
-- [x] Schäden: Verschleiß, Mikrometeoriten, sichtbare Risse, Reparatur (auch automatisch)
-- [x] Echtzeit (1 Sekunde = 1 Sekunde), Vorspulen bis 300×, flüssigere Bewegung
-- [x] Rechtsklick bricht Baupläne und Aufgaben ab
+### Etappe 3 – Weltraum & Schäden
+- [x] Luftschleuse mit Pumpe, Raumanzüge, Anzugschrank, Außeneinsätze
+- [x] Tragbare Ladestation, Gerät versetzen
+- [x] Brennstoff für den Generator, Solarpanel
+- [x] Verschleiß, Mikrometeoriten, sichtbare Risse, Reparatur
+- [x] Echtzeit (1 s = 1 s), Vorspulen bis 300×, Rechtsklick bricht ab
 
-## Etappe 4 – Schiffe & Reisen
-- [ ] Mehrere eigene Schiffe
-- [ ] Manuelles Docking + Auto-Dock-Modul
-- [ ] Karte: Mond als Start (viel Müll in der Nähe), Erde als Schwerkraft-Falle (schwächer als real – Lore: Materialabbau nach dem Krieg)
+## Geplant
+
+### Etappe 4 – Gegenstände & Inventar
+- [ ] Gegenstände mit Gewicht, Volumen, Zustand und Marktwert (datengetrieben)
+- [ ] Inventar für Charaktere, Container und Frachtraum
+- [ ] Aufheben, ablegen, tragen, Container öffnen
+- [ ] Geräte zerlegen in Bauteile, Kabel ausbauen
+- [ ] Bauen kostet Material
+- [ ] Items mit Schrott verbessern (Idee aus Probably Stolen)
+
+### Etappe 5 – Bergung & Wirtschaft (erste vollständige Spielschleife)
+- [ ] Start am Mond mit viel Müll und Wracks in der Nähe
+- [ ] Wracks betreten, untersuchen, wertvolle Teile erkennen, ausschlachten
+- [ ] Station mit Händler: schwankende Preise, Angebot und Nachfrage
+- [ ] Schulden mit regelmäßigen Raten, Liegegebühren, Reparaturkosten
+- [ ] Brennstoff, Sauerstoff, Essen nachkaufen
+
+### Etappe 6 – Flug & Physik
+- [ ] Karte: Mond (Start), Erde als Schwerkraft-Falle (schwächer als real – nach dem Krieg ausgebeutet), Stationen, Asteroiden
+- [ ] Schiffe bewegen sich physikalisch: Trägheit, Beschleunigung, Rotation, Orbits
+- [ ] Triebwerke und Tanks als Bauteile, Treibstoffverbrauch
+- [ ] Manuelles Docking, Auto-Dock-Modul, Kollisionen
+- [ ] Mehrere eigene Schiffe, Schiffe kaufen, verkaufen und umbauen
 - [ ] Schnellreise als Zusatzoption
 
-## Etappe 5 – Wirtschaft & Crafting
-- [ ] Eigener Händler
-- [ ] Items mit Müll verbessern
-- [ ] Wasserfilter, Chemiestation
-- [ ] Anbau: manuell + automatische Version (teuer, begrenzt, Gen-Mods, tägliche Ernte)
-- [ ] Essen als Block-Version
-- [ ] Fleisch als Klumpen oder Käfig-Version
+### Etappe 7 – Tiefere Schiffssysteme
+- [ ] Temperatur, Heizung, Kühlung, Körpertemperatur, Kleidung mit Schutzwerten
+- [ ] Wasser und Abwasser, Rohrleitungen, Wasserfilter
+- [ ] Feuer (braucht Sauerstoff), Löschen
+- [ ] Fenster, Steuerpult
+- [ ] Essen anbauen: von Hand und automatisch (teuer, begrenzt, Gen-Mods, tägliche Ernte)
+- [ ] Essen als Block-Version, Fleisch als Klumpen oder Käfig-Version, Chemiestation
 
-## Etappe 6 – Charaktere
+### Etappe 8 – Crew
 - [ ] Mehrere Charaktere, übertragbar zwischen Spielständen
-- [ ] Zufriedenheitssystem (Werte von Ostranauts recherchieren)
-- [ ] Fähigkeiten
-- [ ] Story nur über Charakter-Dialoge, keine Textbildschirme
+- [ ] Persönlichkeiten, Fähigkeiten, Beziehungen, Moral, Stress, Konflikte
+- [ ] Zufriedenheitssystem, Gehaltsforderungen, Crew anheuern
+- [ ] Geschichten und Dialoge nur über die Charaktere, keine Textbildschirme
 
-## Etappe 7 – Stationen
-- [ ] Stationssystem (wie die Ostranauts-Mod)
+### Etappe 9 – Lebendige Welt
+- [ ] Fraktionen, Handelsrouten, Aufträge, Handelsverträge
+- [ ] Schwarzmarkt, Versicherungen, Schiffskredite, Miete
+- [ ] Verlassene Außenposten, Industrieanlagen, Bergungsgebiete
+- [ ] Stationssystem (wie die Ostranauts-Mod), Welt entwickelt sich weiter
+
+### Etappe 10 – Feinschliff
+- [ ] Einstellbare Simulationstiefe
+- [ ] Mod-Unterstützung (Gegenstände, Geräte, Schiffe als Datendateien)
+- [ ] Mehrere Speicherplätze, Export/Import
+- [ ] Bessere Grafik, Sound, Balancing
