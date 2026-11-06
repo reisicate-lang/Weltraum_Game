@@ -132,6 +132,14 @@ func _build_left() -> void:
 		bar.show_percentage = false
 		bar.custom_minimum_size = Vector2(150, 10)
 		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		var fill := StyleBoxFlat.new()
+		fill.bg_color = Color(0.44, 0.81, 0.56)
+		fill.set_corner_radius_all(3)
+		bar.add_theme_stylebox_override("fill", fill)
+		var bg := StyleBoxFlat.new()
+		bg.bg_color = Color(0.1, 0.13, 0.19)
+		bg.set_corner_radius_all(3)
+		bar.add_theme_stylebox_override("background", bg)
 		row.add_child(bar)
 		box.add_child(row)
 		need_bars[key[0]] = bar
@@ -327,6 +335,10 @@ func _refresh() -> void:
 		need_bars.health.value = c.health
 		for k in ["air", "food", "water", "sleep", "hygiene"]:
 			need_bars[k].value = c.needs[k]
+		for k in need_bars:
+			var v: float = need_bars[k].value
+			var sb: StyleBoxFlat = need_bars[k].get_theme_stylebox("fill")
+			sb.bg_color = Color(0.9, 0.33, 0.29) if v < 25.0 else (COL_AMBER if v < 50.0 else Color(0.44, 0.81, 0.56))
 		var lines: PackedStringArray = []
 		for it in c.inv.items:
 			lines.append("%s ×%d (%d %%)" % [ItemSystem.item(it.type).display_name, it.qty, int(it.cond)])

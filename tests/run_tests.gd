@@ -42,18 +42,22 @@ func _initialize() -> void:
 			o2_ok = false
 	_check("Überall genug Sauerstoff", o2_ok)
 
-	# 2) Bauen mit Material: Wand in den Weltraum neben dem Schiff (erst Boden)
+	# 2) Bauen mit Material
 	var x0: int = (ship.grid.width - 16) / 2
 	var y0: int = (ship.grid.height - 10) / 2
 	var target := Vector2i(x0 + 13, y0 + 3)  # im Cockpit
 	build.place("dev:bed", target)
+	_run(10)
+	_check("Bett ohne Stoff wird nicht gebaut (Material fehlt)", ship.grid.device_at(target) == null)
+	build.place("cancel", target)
+	build.place("dev:crate", target)
 	_run(30)
-	_check("Bett im Cockpit gebaut", ship.grid.device_at(target) != null)
+	_check("Frachtkiste im Cockpit gebaut", ship.grid.device_at(target) != null)
 
 	# 3) Abreißen gibt Teile zurück
 	build.place("remove", target)
 	_run(30)
-	_check("Bett abgerissen", ship.grid.device_at(target) == null)
+	_check("Kiste abgerissen", ship.grid.device_at(target) == null)
 	_check("Teile liegen herum", not ship.grid.piles.is_empty())
 
 	# 4) Leck: Wand entfernen -> Luft entweicht

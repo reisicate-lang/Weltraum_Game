@@ -99,7 +99,7 @@ func _draw_cable(g: ShipGrid, p: Vector2i) -> void:
 	var col := Color(0.84, 0.63, 0.24, 0.55)
 	if GameState.view == "power":
 		var net_id := ShipPowerSystem.net_of[g.idx(p)] if ShipPowerSystem.net_of.size() > g.idx(p) else -1
-		var ok := net_id >= 0 and ShipPowerSystem.nets[net_id].ok and ShipPowerSystem.nets[net_id].production > 0.0
+		var ok: bool = net_id >= 0 and ShipPowerSystem.nets[net_id].ok and ShipPowerSystem.nets[net_id].production > 0.0
 		col = Color(1, 0.82, 0.25) if ok else COL_REMOVE
 	var c := (Vector2(p) + Vector2(0.5, 0.5)) * S
 	var any := false
