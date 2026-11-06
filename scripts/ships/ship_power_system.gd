@@ -52,10 +52,17 @@ func step(dt: float) -> void:
 			dev.powered = false
 			continue
 		var net: Dictionary = nets[dev.net]
-		if d.power > 0.0 and not dev.broken and dev.stock > 0.0:
-			dev.producing = true
-			dev.stock = maxf(0.0, dev.stock - dt / 60.0)  # 1 Brennstoff pro Stunde
-			net.production += d.power
+		if d.power > 0.0 and not dev.broken:
+			if dev.type == "solar":
+				dev.producing = g.pressure(i) < 5.0  # nur draußen im Vakuum
+			elif d.stock >= 0.0:
+				dev.producing = dev.stock > 0.0
+				if dev.producing:
+					dev.stock = maxf(0.0, dev.stock - dt / 60.0)  # 1 Brennstoff pro Stunde
+			else:
+				dev.producing = true
+			if dev.producing:
+				net.production += d.power
 		if d.power < 0.0:
 			if dev.broken:
 				dev.powered = false

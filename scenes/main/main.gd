@@ -49,7 +49,7 @@ func _drag_tiles() -> Array[Vector2i]:
 	var a := _drag_start
 	var b := _tile_at_mouse()
 	var out: Array[Vector2i] = []
-	if GameState.tool == "door":
+	if GameState.tool in ["door", "repair", "move"]:
 		out.append(b)
 		return out
 	for y in range(mini(a.y, b.y), maxi(a.y, b.y) + 1):
@@ -79,6 +79,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif mb.button_index == MOUSE_BUTTON_LEFT:
 			if mb.pressed:
 				_drag_start = _tile_at_mouse()
+			elif _drag_start.x >= 0 and GameState.tool == "move":
+				var dst := _tile_at_mouse()
+				if dst != _drag_start:
+					ShipConstructionSystem.place_move(_drag_start, dst)
+				else:
+					GameState.toast("Halte die Maustaste gedrückt und ziehe vom Gerät zum Zielfeld.")
+				_drag_start = Vector2i(-1, -1)
 			elif _drag_start.x >= 0:
 				var count := 0
 				var tiles := _drag_tiles()
@@ -153,6 +160,8 @@ func _key(k: InputEventKey) -> void:
 		KEY_T: UIManager.set_tool("door")
 		KEY_K: UIManager.set_tool("cable")
 		KEY_X: UIManager.set_tool("remove")
+		KEY_V: UIManager.set_tool("move")
+		KEY_R: UIManager.set_tool("repair")
 		KEY_C: UIManager.set_tool("cancel")
 		KEY_L: GameState.view = "normal" if GameState.view == "air" else "air"
 		KEY_P: GameState.view = "normal" if GameState.view == "power" else "power"

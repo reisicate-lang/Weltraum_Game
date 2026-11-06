@@ -16,6 +16,10 @@ func step(dt: float) -> void:
 			"scrubber":
 				if dev.powered and g.co2[i] > Config.AIR_CO2:
 					g.co2[i] = maxf(Config.AIR_CO2, g.co2[i] - Config.SCRUB_RATE * dt)
+			"locker":
+				if dev.powered and dev.suit != null:
+					dev.suit.o2 = minf(100.0, dev.suit.o2 + Config.SUIT_REFILL * dt)
+					dev.suit.battery = minf(100.0, dev.suit.battery + Config.SUIT_REFILL * dt)
 			"airtank":
 				if dev.stock > 0.0 and g.pressure(i) < Config.TANK_TARGET:
 					var add := minf(dev.stock, Config.TANK_RATE * dt)

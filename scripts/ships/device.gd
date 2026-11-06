@@ -13,6 +13,10 @@ var stock := -1.0
 var charge := 0.0
 var claimed_by := -1
 var inv: Inventory = null
+## Anzugschrank: gelagerter Raumanzug {"o2", "battery"} oder null
+var suit = null
+## Schleusenpumpe: gespeicherte Luft (kPa)
+var store := 0.0
 
 func _init(t: String, p: Vector2i) -> void:
 	type = t
@@ -23,6 +27,10 @@ func _init(t: String, p: Vector2i) -> void:
 		charge = d.capacity * 0.5
 	if d.storage > 0.0:
 		inv = Inventory.new(INF, d.storage)
+	if t == "locker":
+		suit = {"o2": 100.0, "battery": 100.0}
+	if t == "pump":
+		store = 1000.0
 
 func data() -> DeviceData:
 	return ItemSystem.device(type)
@@ -50,7 +58,11 @@ func status_text() -> String:
 	if needs_power():
 		parts.append("läuft" if powered else "kein Strom")
 	if d.power > 0.0:
-		parts.append("liefert %.1f kW" % d.power if producing else "liefert nichts")
+		parts.append("liefert %.1f kW" % d.power if producing else ("muss draußen im Vakuum stehen" if type == "solar" else "liefert nichts"))
+	if type == "locker":
+		parts.append("Anzug: O₂ %d %%, Akku %d %%" % [int(suit.o2), int(suit.battery)] if suit != null else "leer (Anzug ist unterwegs)")
+	if type == "pump":
+		parts.append("Speicher %d kPa" % int(store))
 	if d.capacity > 0.0:
 		parts.append("%.1f / %.0f kWh" % [charge, d.capacity])
 	if d.stock >= 0.0:
@@ -61,7 +73,7 @@ func status_text() -> String:
 
 func to_data() -> Dictionary:
 	return {"type": type, "x": pos.x, "y": pos.y, "cond": cond, "broken": broken, "stock": stock,
-		"charge": charge, "items": inv.to_data() if inv != null else []}
+		"charge": charge, "items": inv.to_data() if inv != null else [], "suit": suit, "store": store}
 
 static func from_data(d: Dictionary) -> Device:
 	var dev := Device.new(String(d.type), Vector2i(int(d.x), int(d.y)))
@@ -71,4 +83,6 @@ static func from_data(d: Dictionary) -> Device:
 	dev.charge = float(d.charge)
 	if dev.inv != null:
 		dev.inv.from_data(d.items)
+	dev.suit = d.get("suit")
+	dev.store = float(d.get("store", 0.0))
 	return dev

@@ -24,6 +24,9 @@ var is_player := false
 var manual_until := 0.0             ## echte Zeit (ms), bis wann von Hand gesteuert
 var task := "Wartet"
 var inv := Inventory.new(Config.CARRY_WEIGHT, Config.CARRY_VOLUME)
+var suit = null                     ## getragener Raumanzug {"o2", "battery"} oder null
+var carrying: Device = null         ## getragenes Gerät
+var waiting := false                ## wartet an einer Schleuse
 var _search_cooldown := 0.0
 var _flee_cooldown := 0.0
 var _warned := {}
@@ -40,9 +43,13 @@ func tile() -> Vector2i:
 func grid() -> ShipGrid:
 	return ShipSystem.grid
 
-func is_next_to(p: Vector2i) -> bool:
+func is_next_to(p: Vector2i, reach: int = 1) -> bool:
 	var t := tile()
-	return absi(t.x - p.x) <= 1 and absi(t.y - p.y) <= 1 and t != p
+	return absi(t.x - p.x) <= reach and absi(t.y - p.y) <= reach and t != p
+
+## Reparaturen gehen mit langem Werkzeug auch aus 2 Feldern Entfernung
+func _reach(j: Dictionary) -> int:
+	return 2 if j.kind == "repair" else 1
 
 func can_reach(p: Vector2i) -> bool:
 	var t := tile()
@@ -50,6 +57,9 @@ func can_reach(p: Vector2i) -> bool:
 
 func safe_air(i: int) -> bool:
 	return grid().holds_air(i) and grid().o2[i] >= Config.O2_LOW
+
+func suit_ok() -> bool:
+	return suit != null and suit.o2 > 0.0 and suit.battery > 0.0
 
 func is_manual() -> bool:
 	return is_player and Time.get_ticks_msec() < manual_until
@@ -69,6 +79,8 @@ func order_move(target: Vector2i) -> bool:
 	return true
 
 func release_job() -> void:
+	if carrying != null:
+		drop_carried()
 	fetch = null
 	if job != null:
 		job.claimed_by = -1
@@ -80,6 +92,20 @@ func stop_activity() -> void:
 		activity.dev.claimed_by = -1
 	activity = null
 	path.clear()
+
+## Getragenes Gerät in der Nähe abstellen
+func drop_carried() -> void:
+	var g := grid()
+	var dev := carrying
+	carrying = null
+	if job != null and job.kind == "move":
+		ShipConstructionSystem.jobs.erase(g.idx(ShipConstructionSystem.pos_of(job)))
+		job = null
+	var spot := ShipConstructionSystem.drop_spot(tile())
+	dev.pos = spot
+	g.devices[g.idx(spot)] = dev
+	EventBus.ship_changed.emit()
+	push_out_if_stuck()
 
 func cancel_all() -> void:
 	if job != null:
@@ -103,9 +129,13 @@ func follow_path(dt: float) -> bool:
 		if not g.walkable(next):
 			return false
 		var ni := g.idx(next)
-		if g.tiles[ni] == ShipGrid.Tile.DOOR:
-			g.door_open_until[ni] = GameState.time + 0.05
 		var ci := g.idx(tile())
+		waiting = false
+		if g.tiles[ni] == ShipGrid.Tile.DOOR and ni != ci:
+			if not AirlockSystem.can_pass(ni):
+				waiting = true
+				return true
+			g.door_open_until[ni] = GameState.time + 0.05
 		if g.tiles[ci] == ShipGrid.Tile.DOOR:
 			g.door_open_until[ci] = GameState.time + 0.05
 		var target := Vector2(next) + Vector2(0.5, 0.5)
@@ -142,7 +172,9 @@ func manual_move(dir: Vector2, dist: float) -> void:
 			if not g.walkable(t):
 				return false
 			var ti := g.idx(t)
-			if g.tiles[ti] == ShipGrid.Tile.DOOR:
+			if g.tiles[ti] == ShipGrid.Tile.DOOR and ti != g.idx(tile()):
+				if not AirlockSystem.can_pass(ti):
+					return false
 				g.door_open_until[ti] = GameState.time + 0.05
 		return true
 	# Achsen getrennt: so gleitet man an Wänden entlang
@@ -173,16 +205,24 @@ func _update_body(dt: float) -> void:
 	var g := grid()
 	var i := g.idx(tile())
 	var sleeping: bool = activity != null and activity.get("need", "") == "sleep" and path.is_empty()
-	var o2 := 0.0
-	if g.holds_air(i):
-		var used := minf(g.o2[i], Config.BREATH_O2 * dt)
-		g.o2[i] -= used
-		g.co2[i] += used
-		o2 = g.o2[i]
-	if o2 < Config.O2_LOW:
-		needs.air -= (Config.O2_LOW - o2) / Config.O2_LOW * 40.0 * dt
-	else:
+	var in_suit := suit_ok()
+	if suit != null:
+		suit.battery = maxf(0.0, suit.battery - Config.SUIT_BATTERY_USE * dt)
+		if in_suit:
+			suit.o2 = maxf(0.0, suit.o2 - Config.SUIT_O2_USE * dt)
+	if in_suit:
 		needs.air += 30.0 * dt
+	else:
+		var o2 := 0.0
+		if g.holds_air(i):
+			var used := minf(g.o2[i], Config.BREATH_O2 * dt)
+			g.o2[i] -= used
+			g.co2[i] += used
+			o2 = g.o2[i]
+		if o2 < Config.O2_LOW:
+			needs.air -= (Config.O2_LOW - o2) / Config.O2_LOW * 40.0 * dt
+		else:
+			needs.air += 30.0 * dt
 	var h := dt / 60.0
 	var slow := 0.5 if sleeping else 1.0
 	for k in ["food", "water", "hygiene"]:
@@ -195,7 +235,7 @@ func _update_body(dt: float) -> void:
 	if needs.food <= 0.0: damage += 2.0
 	if needs.water <= 0.0: damage += 4.0
 	if needs.air < 25.0: damage += 600.0
-	if g.holds_air(i) and g.co2[i] > Config.CO2_BAD: damage += 3.0
+	if not in_suit and g.holds_air(i) and g.co2[i] > Config.CO2_BAD: damage += 3.0
 	health = clampf(health - damage * h if damage > 0.0 else health + 1.5 * h, 0.0, 100.0)
 	if not unconscious and (health <= 0.0 or needs.air < 10.0):
 		unconscious = true
@@ -208,6 +248,9 @@ func _update_body(dt: float) -> void:
 		GameState.toast(display_name + " ist wieder bei Bewusstsein.")
 	_warn("air", needs.air < 40.0, display_name + " bekommt kaum Luft!", needs.air > 95.0)
 	_warn("health", health < 30.0, display_name + " geht es sehr schlecht.", health > 50.0)
+	if suit != null:
+		var low := minf(suit.o2, suit.battery)
+		_warn("suit", low < Config.SUIT_RETURN_AT, "Der Raumanzug von " + display_name + " wird knapp.", low > 60.0)
 
 func _warn(key: String, cond: bool, text: String, clear: bool) -> void:
 	if cond and not _warned.get(key, false):
@@ -241,7 +284,7 @@ func update(dt: float) -> void:
 	var g := grid()
 	var i := g.idx(tile())
 	_flee_cooldown -= dt
-	if not safe_air(i) and needs.air < 50.0 and not (activity != null and activity.has("flee")) and _flee_cooldown <= 0.0:
+	if not suit_ok() and not safe_air(i) and needs.air < 50.0 and not (activity != null and activity.has("flee")) and _flee_cooldown <= 0.0:
 		_flee_cooldown = 0.05
 		release_job()
 		stop_activity()
@@ -255,22 +298,29 @@ func update(dt: float) -> void:
 	var check := _search_cooldown <= 0.0
 	if check:
 		_search_cooldown = 0.05
-		if _start_need():
+		# Anzug fast leer: aufladen oder ablegen
+		if suit != null and minf(suit.o2, suit.battery) < Config.SUIT_RETURN_AT and carrying == null:
+			release_job()
+			if suit.o2 >= Config.SUIT_RETURN_AT and _start_device("recharge", func(d): return d.type == "charger" and d.charge > 0.05):
+				return
+			if _start_device("suit_off", func(d): return d.type == "locker" and d.suit == null and not d.broken):
+				return
+		if carrying == null and _start_need():
 			return
 	# 5) Bauplan
 	if job != null:
-		var jp := ShipConstructionSystem.pos_of(job)
-		if not is_same(ShipConstructionSystem.jobs.get(g.idx(jp)), job):
+		var jp := ShipConstructionSystem.target_of(job)
+		if not is_same(ShipConstructionSystem.jobs.get(g.idx(ShipConstructionSystem.pos_of(job))), job):
 			release_job()
 		elif fetch != null:
 			_do_fetch(dt)
 			return
 		elif not path.is_empty():
-			task = "Geht zu: " + ShipConstructionSystem.label(job)
+			task = "Wartet auf Schleuse" if waiting else "Geht zu: " + ShipConstructionSystem.label(job)
 			if not follow_path(dt):
 				release_job()
 			return
-		elif is_next_to(jp):
+		elif is_next_to(jp, _reach(job)):
 			if not job.paid:
 				var c := ShipConstructionSystem.cost(job)
 				if not ShipConstructionSystem.missing(c, inv).is_empty():
@@ -285,15 +335,74 @@ func update(dt: float) -> void:
 			task = ShipConstructionSystem.label(job)
 			job.progress += dt
 			if job.progress >= job.need:
-				var done: Dictionary = job
-				job = null
-				ShipConstructionSystem.complete(done, tile())
+				_finish_job()
 			return
 		else:
 			release_job()
 	task = "Kann keinen Bauplan erreichen" if not ShipConstructionSystem.jobs.is_empty() else "Wartet"
 	if check:
 		_assign_job()
+		# Nichts zu tun: Raumanzug wieder ablegen
+		if job == null and activity == null and suit != null:
+			_start_device("suit_off", func(d): return d.type == "locker" and d.suit == null and not d.broken)
+
+func _finish_job() -> void:
+	var CS := ShipConstructionSystem
+	var g := grid()
+	if job.kind == "move":
+		if job.phase == "pickup":
+			var dev := g.device_at(CS.pos_of(job))
+			if dev == null:
+				CS.jobs.erase(g.idx(CS.pos_of(job)))
+				job = null
+				return
+			g.devices.erase(g.idx(dev.pos))
+			carrying = dev
+			job.phase = "deliver"
+			job.progress = 0.0
+			EventBus.ship_changed.emit()
+			var res := ShipSystem.nearest_adjacent(tile(), [CS.target_of(job)])
+			if not res.ok:
+				GameState.toast(display_name + " kommt nicht zum Ziel und stellt das Gerät ab.")
+				drop_carried()
+				return
+			path = res.path
+			return
+		var done: Dictionary = job
+		job = null
+		CS.jobs.erase(g.idx(CS.pos_of(done)))
+		var dst := CS.target_of(done)
+		var dev2 := carrying
+		carrying = null
+		if g.get_tile(dst) == ShipGrid.Tile.FLOOR and g.device_at(dst) == null:
+			dev2.pos = dst
+			g.devices[g.idx(dst)] = dev2
+			EventBus.ship_changed.emit()
+		else:
+			carrying = dev2
+			drop_carried()
+		return
+	var finished: Dictionary = job
+	job = null
+	CS.complete(finished, tile())
+
+## Zu einem passenden Gerät gehen (Anzugschrank, Ladestation)
+func _start_device(kind: String, filter: Callable) -> bool:
+	var targets: Array = []
+	var by_pos := {}
+	for dev in grid().devices.values():
+		if filter.call(dev) and (dev.claimed_by == -1 or dev.claimed_by == id):
+			targets.append(dev.pos)
+			by_pos[dev.pos] = dev
+	var res := ShipSystem.nearest_adjacent(tile(), targets)
+	if not res.ok:
+		return false
+	stop_activity()
+	var dev: Device = by_pos[res.target]
+	dev.claimed_by = id
+	activity = {"kind": kind, "dev": dev, "timer": 0.0}
+	path = res.path
+	return true
 
 func _assign_job() -> void:
 	var CS := ShipConstructionSystem
@@ -303,6 +412,8 @@ func _assign_job() -> void:
 		if j.claimed_by != -1 and j.claimed_by != id:
 			continue
 		if j.retry_at > GameState.time:
+			continue
+		if j.kind == "move" and j.phase == "deliver":
 			continue
 		var ok := true
 		var c := CS.cost(j)
@@ -318,11 +429,33 @@ func _assign_job() -> void:
 	if targets.is_empty():
 		return
 	var res := ShipSystem.nearest_adjacent(tile(), targets)
+	# Reparaturen: auch mit größerer Reichweite versuchen
+	if not res.ok:
+		var rep_targets: Array = targets.filter(func(p): return by_pos[p].kind == "repair")
+		if not rep_targets.is_empty():
+			res = ShipSystem.nearest_adjacent(tile(), rep_targets, 2)
 	if not res.ok:
 		for j in by_pos.values():
 			j.retry_at = GameState.time + 0.5
 		return
-	job = by_pos[res.target]
+	var chosen: Dictionary = by_pos[res.target]
+	# Führt der Weg durchs Vakuum? Dann erst einen Raumanzug holen.
+	if not suit_ok():
+		var hostile := not safe_air(grid().idx(tile()))
+		for q in res.path:
+			if not safe_air(grid().idx(q)):
+				hostile = true
+		if chosen.kind == "move":
+			var tq := Vector2i(int(chosen.tx), int(chosen.ty))
+			if not safe_air(grid().idx(tq)):
+				hostile = true
+		if hostile:
+			if _start_device("suit_up", func(d): return d.type == "locker" and d.suit != null and not d.broken):
+				return
+			chosen.retry_at = GameState.time + 1.0
+			_warn("need-suit", true, display_name + " braucht einen Raumanzug für diese Arbeit.", false)
+			return
+	job = chosen
 	job.claimed_by = id
 	path = res.path
 	if not job.paid and not CS.missing(CS.cost(job), inv).is_empty():
@@ -413,11 +546,50 @@ func _do_activity(dt: float) -> void:
 		stop_activity()
 		return
 	if not path.is_empty():
-		task = "Geht zu: " + dev.data().display_name
+		task = "Wartet auf Schleuse" if waiting else "Geht zu: " + dev.data().display_name
 		if not follow_path(dt):
 			stop_activity()
 		return
-	if not is_next_to(dev.pos) or not dev.usable():
+	if not is_next_to(dev.pos):
+		stop_activity()
+		return
+	var kind: String = activity.get("kind", "need")
+	if kind != "need":
+		activity.timer += dt
+		match kind:
+			"suit_up":
+				task = "Zieht Raumanzug an"
+				if dev.suit == null:
+					stop_activity()
+				elif activity.timer >= 0.5:
+					suit = dev.suit
+					dev.suit = null
+					stop_activity()
+					_search_cooldown = 0.0
+			"suit_off":
+				task = "Zieht Raumanzug aus"
+				if dev.suit != null or suit == null:
+					stop_activity()
+				elif activity.timer >= 0.5:
+					dev.suit = suit
+					suit = null
+					stop_activity()
+			"recharge":
+				task = "Lädt Anzug"
+				if suit == null:
+					stop_activity()
+					return
+				var add := minf(Config.SUIT_CHARGE * dt, 100.0 - suit.battery)
+				var kwh := add / 100.0 * Config.SUIT_KWH_PER_100
+				if dev.charge < kwh:
+					stop_activity()
+					return
+				dev.charge -= kwh
+				suit.battery += add
+				if suit.battery >= 99.9:
+					stop_activity()
+		return
+	if not dev.usable():
 		stop_activity()
 		return
 	var need: String = activity.need
@@ -463,7 +635,7 @@ func _start_flee() -> bool:
 func to_data() -> Dictionary:
 	return {"id": id, "name": display_name, "color": color.to_html(), "x": pos.x, "y": pos.y,
 		"needs": needs.duplicate(), "health": health, "unconscious": unconscious,
-		"is_player": is_player, "items": inv.to_data()}
+		"is_player": is_player, "items": inv.to_data(), "suit": suit}
 
 static func from_data(d: Dictionary) -> CrewMember:
 	var c := CrewMember.new(int(d.id), String(d.name), Color.html(String(d.color)), Vector2i.ZERO)
@@ -474,4 +646,5 @@ static func from_data(d: Dictionary) -> CrewMember:
 	c.unconscious = bool(d.unconscious)
 	c.is_player = bool(d.is_player)
 	c.inv.from_data(d.items)
+	c.suit = d.get("suit")
 	return c

@@ -28,7 +28,16 @@ func create_start_ship() -> void:
 	for x in range(x0, mid + 1):
 		grid.set_tile(Vector2i(x, y0 + 4), T.WALL)
 	grid.set_tile(Vector2i(x0 + 8, y0 + 4), T.DOOR)
-	grid.set_tile(Vector2i(x0, y0 + 7), T.DOOR)  # Außentür
+	grid.set_tile(Vector2i(x0, y0 + 7), T.DOOR)  # Innentür der Schleuse
+	# Luftschleuse links (2x2 innen) mit Außentür
+	for y in range(y0 + 5, y0 + 9):
+		for x in range(x0 - 3, x0):
+			var edge := x == x0 - 3 or y == y0 + 5 or y == y0 + 8
+			grid.set_tile(Vector2i(x, y), T.WALL if edge else T.FLOOR)
+	grid.set_tile(Vector2i(x0 - 3, y0 + 7), T.DOOR)
+	# Außensteg im Vakuum
+	for y in range(y0 + 1, y0 + 10):
+		grid.set_tile(Vector2i(x0 - 4, y), T.FLOOR)
 
 	# Einrichtung
 	grid.place_device("bed", Vector2i(x0 + 1, y0 + 1))
@@ -40,6 +49,9 @@ func create_start_ship() -> void:
 	grid.place_device("generator", Vector2i(x0 + 1, y0 + 5))
 	grid.place_device("battery", Vector2i(x0 + 2, y0 + 5))
 	grid.place_device("airtank", Vector2i(x0 + 7, y0 + 5))
+	grid.place_device("locker", Vector2i(x0 + 1, y0 + 8))
+	grid.place_device("charger", Vector2i(x0 + 2, y0 + 8))
+	grid.place_device("pump", Vector2i(x0 - 1, y0 + 6))
 	var c1 := grid.place_device("crate", Vector2i(x0 + 14, y0 + 8))
 	var c2 := grid.place_device("crate", Vector2i(x0 + 13, y0 + 8))
 	c1.inv.add("plate", 12, 80); c1.inv.add("copper", 8, 90); c1.inv.add("circuit", 3, 70); c1.inv.add("pipe", 4, 85)
@@ -50,9 +62,21 @@ func create_start_ship() -> void:
 		grid.cables[grid.idx(Vector2i(x, y0 + 5))] = 1
 	for y in range(y0 + 1, y0 + 6):
 		grid.cables[grid.idx(Vector2i(x0 + 9, y))] = 1
+	for y in range(y0 + 6, y0 + 9):
+		grid.cables[grid.idx(Vector2i(x0 + 1, y))] = 1
+	grid.cables[grid.idx(Vector2i(x0 + 2, y0 + 8))] = 1
+	grid.cables[grid.idx(Vector2i(x0 - 1, y0 + 5))] = 1
+	grid.cables[grid.idx(Vector2i(x0, y0 + 5))] = 1
+	grid.cables[grid.idx(Vector2i(x0 - 1, y0 + 6))] = 1
+	# Mondmüll draußen am Steg
+	grid.drop_items(Vector2i(x0 - 4, y0 + 1), "scrap", 4, 30.0)
+	grid.drop_items(Vector2i(x0 - 4, y0 + 1), "copper", 2, 40.0)
+	grid.drop_items(Vector2i(x0 - 4, y0 + 9), "plate", 3, 45.0)
+	grid.drop_items(Vector2i(x0 - 4, y0 + 9), "datachip", 1, 60.0)
+	grid.drop_items(Vector2i(x0 - 4, y0 + 4), "glass", 2, 55.0)
 
 	for i in grid.tiles.size():
-		if grid.holds_air(i):
+		if grid.holds_air(i) and grid.pos(i).x != x0 - 4:
 			grid.fill_air(i)
 	EventBus.ship_changed.emit()
 
@@ -92,7 +116,8 @@ func find_path(a: Vector2i, b: Vector2i) -> Array[Vector2i]:
 
 ## Sucht unter mehreren Zielfeldern das nächste, neben dem man stehen kann.
 ## Antwort: {"target": Vector2i, "path": Array[Vector2i], "ok": bool}
-func nearest_adjacent(from: Vector2i, targets: Array) -> Dictionary:
+## reach: wie weit entfernt man arbeiten darf (1 = direkt daneben, 2 = mit langem Werkzeug)
+func nearest_adjacent(from: Vector2i, targets: Array, reach: int = 1) -> Dictionary:
 	var best := {"ok": false}
 	var best_len := INF
 	var sorted := targets.duplicate()
@@ -103,7 +128,13 @@ func nearest_adjacent(from: Vector2i, targets: Array) -> Dictionary:
 			break
 		if Vector2(t - from).length() - 1.5 > best_len:
 			break
-		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1), Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]:
+		var offsets: Array[Vector2i] = []
+		for dy in range(-reach, reach + 1):
+			for dx in range(-reach, reach + 1):
+				if dx != 0 or dy != 0:
+					offsets.append(Vector2i(dx, dy))
+		offsets.sort_custom(func(a, b): return a.length_squared() < b.length_squared())
+		for d in offsets:
 			var spot: Vector2i = t + d
 			if not grid.walkable(spot):
 				continue

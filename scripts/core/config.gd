@@ -54,3 +54,24 @@ const CARRY_VOLUME := 40.0
 
 const SAVE_PATH := "user://savegame.json"
 const SAVE_VERSION := 1
+
+## Raumanzüge (Prozent, Verbrauch pro Minute)
+const SUIT_O2_USE := 100.0 / 120.0
+const SUIT_BATTERY_USE := 100.0 / 150.0
+const SUIT_REFILL := 10.0
+const SUIT_CHARGE := 10.0
+const SUIT_KWH_PER_100 := 0.5
+const SUIT_RETURN_AT := 30.0
+
+## Luftschleuse
+const AIRLOCK_MAX_SIZE := 12
+const AIRLOCK_PUMP_RATE := 600.0
+const AIRLOCK_TOLERANCE := 6.0
+const AIRLOCK_STORE_MAX := 3000.0
+
+## Schäden
+const WEAR_PER_DAY := 4.0
+const METEORS_PER_DAY := 0.7
+const FIRST_METEOR_DAY := 1.0
+const AUTO_REPAIR_AT := 50.0
+const REPAIR_TIME := 3.0

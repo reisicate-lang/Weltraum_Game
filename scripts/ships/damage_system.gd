@@ -1,0 +1,90 @@
+## Schäden: Verschleiß laufender Geräte, Mikrometeoriten auf die
+## Außenhülle und automatische Reparatur-Aufträge.
+extends Node
+
+## Einschlag-Blitze zum Zeichnen: [{pos, start_ms}]
+var effects: Array[Dictionary] = []
+var _scan := 0.0
+
+func step(dt: float) -> void:
+	var g := ShipSystem.grid
+	# Verschleiß
+	for i in g.devices:
+		var dev: Device = g.devices[i]
+		var running := (dev.needs_power() and dev.powered) or dev.producing
+		if dev.data().wears and running and not dev.broken:
+			dev.cond -= Config.WEAR_PER_DAY * dt / 1440.0
+			if dev.cond <= 0.0:
+				dev.cond = 0.0
+				dev.broken = true
+				GameState.toast(dev.data().display_name + " ist kaputt gegangen!", "bad")
+	# Mikrometeoriten
+	if GameState.time / 1440.0 >= Config.FIRST_METEOR_DAY and randf() < Config.METEORS_PER_DAY * dt / 1440.0:
+		strike()
+	_scan -= dt
+	if _scan <= 0.0:
+		_scan = 1.0
+		_auto_repair()
+
+## Ein Mikrometeorit trifft eine zufällige Stelle der Außenhülle
+func strike() -> void:
+	var g := ShipSystem.grid
+	var hull: Array[Vector2i] = []
+	for i in g.tiles.size():
+		var t := g.tiles[i]
+		if t != ShipGrid.Tile.WALL and t != ShipGrid.Tile.DOOR:
+			continue
+		var p := g.pos(i)
+		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			if g.get_tile(p + d) == ShipGrid.Tile.SPACE:
+				hull.append(p)
+				break
+	if hull.is_empty():
+		return
+	var p: Vector2i = hull.pick_random()
+	var i := g.idx(p)
+	var was_door := g.tiles[i] == ShipGrid.Tile.DOOR
+	g.cond[i] -= randf_range(35.0, 80.0)
+	effects.append({"pos": p, "start": Time.get_ticks_msec()})
+	for dev in g.devices.values():
+		if absi(dev.pos.x - p.x) <= 2 and absi(dev.pos.y - p.y) <= 2 and not dev.broken:
+			dev.cond = maxf(0.0, dev.cond - randf() * 30.0)
+			if dev.cond <= 0.0:
+				dev.broken = true
+	if g.cond[i] <= 0.0:
+		g.set_tile(p, ShipGrid.Tile.FLOOR)
+		EventBus.ship_changed.emit()
+		ShipConstructionSystem.place("door" if was_door else "wall", p)
+		GameState.toast("Hüllenbruch! Ein Mikrometeorit hat ein Loch geschlagen.", "bad")
+	else:
+		GameState.toast("Mikrometeorit-Einschlag! Die Hülle ist beschädigt.", "bad")
+
+func needs_repair(p: Vector2i) -> bool:
+	var g := ShipSystem.grid
+	if not g.in_bounds(p):
+		return false
+	var dev := g.device_at(p)
+	if dev != null:
+		return dev.cond < 100.0
+	var t := g.get_tile(p)
+	return (t == ShipGrid.Tile.WALL or t == ShipGrid.Tile.DOOR) and g.cond[g.idx(p)] < 100.0
+
+func repair(p: Vector2i) -> void:
+	var g := ShipSystem.grid
+	var dev := g.device_at(p)
+	if dev != null:
+		dev.cond = 100.0
+		dev.broken = false
+	else:
+		g.cond[g.idx(p)] = 100.0
+
+func _auto_repair() -> void:
+	var g := ShipSystem.grid
+	var CS := ShipConstructionSystem
+	for i in g.tiles.size():
+		var t := g.tiles[i]
+		if (t == ShipGrid.Tile.WALL or t == ShipGrid.Tile.DOOR) and g.cond[i] < Config.AUTO_REPAIR_AT and not CS.jobs.has(i):
+			CS.place("repair", g.pos(i))
+	for i in g.devices:
+		if g.devices[i].cond < Config.AUTO_REPAIR_AT and not CS.jobs.has(i):
+			CS.place("repair", g.pos(i))

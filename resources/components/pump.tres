@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "pump"
+display_name = "Schleusenpumpe"
+description = "Macht einen kleinen Raum zur Luftschleuse: pumpt die Luft ab und wieder hinein. Braucht 1 kW."
+power = -1.0
+build_time = 6.0
+cost = {"plate": 2, "motor": 1, "pipe": 2, "circuit": 1}
+stock = -1.0
+stock_unit = ""
+capacity = 0.0
+storage = 0.0
+need = ""
+wears = true
+color = Color(0.23, 0.27, 0.32, 1)

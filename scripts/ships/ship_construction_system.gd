@@ -17,6 +17,8 @@ func can_place(tool: String, p: Vector2i) -> bool:
 	if tool.begins_with("dev:"):
 		return t == ShipGrid.Tile.FLOOR and not has_dev
 	match tool:
+		"repair": return DamageSystem.needs_repair(p)
+		"move": return has_dev and not jobs.has(i)
 		"floor": return t == ShipGrid.Tile.SPACE
 		"wall": return (t == ShipGrid.Tile.SPACE or t == ShipGrid.Tile.FLOOR) and not has_dev
 		"door": return t != ShipGrid.Tile.DOOR and not has_dev
@@ -33,7 +35,9 @@ func place(tool: String, p: Vector2i) -> bool:
 		cancel(jobs[i])
 		return true
 	var job := {"x": p.x, "y": p.y, "progress": 0.0, "claimed_by": -1, "retry_at": 0.0, "paid": false}
-	if tool == "remove":
+	if tool == "repair":
+		job.merge({"kind": "repair", "need": Config.REPAIR_TIME})
+	elif tool == "remove":
 		job.merge({"kind": "remove", "need": Config.REMOVE_TIME})
 	elif tool == "cable":
 		job.merge({"kind": "cable", "need": Config.CABLE_TIME})
@@ -45,6 +49,27 @@ func place(tool: String, p: Vector2i) -> bool:
 		job.merge({"kind": "build", "tile": tile, "need": Config.TILE_BUILD_TIME[tile]})
 	jobs[i] = job
 	return true
+
+## Gerät versetzen: von src nach dst (ein Charakter trägt es)
+func place_move(src: Vector2i, dst: Vector2i) -> bool:
+	var g := ShipSystem.grid
+	if not can_place("move", src):
+		GameState.toast("Dort steht kein Gerät, das man versetzen kann.")
+		return false
+	if src == dst:
+		return false
+	if g.get_tile(dst) != ShipGrid.Tile.FLOOR or g.device_at(dst) != null:
+		GameState.toast("Das Ziel muss ein freier Boden sein.")
+		return false
+	jobs[g.idx(src)] = {"kind": "move", "x": src.x, "y": src.y, "tx": dst.x, "ty": dst.y, "phase": "pickup",
+		"need": 0.3, "progress": 0.0, "claimed_by": -1, "retry_at": 0.0, "paid": true}
+	return true
+
+## Wo muss gerade gearbeitet werden?
+func target_of(job: Dictionary) -> Vector2i:
+	if job.kind == "move" and job.phase == "deliver":
+		return Vector2i(int(job.tx), int(job.ty))
+	return pos_of(job)
 
 func cost(job: Dictionary) -> Dictionary:
 	match job.kind:
@@ -115,6 +140,8 @@ func complete(job: Dictionary, worker_pos: Vector2i) -> void:
 	var i := g.idx(p)
 	jobs.erase(i)
 	match job.kind:
+		"repair":
+			DamageSystem.repair(p)
 		"build":
 			_move_pile_away(i, worker_pos)
 			g.set_tile(p, int(job.tile))
@@ -179,6 +206,8 @@ func missing(c: Dictionary, inv: Inventory) -> Dictionary:
 
 func label(job: Dictionary) -> String:
 	match job.kind:
+		"repair": return "Repariert"
+		"move": return "Trägt Gerät" if job.phase == "deliver" else "Hebt Gerät auf"
 		"remove": return "Reißt ab"
 		"cable": return "Verlegt Kabel"
 		"device": return "Baut " + ItemSystem.device(job.dev).display_name

@@ -14,7 +14,7 @@ und werden Schritt für Schritt übertragen.
 - [x] Godot-Projekt mit Ordnerstruktur, Autoloads, Resources (Gegenstände, Geräte), Signals (EventBus)
 - [x] Übertragen: Schiffsraster, Bauen mit Material, Abreißen, Wegfindung (AStarGrid2D), Crew mit Bedürfnissen,
       Luft pro Feld mit Lecks, Strom, Lebenserhaltung, Inventar, Kisten, Speichern (JSON), Oberfläche, WASD
-- [ ] Übertragen: Luftschleuse, Raumanzüge, Schäden (Etappe 3)
+- [x] Übertragen: Luftschleuse, Raumanzüge, Ladestation, Versetzen, Solarpanel, Schäden, Reparatur (Etappe 3) – 20 Tests
 - [ ] Übertragen: Einsammeln, Werkbank, Wracks, Handel, Kredit (Etappe 4–5)
 - [ ] Übertragen: Raumflug, Navigation, Flotte (Etappe 6)
 - [ ] Skill-, Hobby- und Trait-System mit Lebenslauf (eigener Prompt)

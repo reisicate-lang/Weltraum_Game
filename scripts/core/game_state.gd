@@ -27,8 +27,10 @@ func new_game() -> void:
 func step(dt: float) -> void:
 	time += dt
 	ShipPowerSystem.step(dt)
+	AirlockSystem.step(dt)
 	OxygenSystem.step(dt)
 	AtmosphereSystem.step(dt)
+	DamageSystem.step(dt)
 	CrewSystem.step(dt)
 
 func clock_text() -> String:

@@ -57,6 +57,9 @@ func _flow(g: ShipGrid, a: int, b: int) -> float:
 	var b_closed := tb == ShipGrid.Tile.DOOR and not g.door_open(b)
 	if not a_air or not b_air:
 		return 0.0 if (a_closed or b_closed) else -1.0  # -1 = Leck ins All
+	# Schleusentüren sind ganz dicht, normale Türen haben Lüftungsschlitze
+	if (a_closed and AirlockSystem.is_lock_door(a)) or (b_closed and AirlockSystem.is_lock_door(b)):
+		return 0.0
 	if a_closed or b_closed:
 		return Config.DOOR_SLITS
 	return Config.DIFFUSION

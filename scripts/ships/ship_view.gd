@@ -46,7 +46,17 @@ func _draw() -> void:
 	_draw_jobs()
 	for c in CrewSystem.crew:
 		_draw_char(c)
+	_draw_effects()
 	_draw_preview(g)
+
+func _draw_effects() -> void:
+	var now := Time.get_ticks_msec()
+	DamageSystem.effects = DamageSystem.effects.filter(func(e): return now - e.start < 1500)
+	for e in DamageSystem.effects:
+		var f: float = (now - e.start) / 1500.0
+		var c := (Vector2(e.pos) + Vector2(0.5, 0.5)) * S
+		draw_circle(c, S * (0.2 + f * 1.6), Color(1, 0.95, 0.77, 1.0 - f))
+		draw_arc(c, S * (0.4 + f * 2.5), 0, TAU, 32, Color(1, 0.7, 0.28, 1.0 - f), 2.5)
 
 func _rect(p: Vector2i, inset: float = 0.0) -> Rect2:
 	return Rect2(Vector2(p) * S + Vector2(inset, inset) * S, Vector2(S, S) * (1.0 - 2.0 * inset))
@@ -57,6 +67,12 @@ func _draw_tile(g: ShipGrid, p: Vector2i) -> void:
 		return
 	draw_rect(_rect(p), COL_FLOOR if (p.x + p.y) % 2 == 0 else COL_FLOOR_ALT)
 	draw_rect(_rect(p, 0.02), Color(0.11, 0.145, 0.19), false, 1.0)
+	# Schleusenboden: Warnstreifen
+	if t == ShipGrid.Tile.FLOOR and AirlockSystem.is_lock_tile(g.idx(p)):
+		var o := Vector2(p) * S
+		for k in 3:
+			var a := o + Vector2(k * 0.35 * S, S)
+			draw_line(a, a + Vector2(S * 0.35, -S * 0.35), Color(0.95, 0.64, 0.23, 0.25), 3.0)
 	if t == ShipGrid.Tile.WALL:
 		draw_rect(_rect(p), COL_WALL)
 		for d in [Vector2i(0, -1), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(1, 0)]:
@@ -83,6 +99,9 @@ func _draw_tile(g: ShipGrid, p: Vector2i) -> void:
 		else:
 			draw_rect(Rect2(o + Vector2(0.36, 0.04) * S, Vector2(0.28, 0.44 - gap) * S), COL_DOOR)
 			draw_rect(Rect2(o + Vector2(0.36, 0.52 + gap) * S, Vector2(0.28, 0.44 - gap) * S), COL_DOOR)
+		if AirlockSystem.is_lock_door(g.idx(p)):
+			draw_rect(_rect(p, 0.04), COL_PLAN, false, 2.0)
+		_draw_cracks(p, g.cond[g.idx(p)])
 
 func _draw_cracks(p: Vector2i, c: float) -> void:
 	if c >= 85.0:
@@ -132,7 +151,14 @@ func _draw_device(dev: Device, ghost: bool = false) -> void:
 	if f >= 0.0:
 		draw_rect(Rect2(r.position + Vector2(0, r.size.y - 3), Vector2(r.size.x * clampf(f, 0.0, 1.0), 3)), Color(0.44, 0.81, 0.56))
 	_draw_cracks(dev.pos, dev.cond)
-	var problem := (dev.needs_power() and not dev.powered) or (d.stock >= 0.0 and dev.stock <= 0.0) or dev.broken
+	if dev.type == "locker" and dev.suit != null:
+		draw_circle(r.get_center() - Vector2(0, S * 0.1), S * 0.13, Color(0.9, 0.91, 0.93))
+	if dev.type == "pump" and AirlockSystem.is_pumping(dev):
+		draw_arc(r.get_center(), S * 0.25, Time.get_ticks_msec() / 100.0, Time.get_ticks_msec() / 100.0 + 4.0, 12, COL_PLAN, 2.0)
+	if dev.broken:
+		draw_line(r.position, r.end, COL_REMOVE, 2.0)
+		draw_line(Vector2(r.end.x, r.position.y), Vector2(r.position.x, r.end.y), COL_REMOVE, 2.0)
+	var problem := (dev.needs_power() and not dev.powered) or (d.stock >= 0.0 and dev.stock <= 0.0) or dev.broken or (dev.type == "solar" and not dev.producing)
 	if problem and int(Time.get_ticks_msec() / 400) % 2 == 0:
 		draw_circle(Vector2(dev.pos) * S + Vector2(0.82, 0.18) * S, S * 0.09, COL_REMOVE)
 
@@ -183,12 +209,23 @@ func _draw_char(c: CrewMember) -> void:
 		draw_string(font, center + Vector2(-3, -S * 0.4), "!", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, COL_REMOVE)
 		return
 	draw_circle(center + Vector2(1, 2), S * 0.3, Color(0, 0, 0, 0.35))
-	draw_circle(center, S * 0.28, c.color)
-	draw_circle(center + Vector2.from_angle(c.facing) * S * 0.14, S * 0.11, Color(0.75, 0.91, 1.0))
+	if c.suit != null:
+		# Raumanzug: weiß mit farbigem Ring und Rucksack
+		draw_circle(center - Vector2.from_angle(c.facing) * S * 0.2, S * 0.13, Color(0.54, 0.58, 0.65))
+		draw_circle(center, S * 0.31, Color(0.9, 0.91, 0.93))
+		draw_arc(center, S * 0.31, 0, TAU, 24, c.color, 2.5)
+		draw_circle(center + Vector2.from_angle(c.facing) * S * 0.14, S * 0.14, Color(0.95, 0.76, 0.31))
+	else:
+		draw_circle(center, S * 0.28, c.color)
+		draw_circle(center + Vector2.from_angle(c.facing) * S * 0.14, S * 0.11, Color(0.75, 0.91, 1.0))
+	if c.carrying != null:
+		var cr := Rect2(center + Vector2(-0.25, -0.85) * S, Vector2(0.5, 0.5) * S)
+		draw_rect(cr, c.carrying.data().color)
+		draw_rect(cr, Color(0, 0, 0, 0.5), false, 1.0)
 	if GameState.selected == c:
 		draw_arc(center, S * 0.42, 0, TAU, 32, Color(0.95, 0.64, 0.23), 1.5)
 	var label := ("▸ " if c.is_player else "") + c.display_name
-	draw_string(font, center + Vector2(-S, -S * 0.5), label, HORIZONTAL_ALIGNMENT_CENTER, S * 2, 11,
+	draw_string(font, center + Vector2(-S * 2, -S * 0.5), label, HORIZONTAL_ALIGNMENT_CENTER, S * 4, 11,
 		Color(0.95, 0.76, 0.31) if c.is_player else Color(0.91, 0.93, 0.96))
 	if not c.path.is_empty() and (c.order != null):
 		var prev := center

@@ -8,6 +8,8 @@ const TOOLS := [
 	["wall", "Wand", "M", "Ziehen zeichnet eine Linie oder den Rand eines Rechtecks."],
 	["door", "Tür", "T", "Klick auf eine Wand oder einen Boden."],
 	["cable", "Kabel", "K", "Kabel verbinden Geräte mit Strom."],
+	["move", "Versetzen", "V", "Vom Gerät zum Zielfeld ziehen. Ein Charakter trägt es dorthin."],
+	["repair", "Reparieren", "R", "Auf Beschädigtes klicken. Stark Beschädigtes wird automatisch repariert."],
 	["remove", "Abreißen", "X", "Schicht für Schicht: Gerät, Kabel, Wand/Tür, Boden. Gibt Teile zurück."],
 	["cancel", "Plan löschen", "C", "Entfernt Baupläne. Rechtsklick geht auch."],
 ]
@@ -121,7 +123,7 @@ func _build_left() -> void:
 	box.add_child(name_label)
 	task_label = _label("", COL_MUTED, 12)
 	box.add_child(task_label)
-	for key in [["health", "Gesundheit"], ["air", "Atmung"], ["food", "Hunger"], ["water", "Durst"], ["sleep", "Energie"], ["hygiene", "Hygiene"]]:
+	for key in [["health", "Gesundheit"], ["air", "Atmung"], ["food", "Hunger"], ["water", "Durst"], ["sleep", "Energie"], ["hygiene", "Hygiene"], ["suit_o2", "Anzug O₂"], ["suit_bat", "Anzug-Akku"]]:
 		var row := HBoxContainer.new()
 		var l := _label(key[1], COL_MUTED, 12)
 		l.custom_minimum_size = Vector2(80, 0)
@@ -224,7 +226,9 @@ WASD: deine Figur steuern (Umschalt: rennen)
 Auswahl + Klick auf Boden: hinlaufen lassen · Klick auf Kiste: Inhalt
 Werkzeuge unten: Boden B, Wand M, Tür T, Kabel K, Abreißen X, Plan löschen C
 Geräte-Menü: Generator, Sauerstoff, Betten, Kisten ...
-Rechtsklick: Bauplan oder Aufgabe abbrechen
+Rechtsklick: Bauplan oder Aufgabe abbrechen · Versetzen V · Reparieren R
+Für Arbeiten im Vakuum holt Mira selbst einen Raumanzug. Die Luftschleuse links
+pumpt die Luft ab, bevor die Außentür aufgeht. Draußen auf dem Steg liegt Mondmüll.
 E: Kiste oder Haufen neben dir durchsuchen
 L / P: Luft- und Strom-Ansicht · Mausrad: zoomen · Pfeiltasten: Ansicht
 Leertaste: Pause · 1–4: Geschwindigkeit · Strg+S: speichern""", Color(0.87, 0.9, 0.94), 14)
@@ -331,10 +335,15 @@ func _refresh() -> void:
 	var c: CrewMember = GameState.selected if GameState.selected != null else CrewSystem.player()
 	if c != null:
 		name_label.text = ("▸ " if c.is_player else "") + c.display_name
-		task_label.text = c.task
+		task_label.text = c.task + (" · trägt " + c.carrying.data().display_name if c.carrying != null else "")
 		need_bars.health.value = c.health
 		for k in ["air", "food", "water", "sleep", "hygiene"]:
 			need_bars[k].value = c.needs[k]
+		need_bars.suit_o2.get_parent().visible = c.suit != null
+		need_bars.suit_bat.get_parent().visible = c.suit != null
+		if c.suit != null:
+			need_bars.suit_o2.value = c.suit.o2
+			need_bars.suit_bat.value = c.suit.battery
 		for k in need_bars:
 			var v: float = need_bars[k].value
 			var sb: StyleBoxFlat = need_bars[k].get_theme_stylebox("fill")
