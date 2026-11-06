@@ -18,9 +18,10 @@ G.Save = {
         co2: Array.from(S.world.co2, v => +v.toFixed(3)),
         cond: Array.from(S.world.cond, v => Math.round(v)),
         piles: [...S.world.piles].map(([i, inv]) => [i, inv.items]),
+        zone: Array.from(S.world.zone).join(''),
         devices: [...S.world.devices.values()].map(d => ({
           type: d.type, x: d.x, y: d.y, stock: d.stock, charge: d.charge,
-          cond: d.cond, broken: d.broken, suit: d.suit, store: d.store, items: d.inv ? d.inv.items : undefined,
+          cond: d.cond, broken: d.broken, suit: d.suit, store: d.store, items: d.inv ? d.inv.items : undefined, unknown: d.unknown,
         })),
       },
       view: S.view,
@@ -34,9 +35,11 @@ G.Save = {
         suit: c.suit, carrying: c.carrying ? { ...c.carrying, claimedBy: null } : null,
         items: c.inv.items, isPlayer: c.isPlayer,
       })),
-      jobs: [...S.jobs.values()].filter(j => !(j.kind === 'move' && j.phase === 'deliver'))
+      econ: S.econ,
+      wreckName: S.wreckName,
+      jobs: [...S.jobs.values()].filter(j => !((j.kind === 'move' || j.kind === 'haul') && j.phase === 'deliver'))
         .map(j => ({ x: j.x, y: j.y, kind: j.kind, tile: j.tile, dev: j.dev, tx: j.tx, ty: j.ty, phase: j.phase,
-          item: j.item, qty: j.qty, paid: j.paid, auto: j.auto, progress: j.progress, need: j.need })),
+          item: j.item, qty: j.qty, paid: j.paid, auto: j.auto, recipe: j.recipe, progress: j.progress, need: j.need })),
     };
   },
 
@@ -50,12 +53,13 @@ G.Save = {
       world.n2[i] = d.n2[i] || 0;
       world.co2[i] = d.co2[i] || 0;
       world.cond[i] = d.cond ? d.cond[i] : 100;
+      world.zone[i] = d.zone ? Number(d.zone[i]) || 0 : 0;
     }
     for (const dv of d.devices || []) {
       const dev = G.Devices.create(dv.type, dv.x, dv.y);
       if (dv.stock !== undefined) dev.stock = dv.stock;
       if (dv.charge !== undefined) dev.charge = dv.charge;
-      for (const k of ['cond', 'broken', 'suit', 'store']) if (dv[k] !== undefined) dev[k] = dv[k];
+      for (const k of ['cond', 'broken', 'suit', 'store', 'unknown']) if (dv[k] !== undefined) dev[k] = dv[k];
       if (dv.items && dev.inv) dev.inv.items = dv.items;
       world.devices.set(world.idx(dv.x, dv.y), dev);
     }
@@ -81,6 +85,8 @@ G.Save = {
       camera: data.camera || G.state.camera,
       selectedId: data.selectedId ?? (chars[0] && chars[0].id),
       openSource: null,
+      econ: data.econ || G.Econ.create(),
+      wreckName: data.wreckName || null,
     };
     G.Power.dirty = true;
     G.Airlock.dirty = true;

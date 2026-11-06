@@ -188,6 +188,8 @@ G.Chars = {
   releaseJob(c) {
     if (c.carrying) this.dropCarried(c);
     c.fetch = null;
+    // Unterbrochenes Einsammeln: die Sachen bleiben im Gepäck
+    if (c.job && c.job.kind === 'haul' && c.job.phase === 'deliver') G.state.jobs.delete(G.state.world.idx(c.job.x, c.job.y));
     if (c.job) c.job.claimedBy = null;
     c.job = null;
     c.path = [];
@@ -426,6 +428,8 @@ G.Chars = {
         if (c.suit.o2 >= G.SUIT.RETURN_AT && this.startDevice(c, 'recharge', d => d.type === 'charger' && d.charge > 0.05)) return;
         if (this.startDevice(c, 'suitOff', d => d.type === 'locker' && !d.suit && !d.broken)) return;
       }
+      // Geräte in der Nähe untersuchen (Wrack)
+      G.Wreck.reveal(c);
       // 5) Bedürfnisse
       if (!c.carrying && this.startNeed(c)) return;
     }
@@ -475,6 +479,12 @@ G.Chars = {
 
   finishJob(c) {
     const job = c.job;
+    if (job.kind === 'haul') {
+      if (job.phase === 'pickup') { if (!G.Jobs.haulPickUp(c, job)) c.job = null; return; }
+      c.job = null;
+      G.Jobs.haulDeliver(c, job);
+      return;
+    }
     if (job.kind === 'move' && job.phase === 'pickup') {
       if (!G.Jobs.pickUp(c, job)) { c.job = null; return; }
       const res = G.Path.nearestAdjacent(c, [{ x: job.tx, y: job.ty }]);

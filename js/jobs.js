@@ -18,7 +18,8 @@ G.Jobs = {
     const hasDev = world.devices.has(i);
     if (tool.startsWith('dev:')) return t === T.FLOOR && !hasDev;
     if (tool === 'repair') return G.Damage.needsRepair(x, y);
-    if (tool === 'refill') return hasDev;
+    if (tool === 'refill' || tool === 'craft') return hasDev;
+    if (tool === 'haul') return world.piles.has(i) && !G.state.jobs.has(i);
     if (tool === 'move') return hasDev && !G.state.jobs.has(i);
     switch (tool) {
       case 'floor': return t === T.SPACE;
@@ -43,7 +44,8 @@ G.Jobs = {
     }
 
     let job;
-    if (tool === 'repair') job = { kind: 'repair', need: G.DAMAGE.REPAIR_TIME };
+    if (tool === 'haul') job = { kind: 'haul', phase: 'pickup', need: 0.2 };
+    else if (tool === 'repair') job = { kind: 'repair', need: G.DAMAGE.REPAIR_TIME };
     else if (tool === 'remove') job = { kind: 'remove', need: G.REMOVE_TIME };
     else if (tool === 'cable') job = { kind: 'cable', need: G.CABLE_TIME };
     else if (tool.startsWith('dev:')) {
@@ -68,6 +70,7 @@ G.Jobs = {
       case 'cable': return G.CABLE_COST;
       case 'device': return G.DEVICES[job.dev].cost;
       case 'refill': return { [job.item]: job.qty };
+      case 'craft': return G.RECIPES.find(r => r.id === job.recipe).in;
       default: return null;
     }
   },
@@ -128,6 +131,7 @@ G.Jobs = {
     const S = G.state, world = S.world;
     for (const dev of world.devices.values()) {
       const def = G.DEVICES[dev.type];
+      if (world.zone[world.idx(dev.x, dev.y)] === 1) continue; // Wrack-Geräte nicht auffüllen
       if (dev.stock === undefined || dev.stock > def.stock * G.REFILL_AT) continue;
       const key = world.idx(dev.x, dev.y);
       if (S.jobs.has(key)) continue;
@@ -140,6 +144,39 @@ G.Jobs = {
       if (qty <= 0) continue;
       S.jobs.set(key, { kind: 'refill', x: dev.x, y: dev.y, item, qty, need: 0.5, progress: 0, claimedBy: null, retryAt: 0, auto: true });
     }
+  },
+
+  // Einsammeln, Teil 1: Haufen aufheben und eine Kiste im Schiff suchen
+  haulPickUp(c, job) {
+    const S = G.state, world = S.world;
+    const i = world.idx(job.x, job.y);
+    const pile = world.piles.get(i);
+    if (!pile) { S.jobs.delete(i); return false; }
+    job.carry = [];
+    for (const it of [...pile.items]) if (G.Items.move(pile, c.inv, it.type, it.qty) > 0) job.carry.push(it.type);
+    G.Items.cleanPiles();
+    if (!job.carry.length) { G.UI.toast(c.name + ' kann nichts mehr tragen.'); S.jobs.delete(i); return false; }
+    const crates = [...world.devices.values()].filter(d => d.type === 'crate' && world.zone[world.idx(d.x, d.y)] !== 1
+      && job.carry.some(t => G.Items.room(d.inv, t) > 0));
+    const res = G.Path.nearestAdjacent(c, crates);
+    if (!res.target) {
+      G.UI.toast('Keine Frachtkiste mit freiem Platz im Schiff.', 'bad');
+      S.jobs.delete(i);
+      return false;
+    }
+    job.phase = 'deliver'; job.tx = res.target.x; job.ty = res.target.y; job.progress = 0;
+    c.path = res.path;
+    return true;
+  },
+
+  // Einsammeln, Teil 2: in die Kiste legen
+  haulDeliver(c, job) {
+    const S = G.state, world = S.world;
+    S.jobs.delete(world.idx(job.x, job.y));
+    const crate = world.device(job.tx, job.ty);
+    if (crate && crate.inv) for (const t of job.carry) G.Items.move(c.inv, crate.inv, t, Infinity);
+    // Liegt am Haufen noch etwas? Dann gleich wieder einsammeln.
+    if (world.piles.has(world.idx(job.x, job.y))) this.place('haul', job.x, job.y);
   },
 
   // Gerät versetzen: von (sx,sy) nach (tx,ty)
@@ -157,7 +194,7 @@ G.Jobs = {
 
   // Wo muss der Charakter gerade arbeiten?
   target(job) {
-    return job.kind === 'move' && job.phase === 'deliver' ? { x: job.tx, y: job.ty } : { x: job.x, y: job.y };
+    return (job.kind === 'move' || job.kind === 'haul') && job.phase === 'deliver' ? { x: job.tx, y: job.ty } : { x: job.x, y: job.y };
   },
 
   // Gerät aufheben (Teil 1 von "Versetzen")
@@ -205,6 +242,13 @@ G.Jobs = {
     const S = G.state, world = S.world, T = G.T;
     const i = world.idx(job.x, job.y);
     S.jobs.delete(i);
+    if (job.kind === 'craft') {
+      const r = G.RECIPES.find(x => x.id === job.recipe);
+      const spot = this.dropSpot(c ? G.Chars.tileX(c) : job.x, c ? G.Chars.tileY(c) : job.y);
+      G.Items.drop(spot.x, spot.y, G.Items.make(r.out[0], r.out[1], r.out[2]));
+      G.UI.toast('Werkbank: ' + G.ITEMS[r.out[0]].name + ' fertig.');
+      return;
+    }
     if (job.kind === 'refill') {
       const dev = world.devices.get(i);
       if (dev && dev.stock !== undefined) {
@@ -269,7 +313,7 @@ G.Jobs = {
     for (const job of S.jobs.values()) {
       if (job.claimedBy && job.claimedBy !== c.id) continue;
       if (job.retryAt > S.time) continue;
-      if (job.kind === 'move' && job.phase === 'deliver') continue;
+      if ((job.kind === 'move' || job.kind === 'haul') && job.phase === 'deliver') continue;
       // Gibt es genug Material (im eigenen Gepäck oder irgendwo im Lager)?
       job.missing = false;
       if (!job.paid) {
@@ -311,6 +355,8 @@ G.Jobs = {
   label(job) {
     switch (job.kind) {
       case 'repair': return 'Repariert';
+      case 'haul': return job.phase === 'deliver' ? 'Bringt Sachen ins Lager' : 'Sammelt ein';
+      case 'craft': return 'Werkbank: ' + G.RECIPES.find(r => r.id === job.recipe).name;
       case 'refill': return 'Füllt nach: ' + G.ITEMS[job.item].name;
       case 'move': return job.phase === 'deliver' ? 'Trägt Gerät' : 'Hebt Gerät auf';
       case 'remove': return 'Reißt ab';
@@ -323,6 +369,8 @@ G.Jobs = {
   describe(job) {
     switch (job.kind) {
       case 'repair': return 'reparieren';
+      case 'haul': return 'einsammeln';
+      case 'craft': return 'Werkbank';
       case 'refill': return 'nachfüllen';
       case 'move': return 'versetzen';
       case 'remove': return 'abreißen';

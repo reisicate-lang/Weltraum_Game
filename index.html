@@ -24,6 +24,7 @@
       <button type="button" data-speed="4" title="300-mal so schnell: 1 Sekunde = 5 Minuten (4)">300×</button>
     </div>
   </div>
+  <div class="money" id="money"></div>
   <div class="menu">
     <button type="button" id="btn-save" title="Speichern (Strg+S)">Speichern</button>
     <button type="button" id="btn-load">Laden</button>
@@ -40,26 +41,36 @@
 </aside>
 
 <aside id="box" class="box-panel" hidden></aside>
+<aside id="panel" class="box-panel wide" hidden></aside>
+
+<div id="gameover" class="help" hidden>
+  <div class="help-card">
+    <h2>Gepfändet</h2>
+    <p>Du hast drei Kreditraten verpasst. Die Bank hat dein Schiff beschlagnahmt. Mira steht mit nichts als ihrem Anzug auf dem Tycho-Schrottplatz.</p>
+    <button type="button" id="btn-restart" class="primary">Neues Spiel</button>
+  </div>
+</div>
 
 <div class="paused-badge">Pausiert</div>
 
 <footer class="bottombar">
   <div class="tools" role="toolbar" aria-label="Werkzeuge">
-    <button type="button" data-tool="select"><span class="t-name">Auswahl</span><kbd>Esc</kbd></button>
+    <button type="button" data-tool="select" title="Auswahl (Esc)"><span class="t-name">Auswahl</span><kbd>Esc</kbd></button>
     <span class="sep"></span>
-    <button type="button" data-tool="floor"><span class="t-name">Boden</span><kbd>B</kbd></button>
-    <button type="button" data-tool="wall"><span class="t-name">Wand</span><kbd>M</kbd></button>
-    <button type="button" data-tool="door"><span class="t-name">Tür</span><kbd>T</kbd></button>
-    <button type="button" data-tool="cable"><span class="t-name">Kabel</span><kbd>K</kbd></button>
+    <button type="button" data-tool="floor" title="Boden (B)"><span class="t-name">Boden</span><kbd>B</kbd></button>
+    <button type="button" data-tool="wall" title="Wand (M)"><span class="t-name">Wand</span><kbd>M</kbd></button>
+    <button type="button" data-tool="door" title="Tür (T)"><span class="t-name">Tür</span><kbd>T</kbd></button>
+    <button type="button" data-tool="cable" title="Kabel (K)"><span class="t-name">Kabel</span><kbd>K</kbd></button>
     <span class="dev-wrap">
       <button type="button" id="btn-devices" aria-haspopup="true"><span class="t-name">Geräte</span><kbd>G</kbd></button>
       <div id="dev-menu" class="dev-menu" hidden></div>
     </span>
-    <button type="button" data-tool="move"><span class="t-name">Versetzen</span><kbd>V</kbd></button>
-    <button type="button" data-tool="repair"><span class="t-name">Reparieren</span><kbd>R</kbd></button>
+    <button type="button" data-tool="move" title="Versetzen (V)"><span class="t-name">Versetzen</span><kbd>V</kbd></button>
+    <button type="button" data-tool="haul" title="Einsammeln (Q)"><span class="t-name">Einsammeln</span><kbd>Q</kbd></button>
+    <button type="button" data-tool="repair" title="Reparieren (R)"><span class="t-name">Reparieren</span><kbd>R</kbd></button>
     <span class="sep"></span>
-    <button type="button" data-tool="remove" class="danger"><span class="t-name">Abreißen</span><kbd>X</kbd></button>
-    <button type="button" data-tool="cancel" class="danger"><span class="t-name">Plan löschen</span><kbd>C</kbd></button>
+    <button type="button" data-tool="remove" class="danger" title="Abreißen (X)"><span class="t-name">Abreißen</span><kbd>X</kbd></button>
+    <button type="button" data-tool="cancel" class="danger" title="Plan löschen (C)"><span class="t-name">Plan löschen</span><kbd>C</kbd></button>
     <span class="views" role="group" aria-label="Ansicht">
       <button type="button" data-view="normal">Normal</button>
       <button type="button" data-view="air" title="Luft-Ansicht (L)">Luft</button>
@@ -81,6 +92,8 @@
     <p>Dein kleines Schiff treibt im All. Mira lebt darin und baut, was du planst. Halte sie am Leben: Luft, Essen, Wasser, Schlaf.</p>
     <dl>
       <dt>Laufen</dt><dd>Deine Figur mit <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> steuern, mit <kbd>Umschalt</kbd> rennen. Oder mit <b>Auswahl</b> auf einen Boden klicken.</dd>
+      <dt>Geld</dt><dd>Du schuldest der Bank 24 000 Cr. Alle 7 Tage ist eine Rate fällig. Klick auf das <b>Handelsterminal</b> im Cockpit: dort verkaufst und kaufst du.</dd>
+      <dt>Bergung</dt><dd>Unten hängt ein <b>Wrack</b> an der Bergungsleine. Schlachte es aus (Abreißen, Kisten leeren), sammle alles mit <b>Einsammeln</b> <kbd>Q</kbd> ein und verkaufe es.</dd>
       <dt>Sachen</dt><dd><kbd>E</kbd> durchsucht die Kiste oder den Haufen neben dir. Klick auf eine Kiste zeigt ihren Inhalt. Bauen kostet Material, Abreißen gibt Teile zurück.</dd>
       <dt>Bauen</dt><dd>Werkzeug unten wählen, dann klicken oder eine Fläche ziehen. Mira arbeitet die blauen Baupläne ab.</dd>
       <dt>Geräte</dt><dd><kbd>G</kbd> öffnet die Liste. Geräte mit Stromverbrauch brauchen ein <b>Kabel</b> <kbd>K</kbd> auf ihrem Feld, verbunden mit einem Generator.</dd>
@@ -92,7 +105,7 @@
       <dt>Zeit</dt><dd>Bei 1× läuft die Zeit wie in echt. <kbd>Leertaste</kbd> Pause, <kbd>1</kbd> bis <kbd>4</kbd> für 1×, 10×, 60× und 300×</dd>
       <dt>Speichern</dt><dd><kbd>Strg</kbd>+<kbd>S</kbd>. Außerdem jede Minute automatisch.</dd>
     </dl>
-    <p class="tip">Draußen auf dem Steg links liegt Mondmüll. Hol dir einen Raumanzug, geh durch die Schleuse und sammle ihn ein.</p>
+    <p class="tip">Erster Schritt: Raumanzug holen (passiert automatisch), über den Steg links hinunter zum Wrack. Geräte erkennst du erst, wenn jemand nahe herangeht.</p>
     <button type="button" id="help-close" class="primary">Los geht's</button>
   </div>
 </div>
@@ -105,6 +118,8 @@
 <script src="js/atmosphere.js"></script>
 <script src="js/airlock.js"></script>
 <script src="js/damage.js"></script>
+<script src="js/economy.js"></script>
+<script src="js/wreck.js"></script>
 <script src="js/pathfinding.js"></script>
 <script src="js/jobs.js"></script>
 <script src="js/characters.js"></script>

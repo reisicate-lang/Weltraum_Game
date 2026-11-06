@@ -19,6 +19,9 @@ G.newGame = function () {
   const world = new G.World(G.WORLD_W, G.WORLD_H);
   G.state.world = world; // schon setzen, das Startschiff legt Gegenstände ab
   const start = G.createStartShip(world);
+  G.state.econ = G.Econ.create();
+  G.Wreck.buildGangway(world);
+  G.Wreck.generate();
   G.Chars.nextId = 1;
   const mira = G.Chars.create('Mira Okafor', start.x, start.y, '#f2a33a');
   mira.isPlayer = true; // deine Figur
@@ -61,6 +64,7 @@ G.step = function (dt) {
   G.Devices.update(dt);
   G.Atmo.update(dt);
   G.Damage.update(dt);
+  G.Econ.update();
   for (const c of G.state.chars) G.Chars.update(c, dt);
 };
 
@@ -73,9 +77,9 @@ G.start = function () {
 
   // Erster Besuch: Hilfe zeigen
   let seen = false;
-  try { seen = localStorage.getItem('weltraum_game_help_seen_v4') === '1'; } catch (err) { /* egal */ }
+  try { seen = localStorage.getItem('weltraum_game_help_seen_v5') === '1'; } catch (err) { /* egal */ }
   G.UI.showHelp(!seen);
-  try { localStorage.setItem('weltraum_game_help_seen_v4', '1'); } catch (err) { /* egal */ }
+  try { localStorage.setItem('weltraum_game_help_seen_v5', '1'); } catch (err) { /* egal */ }
 
   // Automatisch speichern, jede Minute (echte Zeit)
   setInterval(() => G.Save.save(true), 60000);

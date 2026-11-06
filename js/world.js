@@ -20,6 +20,8 @@ G.World = class World {
     this.co2 = new Float32Array(n);
     // Zustand von Wänden und Türen (100 = wie neu, 0 = kaputt)
     this.cond = new Float32Array(n).fill(100);
+    // Bereich: 0 = dein Schiff/frei, 1 = Wrack, 2 = Bergungsleine
+    this.zone = new Uint8Array(n);
   }
 
   idx(x, y) { return y * this.w + x; }
@@ -121,6 +123,9 @@ G.createStartShip = function (world) {
   place('locker', x0 + 1, y0 + 8);
   place('charger', x0 + 2, y0 + 8);
   place('pump', x0 - 1, y0 + 6);
+  // Handelsterminal und Werkbank im Cockpit (am Kabel)
+  place('terminal', x0 + 12, y0 + 5);
+  place('workbench', x0 + 13, y0 + 5);
   // Frachtkisten im Cockpit mit Startmaterial
   place('crate', x0 + 14, y0 + 8);
   place('crate', x0 + 13, y0 + 8);

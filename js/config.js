@@ -50,6 +50,8 @@ G.DEVICES = {
   sink:      { name: 'Waschbecken', cost: { plate: 2, pipe: 2 }, stock: 80, unit: 'L', buildTime: 3, need: 'hygiene', desc: 'Zum Waschen.' },
   locker:    { name: 'Anzugschrank', cost: { plate: 3, pipe: 1, circuit: 1 }, power: -0.5, buildTime: 4, desc: 'Bewahrt einen Raumanzug auf und füllt Sauerstoff und Akku auf. Braucht 0,5 kW.' },
   charger:   { name: 'Tragbare Ladestation', cost: { plate: 1, cell: 2, circuit: 1 }, capacity: 10, buildTime: 3, portable: true, desc: 'Akku mit 10 kWh. Lädt Raumanzüge auch draußen. Am Kabel lädt sie sich selbst auf. Mit "Versetzen" umstellbar.' },
+  terminal:  { name: 'Handelsterminal', cost: { plate: 2, circuit: 3, datachip: 1 }, power: -0.3, buildTime: 5, storage: 300, desc: 'Verbindung zur Station: kaufen, verkaufen, Schulden bezahlen, Bergungsrechte. Was du verkaufen willst, legst du hinein (300 L).' },
+  workbench: { name: 'Werkbank', cost: { plate: 3, motor: 1 }, power: -0.5, buildTime: 5, desc: 'Hier wird aus Schrott Neues gemacht: Platten, Rohre, Platinen, Filter.' },
   crate:     { name: 'Frachtkiste', cost: { plate: 3 }, buildTime: 3, storage: 400, desc: 'Lagert Gegenstände (400 Liter).' },
   pump:      { name: 'Schleusenpumpe', cost: { plate: 2, motor: 1, pipe: 2, circuit: 1 }, power: -1, buildTime: 6, wears: true, desc: 'Macht einen kleinen Raum zur Luftschleuse: pumpt die Luft ab und wieder hinein. Braucht 1 kW.' },
 };
@@ -125,6 +127,34 @@ G.CARRY = { weight: 40, volume: 40 }; // was ein Charakter tragen kann
 G.REFILL_AT = 0.3;                    // unter 30 % Vorrat wird automatisch nachgefüllt
 G.REACH = 1.6;                        // so nah muss man an einer Kiste stehen
 
+// ------------------------------------------------------------
+// Wirtschaft (Credits = Cr)
+// ------------------------------------------------------------
+G.ECON = {
+  START_CREDITS: 400,
+  START_DEBT: 24000,       // Kredit für das Schiff
+  PAYMENT: 1500,           // Rate
+  PAYMENT_DAYS: 7,         // alle 7 Tage fällig
+  LATE_FEE: 0.1,           // verpasste Rate: 10 % Strafzins auf die Restschuld
+  MAX_STRIKES: 3,          // so viele verpasste Raten, dann wird das Schiff gepfändet
+  DOCK_FEE: 45,            // Liegegebühr pro Tag an der Station
+  BUY_MARKUP: 1.3,         // Kaufpreis = Marktwert × 1,3
+  SELL_FACTOR: 0.75,       // Verkaufspreis = Marktwert × 0,75 × Zustand
+  CLAIM_FEE: 350,          // Bergungsrecht für ein neues Wrack
+  HULL_FACTOR: 0.25,       // Restwert eines Wracks beim Verschrotten
+  DRIFT: 0.06,             // so stark schwanken die Preise pro Tag
+};
+
+// Werkbank-Rezepte: aus Schrott und Resten Neues machen
+G.RECIPES = [
+  { id: 'plate',   name: 'Schrott einschmelzen',  in: { scrap: 3 },               out: ['plate', 1, 65],   time: 4 },
+  { id: 'pipe',    name: 'Rohre biegen',          in: { scrap: 2 },               out: ['pipe', 2, 70],    time: 3 },
+  { id: 'circuit', name: 'Platine löten',         in: { copper: 2, scrap: 1 },    out: ['circuit', 1, 55], time: 6 },
+  { id: 'filter',  name: 'Filter flicken',        in: { fabric: 1, scrap: 1 },    out: ['filter', 1, 60],  time: 3 },
+  { id: 'cell',    name: 'Akkuzelle aufbereiten', in: { scrap: 2, copper: 1 },    out: ['cell', 1, 45],    time: 8 },
+  { id: 'fabric',  name: 'Stoff aus Resten',      in: { scrap: 1 },               out: ['fabric', 1, 50],  time: 2 },
+];
+
 // Die Werkzeuge im Baumenü
 G.TOOLS = {
   select: { name: 'Auswahl', hint: 'Klick auf den Boden: Charakter läuft dorthin. Ziehen: Ansicht verschieben.' },
@@ -132,6 +162,7 @@ G.TOOLS = {
   wall:   { name: 'Wand', hint: 'Ziehen zeichnet eine Linie oder den Rand eines Rechtecks.' },
   door:   { name: 'Tür', hint: 'Klick auf eine Wand oder einen Boden.' },
   move:   { name: 'Versetzen', hint: 'Vom Gerät zum Zielfeld ziehen. Ein Charakter trägt es dorthin.' },
+  haul:   { name: 'Einsammeln', hint: 'Haufen markieren (klicken oder ziehen). Die Crew bringt alles in die nächste Frachtkiste im Schiff.' },
   repair: { name: 'Reparieren', hint: 'Auf beschädigte Wände, Türen oder Geräte klicken. Stark Beschädigtes wird automatisch repariert.' },
   cable:  { name: 'Kabel', hint: 'Kabel verbinden Geräte mit Strom. Ein Gerät braucht ein Kabel auf seinem eigenen Feld.' },
   remove: { name: 'Abreißen', hint: 'Schicht für Schicht: erst Gerät, dann Kabel, dann Wand/Tür (wird Boden), dann Boden.' },
@@ -154,5 +185,5 @@ G.SPRINT = 1.6; // mit gedrückter Umschalttaste läuft deine Figur so viel schn
 G.START_MINUTES = 8 * 60;
 
 // Name, unter dem der Spielstand im Browser gespeichert wird
-G.SAVE_KEY = 'weltraum_game_save_v4';
-G.SAVE_VERSION = 4;
+G.SAVE_KEY = 'weltraum_game_save_v5';
+G.SAVE_VERSION = 5;

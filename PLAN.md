@@ -36,14 +36,17 @@ Jede Etappe endet mit einer spielbaren, getesteten Version.
 - [x] Bauen kostet Material, abgebrochene Pläne geben es zurück
 - [x] Vorräte (Essen, Wasser, Brennstoff, Luft) werden automatisch aus dem Lager nachgefüllt
 - [x] Deine Figur direkt mit WASD steuern, die Crew arbeitet selbstständig
-- [ ] Items mit Schrott verbessern (Idee aus Probably Stolen) – kommt mit dem Händler
+- [x] Items mit Schrott verbessern: siehe Werkbank in Etappe 5
 
 ### Etappe 5 – Bergung & Wirtschaft (erste vollständige Spielschleife)
-- [ ] Start am Mond mit viel Müll und Wracks in der Nähe
-- [ ] Wracks betreten, untersuchen, wertvolle Teile erkennen, ausschlachten
-- [ ] Station mit Händler: schwankende Preise, Angebot und Nachfrage
-- [ ] Schulden mit regelmäßigen Raten, Liegegebühren, Reparaturkosten
-- [ ] Brennstoff, Sauerstoff, Essen nachkaufen
+- [x] Start am Tycho-Schrottplatz im Mondorbit, Wrack an der Bergungsleine
+- [x] Zufällige Wracks: Räume, Lecks, abgestandene Luft, beschädigte Geräte, Kisten, Schrott, alte Kabel
+- [x] Geräte und Kisten erst erkennbar, wenn jemand nahe herangeht; geschätzter Bergungswert
+- [x] Einsammeln-Werkzeug: Crew bringt Haufen in die Frachtkisten
+- [x] Handelsterminal: verkaufen, kaufen, schwankende Preise, Angebot und Nachfrage
+- [x] Kredit mit Raten alle 7 Tage, Liegegebühr, Strafzins, Pfändung nach 3 verpassten Raten
+- [x] Bergungsrechte kaufen, Wrack verschrotten
+- [x] Werkbank: aus Schrott Platten, Rohre, Platinen, Filter, Akkuzellen, Stoff (Idee aus Probably Stolen)
 
 ### Etappe 6 – Flug & Physik
 - [ ] Karte: Mond (Start), Erde als Schwerkraft-Falle (schwächer als real – nach dem Krieg ausgebeutet), Stationen, Asteroiden

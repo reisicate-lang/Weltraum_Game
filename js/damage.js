@@ -24,6 +24,7 @@ G.Damage = {
       for (let x = 0; x < world.w; x++) {
         const t = world.get(x, y);
         if (t !== T.WALL && t !== T.DOOR) continue;
+        if (world.zone[world.idx(x, y)] === 1) continue; // nur dein Schiff
         if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => world.get(x + dx, y + dy) === T.SPACE)) hull.push([x, y]);
       }
     }
@@ -72,9 +73,12 @@ G.Damage = {
     const world = G.state.world, T = G.T, limit = G.DAMAGE.AUTO_REPAIR_AT;
     for (let i = 0; i < world.tiles.length; i++) {
       const t = world.tiles[i];
+      if (world.zone[i] === 1) continue; // Wracks werden nicht repariert
       if ((t === T.WALL || t === T.DOOR) && world.cond[i] < limit) this.requestRepair(i % world.w, (i / world.w) | 0);
     }
-    for (const dev of world.devices.values()) if (dev.cond < limit) this.requestRepair(dev.x, dev.y);
+    for (const dev of world.devices.values()) {
+      if (dev.cond < limit && world.zone[world.idx(dev.x, dev.y)] !== 1) this.requestRepair(dev.x, dev.y);
+    }
     G.Jobs.scanRefills();
   },
 

@@ -108,8 +108,9 @@ G.Render = {
     const t = world.get(x, y);
     if (t === T.SPACE) return;
 
-    // Unter Wänden und Türen liegt immer Boden
-    ctx.fillStyle = (x + y) % 2 ? C.floor : C.floorAlt;
+    // Unter Wänden und Türen liegt immer Boden (im Wrack rostiger)
+    const zone = world.zone[world.idx(x, y)];
+    ctx.fillStyle = zone === 1 ? ((x + y) % 2 ? '#33302c' : '#2f2c28') : zone === 2 ? '#2b3036' : ((x + y) % 2 ? C.floor : C.floorAlt);
     ctx.fillRect(x, y, 1, 1);
     ctx.strokeStyle = C.floorLine;
     ctx.lineWidth = 0.04;
@@ -186,7 +187,19 @@ G.Render = {
         ctx.globalAlpha = 1;
         continue;
       }
-      if (job.kind === 'refill') {
+      if (job.kind === 'haul') {
+        ctx.globalAlpha = pulse;
+        ctx.strokeStyle = '#6fcf8e'; ctx.lineWidth = 0.06;
+        ctx.strokeRect(x + 0.08, y + 0.08, 0.84, 0.84);
+        if (job.phase === 'deliver') {
+          ctx.setLineDash([0.12, 0.1]);
+          ctx.beginPath(); ctx.moveTo(x + 0.5, y + 0.5); ctx.lineTo(job.tx + 0.5, job.ty + 0.5); ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        ctx.globalAlpha = 1;
+        continue;
+      }
+      if (job.kind === 'refill' || job.kind === 'craft') {
         ctx.globalAlpha = pulse;
         ctx.strokeStyle = '#6fcf8e'; ctx.lineWidth = 0.06;
         ctx.beginPath(); ctx.moveTo(x + 0.5, y + 0.15); ctx.lineTo(x + 0.5, y + 0.45); ctx.moveTo(x + 0.35, y + 0.3); ctx.lineTo(x + 0.65, y + 0.3); ctx.stroke();
@@ -381,6 +394,16 @@ G.Render = {
   // Geräte als einfache Symbole
   drawDevice(dev, x, y, ghost) {
     const ctx = this.ctx;
+    // Noch nicht untersucht: nur eine graue Form mit Fragezeichen
+    if (dev.unknown && !ghost) {
+      ctx.fillStyle = '#3a3d42'; ctx.fillRect(x + 0.1, y + 0.1, 0.8, 0.8);
+      ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 0.04; ctx.strokeRect(x + 0.1, y + 0.1, 0.8, 0.8);
+      ctx.fillStyle = '#8b9099';
+      ctx.font = '700 0.55px "Chakra Petch", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('?', x + 0.5, y + 0.54);
+      ctx.textBaseline = 'alphabetic';
+      return;
+    }
     const cx = x + 0.5, cy = y + 0.5;
     const box = (fill, inset = 0.1) => {
       ctx.fillStyle = fill;

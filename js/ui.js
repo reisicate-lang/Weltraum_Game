@@ -22,7 +22,18 @@ G.UI = {
       power: document.getElementById('power-info'),
       inv: document.getElementById('inv'),
       box: document.getElementById('box'),
+      panel: document.getElementById('panel'),
+      money: document.getElementById('money'),
     };
+    this.panelKind = null;
+    this.tradeTab = 'sell';
+    this.lastPanelHtml = '';
+    this.el.panel.addEventListener('click', e => this.onPanelButton(e));
+    document.getElementById('btn-restart').addEventListener('click', () => {
+      document.getElementById('gameover').hidden = true;
+      G.newGame();
+      G.setSpeed(1);
+    });
 
     // Geräte-Menü aus der Liste in config.js füllen
     this.el.devMenu.innerHTML = Object.entries(G.DEVICES).map(([type, d]) => `
@@ -137,7 +148,7 @@ G.UI = {
     if (!o) return null;
     const i = world.idx(o.x, o.y);
     const dev = world.devices.get(i);
-    if (dev && dev.inv) return { x: o.x, y: o.y, inv: dev.inv, dev, name: G.DEVICES[dev.type].name };
+    if (dev && dev.inv) return { x: o.x, y: o.y, inv: dev.inv, dev, name: dev.unknown ? 'Unbekannte Kiste' : G.DEVICES[dev.type].name, unknown: dev.unknown };
     const pile = world.piles.get(i);
     return { x: o.x, y: o.y, inv: pile || G.Items.newInv(), pile: true, name: 'Haufen auf dem Boden' };
   },
@@ -189,6 +200,11 @@ G.UI = {
     if (!src) return;
     const near = c && G.Chars.canReach(c, src);
     let b = `<div class="box-head"><span class="label">${src.name}</span><button type="button" class="icon" data-act="close" aria-label="Schließen">✕</button></div>`;
+    if (src.unknown) {
+      b += `<div class="empty">Inhalt unbekannt. Geh mit einer Figur nah heran, um sie zu öffnen.</div>`;
+      if (b !== this.lastBoxHtml) { this.el.box.innerHTML = b; this.lastBoxHtml = b; }
+      return;
+    }
     if (!src.pile) b += `<div class="empty">${Math.round(G.Items.volume(src.inv))} / ${src.inv.maxVolume} L belegt</div>`;
     const total = src.inv.items.reduce((s, it) => s + G.Items.value(it), 0);
     b += src.inv.items.length
@@ -203,6 +219,115 @@ G.UI = {
     }
     if (c && !near) b += `<div class="empty">${c.name} steht nicht daneben und läuft erst hin.</div>`;
     if (b !== this.lastBoxHtml) { this.el.box.innerHTML = b; this.lastBoxHtml = b; }
+  },
+
+  // ---------- Handelsterminal und Werkbank ----------
+
+  openPanel(kind) {
+    this.panelKind = kind;
+    this.el.panel.hidden = false;
+    this.lastPanelHtml = '';
+    this.closeSource();
+  },
+
+  closePanel() {
+    this.panelKind = null;
+    if (this.el) this.el.panel.hidden = true;
+  },
+
+  gameOver() { document.getElementById('gameover').hidden = false; },
+
+  fmt(n) { return Math.round(n).toLocaleString('de-DE'); },
+
+  onPanelButton(e) {
+    const b = e.target.closest('[data-act]');
+    if (!b) return;
+    const d = b.dataset, E = G.Econ;
+    switch (d.act) {
+      case 'close': this.closePanel(); break;
+      case 'tab': this.tradeTab = d.tab; break;
+      case 'sell': E.sell(d.type, Number(d.qty)); break;
+      case 'sellall': E.sellAll(); break;
+      case 'buy': E.buy(d.type, Number(d.qty)); break;
+      case 'pay': E.payDebt(d.qty === 'all' ? Infinity : Number(d.qty)); break;
+      case 'claim': E.buyClaim(); break;
+      case 'scrap': E.scrapHull(); break;
+      case 'craft': E.craftJob(d.id); break;
+      case 'put': {
+        const c = this.selectedChar(), t = E.terminal();
+        if (c && t) G.Chars.startTransfer(c, { x: t.x, y: t.y, inv: t.inv, dev: t }, 'put', d.type, Number(d.qty));
+        break;
+      }
+    }
+    this.lastPanelHtml = '';
+  },
+
+  renderPanel() {
+    if (!this.panelKind) return;
+    const E = G.Econ, e = E.state();
+    let h = '';
+    const head = (title) => `<div class="box-head"><span class="label">${title}</span><button type="button" class="icon" data-act="close" aria-label="Schließen">✕</button></div>`;
+
+    if (this.panelKind === 'bench') {
+      h += head('Werkbank');
+      h += '<div class="empty">Aus Schrott und Resten Neues machen. Die Crew holt das Material selbst und legt das Ergebnis neben die Werkbank.</div>';
+      for (const r of G.RECIPES) {
+        const ok = Object.entries(r.in).every(([t, q]) => G.Items.available(t) + G.state.chars.reduce((s, c) => s + G.Items.count(c.inv, t), 0) >= q);
+        const inTxt = Object.entries(r.in).map(([t, q]) => q + '× ' + G.ITEMS[t].name).join(' + ');
+        h += `<div class="item"><span class="item-name">${r.name}</span>
+          <span class="item-meta">${inTxt} → ${r.out[1]}× ${G.ITEMS[r.out[0]].name}</span>
+          <span class="item-btns"><button type="button" data-act="craft" data-id="${r.id}" ${ok ? '' : 'disabled'}>Herstellen</button></span></div>`;
+      }
+    } else {
+      const t = E.terminal();
+      h += head('Handelsterminal · Tycho-Schrottplatz');
+      if (!E.terminalOnline()) h += '<div class="empty bad">Kein Strom. Das Terminal ist offline.</div>';
+      h += `<div class="tabs">${[['sell', 'Verkaufen'], ['buy', 'Kaufen'], ['bank', 'Konto'], ['salvage', 'Bergung']]
+        .map(([k, n]) => `<button type="button" data-act="tab" data-tab="${k}" class="${this.tradeTab === k ? 'active' : ''}">${n}</button>`).join('')}</div>`;
+      h += `<div class="credits">${this.fmt(e.credits)} Cr</div>`;
+
+      if (this.tradeTab === 'sell') {
+        const items = t ? t.inv.items : [];
+        h += '<div class="empty">Was im Terminal liegt, kannst du verkaufen. Leg Sachen aus dem Gepäck hinein.</div>';
+        h += items.length ? items.map(it => this.itemRow(it, `<button type="button" data-act="sell" data-type="${it.type}" data-qty="${it.qty}">${this.fmt(E.sellPrice(it))} Cr</button>`)).join('')
+          + `<div class="box-foot"><span>Summe: ${this.fmt(items.reduce((s, it) => s + E.sellPrice(it), 0))} Cr</span><button type="button" data-act="sellall">Alles verkaufen</button></div>`
+          : '<div class="empty">Das Terminal ist leer.</div>';
+        const c = this.selectedChar();
+        if (c && c.inv.items.length) {
+          h += `<div class="needs-sub">Gepäck von ${c.name}</div>`;
+          h += c.inv.items.map(it => this.itemRow(it, `<button type="button" data-act="put" data-type="${it.type}" data-qty="${it.qty}">Hineinlegen</button>`)).join('');
+        }
+      } else if (this.tradeTab === 'buy') {
+        h += '<div class="empty">Gekauftes landet im Terminal. Preise ändern sich jeden Tag.</div>';
+        for (const [type, d] of Object.entries(G.ITEMS)) {
+          const f = e.prices[type];
+          const trend = f > 1.1 ? '<span class="up">▲ teuer</span>' : f < 0.9 ? '<span class="down">▼ günstig</span>' : '';
+          h += `<div class="item" title="${d.desc}"><span class="item-name">${d.name} ${trend}</span>
+            <span class="item-meta">${d.weight} kg · Verkauf ~${this.fmt(E.marketPrice(type) * G.ECON.SELL_FACTOR)} Cr</span>
+            <span class="item-btns"><button type="button" data-act="buy" data-type="${type}" data-qty="1">${this.fmt(E.buyPrice(type))} Cr</button><button type="button" data-act="buy" data-type="${type}" data-qty="5">×5</button></span></div>`;
+        }
+      } else if (this.tradeTab === 'bank') {
+        const days = Math.max(0, (e.nextPayment - G.state.time) / 1440);
+        h += `<div class="kv"><span>Restschuld</span><b>${this.fmt(e.debt)} Cr</b></div>
+          <div class="kv"><span>Nächste Rate</span><b>${this.fmt(Math.min(G.ECON.PAYMENT, e.debt))} Cr in ${days.toFixed(1)} Tagen</b></div>
+          <div class="kv"><span>Liegegebühr</span><b>${G.ECON.DOCK_FEE} Cr pro Tag</b></div>
+          <div class="kv"><span>Verpasste Raten</span><b class="${e.strikes ? 'bad' : ''}">${e.strikes} von ${G.ECON.MAX_STRIKES}</b></div>
+          <div class="tabs"><button type="button" data-act="pay" data-qty="500">500 Cr tilgen</button><button type="button" data-act="pay" data-qty="all">Alles tilgen</button></div>
+          <div class="needs-sub">Kontoauszug</div>`;
+        h += e.log.length ? e.log.map(l => `<div class="kv small"><span>${l.text}</span><b class="${l.amount < 0 ? 'bad' : 'good'}">${l.amount ? (l.amount > 0 ? '+' : '') + this.fmt(l.amount) : ''}</b></div>`).join('')
+          : '<div class="empty">Noch keine Buchungen.</div>';
+      } else {
+        const has = G.state.wreckName;
+        h += has ? `<div class="kv"><span>Wrack an der Leine</span><b>${G.state.wreckName}</b></div>
+          <div class="kv"><span>Restwert beim Verschrotten</span><b>${this.fmt(G.Wreck.hullValue())} Cr</b></div>
+          <div class="empty">Tipp: Was du vorher ausbaust und einzeln verkaufst, bringt viel mehr als das Verschrotten.</div>
+          <div class="tabs"><button type="button" data-act="scrap">Wrack verschrotten</button></div>`
+          : '<div class="empty">Kein Wrack an der Bergungsleine.</div>';
+        h += `<div class="tabs"><button type="button" data-act="claim">Neues Bergungsrecht (${G.ECON.CLAIM_FEE} Cr)</button></div>`;
+        if (has) h += '<div class="empty">Ein neues Bergungsrecht ersetzt das aktuelle Wrack.</div>';
+      }
+    }
+    if (h !== this.lastPanelHtml) { this.el.panel.innerHTML = h; this.lastPanelHtml = h; }
   },
 
   showHelp(show) {
@@ -279,6 +404,14 @@ G.UI = {
     }
 
     this.renderInventories();
+    this.renderPanel();
+    // Geld oben in der Leiste
+    const e = S.econ;
+    if (e) {
+      const days = Math.max(0, (e.nextPayment - S.time) / 1440);
+      const html = `<span class="cr">${this.fmt(e.credits)} Cr</span><span class="debt">Schulden ${this.fmt(e.debt)} · Rate in ${days.toFixed(1)} T</span>`;
+      if (html !== this.lastMoney) { el.money.innerHTML = html; this.lastMoney = html; }
+    }
 
     el.jobCount.textContent = S.jobs.size ? S.jobs.size + (S.jobs.size === 1 ? ' Bauplan offen' : ' Baupläne offen') : 'Keine Baupläne';
 

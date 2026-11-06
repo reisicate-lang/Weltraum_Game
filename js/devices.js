@@ -35,8 +35,10 @@ G.Devices = {
         dev.cond -= D.WEAR_PER_DAY * dt / 1440;
         if (dev.cond <= 0) {
           dev.cond = 0; dev.broken = true;
-          G.UI.toast(def.name + ' ist kaputt gegangen!', 'bad');
-          G.Damage.requestRepair(dev.x, dev.y);
+          if (world.zone[i] !== 1) {
+            G.UI.toast(def.name + ' ist kaputt gegangen!', 'bad');
+            G.Damage.requestRepair(dev.x, dev.y);
+          }
         }
       }
       if (dev.broken) continue;
@@ -70,6 +72,7 @@ G.Devices = {
   // Kurzer Statustext für die Anzeige
   status(dev) {
     const def = G.DEVICES[dev.type];
+    if (dev.unknown) return dev.inv ? 'Kiste · Inhalt unbekannt (näher herangehen)' : 'Unbekanntes Gerät (näher herangehen, um es zu untersuchen)';
     const parts = [def.name];
     if (dev.broken) parts.push('KAPUTT');
     else if (dev.cond < 100) parts.push('Zustand ' + Math.round(dev.cond) + ' %');
@@ -79,6 +82,7 @@ G.Devices = {
     if (def.capacity) parts.push(dev.charge.toFixed(1) + ' / ' + def.capacity + ' kWh' + (dev.net < 0 && dev.type === 'battery' ? ', nicht am Kabel' : ''));
     if (dev.stock !== undefined) parts.push('Vorrat: ' + Math.floor(dev.stock) + ' ' + def.unit);
     if (dev.type === 'locker') parts.push(dev.suit ? `Anzug: O₂ ${Math.round(dev.suit.o2)} %, Akku ${Math.round(dev.suit.battery)} %` : 'leer (Anzug ist unterwegs)');
+    if (G.state.world.zone[G.state.world.idx(dev.x, dev.y)] === 1) parts.push('Bergungswert ~' + G.Wreck.deviceValue(dev) + ' Cr');
     if (dev.inv) parts.push(`${Math.round(G.Items.volume(dev.inv))} / ${G.DEVICES[dev.type].storage} L belegt`);
     if (dev.type === 'pump') {
       const lock = G.Airlock.lockOfPump(dev);

@@ -119,6 +119,8 @@ G.Input = {
     if (S.world.inBounds(t.x, t.y)) {
       const i = S.world.idx(t.x, t.y);
       const dev = S.world.devices.get(i);
+      if (dev && dev.type === 'terminal' && !dev.unknown) { G.UI.openPanel('trade'); return; }
+      if (dev && dev.type === 'workbench' && !dev.unknown) { G.UI.openPanel('bench'); return; }
       if ((dev && dev.inv) || S.world.piles.has(i)) { G.UI.openSource(t.x, t.y); return; }
     }
     const sel = S.chars.find(ch => ch.id === S.selectedId) || S.chars[0];
@@ -136,6 +138,7 @@ G.Input = {
     if (tool === 'remove') return 'Hier gibt es nichts zum Abreißen.';
     if (tool === 'cancel') return 'Hier ist kein Bauplan.';
     if (tool === 'repair') return 'Hier ist nichts beschädigt.';
+    if (tool === 'haul') return 'Hier liegt nichts zum Einsammeln.';
     if (tool === 'cable') return world.get(t.x, t.y) === G.T.SPACE ? 'Kabel brauchen Boden oder Wand.' : 'Hier liegt schon ein Kabel.';
     if (tool.startsWith('dev:')) return 'Geräte brauchen einen freien Boden.';
     return '';
@@ -187,9 +190,10 @@ G.Input = {
       case '1': G.setSpeed(1); break;
       case '2': G.setSpeed(2); break;
       case '3': G.setSpeed(3); break;
-      case 'escape': G.UI.setTool('select'); G.UI.showHelp(false); G.UI.showDevMenu(false); G.UI.closeSource(); break;
+      case 'escape': G.UI.setTool('select'); G.UI.showHelp(false); G.UI.showDevMenu(false); G.UI.closeSource(); G.UI.closePanel(); break;
       case 'k': G.UI.setTool('cable'); break;
       case 'v': G.UI.setTool('move'); break;
+      case 'q': G.UI.setTool('haul'); break;
       case 'r': G.UI.setTool('repair'); break;
       case '4': G.setSpeed(4); break;
       case 'g': G.UI.showDevMenu(); break;

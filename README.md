@@ -16,7 +16,8 @@ Die Datei `index.html` im Browser öffnen (Doppelklick genügt).
 | Gepäck ein-/ausblenden | `I` |
 | Bauen | Werkzeug wählen (Boden `B`, Wand `M`, Tür `T`), klicken oder Fläche ziehen |
 | Abreißen / Plan löschen | `X` / `C` |
-| Versetzen / Reparieren | `V` / `R` |
+| Versetzen / Reparieren / Einsammeln | `V` / `R` / `Q` |
+| Handeln | Klick auf das Handelsterminal im Cockpit |
 | Aufgabe abbrechen | Rechtsklick auf Bauplan oder Charakter |
 | Ansicht bewegen | Maus ziehen oder Pfeiltasten, Mausrad zoomt |
 | Kabel / Geräte | `K` / `G` |
@@ -36,6 +37,8 @@ Die Datei `index.html` im Browser öffnen (Doppelklick genügt).
 | `js/atmosphere.js` | Luft und Lecks |
 | `js/airlock.js` | Luftschleusen |
 | `js/damage.js` | Verschleiß, Mikrometeoriten, Reparaturen |
+| `js/economy.js` | Geld, Markt, Kredit, Werkbank-Aufträge |
+| `js/wreck.js` | Zufällige Wracks zum Ausschlachten |
 | `js/pathfinding.js` | Wegfindung der Charaktere |
 | `js/jobs.js` | Baupläne |
 | `js/characters.js` | Verhalten der Charaktere |
