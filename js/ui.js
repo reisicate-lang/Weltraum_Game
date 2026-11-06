@@ -235,7 +235,11 @@ G.UI = {
     if (this.el) this.el.panel.hidden = true;
   },
 
-  gameOver() { document.getElementById('gameover').hidden = false; },
+  gameOver(text, title) {
+    if (text) document.getElementById('go-text').textContent = text;
+    if (title) document.getElementById('go-title').textContent = title;
+    document.getElementById('gameover').hidden = false;
+  },
 
   fmt(n) { return Math.round(n).toLocaleString('de-DE'); },
 
@@ -253,6 +257,10 @@ G.UI = {
       case 'claim': E.buyClaim(); break;
       case 'scrap': E.scrapHull(); break;
       case 'craft': E.craftJob(d.id); break;
+      case 'switch': G.Fleet.switchTo(Number(d.id)); break;
+      case 'sellship': G.Fleet.sell(Number(d.id)); break;
+      case 'buyship': G.Fleet.buy(d.id); break;
+      case 'register': G.Fleet.registerWreck(); break;
       case 'put': {
         const c = this.selectedChar(), t = E.terminal();
         if (c && t) G.Chars.startTransfer(c, { x: t.x, y: t.y, inv: t.inv, dev: t }, 'put', d.type, Number(d.qty));
@@ -280,9 +288,11 @@ G.UI = {
       }
     } else {
       const t = E.terminal();
-      h += head('Handelsterminal · Tycho-Schrottplatz');
-      if (!E.terminalOnline()) h += '<div class="empty bad">Kein Strom. Das Terminal ist offline.</div>';
-      h += `<div class="tabs">${[['sell', 'Verkaufen'], ['buy', 'Kaufen'], ['bank', 'Konto'], ['salvage', 'Bergung']]
+      const st = E.station();
+      h += head('Handelsterminal' + (st ? ' · ' + st.name : ''));
+      if (!E.terminalOnline()) h += `<div class="empty bad">${st ? 'Kein Strom. Das Terminal ist offline.' : 'Keine Verbindung: Handel geht nur angedockt an einer Station.'}</div>`;
+      if (st && st.black) h += '<div class="empty">Schwarzmarkt: Datenchips bringen hier das Doppelte.</div>';
+      h += `<div class="tabs">${[['sell', 'Verkaufen'], ['buy', 'Kaufen'], ['bank', 'Konto'], ['salvage', 'Bergung'], ['ships', 'Schiffe']]
         .map(([k, n]) => `<button type="button" data-act="tab" data-tab="${k}" class="${this.tradeTab === k ? 'active' : ''}">${n}</button>`).join('')}</div>`;
       h += `<div class="credits">${this.fmt(e.credits)} Cr</div>`;
 
@@ -316,6 +326,22 @@ G.UI = {
           <div class="needs-sub">Kontoauszug</div>`;
         h += e.log.length ? e.log.map(l => `<div class="kv small"><span>${l.text}</span><b class="${l.amount < 0 ? 'bad' : 'good'}">${l.amount ? (l.amount > 0 ? '+' : '') + this.fmt(l.amount) : ''}</b></div>`).join('')
           : '<div class="empty">Noch keine Buchungen.</div>';
+      } else if (this.tradeTab === 'ships') {
+        const F = G.Fleet, f = F.st(), here = G.state.nav.docked, loc = here ? G.Nav.loc(here) : null;
+        h += `<div class="kv"><span>Aktuelles Schiff</span><b>${f.currentName}</b></div>`;
+        h += '<div class="needs-sub">Deine anderen Schiffe</div>';
+        h += f.ships.length ? f.ships.map(s => `<div class="item"><span class="item-name">${s.name}</span>
+          <span class="item-meta">liegt bei ${G.Nav.loc(s.location).name}</span>
+          <span class="item-btns">${s.location === here ? `<button type="button" data-act="switch" data-id="${s.id}">An Bord gehen</button>` : ''}
+          ${s.location === here && loc && loc.shipyard ? `<button type="button" data-act="sellship" data-id="${s.id}">Verkaufen</button>` : ''}</span></div>`).join('')
+          : '<div class="empty">Keine weiteren Schiffe.</div>';
+        if (G.state.wreckName && st) h += `<div class="tabs"><button type="button" data-act="register">Wrack „${G.state.wreckName}“ als Schiff anmelden (${G.ECON.REGISTER_FEE} Cr)</button></div>
+          <div class="empty">Das Wrack wird dein Schiff. Du kannst es reparieren und damit fliegen, wenn Steuerpult, Triebwerk und Tank funktionieren.</div>`;
+        if (loc && loc.shipyard) {
+          h += '<div class="needs-sub">Werft</div>';
+          h += G.SHIPYARD.map(t => `<div class="item"><span class="item-name">${t.name}</span><span class="item-meta">${t.desc}</span>
+            <span class="item-btns"><button type="button" data-act="buyship" data-id="${t.id}">${this.fmt(t.price)} Cr</button></span></div>`).join('');
+        } else h += '<div class="empty">Schiffe kaufen und verkaufen kannst du an der Werft am Kármán-Ring.</div>';
       } else {
         const has = G.state.wreckName;
         h += has ? `<div class="kv"><span>Wrack an der Leine</span><b>${G.state.wreckName}</b></div>

@@ -30,7 +30,11 @@ G.Econ = {
   marketPrice(type) {
     const e = this.state();
     const glut = 1 / (1 + e.supply[type] / 20); // viel verkauft = Preis sinkt
-    return G.ITEMS[type].value * e.prices[type] * glut;
+    const st = this.station();
+    let local = st ? st.market : 1;
+    // Schwarzmarkt: Datenchips bringen dort das Doppelte
+    if (st && st.black && type === 'datachip') local *= 2;
+    return G.ITEMS[type].value * e.prices[type] * glut * local;
   },
   buyPrice(type) { return Math.ceil(this.marketPrice(type) * G.ECON.BUY_MARKUP); },
   sellPrice(it) { return Math.floor(this.marketPrice(it.type) * G.ECON.SELL_FACTOR * (0.2 + 0.8 * it.cond / 100) * it.qty); },
@@ -45,15 +49,22 @@ G.Econ = {
     return [...G.state.world.devices.values()].find(d => d.type === 'terminal') || null;
   },
 
+  // Handel geht nur, wenn du an einer Station angedockt bist
+  station() {
+    const n = G.state.nav;
+    const loc = n && n.docked ? G.Nav.loc(n.docked) : null;
+    return loc && loc.kind === 'station' ? loc : null;
+  },
+
   terminalOnline() {
     const t = this.terminal();
-    return !!(t && t.powered && !t.broken);
+    return !!(t && t.powered && !t.broken && this.station());
   },
 
   // ---------- Handel ----------
   sell(type, qty) {
     const t = this.terminal();
-    if (!t || !this.terminalOnline()) return G.UI.toast('Das Handelsterminal hat keinen Strom.', 'bad');
+    if (!t || !this.terminalOnline()) return G.UI.toast('Das Handelsterminal ist offline (kein Strom oder keine Station).', 'bad');
     let total = 0, sold = 0;
     for (const st of G.Items.take(t.inv, type, qty)) {
       total += this.sellPrice(st); sold += st.qty;
@@ -73,7 +84,7 @@ G.Econ = {
 
   buy(type, qty) {
     const t = this.terminal();
-    if (!t || !this.terminalOnline()) return G.UI.toast('Das Handelsterminal hat keinen Strom.', 'bad');
+    if (!t || !this.terminalOnline()) return G.UI.toast('Das Handelsterminal ist offline (kein Strom oder keine Station).', 'bad');
     const e = this.state();
     const price = this.buyPrice(type);
     const n = Math.min(qty, Math.floor(e.credits / price), G.Items.room(t.inv, type));
@@ -97,7 +108,7 @@ G.Econ = {
   // ---------- Bergungsrechte ----------
   buyClaim() {
     const e = this.state();
-    if (!this.terminalOnline()) return G.UI.toast('Das Handelsterminal hat keinen Strom.', 'bad');
+    if (!this.terminalOnline()) return G.UI.toast('Bergungsrechte gibt es nur an einer Station.', 'bad');
     if (e.credits < G.ECON.CLAIM_FEE) return G.UI.toast('Nicht genug Credits für ein Bergungsrecht.');
     if (!G.Wreck.clearable()) return G.UI.toast('Erst alle Crewmitglieder vom Wrack holen.');
     e.credits -= G.ECON.CLAIM_FEE;
@@ -108,7 +119,7 @@ G.Econ = {
   },
 
   scrapHull() {
-    if (!this.terminalOnline()) return G.UI.toast('Das Handelsterminal hat keinen Strom.', 'bad');
+    if (!this.terminalOnline()) return G.UI.toast('Verschrotten geht nur an einer Station.', 'bad');
     if (!G.Wreck.clearable()) return G.UI.toast('Erst alle Crewmitglieder vom Wrack holen.');
     const value = G.Wreck.hullValue();
     this.state().credits += value;
@@ -128,8 +139,10 @@ G.Econ = {
         e.prices[type] = Math.min(1.6, Math.max(0.5, e.prices[type] * (1 + (Math.random() * 2 - 1) * E.DRIFT)));
         e.supply[type] *= 0.7;
       }
-      if (e.credits >= E.DOCK_FEE) { e.credits -= E.DOCK_FEE; this.book('Liegegebühr', -E.DOCK_FEE); }
-      else { e.debt += E.DOCK_FEE; this.book('Liegegebühr: kein Geld, ' + E.DOCK_FEE + ' Cr auf die Schulden', 0); }
+      if (this.station()) {
+        if (e.credits >= E.DOCK_FEE) { e.credits -= E.DOCK_FEE; this.book('Liegegebühr ' + this.station().name, -E.DOCK_FEE); }
+        else { e.debt += E.DOCK_FEE; this.book('Liegegebühr: kein Geld, ' + E.DOCK_FEE + ' Cr auf die Schulden', 0); }
+      }
     }
     // Kreditrate
     if (e.debt > 0 && S.time >= e.nextPayment) {

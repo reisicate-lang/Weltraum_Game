@@ -20,6 +20,9 @@ G.newGame = function () {
   G.state.world = world; // schon setzen, das Startschiff legt Gegenstände ab
   const start = G.createStartShip(world);
   G.state.econ = G.Econ.create();
+  G.state.nav = G.Nav.create();
+  G.state.fleet = G.Fleet.create();
+  G.state.wreckName = null;
   G.Wreck.buildGangway(world);
   G.Wreck.generate();
   G.Chars.nextId = 1;
@@ -59,6 +62,7 @@ G.clampCamera = function () {
 // Ein Simulationsschritt (dt in Spielminuten)
 G.step = function (dt) {
   G.state.time += dt;
+  G.Nav.update(dt);
   G.Power.update(dt);
   G.Airlock.update(dt);
   G.Devices.update(dt);
@@ -74,12 +78,14 @@ G.start = function () {
   G.Input.init(canvas);
   if (!G.Save.load(true)) G.newGame();
   G.UI.init();
+  G.NavUI.init();
+  window.addEventListener('resize', () => { if (G.NavUI.open) G.NavUI.resize(); });
 
   // Erster Besuch: Hilfe zeigen
   let seen = false;
-  try { seen = localStorage.getItem('weltraum_game_help_seen_v5') === '1'; } catch (err) { /* egal */ }
+  try { seen = localStorage.getItem('weltraum_game_help_seen_v6') === '1'; } catch (err) { /* egal */ }
   G.UI.showHelp(!seen);
-  try { localStorage.setItem('weltraum_game_help_seen_v5', '1'); } catch (err) { /* egal */ }
+  try { localStorage.setItem('weltraum_game_help_seen_v6', '1'); } catch (err) { /* egal */ }
 
   // Automatisch speichern, jede Minute (echte Zeit)
   setInterval(() => G.Save.save(true), 60000);
@@ -99,6 +105,7 @@ G.start = function () {
       for (let k = 0; k < n; k++) G.step(total / n);
     }
     G.Render.draw();
+    G.NavUI.draw();
     G.UI.update();
     requestAnimationFrame(frame);
   }

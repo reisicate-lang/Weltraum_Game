@@ -9,21 +9,7 @@ G.Save = {
     return {
       version: G.SAVE_VERSION,
       savedAt: new Date().toISOString(),
-      world: {
-        w: S.world.w, h: S.world.h,
-        tiles: Array.from(S.world.tiles).join(''),
-        cables: Array.from(S.world.cables).join(''),
-        o2: Array.from(S.world.o2, v => +v.toFixed(2)),
-        n2: Array.from(S.world.n2, v => +v.toFixed(2)),
-        co2: Array.from(S.world.co2, v => +v.toFixed(3)),
-        cond: Array.from(S.world.cond, v => Math.round(v)),
-        piles: [...S.world.piles].map(([i, inv]) => [i, inv.items]),
-        zone: Array.from(S.world.zone).join(''),
-        devices: [...S.world.devices.values()].map(d => ({
-          type: d.type, x: d.x, y: d.y, stock: d.stock, charge: d.charge,
-          cond: d.cond, broken: d.broken, suit: d.suit, store: d.store, items: d.inv ? d.inv.items : undefined, unknown: d.unknown,
-        })),
-      },
+      world: this.worldToData(S.world),
       view: S.view,
       time: S.time,
       camera: { ...S.camera },
@@ -37,14 +23,35 @@ G.Save = {
       })),
       econ: S.econ,
       wreckName: S.wreckName,
+      nav: S.nav,
+      fleet: S.fleet,
       jobs: [...S.jobs.values()].filter(j => !((j.kind === 'move' || j.kind === 'haul') && j.phase === 'deliver'))
         .map(j => ({ x: j.x, y: j.y, kind: j.kind, tile: j.tile, dev: j.dev, tx: j.tx, ty: j.ty, phase: j.phase,
           item: j.item, qty: j.qty, paid: j.paid, auto: j.auto, recipe: j.recipe, progress: j.progress, need: j.need })),
     };
   },
 
-  apply(data) {
-    const d = data.world;
+  // Eine Schiffswelt in einfache Daten umwandeln (auch für weitere Schiffe der Flotte)
+  worldToData(w) {
+    return {
+      w: w.w, h: w.h,
+      tiles: Array.from(w.tiles).join(''),
+      cables: Array.from(w.cables).join(''),
+      o2: Array.from(w.o2, v => +v.toFixed(2)),
+      n2: Array.from(w.n2, v => +v.toFixed(2)),
+      co2: Array.from(w.co2, v => +v.toFixed(3)),
+      cond: Array.from(w.cond, v => Math.round(v)),
+      piles: [...w.piles].map(([i, inv]) => [i, inv.items]),
+      zone: Array.from(w.zone).join(''),
+      devices: [...w.devices.values()].map(d => ({
+        type: d.type, x: d.x, y: d.y, stock: d.stock, charge: d.charge,
+        cond: d.cond, broken: d.broken, suit: d.suit, store: d.store, items: d.inv ? d.inv.items : undefined, unknown: d.unknown,
+      })),
+    };
+  },
+
+  dataToWorld(d) {
+    d = JSON.parse(JSON.stringify(d)); // Kopie, damit gespeicherte Daten unverändert bleiben
     const world = new G.World(d.w, d.h);
     for (let i = 0; i < world.tiles.length; i++) {
       world.tiles[i] = Number(d.tiles[i]) || 0;
@@ -64,6 +71,11 @@ G.Save = {
       world.devices.set(world.idx(dv.x, dv.y), dev);
     }
     for (const [i, items] of d.piles || []) { const inv = G.Items.newInv(); inv.items = items; world.piles.set(i, inv); }
+    return world;
+  },
+
+  apply(data) {
+    const world = this.dataToWorld(data.world);
     const jobs = new Map();
     for (const j of data.jobs || []) {
       jobs.set(world.idx(j.x, j.y), { ...j, claimedBy: null, retryAt: 0 });
@@ -86,6 +98,8 @@ G.Save = {
       selectedId: data.selectedId ?? (chars[0] && chars[0].id),
       openSource: null,
       econ: data.econ || G.Econ.create(),
+      nav: data.nav || G.Nav.create(),
+      fleet: data.fleet || G.Fleet.create(),
       wreckName: data.wreckName || null,
     };
     G.Power.dirty = true;

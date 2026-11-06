@@ -126,6 +126,15 @@ G.createStartShip = function (world) {
   // Handelsterminal und Werkbank im Cockpit (am Kabel)
   place('terminal', x0 + 12, y0 + 5);
   place('workbench', x0 + 13, y0 + 5);
+  // Flugsystem: Steuerpult, Treibstofftank, zwei Triebwerke, Auto-Dock
+  place('helm', x0 + 14, y0 + 1);
+  place('fueltank', x0 + 11, y0 + 1);
+  place('autodock', x0 + 14, y0 + 3);
+  place('thruster', x0 + 11, y0 + 8);
+  place('thruster', x0 + 12, y0 + 8);
+  for (let y = y0 + 1; y <= y0 + 4; y++) world.cables[world.idx(x0 + 14, y)] = 1;
+  for (let y = y0 + 6; y <= y0 + 8; y++) world.cables[world.idx(x0 + 11, y)] = 1;
+  world.cables[world.idx(x0 + 12, y0 + 8)] = 1;
   // Frachtkisten im Cockpit mit Startmaterial
   place('crate', x0 + 14, y0 + 8);
   place('crate', x0 + 13, y0 + 8);

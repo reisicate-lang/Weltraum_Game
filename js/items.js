@@ -19,7 +19,7 @@ G.ITEMS = {
   datachip: { name: 'Datenchip',          weight: 0.05, volume: 0.1, value: 150, desc: 'Gespeicherte Daten. Manche zahlen viel dafür.' },
   ration:   { name: 'Essensration',       weight: 0.5, volume: 0.6, value: 6,  desc: 'Füllt den Vorratsschrank um 1 Ration auf.', refill: { food: 1 } },
   watercan: { name: 'Wasserkanister',     weight: 10,  volume: 10, value: 8,   desc: 'Füllt einen Wasserspender oder ein Waschbecken um 10 L auf.', refill: { water: 10, sink: 10 } },
-  fuelcan:  { name: 'Brennstoffkanister', weight: 12,  volume: 10, value: 40,  desc: 'Füllt den Generator um 40 Brennstoff auf.', refill: { generator: 40 } },
+  fuelcan:  { name: 'Brennstoffkanister', weight: 12,  volume: 10, value: 40,  desc: 'Füllt den Generator um 40 Brennstoff oder einen Treibstofftank um 40 Einheiten auf.', refill: { generator: 40, fueltank: 40 } },
   aircan:   { name: 'Druckluftflasche',   weight: 15,  volume: 12, value: 50,  desc: 'Füllt einen Lufttank um 800 kPa auf.', refill: { airtank: 800 } },
 };
 

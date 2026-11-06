@@ -52,6 +52,10 @@ G.DEVICES = {
   charger:   { name: 'Tragbare Ladestation', cost: { plate: 1, cell: 2, circuit: 1 }, capacity: 10, buildTime: 3, portable: true, desc: 'Akku mit 10 kWh. Lädt Raumanzüge auch draußen. Am Kabel lädt sie sich selbst auf. Mit "Versetzen" umstellbar.' },
   terminal:  { name: 'Handelsterminal', cost: { plate: 2, circuit: 3, datachip: 1 }, power: -0.3, buildTime: 5, storage: 300, desc: 'Verbindung zur Station: kaufen, verkaufen, Schulden bezahlen, Bergungsrechte. Was du verkaufen willst, legst du hinein (300 L).' },
   workbench: { name: 'Werkbank', cost: { plate: 3, motor: 1 }, power: -0.5, buildTime: 5, desc: 'Hier wird aus Schrott Neues gemacht: Platten, Rohre, Platinen, Filter.' },
+  helm:      { name: 'Steuerpult', cost: { plate: 2, circuit: 3, glass: 1 }, power: -0.3, buildTime: 6, desc: 'Zum Fliegen und Navigieren (Taste N). Braucht 0,3 kW.' },
+  thruster:  { name: 'Triebwerk', cost: { plate: 4, motor: 1, pipe: 3 }, power: -0.2, buildTime: 8, wears: true, thrust: 40, desc: 'Schub 40 kN. Verbraucht Treibstoff aus dem Treibstofftank.' },
+  fueltank:  { name: 'Treibstofftank', cost: { plate: 4, pipe: 2 }, stock: 600, unit: 'Treibstoff', buildTime: 6, desc: 'Treibstoff für die Triebwerke (600 Einheiten).' },
+  autodock:  { name: 'Auto-Dock-Modul', cost: { circuit: 4, motor: 1, datachip: 1 }, power: -0.2, buildTime: 6, desc: 'Dockt automatisch an, wenn du nah genug und langsam genug bist.' },
   crate:     { name: 'Frachtkiste', cost: { plate: 3 }, buildTime: 3, storage: 400, desc: 'Lagert Gegenstände (400 Liter).' },
   pump:      { name: 'Schleusenpumpe', cost: { plate: 2, motor: 1, pipe: 2, circuit: 1 }, power: -1, buildTime: 6, wears: true, desc: 'Macht einen kleinen Raum zur Luftschleuse: pumpt die Luft ab und wieder hinein. Braucht 1 kW.' },
 };
@@ -141,6 +145,7 @@ G.ECON = {
   BUY_MARKUP: 1.3,         // Kaufpreis = Marktwert × 1,3
   SELL_FACTOR: 0.75,       // Verkaufspreis = Marktwert × 0,75 × Zustand
   CLAIM_FEE: 350,          // Bergungsrecht für ein neues Wrack
+  REGISTER_FEE: 600,       // Wrack als eigenes Schiff anmelden
   HULL_FACTOR: 0.25,       // Restwert eines Wracks beim Verschrotten
   DRIFT: 0.06,             // so stark schwanken die Preise pro Tag
 };
@@ -153,6 +158,34 @@ G.RECIPES = [
   { id: 'filter',  name: 'Filter flicken',        in: { fabric: 1, scrap: 1 },    out: ['filter', 1, 60],  time: 3 },
   { id: 'cell',    name: 'Akkuzelle aufbereiten', in: { scrap: 2, copper: 1 },    out: ['cell', 1, 45],    time: 8 },
   { id: 'fabric',  name: 'Stoff aus Resten',      in: { scrap: 1 },               out: ['fabric', 1, 50],  time: 2 },
+];
+
+// ------------------------------------------------------------
+// Raumfahrt (Werte in km, km/s und Sekunden; das Erde-Mond-System ist verkleinert)
+// ------------------------------------------------------------
+G.SPACE = {
+  EARTH: { name: 'Erde', x: 0, y: 0, r: 6371, gm: 40000, color: '#3f6fb0' },  // schwächer als echt: nach dem Krieg ausgebeutet
+  MOON:  { name: 'Mond', x: 60000, y: 0, r: 1737, gm: 600, color: '#8a8f98' },
+  CRASH_ALT: 400,      // tiefer als das über der Erde: Absturz
+  WARN_ALT: 3000,      // Warnung: Schwerkraft-Falle
+  MOON_CRASH_ALT: 30,
+  DOCK_DIST: 0.25,     // km: so nah zum Andocken
+  DOCK_SPEED: 0.006,   // km/s (6 m/s): so langsam zum Andocken
+  AUTODOCK_DIST: 80,   // km
+  AUTODOCK_SPEED: 0.6, // km/s
+  COLLIDE_SPEED: 0.012,
+  TRAVEL_SPEED: 4,     // km/s bei Schnellreise
+  TRAVEL_FUEL: 1 / 300, // Treibstoff pro km bei Schnellreise
+  BURN: 4,             // Treibstoff pro Minute und Triebwerk bei vollem Schub
+  ROT_SPEED: 1.2,      // Drehgeschwindigkeit (Bogenmaß pro Sekunde)
+};
+
+// Orte. Mit body/radius kreist der Ort um Erde oder Mond, sonst steht er fest im Raum.
+G.LOCATIONS = [
+  { id: 'tycho', name: 'Tycho-Schrottplatz', kind: 'station', body: 'MOON', radius: 3000, phase: 0.5, market: 1, desc: 'Schrotthändler im Mondorbit. Hier fing alles an.' },
+  { id: 'karman', name: 'Kármán-Ring', kind: 'station', body: 'EARTH', radius: 14000, phase: 2.0, market: 1.1, shipyard: true, desc: 'Große Handelsstation im Erdorbit mit Werft.' },
+  { id: 'l4', name: 'Habitat L4', kind: 'station', x: 30000, y: -51962, market: 0.9, black: true, desc: 'Abgelegenes Habitat. Hier fragt keiner, woher die Ware stammt.' },
+  { id: 'debris', name: 'Trümmerfeld Achilles', kind: 'debris', x: 42000, y: 26000, desc: 'Reste der Kriegsflotte. Wracks gratis, aber kein Händler.' },
 ];
 
 // Die Werkzeuge im Baumenü
@@ -175,15 +208,15 @@ for (const [type, d] of Object.entries(G.DEVICES)) {
 // Zeit: Bei 1x ist eine Sekunde im Spiel eine echte Sekunde.
 // Im Spiel wird in Minuten gerechnet, darum 1/60 Minute pro Sekunde.
 G.MINUTES_PER_SECOND = 1 / 60;
-G.SPEEDS = [0, 1, 10, 60, 300];         // 0 = Pause
+G.SPEEDS = [0, 1, 10, 60, 300, 1000];   // 0 = Pause
 
-// Laufgeschwindigkeit: 3 Kacheln pro Sekunde (in Kacheln pro Minute)
-G.WALK_SPEED = 180;
+// Laufgeschwindigkeit: 2,5 Kacheln pro Sekunde (in Kacheln pro Minute)
+G.WALK_SPEED = 150;
 G.SPRINT = 1.6; // mit gedrückter Umschalttaste läuft deine Figur so viel schneller
 
 // Spielbeginn: Tag 1, 08:00 Uhr (in Minuten)
 G.START_MINUTES = 8 * 60;
 
 // Name, unter dem der Spielstand im Browser gespeichert wird
-G.SAVE_KEY = 'weltraum_game_save_v5';
-G.SAVE_VERSION = 5;
+G.SAVE_KEY = 'weltraum_game_save_v6';
+G.SAVE_VERSION = 6;

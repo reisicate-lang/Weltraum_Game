@@ -190,12 +190,15 @@ G.Input = {
       case '1': G.setSpeed(1); break;
       case '2': G.setSpeed(2); break;
       case '3': G.setSpeed(3); break;
-      case 'escape': G.UI.setTool('select'); G.UI.showHelp(false); G.UI.showDevMenu(false); G.UI.closeSource(); G.UI.closePanel(); break;
+      case 'escape': G.UI.setTool('select'); G.UI.showHelp(false); G.UI.showDevMenu(false); G.UI.closeSource(); G.UI.closePanel(); G.NavUI.toggle(false); break;
       case 'k': G.UI.setTool('cable'); break;
       case 'v': G.UI.setTool('move'); break;
       case 'q': G.UI.setTool('haul'); break;
       case 'r': G.UI.setTool('repair'); break;
       case '4': G.setSpeed(4); break;
+      case '5': G.setSpeed(5); break;
+      case 'n': G.NavUI.toggle(); break;
+      case 'f': if (G.NavUI.open) G.NavUI.tryDock(); break;
       case 'g': G.UI.showDevMenu(); break;
       case 'l': G.UI.setView(G.state.view === 'air' ? 'normal' : 'air'); break;
       case 'p': G.UI.setView(G.state.view === 'power' ? 'normal' : 'power'); break;
@@ -222,6 +225,8 @@ G.Input = {
     if (k.has('arrowup')) cam.y -= speed;
     if (k.has('arrowdown')) cam.y += speed;
 
+    // Navigationskarte offen: WASD steuert das Schiff
+    if (G.NavUI.open) { G.NavUI.control(k, realDt); G.clampCamera(); return; }
     // Deine Figur mit WASD steuern (läuft immer in echter Geschwindigkeit, nicht in der Pause)
     const p = G.player();
     if (p && G.state.speedIndex > 0 && !this.ctrl) {

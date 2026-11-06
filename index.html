@@ -22,6 +22,7 @@
       <button type="button" data-speed="2" title="10-mal so schnell (2)">10×</button>
       <button type="button" data-speed="3" title="60-mal so schnell: 1 Sekunde = 1 Minute (3)">60×</button>
       <button type="button" data-speed="4" title="300-mal so schnell: 1 Sekunde = 5 Minuten (4)">300×</button>
+      <button type="button" data-speed="5" title="1000-mal so schnell, für lange Reisen (5)">1000×</button>
     </div>
   </div>
   <div class="money" id="money"></div>
@@ -43,10 +44,15 @@
 <aside id="box" class="box-panel" hidden></aside>
 <aside id="panel" class="box-panel wide" hidden></aside>
 
+<div id="nav" class="nav-overlay" hidden>
+  <canvas id="navmap"></canvas>
+  <aside id="nav-side" class="nav-side"></aside>
+</div>
+
 <div id="gameover" class="help" hidden>
   <div class="help-card">
-    <h2>Gepfändet</h2>
-    <p>Du hast drei Kreditraten verpasst. Die Bank hat dein Schiff beschlagnahmt. Mira steht mit nichts als ihrem Anzug auf dem Tycho-Schrottplatz.</p>
+    <h2 id="go-title">Gepfändet</h2>
+    <p id="go-text">Du hast drei Kreditraten verpasst. Die Bank hat dein Schiff beschlagnahmt. Mira steht mit nichts als ihrem Anzug auf dem Tycho-Schrottplatz.</p>
     <button type="button" id="btn-restart" class="primary">Neues Spiel</button>
   </div>
 </div>
@@ -101,6 +107,7 @@
       <dt>Abbrechen</dt><dd><b>Rechtsklick</b> auf einen Bauplan löscht ihn. Rechtsklick auf Mira bricht ab, was sie gerade tut.</dd>
       <dt>Draußen</dt><dd>Für Arbeiten im Vakuum holt Mira selbst einen <b>Raumanzug</b> aus dem Anzugschrank. Die <b>Luftschleuse</b> links pumpt die Luft ab, bevor die Außentür aufgeht.</dd>
       <dt>Schäden</dt><dd>Geräte nutzen sich ab, Mikrometeoriten treffen die Hülle. Stark Beschädigtes repariert Mira von selbst, sonst <b>Reparieren</b> <kbd>R</kbd>.</dd>
+      <dt>Fliegen</dt><dd><kbd>N</kbd> öffnet die Navigation am Steuerpult. Abdocken, mit <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> fliegen oder per Schnellreise zu Stationen und ins Trümmerfeld. Vorsicht: Die Erde zieht dich an.</dd>
       <dt>Ansicht</dt><dd>Ziehen mit der Maus oder Pfeiltasten. Mausrad zum Zoomen.</dd>
       <dt>Zeit</dt><dd>Bei 1× läuft die Zeit wie in echt. <kbd>Leertaste</kbd> Pause, <kbd>1</kbd> bis <kbd>4</kbd> für 1×, 10×, 60× und 300×</dd>
       <dt>Speichern</dt><dd><kbd>Strg</kbd>+<kbd>S</kbd>. Außerdem jede Minute automatisch.</dd>
@@ -120,6 +127,9 @@
 <script src="js/damage.js"></script>
 <script src="js/economy.js"></script>
 <script src="js/wreck.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/fleet.js"></script>
+<script src="js/navui.js"></script>
 <script src="js/pathfinding.js"></script>
 <script src="js/jobs.js"></script>
 <script src="js/characters.js"></script>

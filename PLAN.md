@@ -48,13 +48,15 @@ Jede Etappe endet mit einer spielbaren, getesteten Version.
 - [x] Bergungsrechte kaufen, Wrack verschrotten
 - [x] Werkbank: aus Schrott Platten, Rohre, Platinen, Filter, Akkuzellen, Stoff (Idee aus Probably Stolen)
 
-### Etappe 6 – Flug & Physik
-- [ ] Karte: Mond (Start), Erde als Schwerkraft-Falle (schwächer als real – nach dem Krieg ausgebeutet), Stationen, Asteroiden
-- [ ] Schiffe bewegen sich physikalisch: Trägheit, Beschleunigung, Rotation, Orbits
-- [ ] Triebwerke und Tanks als Bauteile, Treibstoffverbrauch
-- [ ] Manuelles Docking, Auto-Dock-Modul, Kollisionen
-- [ ] Mehrere eigene Schiffe, Schiffe kaufen, verkaufen und umbauen
-- [ ] Schnellreise als Zusatzoption
+### Etappe 6 – Flug & Physik (Web-Version erledigt)
+- [x] Verkleinertes Erde-Mond-System: Tycho-Schrottplatz, Kármán-Ring (Werft), Habitat L4 (Schwarzmarkt), Trümmerfeld Achilles
+- [x] Schwerkraft von Erde und Mond, Trägheit, Umlaufbahnen, Stationen kreisen
+- [x] Triebwerke, Treibstofftank, Masse aus Rumpf/Geräten/Ladung, Treibstoffverbrauch
+- [x] Navigationskarte mit vorausberechneter Flugbahn, manuelles Fliegen (WASD), Geschwindigkeit angleichen
+- [x] Manuelles Andocken, Auto-Dock-Modul, Schnellreise, Zusammenstöße
+- [x] Erde als Schwerkraft-Falle (Absturz), Mond-Absturz
+- [x] Mehrere Schiffe: kaufen, wechseln, verkaufen; Wrack als eigenes Schiff anmelden
+- [x] Wracks bleiben an ihrem Ort; Trümmerfeld liefert gratis Wracks
 
 ### Etappe 7 – Tiefere Schiffssysteme
 - [ ] Temperatur, Heizung, Kühlung, Körpertemperatur, Kleidung mit Schutzwerten
