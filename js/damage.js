@@ -75,6 +75,7 @@ G.Damage = {
       if ((t === T.WALL || t === T.DOOR) && world.cond[i] < limit) this.requestRepair(i % world.w, (i / world.w) | 0);
     }
     for (const dev of world.devices.values()) if (dev.cond < limit) this.requestRepair(dev.x, dev.y);
+    G.Jobs.scanRefills();
   },
 
   repair(x, y) {

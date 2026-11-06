@@ -36,7 +36,10 @@
   <div class="label">Crew</div>
   <div id="crew"></div>
   <div id="needs"></div>
+  <div id="inv"></div>
 </aside>
+
+<aside id="box" class="box-panel" hidden></aside>
 
 <div class="paused-badge">Pausiert</div>
 
@@ -77,23 +80,25 @@
     <h2 id="help-title">Steuerung</h2>
     <p>Dein kleines Schiff treibt im All. Mira lebt darin und baut, was du planst. Halte sie am Leben: Luft, Essen, Wasser, Schlaf.</p>
     <dl>
-      <dt>Laufen</dt><dd>Mit <b>Auswahl</b> auf einen Boden klicken</dd>
+      <dt>Laufen</dt><dd>Deine Figur mit <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> steuern. Oder mit <b>Auswahl</b> auf einen Boden klicken.</dd>
+      <dt>Sachen</dt><dd><kbd>E</kbd> durchsucht die Kiste oder den Haufen neben dir. Klick auf eine Kiste zeigt ihren Inhalt. Bauen kostet Material, Abreißen gibt Teile zurück.</dd>
       <dt>Bauen</dt><dd>Werkzeug unten wählen, dann klicken oder eine Fläche ziehen. Mira arbeitet die blauen Baupläne ab.</dd>
       <dt>Geräte</dt><dd><kbd>G</kbd> öffnet die Liste. Geräte mit Stromverbrauch brauchen ein <b>Kabel</b> <kbd>K</kbd> auf ihrem Feld, verbunden mit einem Generator.</dd>
       <dt>Luft</dt><dd>Jeder Raum hat eigene Luft. Wo Boden an den Weltraum grenzt, entweicht sie. <kbd>L</kbd> zeigt die Luft an, <kbd>P</kbd> das Stromnetz.</dd>
       <dt>Abbrechen</dt><dd><b>Rechtsklick</b> auf einen Bauplan löscht ihn. Rechtsklick auf Mira bricht ab, was sie gerade tut.</dd>
       <dt>Draußen</dt><dd>Für Arbeiten im Vakuum holt Mira selbst einen <b>Raumanzug</b> aus dem Anzugschrank. Die <b>Luftschleuse</b> links pumpt die Luft ab, bevor die Außentür aufgeht.</dd>
       <dt>Schäden</dt><dd>Geräte nutzen sich ab, Mikrometeoriten treffen die Hülle. Stark Beschädigtes repariert Mira von selbst, sonst <b>Reparieren</b> <kbd>R</kbd>.</dd>
-      <dt>Ansicht</dt><dd>Ziehen mit der Maus, <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> oder Pfeiltasten. Mausrad zum Zoomen.</dd>
+      <dt>Ansicht</dt><dd>Ziehen mit der Maus oder Pfeiltasten. Mausrad zum Zoomen.</dd>
       <dt>Zeit</dt><dd>Bei 1× läuft die Zeit wie in echt. <kbd>Leertaste</kbd> Pause, <kbd>1</kbd> bis <kbd>4</kbd> für 1×, 10×, 60× und 300×</dd>
       <dt>Speichern</dt><dd><kbd>Strg</kbd>+<kbd>S</kbd>. Außerdem jede Minute automatisch.</dd>
     </dl>
-    <p class="tip">Der Generator verbraucht Brennstoff. Baue Solarpanels draußen auf dem Steg links, damit der Strom nicht ausgeht.</p>
+    <p class="tip">Draußen auf dem Steg links liegt Mondmüll. Hol dir einen Raumanzug, geh durch die Schleuse und sammle ihn ein.</p>
     <button type="button" id="help-close" class="primary">Los geht's</button>
   </div>
 </div>
 
 <script src="js/config.js"></script>
+<script src="js/items.js"></script>
 <script src="js/world.js"></script>
 <script src="js/devices.js"></script>
 <script src="js/power.js"></script>

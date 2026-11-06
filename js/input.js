@@ -18,7 +18,7 @@ G.Input = {
     canvas.addEventListener('wheel', e => this.onWheel(e), { passive: false });
     canvas.addEventListener('contextmenu', e => e.preventDefault());
     window.addEventListener('keydown', e => this.onKey(e));
-    window.addEventListener('keyup', e => this.keys.delete(e.key.toLowerCase()));
+    window.addEventListener('keyup', e => { this.keys.delete(e.key.toLowerCase()); if (e.key === 'Control' || e.key === 'Meta') this.ctrl = false; });
     window.addEventListener('blur', () => this.keys.clear());
   },
 
@@ -91,7 +91,7 @@ G.Input = {
       const k = S.world.idx(t.x, t.y);
       const c = G.Chars.at(t.wx, t.wy);
       if (c) {
-        if (c.job) S.jobs.delete(G.Jobs.key(c.job.x, c.job.y));
+        if (c.job) { const j = c.job; G.Chars.releaseJob(c); G.Jobs.cancel(j); }
         G.Chars.releaseJob(c);
         G.Chars.stopActivity(c);
         c.order = null;
@@ -102,7 +102,7 @@ G.Input = {
       let job = S.jobs.get(k);
       if (!job) job = [...S.jobs.values()].find(j => j.kind === 'move' && j.tx === t.x && j.ty === t.y);
       if (job) {
-        S.jobs.delete(G.Jobs.key(job.x, job.y));
+        G.Jobs.cancel(job);
         G.UI.toast('Bauplan abgebrochen.');
         return;
       }
@@ -115,6 +115,12 @@ G.Input = {
     const S = G.state;
     const c = G.Chars.at(t.wx, t.wy);
     if (c) { S.selectedId = c.id; return; }
+    // Kiste oder Haufen: Inhalt anzeigen
+    if (S.world.inBounds(t.x, t.y)) {
+      const i = S.world.idx(t.x, t.y);
+      const dev = S.world.devices.get(i);
+      if ((dev && dev.inv) || S.world.piles.has(i)) { G.UI.openSource(t.x, t.y); return; }
+    }
     const sel = S.chars.find(ch => ch.id === S.selectedId) || S.chars[0];
     if (!sel) return;
     if (!S.world.walkable(t.x, t.y)) { G.UI.toast('Dorthin kann niemand laufen.'); return; }
@@ -170,7 +176,8 @@ G.Input = {
   onKey(e) {
     if (e.target.closest && e.target.closest('input, textarea')) return;
     const k = e.key.toLowerCase();
-    this.keys.add(k);
+    this.ctrl = e.ctrlKey || e.metaKey;
+    if (!this.ctrl) this.keys.add(k);
     if (e.ctrlKey || e.metaKey) {
       if (k === 's') { e.preventDefault(); G.Save.save(); }
       return;
@@ -180,7 +187,7 @@ G.Input = {
       case '1': G.setSpeed(1); break;
       case '2': G.setSpeed(2); break;
       case '3': G.setSpeed(3); break;
-      case 'escape': G.UI.setTool('select'); G.UI.showHelp(false); G.UI.showDevMenu(false); break;
+      case 'escape': G.UI.setTool('select'); G.UI.showHelp(false); G.UI.showDevMenu(false); G.UI.closeSource(); break;
       case 'k': G.UI.setTool('cable'); break;
       case 'v': G.UI.setTool('move'); break;
       case 'r': G.UI.setTool('repair'); break;
@@ -194,19 +201,38 @@ G.Input = {
       case 'x': G.UI.setTool('remove'); break;
       case 'c': G.UI.setTool('cancel'); break;
       case 'h': G.UI.showHelp(); break;
+      case 'e': G.UI.interact(); break;
+      case 'i': G.UI.toggleInv(); break;
       case '+': case '=': G.zoomBy(1.15); break;
       case '-': G.zoomBy(1 / 1.15); break;
     }
   },
 
-  // Ansicht mit WASD / Pfeiltasten bewegen (läuft in Echtzeit, auch in der Pause)
+  // Wird jedes Bild aufgerufen (echte Zeit, realDt in Sekunden)
   update(realDt) {
     const k = this.keys, cam = G.state.camera;
+    // Ansicht mit den Pfeiltasten bewegen (auch in der Pause)
     const speed = 14 / cam.zoom * realDt;
-    if (k.has('a') || k.has('arrowleft')) cam.x -= speed;
-    if (k.has('d') || k.has('arrowright')) cam.x += speed;
-    if (k.has('w') || k.has('arrowup')) cam.y -= speed;
-    if (k.has('s') || k.has('arrowdown')) cam.y += speed;
+    if (k.has('arrowleft')) cam.x -= speed;
+    if (k.has('arrowright')) cam.x += speed;
+    if (k.has('arrowup')) cam.y -= speed;
+    if (k.has('arrowdown')) cam.y += speed;
+
+    // Deine Figur mit WASD steuern (läuft immer in echter Geschwindigkeit, nicht in der Pause)
+    const p = G.player();
+    if (p && G.state.speedIndex > 0 && !this.ctrl) {
+      let dx = 0, dy = 0;
+      if (k.has('a')) dx -= 1;
+      if (k.has('d')) dx += 1;
+      if (k.has('w')) dy -= 1;
+      if (k.has('s')) dy += 1;
+      if (dx || dy) {
+        G.Chars.manualMove(p, dx, dy, G.WALK_SPEED / 60 * realDt);
+        // Kamera folgt weich
+        cam.x += (p.x - cam.x) * Math.min(1, realDt * 4);
+        cam.y += (p.y - cam.y) * Math.min(1, realDt * 4);
+      }
+    }
     G.clampCamera();
   },
 };

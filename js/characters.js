@@ -26,6 +26,11 @@ G.Chars = {
       activity: null,  // aktuelle Tätigkeit
       suit: null,      // getragener Raumanzug { o2, battery }
       carrying: null,  // getragenes Gerät
+      inv: G.Items.newInv(G.CARRY.weight, G.CARRY.volume), // Gepäck
+      fetch: null,     // holt gerade Material { src }
+      transfer: null,  // geplanter Austausch mit einer Kiste { src, dir, type, qty }
+      isPlayer: false, // die Figur, die du mit WASD steuerst
+      manualUntil: 0,  // bis wann die Figur gerade von Hand gesteuert wird
       needs: { food: 85, water: 80, sleep: 75, hygiene: 80, air: 100 },
       health: 100,
       unconscious: false,
@@ -58,11 +63,131 @@ G.Chars = {
     this.stopActivity(c);
     c.order = { x: tx, y: ty };
     c.path = path;
+    c.transfer = null;
     return true;
   },
 
+  // ---------------- Gegenstände ----------------
+
+  // Steht der Charakter nah genug an einem Lager (Kiste oder Haufen)?
+  canReach(c, src) {
+    return Math.abs(this.tileX(c) - src.x) <= 1 && Math.abs(this.tileY(c) - src.y) <= 1;
+  },
+
+  // Geht zum nächsten Lager mit fehlendem Material für den aktuellen Auftrag
+  startFetch(c) {
+    const miss = G.Items.missing(G.Jobs.cost(c.job), c.inv);
+    const types = Object.keys(miss);
+    if (!types.length) return false;
+    const srcs = G.Items.sources().filter(s => types.some(t => G.Items.count(s.inv, t) > 0));
+    // Haufen kann man auch betreten, darum zählt dort auch das Feld selbst
+    const res = G.Path.nearestAdjacent(c, srcs);
+    if (!res.target) return false;
+    c.fetch = { src: res.target };
+    c.path = res.path;
+    return true;
+  },
+
+  doFetch(c, dt) {
+    const src = c.fetch.src;
+    if (c.path.length) {
+      c.task = c.waiting ? 'Wartet auf Schleuse' : 'Holt Material';
+      if (!this.followPath(c, dt)) this.releaseJob(c);
+      return;
+    }
+    if (!this.canReach(c, src)) { this.releaseJob(c); return; }
+    c.task = 'Nimmt Material';
+    for (const [type, qty] of Object.entries(G.Items.missing(G.Jobs.cost(c.job), c.inv))) {
+      G.Items.move(src.inv, c.inv, type, qty);
+    }
+    G.Items.cleanPiles();
+    c.fetch = null;
+    // Fehlt noch etwas? Nächstes Lager. Sonst zur Baustelle.
+    if (Object.keys(G.Items.missing(G.Jobs.cost(c.job), c.inv)).length) {
+      if (!this.startFetch(c)) {
+        G.UI.toast(c.name + ': Nicht genug Material (oder zu schwer zum Tragen).', 'bad');
+        c.job.retryAt = G.state.time + 1;
+        this.releaseJob(c);
+      }
+      return;
+    }
+    const tgt = G.Jobs.target(c.job);
+    const res = G.Path.nearestAdjacent(c, [tgt]);
+    if (!res.target) { this.releaseJob(c); return; }
+    c.path = res.path;
+  },
+
+  // Gegenstände mit einer Kiste oder einem Haufen austauschen (vom Spieler angeordnet)
+  // dir: 'take' = herausnehmen, 'put' = hineinlegen
+  startTransfer(c, src, dir, type, qty) {
+    if (c.unconscious) return false;
+    if (this.canReach(c, src)) return this.doTransfer(c, { src, dir, type, qty });
+    const res = G.Path.nearestAdjacent(c, [src]);
+    if (!res.target) { G.UI.toast(c.name + ' kommt dort nicht hin.'); return false; }
+    this.releaseJob(c); this.stopActivity(c);
+    c.order = null;
+    c.transfer = { src, dir, type, qty };
+    c.path = res.path;
+    return true;
+  },
+
+  doTransfer(c, t) {
+    const from = t.dir === 'take' ? t.src.inv : c.inv;
+    const to = t.dir === 'take' ? c.inv : t.src.inv;
+    const n = G.Items.move(from, to, t.type, t.qty);
+    G.Items.cleanPiles();
+    c.transfer = null;
+    if (n < t.qty) G.UI.toast(t.dir === 'take' ? c.name + ' kann nicht mehr tragen.' : 'Da passt nichts mehr hinein.');
+    return n > 0;
+  },
+
+  // Etwas aus dem Gepäck auf den Boden legen
+  dropItem(c, type, qty) {
+    const spot = G.state.world.get(this.tileX(c), this.tileY(c)) === G.T.FLOOR ? { x: this.tileX(c), y: this.tileY(c) } : G.Jobs.dropSpot(this.tileX(c), this.tileY(c));
+    for (const st of G.Items.take(c.inv, type, qty)) G.Items.drop(spot.x, spot.y, st);
+  },
+
+  // ---------------- Direkte Steuerung (WASD) ----------------
+  // dx, dy = Richtung, dist = Strecke in Kacheln
+  manualMove(c, dx, dy, dist) {
+    if (c.unconscious) return;
+    const world = G.state.world;
+    if (c.order || c.job || c.activity || c.transfer) {
+      this.releaseJob(c); this.stopActivity(c); c.order = null; c.transfer = null;
+    }
+    c.manualUntil = performance.now() + 8000;
+    c.path = [];
+    const len = Math.hypot(dx, dy);
+    if (!len) return;
+    dx /= len; dy /= len;
+    this.turnTo(c, Math.atan2(dy, dx), 1);
+    const r = 0.27;
+    // Kann der Körper (Kreis) an dieser Stelle stehen? Türen öffnen sich dabei.
+    const fits = (px, py) => {
+      for (const [ox, oy] of [[-r, -r], [r, -r], [-r, r], [r, r]]) {
+        const tx = Math.floor(px + ox), ty = Math.floor(py + oy);
+        if (!world.walkable(tx, ty)) return false;
+        const ti = world.idx(tx, ty);
+        if (world.tiles[ti] === G.T.DOOR && ti !== this.tileIdx(c)) {
+          if (!G.Airlock.canPass(ti)) { c.waiting = true; return false; }
+          world.doorOpenUntil[ti] = G.state.time + 0.05;
+        }
+      }
+      return true;
+    };
+    c.waiting = false;
+    // Achsen getrennt prüfen: so gleitet man an Wänden entlang
+    if (fits(c.x + dx * dist, c.y)) c.x += dx * dist;
+    if (fits(c.x, c.y + dy * dist)) c.y += dy * dist;
+    const ci = this.tileIdx(c);
+    if (world.tiles[ci] === G.T.DOOR) world.doorOpenUntil[ci] = G.state.time + 0.05;
+  },
+
+  isManual(c) { return c.isPlayer && performance.now() < c.manualUntil; },
+
   releaseJob(c) {
     if (c.carrying) this.dropCarried(c);
+    c.fetch = null;
     if (c.job) c.job.claimedBy = null;
     c.job = null;
     c.path = [];
@@ -249,6 +374,20 @@ G.Chars = {
     this.updateBody(c, dt);
     if (c.unconscious) { c.task = 'Bewusstlos'; return; }
 
+    // Von Hand gesteuert: keine eigenen Entscheidungen
+    if (this.isManual(c)) { c.task = c.waiting ? 'Wartet auf Schleuse' : 'Wird von dir gesteuert'; return; }
+
+    // Austausch mit einer Kiste (vom Spieler angeordnet)
+    if (c.transfer) {
+      if (c.path.length) {
+        c.task = c.waiting ? 'Wartet auf Schleuse' : 'Geht zur Kiste';
+        if (!this.followPath(c, dt)) { c.transfer = null; c.path = []; }
+        return;
+      }
+      if (this.canReach(c, c.transfer.src)) this.doTransfer(c, c.transfer);
+      c.transfer = null;
+    }
+
     // 1) Laufbefehl vom Spieler
     if (c.order) {
       if (!c.path.length) {
@@ -296,11 +435,24 @@ G.Chars = {
       const tgt = G.Jobs.target(c.job);
       if (S.jobs.get(G.Jobs.key(c.job.x, c.job.y)) !== c.job) {
         this.releaseJob(c);
+      } else if (c.fetch) {
+        this.doFetch(c, dt);
+        return;
       } else if (c.path.length) {
         c.task = c.waiting ? 'Wartet auf Schleuse' : 'Geht zu: ' + G.Jobs.label(c.job);
         if (!this.followPath(c, dt)) this.releaseJob(c);
         return;
       } else if (this.isNextTo(c, tgt.x, tgt.y)) {
+        // Material verbauen
+        if (!c.job.paid) {
+          const cost = G.Jobs.cost(c.job);
+          if (Object.keys(G.Items.missing(cost, c.inv)).length) {
+            if (!this.startFetch(c)) { c.job.retryAt = S.time + 0.5; this.releaseJob(c); }
+            return;
+          }
+          for (const [type, qty] of Object.entries(cost || {})) G.Items.take(c.inv, type, qty);
+          c.job.paid = true;
+        }
         this.face(c, tgt.x, tgt.y, dt);
         c.task = G.Jobs.label(c.job);
         c.job.progress += dt;
@@ -332,7 +484,7 @@ G.Chars = {
     }
     c.job = null;
     if (job.kind === 'move') G.Jobs.deliver(c, job);
-    else G.Jobs.complete(job);
+    else G.Jobs.complete(job, c);
   },
 
   // Zu einem passenden Gerät gehen (z. B. Anzugschrank). Gibt true zurück, wenn es losgeht.

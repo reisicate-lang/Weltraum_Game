@@ -17,9 +17,10 @@ G.Save = {
         n2: Array.from(S.world.n2, v => +v.toFixed(2)),
         co2: Array.from(S.world.co2, v => +v.toFixed(3)),
         cond: Array.from(S.world.cond, v => Math.round(v)),
+        piles: [...S.world.piles].map(([i, inv]) => [i, inv.items]),
         devices: [...S.world.devices.values()].map(d => ({
           type: d.type, x: d.x, y: d.y, stock: d.stock, charge: d.charge,
-          cond: d.cond, broken: d.broken, suit: d.suit, store: d.store,
+          cond: d.cond, broken: d.broken, suit: d.suit, store: d.store, items: d.inv ? d.inv.items : undefined,
         })),
       },
       view: S.view,
@@ -31,9 +32,11 @@ G.Save = {
         id: c.id, name: c.name, color: c.color, x: c.x, y: c.y, facing: c.facing,
         needs: { ...c.needs }, health: c.health, unconscious: c.unconscious,
         suit: c.suit, carrying: c.carrying ? { ...c.carrying, claimedBy: null } : null,
+        items: c.inv.items, isPlayer: c.isPlayer,
       })),
       jobs: [...S.jobs.values()].filter(j => !(j.kind === 'move' && j.phase === 'deliver'))
-        .map(j => ({ x: j.x, y: j.y, kind: j.kind, tile: j.tile, dev: j.dev, tx: j.tx, ty: j.ty, phase: j.phase, progress: j.progress, need: j.need })),
+        .map(j => ({ x: j.x, y: j.y, kind: j.kind, tile: j.tile, dev: j.dev, tx: j.tx, ty: j.ty, phase: j.phase,
+          item: j.item, qty: j.qty, paid: j.paid, auto: j.auto, progress: j.progress, need: j.need })),
     };
   },
 
@@ -53,8 +56,10 @@ G.Save = {
       if (dv.stock !== undefined) dev.stock = dv.stock;
       if (dv.charge !== undefined) dev.charge = dv.charge;
       for (const k of ['cond', 'broken', 'suit', 'store']) if (dv[k] !== undefined) dev[k] = dv[k];
+      if (dv.items && dev.inv) dev.inv.items = dv.items;
       world.devices.set(world.idx(dv.x, dv.y), dev);
     }
+    for (const [i, items] of d.piles || []) { const inv = G.Items.newInv(); inv.items = items; world.piles.set(i, inv); }
     const jobs = new Map();
     for (const j of data.jobs || []) {
       jobs.set(world.idx(j.x, j.y), { ...j, claimedBy: null, retryAt: 0 });
@@ -62,6 +67,9 @@ G.Save = {
     const chars = (data.chars || []).map(c => {
       const ch = Object.assign(G.Chars.create(c.name, 0, 0, c.color), c);
       ch.needs = Object.assign(G.Chars.create('', 0, 0).needs, c.needs);
+      ch.inv = G.Items.newInv(G.CARRY.weight, G.CARRY.volume);
+      ch.inv.items = c.items || [];
+      delete ch.items;
       return ch;
     });
     G.Chars.nextId = data.nextCharId || chars.length + 1;
@@ -72,6 +80,7 @@ G.Save = {
       view: data.view || 'normal',
       camera: data.camera || G.state.camera,
       selectedId: data.selectedId ?? (chars[0] && chars[0].id),
+      openSource: null,
     };
     G.Power.dirty = true;
     G.Airlock.dirty = true;

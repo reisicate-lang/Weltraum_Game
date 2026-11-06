@@ -12,6 +12,7 @@ G.World = class World {
     this.tiles = new Uint8Array(n);   // Bauart (siehe G.T)
     this.cables = new Uint8Array(n);  // 1 = Kabel liegt hier
     this.devices = new Map();         // Kachel-Index -> Gerät
+    this.piles = new Map();           // Kachel-Index -> Haufen mit Gegenständen (Inventar)
     this.doorOpenUntil = new Float64Array(n); // bis wann eine Tür offen steht
     // Luft pro Kachel in kPa
     this.o2 = new Float32Array(n);
@@ -120,6 +121,20 @@ G.createStartShip = function (world) {
   place('locker', x0 + 1, y0 + 8);
   place('charger', x0 + 2, y0 + 8);
   place('pump', x0 - 1, y0 + 6);
+  // Frachtkisten im Cockpit mit Startmaterial
+  place('crate', x0 + 14, y0 + 8);
+  place('crate', x0 + 13, y0 + 8);
+  const fill = (x, y, list) => {
+    const inv = world.devices.get(world.idx(x, y)).inv;
+    for (const [type, qty, cond] of list) G.Items.add(inv, G.Items.make(type, qty, cond));
+  };
+  fill(x0 + 14, y0 + 8, [['plate', 12, 80], ['copper', 8, 90], ['circuit', 3, 70], ['pipe', 4, 85], ['scrap', 6, 50]]);
+  fill(x0 + 13, y0 + 8, [['ration', 10, 100], ['watercan', 3, 100], ['fuelcan', 2, 100], ['aircan', 1, 100], ['filter', 2, 90]]);
+  // Mondmüll draußen am Steg: lohnt sich einzusammeln
+  const junk = (x, y, list) => { for (const [type, qty, cond] of list) G.Items.drop(x, y, G.Items.make(type, qty, cond)); };
+  junk(x0 - 4, y0 + 1, [['scrap', 4, 30], ['copper', 2, 40]]);
+  junk(x0 - 4, y0 + 9, [['plate', 3, 45], ['circuit', 1, 35], ['datachip', 1, 60]]);
+  junk(x0 - 4, y0 + 4, [['glass', 2, 55], ['motor', 1, 25]]);
 
   // Kabel vom Generator bis ins Cockpit und hoch in die Wohnkabine
   for (let x = x0 + 1; x <= x0 + 14; x++) world.cables[world.idx(x, y0 + 5)] = 1;

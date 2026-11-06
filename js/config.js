@@ -25,31 +25,33 @@ G.T = {
 // Infos zu jeder Kachel-Art. buildTime = Bauzeit in Spielminuten.
 G.TILE_INFO = {
   0: { name: 'Weltraum' },
-  1: { name: 'Boden', buildTime: 2 },
-  2: { name: 'Wand', buildTime: 3 },
-  3: { name: 'Tür', buildTime: 4 },
+  1: { name: 'Boden', buildTime: 2, cost: { plate: 1 } },
+  2: { name: 'Wand', buildTime: 3, cost: { plate: 2 } },
+  3: { name: 'Tür', buildTime: 4, cost: { plate: 2, circuit: 1 } },
 };
 
 G.REMOVE_TIME = 1.5;    // Abreißen
 G.CABLE_TIME = 1;       // Kabel verlegen
+G.CABLE_COST = { copper: 1 };
 
 // ------------------------------------------------------------
 // Geräte. power: + erzeugt Strom, - verbraucht Strom (in kW)
 // ------------------------------------------------------------
 G.DEVICES = {
-  generator: { name: 'Generator', power: 6, stock: 240, unit: 'Brennstoff', buildTime: 6, wears: true, desc: 'Erzeugt 6 kW Strom. Verbraucht 1 Brennstoff pro Stunde.' },
-  solar:     { name: 'Solarpanel', power: 1.5, buildTime: 5, desc: 'Erzeugt 1,5 kW ohne Brennstoff. Funktioniert nur draußen im Vakuum.' },
-  battery:   { name: 'Batterie', capacity: 30, buildTime: 4, desc: 'Speichert bis zu 30 kWh überschüssigen Strom.' },
-  o2gen:     { name: 'Sauerstoff-Generator', power: -1.5, buildTime: 5, wears: true, desc: 'Füllt Sauerstoff nach (bis 21 kPa). Braucht 1,5 kW.' },
-  scrubber:  { name: 'CO₂-Filter', power: -1, buildTime: 5, wears: true, desc: 'Entfernt ausgeatmetes CO₂. Braucht 1 kW.' },
-  airtank:   { name: 'Lufttank', stock: 4000, unit: 'kPa', buildTime: 4, desc: 'Füllt Luft nach, wenn der Druck unter 95 kPa fällt.' },
-  bed:       { name: 'Bett', buildTime: 4, need: 'sleep', desc: 'Zum Schlafen.' },
-  food:      { name: 'Vorratsschrank', stock: 40, unit: 'Rationen', buildTime: 3, need: 'food', desc: 'Enthält Essensrationen.' },
-  water:     { name: 'Wasserspender', stock: 80, unit: 'L', buildTime: 3, need: 'water', desc: 'Trinkwasser.' },
-  sink:      { name: 'Waschbecken', stock: 80, unit: 'L', buildTime: 3, need: 'hygiene', desc: 'Zum Waschen.' },
-  locker:    { name: 'Anzugschrank', power: -0.5, buildTime: 4, desc: 'Bewahrt einen Raumanzug auf und füllt Sauerstoff und Akku auf. Braucht 0,5 kW.' },
-  charger:   { name: 'Tragbare Ladestation', capacity: 10, buildTime: 3, portable: true, desc: 'Akku mit 10 kWh. Lädt Raumanzüge auch draußen. Am Kabel lädt sie sich selbst auf. Mit "Versetzen" umstellbar.' },
-  pump:      { name: 'Schleusenpumpe', power: -1, buildTime: 6, wears: true, desc: 'Macht einen kleinen Raum zur Luftschleuse: pumpt die Luft ab und wieder hinein. Braucht 1 kW.' },
+  generator: { name: 'Generator', cost: { plate: 4, motor: 1, circuit: 2 }, power: 6, stock: 240, unit: 'Brennstoff', buildTime: 6, wears: true, desc: 'Erzeugt 6 kW Strom. Verbraucht 1 Brennstoff pro Stunde.' },
+  solar:     { name: 'Solarpanel', cost: { glass: 2, copper: 2, circuit: 1 }, power: 1.5, buildTime: 5, desc: 'Erzeugt 1,5 kW ohne Brennstoff. Funktioniert nur draußen im Vakuum.' },
+  battery:   { name: 'Batterie', cost: { plate: 2, cell: 4, circuit: 1 }, capacity: 30, buildTime: 4, desc: 'Speichert bis zu 30 kWh überschüssigen Strom.' },
+  o2gen:     { name: 'Sauerstoff-Generator', cost: { plate: 3, pipe: 2, circuit: 2 }, power: -1.5, buildTime: 5, wears: true, desc: 'Füllt Sauerstoff nach (bis 21 kPa). Braucht 1,5 kW.' },
+  scrubber:  { name: 'CO₂-Filter', cost: { plate: 2, motor: 1, filter: 2 }, power: -1, buildTime: 5, wears: true, desc: 'Entfernt ausgeatmetes CO₂. Braucht 1 kW.' },
+  airtank:   { name: 'Lufttank', cost: { plate: 4, pipe: 2 }, stock: 4000, unit: 'kPa', buildTime: 4, desc: 'Füllt Luft nach, wenn der Druck unter 95 kPa fällt.' },
+  bed:       { name: 'Bett', cost: { plate: 2, fabric: 3 }, buildTime: 4, need: 'sleep', desc: 'Zum Schlafen.' },
+  food:      { name: 'Vorratsschrank', cost: { plate: 3 }, stock: 40, unit: 'Rationen', buildTime: 3, need: 'food', desc: 'Enthält Essensrationen.' },
+  water:     { name: 'Wasserspender', cost: { plate: 2, pipe: 2 }, stock: 80, unit: 'L', buildTime: 3, need: 'water', desc: 'Trinkwasser.' },
+  sink:      { name: 'Waschbecken', cost: { plate: 2, pipe: 2 }, stock: 80, unit: 'L', buildTime: 3, need: 'hygiene', desc: 'Zum Waschen.' },
+  locker:    { name: 'Anzugschrank', cost: { plate: 3, pipe: 1, circuit: 1 }, power: -0.5, buildTime: 4, desc: 'Bewahrt einen Raumanzug auf und füllt Sauerstoff und Akku auf. Braucht 0,5 kW.' },
+  charger:   { name: 'Tragbare Ladestation', cost: { plate: 1, cell: 2, circuit: 1 }, capacity: 10, buildTime: 3, portable: true, desc: 'Akku mit 10 kWh. Lädt Raumanzüge auch draußen. Am Kabel lädt sie sich selbst auf. Mit "Versetzen" umstellbar.' },
+  crate:     { name: 'Frachtkiste', cost: { plate: 3 }, buildTime: 3, storage: 400, desc: 'Lagert Gegenstände (400 Liter).' },
+  pump:      { name: 'Schleusenpumpe', cost: { plate: 2, motor: 1, pipe: 2, circuit: 1 }, power: -1, buildTime: 6, wears: true, desc: 'Macht einen kleinen Raum zur Luftschleuse: pumpt die Luft ab und wieder hinein. Braucht 1 kW.' },
 };
 
 // ------------------------------------------------------------
@@ -116,6 +118,13 @@ G.DAMAGE = {
   FUEL_PER_HOUR: 1,
 };
 
+// ------------------------------------------------------------
+// Inventar
+// ------------------------------------------------------------
+G.CARRY = { weight: 40, volume: 40 }; // was ein Charakter tragen kann
+G.REFILL_AT = 0.3;                    // unter 30 % Vorrat wird automatisch nachgefüllt
+G.REACH = 1.6;                        // so nah muss man an einer Kiste stehen
+
 // Die Werkzeuge im Baumenü
 G.TOOLS = {
   select: { name: 'Auswahl', hint: 'Klick auf den Boden: Charakter läuft dorthin. Ziehen: Ansicht verschieben.' },
@@ -144,5 +153,5 @@ G.WALK_SPEED = 90;
 G.START_MINUTES = 8 * 60;
 
 // Name, unter dem der Spielstand im Browser gespeichert wird
-G.SAVE_KEY = 'weltraum_game_save_v3';
-G.SAVE_VERSION = 3;
+G.SAVE_KEY = 'weltraum_game_save_v4';
+G.SAVE_VERSION = 4;

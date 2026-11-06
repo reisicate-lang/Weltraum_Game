@@ -29,12 +29,14 @@ Jede Etappe endet mit einer spielbaren, getesteten Version.
 ## Geplant
 
 ### Etappe 4 – Gegenstände & Inventar
-- [ ] Gegenstände mit Gewicht, Volumen, Zustand und Marktwert (datengetrieben)
-- [ ] Inventar für Charaktere, Container und Frachtraum
-- [ ] Aufheben, ablegen, tragen, Container öffnen
-- [ ] Geräte zerlegen in Bauteile, Kabel ausbauen
-- [ ] Bauen kostet Material
-- [ ] Items mit Schrott verbessern (Idee aus Probably Stolen)
+- [x] 15 Gegenstände mit Gewicht, Volumen, Zustand und Marktwert (datengetrieben in items.js)
+- [x] Gepäck für Charaktere, Frachtkisten, Haufen auf dem Boden
+- [x] Aufheben, ablegen, Kisten durchsuchen (Taste E), Material holen
+- [x] Abreißen gibt Teile zurück (Geräte zerlegen, Kabel ausbauen)
+- [x] Bauen kostet Material, abgebrochene Pläne geben es zurück
+- [x] Vorräte (Essen, Wasser, Brennstoff, Luft) werden automatisch aus dem Lager nachgefüllt
+- [x] Deine Figur direkt mit WASD steuern, die Crew arbeitet selbstständig
+- [ ] Items mit Schrott verbessern (Idee aus Probably Stolen) – kommt mit dem Händler
 
 ### Etappe 5 – Bergung & Wirtschaft (erste vollständige Spielschleife)
 - [ ] Start am Mond mit viel Müll und Wracks in der Nähe

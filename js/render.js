@@ -72,6 +72,7 @@ G.Render = {
       const dev = S.world.device(x, y);
       if (dev) this.drawDevice(dev, x, y);
     }
+    for (const [i, pile] of S.world.piles) this.drawPile(i % S.world.w, (i / S.world.w) | 0, pile);
     if (S.view === 'air') this.drawAirOverlay(x0, y0, x1, y1);
     this.drawJobs();
     this.drawPaths();
@@ -185,7 +186,11 @@ G.Render = {
         ctx.globalAlpha = 1;
         continue;
       }
-      if (job.kind === 'repair') {
+      if (job.kind === 'refill') {
+        ctx.globalAlpha = pulse;
+        ctx.strokeStyle = '#6fcf8e'; ctx.lineWidth = 0.06;
+        ctx.beginPath(); ctx.moveTo(x + 0.5, y + 0.15); ctx.lineTo(x + 0.5, y + 0.45); ctx.moveTo(x + 0.35, y + 0.3); ctx.lineTo(x + 0.65, y + 0.3); ctx.stroke();
+      } else if (job.kind === 'repair') {
         ctx.globalAlpha = pulse;
         ctx.strokeStyle = '#f2a33a'; ctx.lineWidth = 0.07;
         ctx.beginPath(); ctx.moveTo(x + 0.25, y + 0.75); ctx.lineTo(x + 0.7, y + 0.3); ctx.stroke();
@@ -203,7 +208,7 @@ G.Render = {
         ctx.fillStyle = C.plan;
         ctx.fillRect(x + 0.05, y + 0.05, 0.9, 0.9);
         ctx.globalAlpha = pulse;
-        ctx.strokeStyle = C.plan;
+        ctx.strokeStyle = job.missing ? C.remove : C.plan;
         ctx.lineWidth = 0.05;
         ctx.setLineDash([0.15, 0.1]);
         ctx.strokeRect(x + 0.08, y + 0.08, 0.84, 0.84);
@@ -316,9 +321,10 @@ G.Render = {
       ctx.font = '600 11px "Chakra Petch", system-ui, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillStyle = 'rgba(0,0,0,0.6)';
-      ctx.fillText(c.name, sx + 1, sy - 0.5 * s + 1);
-      ctx.fillStyle = '#e8eef6';
-      ctx.fillText(c.name, sx, sy - 0.5 * s);
+      const label = c.isPlayer ? '▸ ' + c.name : c.name;
+      ctx.fillText(label, sx + 1, sy - 0.5 * s + 1);
+      ctx.fillStyle = c.isPlayer ? '#f2c14e' : '#e8eef6';
+      ctx.fillText(label, sx, sy - 0.5 * s);
       ctx.restore();
     }
   },
@@ -458,6 +464,16 @@ G.Render = {
         ctx.fillStyle = '#d0dbe6';
         ctx.fillRect(x + 0.42, y + 0.68, 0.16, 0.12);
         break;
+      case 'crate': {
+        box('#5a4a32', 0.08);
+        ctx.strokeStyle = '#3a2f1f'; ctx.lineWidth = 0.05;
+        ctx.strokeRect(x + 0.18, y + 0.18, 0.64, 0.64);
+        ctx.beginPath(); ctx.moveTo(x + 0.18, y + 0.18); ctx.lineTo(x + 0.82, y + 0.82); ctx.stroke();
+        // Füllstand
+        const f = dev.inv ? Math.min(1, G.Items.volume(dev.inv) / dev.inv.maxVolume) : 0;
+        ctx.fillStyle = '#f2a33a'; ctx.fillRect(x + 0.12, y + 0.86, 0.76 * f, 0.05);
+        break;
+      }
       case 'solar':
         ctx.fillStyle = '#1d2f5a';
         ctx.fillRect(x + 0.05, y + 0.05, 0.9, 0.9);
@@ -533,6 +549,24 @@ G.Render = {
     if (problem && Math.sin(t * 6) > -0.3) {
       ctx.fillStyle = '#e5544b';
       ctx.beginPath(); ctx.arc(x + 0.82, y + 0.18, 0.09, 0, Math.PI * 2); ctx.fill();
+    }
+  },
+
+  // Herumliegende Gegenstände: kleine Kisten und Teile
+  drawPile(x, y, pile) {
+    const ctx = this.ctx;
+    const n = Math.min(4, pile.items.length);
+    const colors = { scrap: '#7d6f62', plate: '#9aa3ad', copper: '#c27a3f', circuit: '#3f8f5a', motor: '#5a6270', cell: '#c9b23a',
+      pipe: '#8c97a3', glass: '#8fc3d6', filter: '#d9d2c0', fabric: '#8a6b9e', datachip: '#59c7e6', ration: '#d6a35b',
+      watercan: '#4f8fcf', fuelcan: '#cf4f4f', aircan: '#dcdcdc' };
+    const spots = [[0.3, 0.32], [0.62, 0.38], [0.38, 0.66], [0.66, 0.68]];
+    for (let k = 0; k < n; k++) {
+      const it = pile.items[k];
+      const [ox, oy] = spots[k];
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillRect(x + ox - 0.1, y + oy - 0.06, 0.24, 0.2);
+      ctx.fillStyle = colors[it.type] || '#aaa';
+      ctx.fillRect(x + ox - 0.12, y + oy - 0.1, 0.24, 0.2);
     }
   },
 

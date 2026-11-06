@@ -10,12 +10,15 @@ Die Datei `index.html` im Browser öffnen (Doppelklick genügt).
 
 | Was | Wie |
 |---|---|
-| Laufen | Werkzeug **Auswahl**, auf einen Boden klicken |
+| Deine Figur steuern | `WASD` |
+| Laufen lassen | Werkzeug **Auswahl**, auf einen Boden klicken |
+| Kiste/Haufen durchsuchen | `E` (daneben stehen) oder draufklicken |
+| Gepäck ein-/ausblenden | `I` |
 | Bauen | Werkzeug wählen (Boden `B`, Wand `M`, Tür `T`), klicken oder Fläche ziehen |
 | Abreißen / Plan löschen | `X` / `C` |
 | Versetzen / Reparieren | `V` / `R` |
 | Aufgabe abbrechen | Rechtsklick auf Bauplan oder Charakter |
-| Ansicht bewegen | Maus ziehen, `WASD` oder Pfeiltasten, Mausrad zoomt |
+| Ansicht bewegen | Maus ziehen oder Pfeiltasten, Mausrad zoomt |
 | Kabel / Geräte | `K` / `G` |
 | Luft- / Strom-Ansicht | `L` / `P` |
 | Zeit | `Leertaste` Pause, `1` bis `4` für 1×, 10×, 60×, 300× (1× = Echtzeit) |
@@ -26,6 +29,7 @@ Die Datei `index.html` im Browser öffnen (Doppelklick genügt).
 | Datei | Aufgabe |
 |---|---|
 | `js/config.js` | Einstellungen (Bauzeiten, Geschwindigkeiten, Weltgröße) |
+| `js/items.js` | Gegenstände und Inventare |
 | `js/world.js` | Die Welt aus Kacheln und das Startschiff |
 | `js/devices.js` | Geräte (Generator, Bett, Sauerstoff ...) |
 | `js/power.js` | Stromnetz |

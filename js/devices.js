@@ -10,6 +10,7 @@ G.Devices = {
     if (def.capacity !== undefined) dev.charge = def.capacity * 0.5;
     if (type === 'locker') dev.suit = { o2: 100, battery: 100 };
     if (type === 'pump') { dev.store = 1000; dev.request = null; }
+    if (def.storage) dev.inv = G.Items.newInv(Infinity, def.storage);
     return dev;
   },
 
@@ -78,6 +79,7 @@ G.Devices = {
     if (def.capacity) parts.push(dev.charge.toFixed(1) + ' / ' + def.capacity + ' kWh' + (dev.net < 0 && dev.type === 'battery' ? ', nicht am Kabel' : ''));
     if (dev.stock !== undefined) parts.push('Vorrat: ' + Math.floor(dev.stock) + ' ' + def.unit);
     if (dev.type === 'locker') parts.push(dev.suit ? `Anzug: O₂ ${Math.round(dev.suit.o2)} %, Akku ${Math.round(dev.suit.battery)} %` : 'leer (Anzug ist unterwegs)');
+    if (dev.inv) parts.push(`${Math.round(G.Items.volume(dev.inv))} / ${G.DEVICES[dev.type].storage} L belegt`);
     if (dev.type === 'pump') {
       const lock = G.Airlock.lockOfPump(dev);
       parts.push(lock ? `Schleuse ${Math.round(G.Airlock.pressure(lock))} kPa` : 'steht in keinem kleinen geschlossenen Raum');

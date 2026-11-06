@@ -18,6 +18,7 @@ G.Jobs = {
     const hasDev = world.devices.has(i);
     if (tool.startsWith('dev:')) return t === T.FLOOR && !hasDev;
     if (tool === 'repair') return G.Damage.needsRepair(x, y);
+    if (tool === 'refill') return hasDev;
     if (tool === 'move') return hasDev && !G.state.jobs.has(i);
     switch (tool) {
       case 'floor': return t === T.SPACE;
@@ -37,7 +38,7 @@ G.Jobs = {
     const k = this.key(x, y);
 
     if (tool === 'cancel') {
-      jobs.delete(k);
+      this.cancel(jobs.get(k));
       return true;
     }
 
@@ -58,6 +59,87 @@ G.Jobs = {
 
     jobs.set(k, Object.assign(job, { x, y, progress: 0, claimedBy: null, retryAt: 0 }));
     return true;
+  },
+
+  // Welche Materialien braucht ein Auftrag?
+  cost(job) {
+    switch (job.kind) {
+      case 'build': return G.TILE_INFO[job.tile].cost;
+      case 'cable': return G.CABLE_COST;
+      case 'device': return G.DEVICES[job.dev].cost;
+      case 'refill': return { [job.item]: job.qty };
+      default: return null;
+    }
+  },
+
+  // Auftrag abbrechen. Schon verbautes Material kommt zurück.
+  cancel(job) {
+    if (!job) return;
+    const S = G.state, world = S.world;
+    S.jobs.delete(this.key(job.x, job.y));
+    if (!job.paid) return;
+    const spot = this.dropSpot(job.x, job.y);
+    for (const [type, qty] of Object.entries(this.cost(job) || {})) G.Items.drop(spot.x, spot.y, G.Items.make(type, qty, 80));
+  },
+
+  // Ein Bodenfeld in der Nähe, auf dem man etwas ablegen kann
+  dropSpot(x, y) {
+    const world = G.state.world;
+    for (let r = 0; r < 6; r++) {
+      for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+        const nx = x + dx, ny = y + dy;
+        if (world.get(nx, ny) === G.T.FLOOR && !world.device(nx, ny)) return { x: nx, y: ny };
+      }
+    }
+    return { x, y };
+  },
+
+  // Was bekommt man beim Abreißen zurück?
+  salvage(job) {
+    const world = G.state.world, T = G.T;
+    const i = world.idx(job.x, job.y);
+    const r = (a, b) => a + Math.random() * (b - a);
+    const out = [];
+    const dev = world.devices.get(i);
+    if (dev) {
+      for (const [type, qty] of Object.entries(G.DEVICES[dev.type].cost || {})) {
+        const n = Math.round(qty * r(0.4, 1));
+        if (n > 0) out.push(G.Items.make(type, n, Math.round(r(25, 90) * Math.max(0.3, dev.cond / 100))));
+      }
+      out.push(G.Items.make('scrap', 1 + Math.floor(Math.random() * 2), 40));
+      if (dev.inv) out.push(...dev.inv.items);
+      return out;
+    }
+    const t = world.tiles[i];
+    if (world.cables[i] && t === T.FLOOR) return [G.Items.make('copper', 1, Math.round(r(50, 90)))];
+    const cond = t === T.WALL || t === T.DOOR ? world.cond[i] : 100;
+    if (t === T.WALL) out.push(cond < 30 ? G.Items.make('scrap', 3, 40) : G.Items.make('plate', 2, Math.round(r(40, 90) * cond / 100)));
+    if (t === T.DOOR) {
+      out.push(G.Items.make('plate', 2, Math.round(r(40, 90))));
+      if (Math.random() < 0.6) out.push(G.Items.make('circuit', 1, Math.round(r(30, 80))));
+    }
+    if (t === T.FLOOR) out.push(G.Items.make('plate', 1, Math.round(r(40, 90))));
+    return out;
+  },
+
+  // Vorräte von Geräten automatisch auffüllen lassen
+  scanRefills() {
+    const S = G.state, world = S.world;
+    for (const dev of world.devices.values()) {
+      const def = G.DEVICES[dev.type];
+      if (dev.stock === undefined || dev.stock > def.stock * G.REFILL_AT) continue;
+      const key = world.idx(dev.x, dev.y);
+      if (S.jobs.has(key)) continue;
+      const entry = Object.entries(G.ITEMS).find(([, d]) => d.refill && d.refill[dev.type]);
+      if (!entry) continue;
+      const [item, idef] = entry;
+      const want = Math.ceil((def.stock - dev.stock) / idef.refill[dev.type]);
+      const byWeight = Math.max(1, Math.floor(G.CARRY.weight / idef.weight));
+      const qty = Math.min(want, byWeight, G.Items.available(item));
+      if (qty <= 0) continue;
+      S.jobs.set(key, { kind: 'refill', x: dev.x, y: dev.y, item, qty, need: 0.5, progress: 0, claimedBy: null, retryAt: 0, auto: true });
+    }
   },
 
   // Gerät versetzen: von (sx,sy) nach (tx,ty)
@@ -119,15 +201,42 @@ G.Jobs = {
   },
 
   // Auftrag ist fertig: Welt verändern
-  complete(job) {
+  complete(job, c) {
     const S = G.state, world = S.world, T = G.T;
     const i = world.idx(job.x, job.y);
     S.jobs.delete(i);
+    if (job.kind === 'refill') {
+      const dev = world.devices.get(i);
+      if (dev && dev.stock !== undefined) {
+        const per = G.ITEMS[job.item].refill[dev.type] || 0;
+        dev.stock = Math.min(G.DEVICES[dev.type].stock, dev.stock + per * job.qty);
+      }
+      return;
+    }
     // Hat sich die Lage geändert, seit der Plan gemacht wurde? Dann nichts tun.
     const toolName = job.kind === 'build' ? ['', 'floor', 'wall', 'door'][job.tile]
       : job.kind === 'device' ? 'dev:' + job.dev : job.kind;
     if (!this.canPlace(toolName, job.x, job.y)) return;
     if (job.kind === 'repair') { G.Damage.repair(job.x, job.y); return; }
+
+    // Wo Wand, Tür oder Gerät hinkommt, werden herumliegende Sachen beiseitegeräumt
+    if ((job.kind === 'build' && job.tile !== T.FLOOR) || job.kind === 'device') {
+      const pile = world.piles.get(i);
+      if (pile) {
+        world.piles.delete(i);
+        const spot = c ? { x: G.Chars.tileX(c), y: G.Chars.tileY(c) } : this.dropSpot(job.x, job.y);
+        for (const it of pile.items) G.Items.drop(spot.x, spot.y, it);
+      }
+    }
+    if (job.kind === 'remove') {
+      // Teile zurückbekommen
+      const loot = this.salvage(job);
+      // Boden wird zu Weltraum: Teile neben dem Arbeiter ablegen, sonst auf dem Feld selbst
+      const spot = world.tiles[i] === T.FLOOR && !world.cables[i] && !world.devices.has(i)
+        ? (c ? { x: G.Chars.tileX(c), y: G.Chars.tileY(c) } : this.dropSpot(job.x, job.y))
+        : { x: job.x, y: job.y };
+      for (const it of loot) G.Items.drop(spot.x, spot.y, it);
+    }
 
     switch (job.kind) {
       case 'build':
@@ -161,6 +270,14 @@ G.Jobs = {
       if (job.claimedBy && job.claimedBy !== c.id) continue;
       if (job.retryAt > S.time) continue;
       if (job.kind === 'move' && job.phase === 'deliver') continue;
+      // Gibt es genug Material (im eigenen Gepäck oder irgendwo im Lager)?
+      job.missing = false;
+      if (!job.paid) {
+        for (const [type, qty] of Object.entries(this.cost(job) || {})) {
+          if (G.Items.count(c.inv, type) + G.Items.available(type) < qty) job.missing = true;
+        }
+        if (job.missing) continue;
+      }
       candidates.push(job);
     }
     const res = G.Path.nearestAdjacent(c, candidates);
@@ -184,12 +301,17 @@ G.Jobs = {
     job.claimedBy = c.id;
     c.job = job;
     c.path = res.path;
+    // Fehlt noch Material im Gepäck? Dann erst holen.
+    if (!job.paid && Object.keys(G.Items.missing(this.cost(job), c.inv)).length) {
+      if (!G.Chars.startFetch(c)) { G.Chars.releaseJob(c); job.retryAt = S.time + 0.5; return false; }
+    }
     return true;
   },
 
   label(job) {
     switch (job.kind) {
       case 'repair': return 'Repariert';
+      case 'refill': return 'Füllt nach: ' + G.ITEMS[job.item].name;
       case 'move': return job.phase === 'deliver' ? 'Trägt Gerät' : 'Hebt Gerät auf';
       case 'remove': return 'Reißt ab';
       case 'cable': return 'Verlegt Kabel';
@@ -201,6 +323,7 @@ G.Jobs = {
   describe(job) {
     switch (job.kind) {
       case 'repair': return 'reparieren';
+      case 'refill': return 'nachfüllen';
       case 'move': return 'versetzen';
       case 'remove': return 'abreißen';
       case 'cable': return 'Kabel';

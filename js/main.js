@@ -17,15 +17,18 @@ G.state = {
 
 G.newGame = function () {
   const world = new G.World(G.WORLD_W, G.WORLD_H);
+  G.state.world = world; // schon setzen, das Startschiff legt Gegenstände ab
   const start = G.createStartShip(world);
   G.Chars.nextId = 1;
   const mira = G.Chars.create('Mira Okafor', start.x, start.y, '#f2a33a');
+  mira.isPlayer = true; // deine Figur
   G.state.world = world;
   G.state.jobs = new Map();
   G.state.chars = [mira];
   G.state.time = 0;
   G.state.selectedId = mira.id;
   G.state.camera = { x: world.w / 2, y: world.h / 2, zoom: 1.4 };
+  G.state.openSource = null;
   G.Power.dirty = true;
   G.Airlock.dirty = true;
 };
@@ -70,9 +73,9 @@ G.start = function () {
 
   // Erster Besuch: Hilfe zeigen
   let seen = false;
-  try { seen = localStorage.getItem('weltraum_game_help_seen_v3') === '1'; } catch (err) { /* egal */ }
+  try { seen = localStorage.getItem('weltraum_game_help_seen_v4') === '1'; } catch (err) { /* egal */ }
   G.UI.showHelp(!seen);
-  try { localStorage.setItem('weltraum_game_help_seen_v3', '1'); } catch (err) { /* egal */ }
+  try { localStorage.setItem('weltraum_game_help_seen_v4', '1'); } catch (err) { /* egal */ }
 
   // Automatisch speichern, jede Minute (echte Zeit)
   setInterval(() => G.Save.save(true), 60000);
@@ -99,3 +102,8 @@ G.start = function () {
 };
 
 window.addEventListener('DOMContentLoaded', G.start);
+
+// Deine Figur (die mit WASD gesteuert wird)
+G.player = function () {
+  return G.state.chars.find(c => c.isPlayer) || null;
+};
