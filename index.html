@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Weltraum_Game</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-tool="select">
+<canvas id="game"></canvas>
+
+<header class="topbar">
+  <div class="brand">Weltraum_Game</div>
+  <div class="time">
+    <div class="clock-box"><span id="day">Tag 1</span><span id="clock">08:00</span></div>
+    <div class="speeds" role="group" aria-label="Spielgeschwindigkeit">
+      <button type="button" data-speed="0" title="Pause (Leertaste)">❚❚</button>
+      <button type="button" data-speed="1" title="Normal (1)">▶</button>
+      <button type="button" data-speed="2" title="Schnell (2)">▶▶</button>
+      <button type="button" data-speed="3" title="Sehr schnell (3)">▶▶▶</button>
+    </div>
+  </div>
+  <div class="menu">
+    <button type="button" id="btn-save" title="Speichern (Strg+S)">Speichern</button>
+    <button type="button" id="btn-load">Laden</button>
+    <button type="button" id="btn-new">Neues Spiel</button>
+    <button type="button" id="btn-help" class="icon" title="Hilfe (H)">?</button>
+  </div>
+</header>
+
+<aside class="crew-panel">
+  <div class="label">Crew</div>
+  <div id="crew"></div>
+</aside>
+
+<div class="paused-badge">Pausiert</div>
+
+<footer class="bottombar">
+  <div class="tools" role="toolbar" aria-label="Werkzeuge">
+    <button type="button" data-tool="select"><span class="t-name">Auswahl</span><kbd>Esc</kbd></button>
+    <span class="sep"></span>
+    <button type="button" data-tool="floor"><span class="t-name">Boden</span><kbd>B</kbd></button>
+    <button type="button" data-tool="wall"><span class="t-name">Wand</span><kbd>M</kbd></button>
+    <button type="button" data-tool="door"><span class="t-name">Tür</span><kbd>T</kbd></button>
+    <span class="sep"></span>
+    <button type="button" data-tool="remove" class="danger"><span class="t-name">Abreißen</span><kbd>X</kbd></button>
+    <button type="button" data-tool="cancel" class="danger"><span class="t-name">Plan löschen</span><kbd>C</kbd></button>
+  </div>
+  <div class="status">
+    <span id="tool-hint"></span>
+    <span class="status-right"><span id="job-count"></span><span id="hover-info"></span></span>
+  </div>
+</footer>
+
+<div id="toasts" aria-live="polite"></div>
+
+<div id="help" class="help" hidden>
+  <div class="help-card" role="dialog" aria-labelledby="help-title">
+    <h2 id="help-title">Steuerung</h2>
+    <p>Du hast ein kleines Schiff im Orbit und ein Crew-Mitglied: Mira. Plane Räume, Mira baut sie.</p>
+    <dl>
+      <dt>Laufen</dt><dd>Mit <b>Auswahl</b> auf einen Boden klicken</dd>
+      <dt>Bauen</dt><dd>Werkzeug unten wählen, dann klicken oder eine Fläche ziehen. Es entsteht ein Bauplan, den Mira abarbeitet.</dd>
+      <dt>Ansicht</dt><dd>Ziehen mit der Maus, <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> oder Pfeiltasten. Mausrad zum Zoomen.</dd>
+      <dt>Zeit</dt><dd><kbd>Leertaste</kbd> Pause, <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> Geschwindigkeit</dd>
+      <dt>Speichern</dt><dd><kbd>Strg</kbd>+<kbd>S</kbd>. Außerdem wird jede Minute automatisch gespeichert.</dd>
+    </dl>
+    <p class="tip">Tipp: Boden kann nur neben bestehendem Boden gebaut werden, weil Mira daneben stehen muss. Weit draußen geplante Böden werden nach und nach von innen nach außen gebaut.</p>
+    <button type="button" id="help-close" class="primary">Los geht's</button>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/world.js"></script>
+<script src="js/pathfinding.js"></script>
+<script src="js/jobs.js"></script>
+<script src="js/characters.js"></script>
+<script src="js/render.js"></script>
+<script src="js/input.js"></script>
+<script src="js/save.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

@@ -4,11 +4,11 @@ Weltraum-Survival- und Bauspiel von oben gesehen. Inspiriert von den Mechaniken 
 Läuft im Browser (HTML + JavaScript).
 
 ## Etappe 1 – Fundament
-- [ ] Raumschiff aus Kacheln, Ansicht von oben
-- [ ] Charakter läuft herum
-- [ ] Baumodus: Böden, Wände, Türen bauen/abreißen
-- [ ] Zeitsteuerung: Pause, 1x, 2x, 4x vorspulen
-- [ ] Speichern und Laden
+- [x] Raumschiff aus Kacheln, Ansicht von oben
+- [x] Charakter läuft herum
+- [x] Baumodus: Böden, Wände, Türen bauen/abreißen
+- [x] Zeitsteuerung: Pause, 1x, 2x, 4x vorspulen
+- [x] Speichern und Laden
 
 ## Etappe 2 – Überleben
 - [ ] Sauerstoff pro Raum (Raumerkennung, Lecks) – Mittelmaß recherchieren
