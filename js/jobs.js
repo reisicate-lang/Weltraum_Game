@@ -102,7 +102,7 @@ G.Jobs = {
     }
     const res = G.Path.nearestAdjacent(c, candidates);
     // Unerreichbare Pläne eine Weile nicht mehr probieren
-    for (const job of res.unreachable) job.retryAt = S.time + 30;
+    for (const job of res.unreachable) job.retryAt = S.time + 0.5;
     if (!res.target) return false;
     res.target.claimedBy = c.id;
     c.job = res.target;

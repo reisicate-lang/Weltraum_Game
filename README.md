@@ -16,7 +16,7 @@ Die Datei `index.html` im Browser öffnen (Doppelklick genügt).
 | Ansicht bewegen | Maus ziehen, `WASD` oder Pfeiltasten, Mausrad zoomt |
 | Kabel / Geräte | `K` / `G` |
 | Luft- / Strom-Ansicht | `L` / `P` |
-| Zeit | `Leertaste` Pause, `1` `2` `3` Geschwindigkeit |
+| Zeit | `Leertaste` Pause, `1` bis `4` für 1×, 10×, 60×, 300× (1× = Echtzeit) |
 | Speichern | `Strg+S` (außerdem automatisch jede Minute) |
 
 ## Aufbau des Codes

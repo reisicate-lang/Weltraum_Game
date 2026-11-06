@@ -25,27 +25,27 @@ G.T = {
 // Infos zu jeder Kachel-Art. buildTime = Bauzeit in Spielminuten.
 G.TILE_INFO = {
   0: { name: 'Weltraum' },
-  1: { name: 'Boden', buildTime: 20 },
-  2: { name: 'Wand', buildTime: 30 },
-  3: { name: 'Tür', buildTime: 40 },
+  1: { name: 'Boden', buildTime: 2 },
+  2: { name: 'Wand', buildTime: 3 },
+  3: { name: 'Tür', buildTime: 4 },
 };
 
-G.REMOVE_TIME = 15;     // Abreißen
-G.CABLE_TIME = 8;       // Kabel verlegen
+G.REMOVE_TIME = 1.5;    // Abreißen
+G.CABLE_TIME = 1;       // Kabel verlegen
 
 // ------------------------------------------------------------
 // Geräte. power: + erzeugt Strom, - verbraucht Strom (in kW)
 // ------------------------------------------------------------
 G.DEVICES = {
-  generator: { name: 'Generator', power: 6, buildTime: 60, desc: 'Erzeugt 6 kW Strom.' },
-  battery:   { name: 'Batterie', capacity: 30, buildTime: 40, desc: 'Speichert bis zu 30 kWh überschüssigen Strom.' },
-  o2gen:     { name: 'Sauerstoff-Generator', power: -1.5, buildTime: 50, desc: 'Füllt Sauerstoff nach (bis 21 kPa). Braucht 1,5 kW.' },
-  scrubber:  { name: 'CO₂-Filter', power: -1, buildTime: 50, desc: 'Entfernt ausgeatmetes CO₂. Braucht 1 kW.' },
-  airtank:   { name: 'Lufttank', stock: 4000, unit: 'kPa', buildTime: 40, desc: 'Füllt Luft nach, wenn der Druck unter 95 kPa fällt.' },
-  bed:       { name: 'Bett', buildTime: 40, need: 'sleep', desc: 'Zum Schlafen.' },
-  food:      { name: 'Vorratsschrank', stock: 40, unit: 'Rationen', buildTime: 30, need: 'food', desc: 'Enthält Essensrationen.' },
-  water:     { name: 'Wasserspender', stock: 80, unit: 'L', buildTime: 30, need: 'water', desc: 'Trinkwasser.' },
-  sink:      { name: 'Waschbecken', stock: 80, unit: 'L', buildTime: 30, need: 'hygiene', desc: 'Zum Waschen.' },
+  generator: { name: 'Generator', power: 6, buildTime: 6, desc: 'Erzeugt 6 kW Strom.' },
+  battery:   { name: 'Batterie', capacity: 30, buildTime: 4, desc: 'Speichert bis zu 30 kWh überschüssigen Strom.' },
+  o2gen:     { name: 'Sauerstoff-Generator', power: -1.5, buildTime: 5, desc: 'Füllt Sauerstoff nach (bis 21 kPa). Braucht 1,5 kW.' },
+  scrubber:  { name: 'CO₂-Filter', power: -1, buildTime: 5, desc: 'Entfernt ausgeatmetes CO₂. Braucht 1 kW.' },
+  airtank:   { name: 'Lufttank', stock: 4000, unit: 'kPa', buildTime: 4, desc: 'Füllt Luft nach, wenn der Druck unter 95 kPa fällt.' },
+  bed:       { name: 'Bett', buildTime: 4, need: 'sleep', desc: 'Zum Schlafen.' },
+  food:      { name: 'Vorratsschrank', stock: 40, unit: 'Rationen', buildTime: 3, need: 'food', desc: 'Enthält Essensrationen.' },
+  water:     { name: 'Wasserspender', stock: 80, unit: 'L', buildTime: 3, need: 'water', desc: 'Trinkwasser.' },
+  sink:      { name: 'Waschbecken', stock: 80, unit: 'L', buildTime: 3, need: 'hygiene', desc: 'Zum Waschen.' },
 };
 
 // ------------------------------------------------------------
@@ -92,12 +92,13 @@ for (const [type, d] of Object.entries(G.DEVICES)) {
   G.TOOLS['dev:' + type] = { name: d.name, hint: d.desc + ' Auf freien Boden klicken.' };
 }
 
-// Zeit: 1 echte Sekunde bei Geschwindigkeit 1x = so viele Spielminuten
-G.MINUTES_PER_SECOND = 10;
-G.SPEEDS = [0, 1, 2, 4];
+// Zeit: Bei 1x ist eine Sekunde im Spiel eine echte Sekunde.
+// Im Spiel wird in Minuten gerechnet, darum 1/60 Minute pro Sekunde.
+G.MINUTES_PER_SECOND = 1 / 60;
+G.SPEEDS = [0, 1, 10, 60, 300];         // 0 = Pause
 
-// Laufgeschwindigkeit der Charaktere in Kacheln pro Spielminute
-G.WALK_SPEED = 0.35;
+// Laufgeschwindigkeit: 1,5 Kacheln pro Sekunde (in Kacheln pro Minute)
+G.WALK_SPEED = 90;
 
 // Spielbeginn: Tag 1, 08:00 Uhr (in Minuten)
 G.START_MINUTES = 8 * 60;

@@ -74,7 +74,7 @@ G.start = function () {
   // Automatisch speichern, jede Minute (echte Zeit)
   setInterval(() => G.Save.save(true), 60000);
 
-  const STEP = 1 / 3; // Spielminuten pro Simulationsschritt
+  const STEP = 1 / 60; // ein Simulationsschritt = 1 Spielsekunde
   let last = performance.now(), acc = 0;
   function frame(now) {
     const realDt = Math.min(0.1, (now - last) / 1000);
@@ -82,8 +82,8 @@ G.start = function () {
     G.Input.update(realDt);
     acc += realDt * G.SPEEDS[G.state.speedIndex] * G.MINUTES_PER_SECOND;
     let n = 0;
-    while (acc >= STEP && n < 200) { G.step(STEP); acc -= STEP; n++; }
-    if (n === 200) acc = 0;
+    while (acc >= STEP && n < 400) { G.step(STEP); acc -= STEP; n++; }
+    if (n === 400) acc = 0;
     G.Render.draw();
     G.UI.update();
     requestAnimationFrame(frame);

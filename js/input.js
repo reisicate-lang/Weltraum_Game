@@ -143,6 +143,7 @@ G.Input = {
       case '1': G.setSpeed(1); break;
       case '2': G.setSpeed(2); break;
       case '3': G.setSpeed(3); break;
+      case '4': G.setSpeed(4); break;
       case 'escape': G.UI.setTool('select'); G.UI.showHelp(false); G.UI.showDevMenu(false); break;
       case 'k': G.UI.setTool('cable'); break;
       case 'g': G.UI.showDevMenu(); break;

@@ -68,8 +68,8 @@ G.Chars = {
       if (!world.walkable(next.x, next.y)) return false;
       // Türen öffnen sich, wenn jemand durchgeht
       const ni = world.idx(next.x, next.y), ci = this.tileIdx(c);
-      if (world.tiles[ni] === G.T.DOOR) world.doorOpenUntil[ni] = G.state.time + 1.5;
-      if (world.tiles[ci] === G.T.DOOR) world.doorOpenUntil[ci] = G.state.time + 1.5;
+      if (world.tiles[ni] === G.T.DOOR) world.doorOpenUntil[ni] = G.state.time + 0.05; // 3 Sekunden
+      if (world.tiles[ci] === G.T.DOOR) world.doorOpenUntil[ci] = G.state.time + 0.05;
       const tx = next.x + 0.5, ty = next.y + 0.5;
       const dx = tx - c.x, dy = ty - c.y;
       const d = Math.hypot(dx, dy);
@@ -106,8 +106,8 @@ G.Chars = {
       world.co2[i] += used;
       o2 = world.o2[i];
     }
-    if (o2 < A.O2_LOW) n.air -= (A.O2_LOW - o2) / A.O2_LOW * 3 * dt; // Luft anhalten geht eine Weile
-    else n.air += 8 * dt;
+    if (o2 < A.O2_LOW) n.air -= (A.O2_LOW - o2) / A.O2_LOW * 40 * dt; // im Vakuum: nach gut 1 Minute wird's knapp
+    else n.air += 30 * dt;
 
     // Bedürfnisse sinken mit der Zeit (im Schlaf langsamer)
     const h = dt / 60;
@@ -122,7 +122,7 @@ G.Chars = {
     let damage = 0;
     if (n.food <= 0) damage += 2;
     if (n.water <= 0) damage += 4;
-    if (n.air < 25) damage += 90;
+    if (n.air < 25) damage += 600; // Sauerstoffmangel ist schnell gefährlich
     if (world.holdsAir(i) && world.co2[i] > A.CO2_BAD) damage += 3;
     if (damage) c.health -= damage * h;
     else c.health += 1.5 * h;
@@ -174,7 +174,7 @@ G.Chars = {
     const i = this.tileIdx(c);
     c.fleeCooldown = (c.fleeCooldown || 0) - dt;
     if (S.world.o2[i] < G.AIR.O2_LOW && c.needs.air < 50 && !(c.activity && c.activity.flee) && c.fleeCooldown <= 0) {
-      c.fleeCooldown = 2;
+      c.fleeCooldown = 0.05;
       this.stopActivity(c);
       if (this.startFlee(c)) return;
     }
@@ -186,7 +186,7 @@ G.Chars = {
     c.searchCooldown -= dt;
     const check = c.searchCooldown <= 0;
     if (check) {
-      c.searchCooldown = 3;
+      c.searchCooldown = 0.05; // alle 3 Sekunden
       if (this.startNeed(c)) return;
     }
 

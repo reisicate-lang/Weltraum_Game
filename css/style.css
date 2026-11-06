@@ -74,7 +74,7 @@ kbd {
 #day { color: var(--muted); font-size: 12px; }
 #clock { font-size: 16px; font-weight: 500; }
 .speeds { display: flex; }
-.speeds button { border-radius: 0; margin-left: -1px; min-width: 40px; font-size: 11px; }
+.speeds button { border-radius: 0; margin-left: -1px; min-width: 42px; font-size: 12px; font-variant-numeric: tabular-nums; }
 .speeds button:first-child { border-radius: 4px 0 0 4px; margin-left: 0; }
 .speeds button:last-child { border-radius: 0 4px 4px 0; }
 .speeds button.active { background: var(--amber); border-color: var(--amber); color: #1a1205; position: relative; }

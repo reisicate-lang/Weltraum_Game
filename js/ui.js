@@ -116,11 +116,11 @@ G.UI = {
   // Wird jedes Bild aufgerufen
   update() {
     const S = G.state, el = this.el, world = S.world;
-    const total = G.START_MINUTES + Math.floor(S.time);
-    const day = Math.floor(total / 1440) + 1;
-    const mins = total % 1440;
+    const secs = Math.floor((G.START_MINUTES + S.time) * 60);
+    const day = Math.floor(secs / 86400) + 1;
+    const pad = v => String(v).padStart(2, '0');
     el.day.textContent = 'Tag ' + day;
-    el.clock.textContent = String(Math.floor(mins / 60)).padStart(2, '0') + ':' + String(mins % 60).padStart(2, '0');
+    el.clock.textContent = pad(Math.floor(secs / 3600) % 24) + ':' + pad(Math.floor(secs / 60) % 60) + ':' + pad(secs % 60);
     el.speeds.forEach(b => b.classList.toggle('active', Number(b.dataset.speed) === S.speedIndex));
     document.body.classList.toggle('paused', S.speedIndex === 0);
 
