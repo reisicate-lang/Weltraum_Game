@@ -30,6 +30,7 @@ G.Input = {
 
   onDown(e) {
     this.canvas.setPointerCapture(e.pointerId);
+    G.UI.showDevMenu(false);
     const tool = G.state.tool;
     this.hover = this.tileAt(e);
     // Mittlere/rechte Maustaste oder Auswahl-Werkzeug: Ansicht verschieben möglich
@@ -92,6 +93,8 @@ G.Input = {
     if (tool === 'door') return 'Hier ist schon eine Tür.';
     if (tool === 'remove') return 'Hier gibt es nichts zum Abreißen.';
     if (tool === 'cancel') return 'Hier ist kein Bauplan.';
+    if (tool === 'cable') return world.get(t.x, t.y) === G.T.SPACE ? 'Kabel brauchen Boden oder Wand.' : 'Hier liegt schon ein Kabel.';
+    if (tool.startsWith('dev:')) return 'Geräte brauchen einen freien Boden.';
     return '';
   },
 
@@ -140,7 +143,11 @@ G.Input = {
       case '1': G.setSpeed(1); break;
       case '2': G.setSpeed(2); break;
       case '3': G.setSpeed(3); break;
-      case 'escape': G.UI.setTool('select'); G.UI.showHelp(false); break;
+      case 'escape': G.UI.setTool('select'); G.UI.showHelp(false); G.UI.showDevMenu(false); break;
+      case 'k': G.UI.setTool('cable'); break;
+      case 'g': G.UI.showDevMenu(); break;
+      case 'l': G.UI.setView(G.state.view === 'air' ? 'normal' : 'air'); break;
+      case 'p': G.UI.setView(G.state.view === 'power' ? 'normal' : 'power'); break;
       case 'b': G.UI.setTool('floor'); break;
       case 'm': G.UI.setTool('wall'); break;
       case 't': G.UI.setTool('door'); break;

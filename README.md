@@ -14,6 +14,8 @@ Die Datei `index.html` im Browser öffnen (Doppelklick genügt).
 | Bauen | Werkzeug wählen (Boden `B`, Wand `M`, Tür `T`), klicken oder Fläche ziehen |
 | Abreißen / Plan löschen | `X` / `C` |
 | Ansicht bewegen | Maus ziehen, `WASD` oder Pfeiltasten, Mausrad zoomt |
+| Kabel / Geräte | `K` / `G` |
+| Luft- / Strom-Ansicht | `L` / `P` |
 | Zeit | `Leertaste` Pause, `1` `2` `3` Geschwindigkeit |
 | Speichern | `Strg+S` (außerdem automatisch jede Minute) |
 
@@ -23,6 +25,9 @@ Die Datei `index.html` im Browser öffnen (Doppelklick genügt).
 |---|---|
 | `js/config.js` | Einstellungen (Bauzeiten, Geschwindigkeiten, Weltgröße) |
 | `js/world.js` | Die Welt aus Kacheln und das Startschiff |
+| `js/devices.js` | Geräte (Generator, Bett, Sauerstoff ...) |
+| `js/power.js` | Stromnetz |
+| `js/atmosphere.js` | Luft und Lecks |
 | `js/pathfinding.js` | Wegfindung der Charaktere |
 | `js/jobs.js` | Baupläne |
 | `js/characters.js` | Verhalten der Charaktere |

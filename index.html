@@ -34,6 +34,7 @@
 <aside class="crew-panel">
   <div class="label">Crew</div>
   <div id="crew"></div>
+  <div id="needs"></div>
 </aside>
 
 <div class="paused-badge">Pausiert</div>
@@ -45,10 +46,21 @@
     <button type="button" data-tool="floor"><span class="t-name">Boden</span><kbd>B</kbd></button>
     <button type="button" data-tool="wall"><span class="t-name">Wand</span><kbd>M</kbd></button>
     <button type="button" data-tool="door"><span class="t-name">Tür</span><kbd>T</kbd></button>
+    <button type="button" data-tool="cable"><span class="t-name">Kabel</span><kbd>K</kbd></button>
+    <span class="dev-wrap">
+      <button type="button" id="btn-devices" aria-haspopup="true"><span class="t-name">Geräte</span><kbd>G</kbd></button>
+      <div id="dev-menu" class="dev-menu" hidden></div>
+    </span>
     <span class="sep"></span>
     <button type="button" data-tool="remove" class="danger"><span class="t-name">Abreißen</span><kbd>X</kbd></button>
     <button type="button" data-tool="cancel" class="danger"><span class="t-name">Plan löschen</span><kbd>C</kbd></button>
+    <span class="views" role="group" aria-label="Ansicht">
+      <button type="button" data-view="normal">Normal</button>
+      <button type="button" data-view="air" title="Luft-Ansicht (L)">Luft</button>
+      <button type="button" data-view="power" title="Strom-Ansicht (P)">Strom</button>
+    </span>
   </div>
+  <div id="power-info"></div>
   <div class="status">
     <span id="tool-hint"></span>
     <span class="status-right"><span id="job-count"></span><span id="hover-info"></span></span>
@@ -60,21 +72,26 @@
 <div id="help" class="help" hidden>
   <div class="help-card" role="dialog" aria-labelledby="help-title">
     <h2 id="help-title">Steuerung</h2>
-    <p>Du hast ein kleines Schiff im Orbit und ein Crew-Mitglied: Mira. Plane Räume, Mira baut sie.</p>
+    <p>Dein kleines Schiff treibt im All. Mira lebt darin und baut, was du planst. Halte sie am Leben: Luft, Essen, Wasser, Schlaf.</p>
     <dl>
       <dt>Laufen</dt><dd>Mit <b>Auswahl</b> auf einen Boden klicken</dd>
-      <dt>Bauen</dt><dd>Werkzeug unten wählen, dann klicken oder eine Fläche ziehen. Es entsteht ein Bauplan, den Mira abarbeitet.</dd>
+      <dt>Bauen</dt><dd>Werkzeug unten wählen, dann klicken oder eine Fläche ziehen. Mira arbeitet die blauen Baupläne ab.</dd>
+      <dt>Geräte</dt><dd><kbd>G</kbd> öffnet die Liste. Geräte mit Stromverbrauch brauchen ein <b>Kabel</b> <kbd>K</kbd> auf ihrem Feld, verbunden mit einem Generator.</dd>
+      <dt>Luft</dt><dd>Jeder Raum hat eigene Luft. Wo Boden an den Weltraum grenzt, entweicht sie. <kbd>L</kbd> zeigt die Luft an, <kbd>P</kbd> das Stromnetz.</dd>
       <dt>Ansicht</dt><dd>Ziehen mit der Maus, <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> oder Pfeiltasten. Mausrad zum Zoomen.</dd>
       <dt>Zeit</dt><dd><kbd>Leertaste</kbd> Pause, <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> Geschwindigkeit</dd>
-      <dt>Speichern</dt><dd><kbd>Strg</kbd>+<kbd>S</kbd>. Außerdem wird jede Minute automatisch gespeichert.</dd>
+      <dt>Speichern</dt><dd><kbd>Strg</kbd>+<kbd>S</kbd>. Außerdem jede Minute automatisch.</dd>
     </dl>
-    <p class="tip">Tipp: Boden kann nur neben bestehendem Boden gebaut werden, weil Mira daneben stehen muss. Weit draußen geplante Böden werden nach und nach von innen nach außen gebaut.</p>
+    <p class="tip">Vorsicht mit der Außentür links: Wer sie öffnet, lässt Luft ins All. Neue Räume brauchen ringsum Wände, sonst bleibt dort Vakuum.</p>
     <button type="button" id="help-close" class="primary">Los geht's</button>
   </div>
 </div>
 
 <script src="js/config.js"></script>
 <script src="js/world.js"></script>
+<script src="js/devices.js"></script>
+<script src="js/power.js"></script>
+<script src="js/atmosphere.js"></script>
 <script src="js/pathfinding.js"></script>
 <script src="js/jobs.js"></script>
 <script src="js/characters.js"></script>

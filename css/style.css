@@ -160,3 +160,45 @@ body.paused .paused-badge { display: block; }
 @media (prefers-reduced-motion: reduce) {
   .toast { transition: none; }
 }
+
+/* ---------- Etappe 2: Bedürfnisse, Geräte, Ansichten ---------- */
+#needs { display: grid; gap: 5px; margin-top: 10px; }
+#needs:empty { display: none; }
+.need { display: grid; grid-template-columns: 74px 1fr 24px; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.need-bar { height: 6px; background: #1a2230; border-radius: 3px; overflow: hidden; }
+.need-bar i { display: block; height: 100%; background: #6fcf8e; border-radius: 3px; }
+.need.warn .need-bar i { background: var(--amber); }
+.need.bad .need-bar i { background: var(--red); }
+.need.bad { color: #f0a29c; }
+.need-val { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 11px; }
+.crew-card.down { border-color: var(--red); }
+
+.dev-wrap { position: relative; }
+.dev-menu {
+  position: absolute; bottom: calc(100% + 8px); left: 0; z-index: 5;
+  width: 300px; max-width: calc(100vw - 24px); max-height: 60vh; overflow: auto;
+  display: grid; gap: 4px; padding: 6px;
+  background: var(--panel-solid); border: 1px solid var(--line); border-radius: 6px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+.dev-menu button { display: grid; gap: 4px; text-align: left; border-color: transparent; padding: 8px 10px; }
+.dev-menu button:hover { border-color: var(--line); }
+.dm-name { font: 600 13px/1.2 var(--font-display); }
+.dm-desc { font: 400 12px/1.35 var(--font-body); color: var(--muted); letter-spacing: 0; }
+
+.views { display: flex; margin-left: auto; }
+.views button { border-radius: 0; margin-left: -1px; font-size: 12px; padding: 7px 10px; }
+.views button:first-child { border-radius: 4px 0 0 4px; margin-left: 0; }
+.views button:last-child { border-radius: 0 4px 4px 0; }
+.views button.active { border-color: var(--cyan); background: rgba(89, 199, 230, 0.14); position: relative; }
+
+#power-info { font: 12px/1.3 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--muted); }
+#power-info .bad, .status .bad { color: var(--red); }
+#power-info .warn { color: var(--amber); }
+
+.toast.bad { border-left-color: var(--red); }
+
+@media (max-width: 640px) {
+  .views { margin-left: 0; }
+  .need { grid-template-columns: 64px 1fr 22px; }
+}

@@ -18,7 +18,7 @@ G.Path = {
   fromPoint(sx, sy) {
     const world = G.state.world;
     const n = world.w * world.h;
-    const dist = new Float32Array(n).fill(Infinity);
+    const dist = new Float64Array(n).fill(Infinity);
     const prev = new Int32Array(n).fill(-1);
     const heap = new G.MinHeap();
     const start = world.idx(sx, sy);
@@ -56,6 +56,32 @@ G.Path = {
       cur = prev[cur];
     }
     return path.reverse();
+  },
+
+  // Sucht unter mehreren Zielen (alles mit x und y) das nächste,
+  // neben dem ein Charakter stehen kann. Gibt Ziel und Weg zurück.
+  nearestAdjacent(c, targets) {
+    const world = G.state.world;
+    const res = { target: null, path: null, unreachable: [] };
+    if (!targets.length) return res;
+    const sx = Math.floor(c.x), sy = Math.floor(c.y);
+    const { dist, prev } = this.fromPoint(sx, sy);
+    const startIdx = world.idx(sx, sy);
+    let bestDist = Infinity, bestSpot = -1;
+    for (const t of targets) {
+      let found = false;
+      for (const [dx, dy] of this.DIRS) {
+        const nx = t.x + dx, ny = t.y + dy;
+        if (!world.walkable(nx, ny)) continue;
+        const ni = world.idx(nx, ny);
+        if (dist[ni] === Infinity) continue;
+        found = true;
+        if (dist[ni] < bestDist) { bestDist = dist[ni]; res.target = t; bestSpot = ni; }
+      }
+      if (!found) res.unreachable.push(t);
+    }
+    if (res.target) res.path = bestSpot === startIdx ? [] : this.buildPath(prev, bestSpot);
+    return res;
   },
 
   // Weg von (sx,sy) nach (tx,ty). Gibt null zurück, wenn es keinen Weg gibt.

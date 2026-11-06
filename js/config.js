@@ -2,6 +2,7 @@
 // config.js – Grundeinstellungen des Spiels
 // Hier stehen Zahlen, die man leicht ändern kann, um das Spiel
 // anzupassen (z. B. wie lange das Bauen dauert).
+// Zeiten sind immer in Spielminuten angegeben.
 // ============================================================
 
 window.G = window.G || {};
@@ -29,23 +30,70 @@ G.TILE_INFO = {
   3: { name: 'Tür', buildTime: 40 },
 };
 
-// Wie lange das Abreißen dauert (Spielminuten)
-G.REMOVE_TIME = 15;
+G.REMOVE_TIME = 15;     // Abreißen
+G.CABLE_TIME = 8;       // Kabel verlegen
+
+// ------------------------------------------------------------
+// Geräte. power: + erzeugt Strom, - verbraucht Strom (in kW)
+// ------------------------------------------------------------
+G.DEVICES = {
+  generator: { name: 'Generator', power: 6, buildTime: 60, desc: 'Erzeugt 6 kW Strom.' },
+  battery:   { name: 'Batterie', capacity: 30, buildTime: 40, desc: 'Speichert bis zu 30 kWh überschüssigen Strom.' },
+  o2gen:     { name: 'Sauerstoff-Generator', power: -1.5, buildTime: 50, desc: 'Füllt Sauerstoff nach (bis 21 kPa). Braucht 1,5 kW.' },
+  scrubber:  { name: 'CO₂-Filter', power: -1, buildTime: 50, desc: 'Entfernt ausgeatmetes CO₂. Braucht 1 kW.' },
+  airtank:   { name: 'Lufttank', stock: 4000, unit: 'kPa', buildTime: 40, desc: 'Füllt Luft nach, wenn der Druck unter 95 kPa fällt.' },
+  bed:       { name: 'Bett', buildTime: 40, need: 'sleep', desc: 'Zum Schlafen.' },
+  food:      { name: 'Vorratsschrank', stock: 40, unit: 'Rationen', buildTime: 30, need: 'food', desc: 'Enthält Essensrationen.' },
+  water:     { name: 'Wasserspender', stock: 80, unit: 'L', buildTime: 30, need: 'water', desc: 'Trinkwasser.' },
+  sink:      { name: 'Waschbecken', stock: 80, unit: 'L', buildTime: 30, need: 'hygiene', desc: 'Zum Waschen.' },
+};
+
+// ------------------------------------------------------------
+// Atmosphäre (Werte in kPa, so wie auf der Erde)
+// ------------------------------------------------------------
+G.AIR = {
+  O2: 21, N2: 79, CO2: 0.04,  // normale Luft
+  O2_OK: 18,        // ab hier atmet man gut
+  O2_LOW: 16,       // darunter: Atemnot
+  CO2_BAD: 3,       // darüber: ungesund
+  BREATH_O2: 0.12,  // so viel O2 verbraucht ein Mensch pro Minute (kPa)
+  DIFFUSION: 0.2,   // wie schnell sich Luft zwischen Kacheln verteilt
+  DOOR_SLITS: 0.05, // geschlossene Innentüren lassen ein bisschen Luft durch
+  VENT_LOSS: 0.35,  // wie schnell Luft ins All entweicht
+  O2GEN_RATE: 0.8,  // kPa pro Minute
+  SCRUB_RATE: 0.8,
+  TANK_RATE: 4,
+  TANK_TARGET: 95,
+};
+
+// ------------------------------------------------------------
+// Bedürfnisse (0 = ganz schlecht, 100 = bestens)
+// decay = Verlust pro Stunde, at = ab diesem Wert kümmert sich der Charakter darum
+// ------------------------------------------------------------
+G.NEEDS = {
+  food:    { name: 'Hunger',  decay: 4, at: 45, gain: 45, useTime: 20, verb: 'Isst' },
+  water:   { name: 'Durst',   decay: 6, at: 50, gain: 50, useTime: 5, verb: 'Trinkt' },
+  sleep:   { name: 'Energie', decay: 4, at: 30, gain: 13, useTime: 0, verb: 'Schläft' },  // gain pro Stunde im Bett
+  hygiene: { name: 'Hygiene', decay: 3, at: 35, gain: 70, useTime: 15, verb: 'Wäscht sich' },
+  air:     { name: 'Atmung' },
+};
 
 // Die Werkzeuge im Baumenü
 G.TOOLS = {
-  select: { name: 'Auswahl', key: 'Esc', hint: 'Klick auf den Boden: Charakter läuft dorthin. Ziehen: Ansicht verschieben.' },
-  floor:  { name: 'Boden',   key: 'B',   hint: 'Klicken oder Fläche ziehen. Boden kann nur im Weltraum gebaut werden.' },
-  wall:   { name: 'Wand',    key: 'M',   hint: 'Ziehen zeichnet eine Linie oder den Rand eines Rechtecks.' },
-  door:   { name: 'Tür',     key: 'T',   hint: 'Klick auf eine Wand oder einen Boden.' },
-  remove: { name: 'Abreißen', key: 'X',  hint: 'Wand/Tür wird zu Boden, Boden wird zu Weltraum.' },
-  cancel: { name: 'Plan löschen', key: 'C', hint: 'Entfernt Baupläne, die noch nicht gebaut sind.' },
+  select: { name: 'Auswahl', hint: 'Klick auf den Boden: Charakter läuft dorthin. Ziehen: Ansicht verschieben.' },
+  floor:  { name: 'Boden', hint: 'Klicken oder Fläche ziehen. Boden kann nur im Weltraum gebaut werden.' },
+  wall:   { name: 'Wand', hint: 'Ziehen zeichnet eine Linie oder den Rand eines Rechtecks.' },
+  door:   { name: 'Tür', hint: 'Klick auf eine Wand oder einen Boden.' },
+  cable:  { name: 'Kabel', hint: 'Kabel verbinden Geräte mit Strom. Ein Gerät braucht ein Kabel auf seinem eigenen Feld.' },
+  remove: { name: 'Abreißen', hint: 'Schicht für Schicht: erst Gerät, dann Kabel, dann Wand/Tür (wird Boden), dann Boden.' },
+  cancel: { name: 'Plan löschen', hint: 'Entfernt Baupläne, die noch nicht gebaut sind.' },
 };
+for (const [type, d] of Object.entries(G.DEVICES)) {
+  G.TOOLS['dev:' + type] = { name: d.name, hint: d.desc + ' Auf freien Boden klicken.' };
+}
 
 // Zeit: 1 echte Sekunde bei Geschwindigkeit 1x = so viele Spielminuten
 G.MINUTES_PER_SECOND = 10;
-
-// Mögliche Geschwindigkeiten (0 = Pause)
 G.SPEEDS = [0, 1, 2, 4];
 
 // Laufgeschwindigkeit der Charaktere in Kacheln pro Spielminute
@@ -55,5 +103,5 @@ G.WALK_SPEED = 0.35;
 G.START_MINUTES = 8 * 60;
 
 // Name, unter dem der Spielstand im Browser gespeichert wird
-G.SAVE_KEY = 'weltraum_game_save_v1';
-G.SAVE_VERSION = 1;
+G.SAVE_KEY = 'weltraum_game_save_v2';
+G.SAVE_VERSION = 2;

@@ -11,12 +11,15 @@ Läuft im Browser (HTML + JavaScript).
 - [x] Speichern und Laden
 
 ## Etappe 2 – Überleben
-- [ ] Sauerstoff pro Raum (Raumerkennung, Lecks) – Mittelmaß recherchieren
-- [ ] Strom: Generator, Kabel, Batterien, tragbare Ladestation
-- [ ] Bedürfnisse: Hunger, Durst, Hygiene (Waschbecken), Schlaf
+- [x] Luft pro Kachel (O₂, N₂, CO₂ in kPa), Lecks ins All, Türen mit Lüftungsschlitzen
+- [x] Sauerstoff-Generator, CO₂-Filter, Lufttank
+- [x] Strom: Generator, Kabel, Batterien, Stromnetze
+- [x] Bedürfnisse: Hunger, Durst, Hygiene (Waschbecken), Schlaf, Atmung, Gesundheit
 
 ## Etappe 3 – Weltraum & Schaden
 - [ ] Besseres Airlock-System, Raumanzüge, Außeneinsätze
+- [ ] Tragbare Batterie-Ladestation (für Raumanzüge)
+- [ ] Generator braucht Treibstoff
 - [ ] Schadenssystem mit sichtbarem Schaden, Reparatur
 
 ## Etappe 4 – Schiffe & Reisen

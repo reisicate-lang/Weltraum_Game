@@ -11,6 +11,7 @@ G.state = {
   lastSpeedIndex: 1,
   camera: { x: 0, y: 0, zoom: 1.4 },
   tool: 'select',
+  view: 'normal',   // 'normal', 'air' (Luft) oder 'power' (Strom)
   selectedId: null,
 };
 
@@ -25,6 +26,7 @@ G.newGame = function () {
   G.state.time = 0;
   G.state.selectedId = mira.id;
   G.state.camera = { x: world.w / 2, y: world.h / 2, zoom: 1.4 };
+  G.Power.dirty = true;
 };
 
 G.setSpeed = function (i) {
@@ -50,6 +52,9 @@ G.clampCamera = function () {
 // Ein Simulationsschritt (dt in Spielminuten)
 G.step = function (dt) {
   G.state.time += dt;
+  G.Power.update(dt);
+  G.Devices.update(dt);
+  G.Atmo.update(dt);
   for (const c of G.state.chars) G.Chars.update(c, dt);
 };
 

@@ -7,20 +7,23 @@
 G.Jobs = {
   key(x, y) { return G.state.world.idx(x, y); },
 
-  // Welche Kachel entsteht durch ein Werkzeug?
   TOOL_TILE: { floor: G.T.FLOOR, wall: G.T.WALL, door: G.T.DOOR },
 
   // Darf das Werkzeug auf diese Kachel angewendet werden?
   canPlace(tool, x, y) {
     const world = G.state.world, T = G.T;
     if (!world.inBounds(x, y)) return false;
-    const t = world.get(x, y);
+    const i = world.idx(x, y);
+    const t = world.tiles[i];
+    const hasDev = world.devices.has(i);
+    if (tool.startsWith('dev:')) return t === T.FLOOR && !hasDev;
     switch (tool) {
       case 'floor': return t === T.SPACE;
-      case 'wall': return t === T.SPACE || t === T.FLOOR;
-      case 'door': return t !== T.DOOR;
+      case 'wall': return (t === T.SPACE || t === T.FLOOR) && !hasDev;
+      case 'door': return t !== T.DOOR && !hasDev;
+      case 'cable': return t !== T.SPACE && !world.cables[i];
       case 'remove': return t !== T.SPACE;
-      case 'cancel': return G.state.jobs.has(this.key(x, y));
+      case 'cancel': return G.state.jobs.has(i);
       default: return false;
     }
   },
@@ -36,74 +39,92 @@ G.Jobs = {
       return true;
     }
 
-    const kind = tool === 'remove' ? 'remove' : 'build';
-    const tile = kind === 'build' ? this.TOOL_TILE[tool] : null;
+    let job;
+    if (tool === 'remove') job = { kind: 'remove', need: G.REMOVE_TIME };
+    else if (tool === 'cable') job = { kind: 'cable', need: G.CABLE_TIME };
+    else if (tool.startsWith('dev:')) {
+      const dev = tool.slice(4);
+      job = { kind: 'device', dev, need: G.DEVICES[dev].buildTime };
+    } else {
+      const tile = this.TOOL_TILE[tool];
+      job = { kind: 'build', tile, need: G.TILE_INFO[tile].buildTime };
+    }
     const old = jobs.get(k);
-    if (old && old.kind === kind && old.tile === tile) return false; // gibt es schon
+    if (old && old.kind === job.kind && old.tile === job.tile && old.dev === job.dev) return false;
 
-    jobs.set(k, {
-      x, y, kind, tile,
-      progress: 0,
-      need: kind === 'remove' ? G.REMOVE_TIME : G.TILE_INFO[tile].buildTime,
-      claimedBy: null, // welcher Charakter gerade daran arbeitet
-      retryAt: 0,      // wann wieder versucht wird, falls unerreichbar
-    });
+    jobs.set(k, Object.assign(job, { x, y, progress: 0, claimedBy: null, retryAt: 0 }));
     return true;
   },
 
-  // Was wird aus der Kachel, wenn der Auftrag fertig ist?
-  resultTile(job) {
-    const T = G.T;
-    if (job.kind === 'build') return job.tile;
-    const t = G.state.world.get(job.x, job.y);
-    return (t === T.WALL || t === T.DOOR) ? T.FLOOR : T.SPACE;
-  },
-
+  // Auftrag ist fertig: Welt verändern
   complete(job) {
-    const S = G.state;
-    S.world.set(job.x, job.y, this.resultTile(job));
-    S.jobs.delete(this.key(job.x, job.y));
-    // Steht jemand auf einer Kachel, die jetzt eine Wand ist? Dann zur Seite schieben.
+    const S = G.state, world = S.world, T = G.T;
+    const i = world.idx(job.x, job.y);
+    S.jobs.delete(i);
+    // Hat sich die Lage geändert, seit der Plan gemacht wurde? Dann nichts tun.
+    const toolName = job.kind === 'build' ? ['', 'floor', 'wall', 'door'][job.tile]
+      : job.kind === 'device' ? 'dev:' + job.dev : job.kind;
+    if (!this.canPlace(toolName, job.x, job.y)) return;
+
+    switch (job.kind) {
+      case 'build':
+        world.set(job.x, job.y, job.tile);
+        break;
+      case 'cable':
+        world.cables[i] = 1;
+        break;
+      case 'device':
+        world.devices.set(i, G.Devices.create(job.dev, job.x, job.y));
+        break;
+      case 'remove': {
+        const t = world.tiles[i];
+        if (world.devices.has(i)) world.devices.delete(i);
+        else if (world.cables[i] && t === T.FLOOR) world.cables[i] = 0;
+        else if (t === T.WALL || t === T.DOOR) world.set(job.x, job.y, T.FLOOR);
+        else world.set(job.x, job.y, T.SPACE);
+        break;
+      }
+    }
+    G.Power.dirty = true;
+    // Steht jemand auf einer Kachel, die jetzt blockiert ist? Dann zur Seite schieben.
     for (const c of S.chars) G.Chars.pushOutIfStuck(c);
   },
 
   // Sucht für einen Charakter den nächsten erreichbaren Bauplan
   assign(c) {
-    const S = G.state, world = S.world;
+    const S = G.state;
     if (!S.jobs.size) return false;
-    const tx = Math.floor(c.x), ty = Math.floor(c.y);
-    const { dist, prev } = G.Path.fromPoint(tx, ty);
-    const startIdx = world.idx(tx, ty);
-
-    let best = null, bestDist = Infinity, bestSpot = -1;
+    const candidates = [];
     for (const job of S.jobs.values()) {
       if (job.claimedBy && job.claimedBy !== c.id) continue;
       if (job.retryAt > S.time) continue;
-      let found = false;
-      for (const [dx, dy] of G.Path.DIRS) {
-        const nx = job.x + dx, ny = job.y + dy;
-        if (!world.walkable(nx, ny)) continue;
-        const ni = world.idx(nx, ny);
-        if (dist[ni] < bestDist) {
-          bestDist = dist[ni];
-          best = job;
-          bestSpot = ni;
-        }
-        if (dist[ni] < Infinity) found = true;
-      }
-      // Nicht erreichbar: eine Weile nicht mehr probieren
-      if (!found) job.retryAt = S.time + 30;
+      candidates.push(job);
     }
-
-    if (!best) return false;
-    best.claimedBy = c.id;
-    c.job = best;
-    c.path = bestSpot === startIdx ? [] : G.Path.buildPath(prev, bestSpot);
+    const res = G.Path.nearestAdjacent(c, candidates);
+    // Unerreichbare Pläne eine Weile nicht mehr probieren
+    for (const job of res.unreachable) job.retryAt = S.time + 30;
+    if (!res.target) return false;
+    res.target.claimedBy = c.id;
+    c.job = res.target;
+    c.path = res.path;
     return true;
   },
 
   label(job) {
-    if (job.kind === 'remove') return 'Reißt ab';
-    return 'Baut ' + G.TILE_INFO[job.tile].name;
+    switch (job.kind) {
+      case 'remove': return 'Reißt ab';
+      case 'cable': return 'Verlegt Kabel';
+      case 'device': return 'Baut ' + G.DEVICES[job.dev].name;
+      default: return 'Baut ' + G.TILE_INFO[job.tile].name;
+    }
+  },
+
+  describe(job) {
+    switch (job.kind) {
+      case 'remove': return 'abreißen';
+      case 'cable': return 'Kabel';
+      case 'device': return G.DEVICES[job.dev].name;
+      default: return G.TILE_INFO[job.tile].name;
+    }
   },
 };
