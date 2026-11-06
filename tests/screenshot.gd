@@ -22,6 +22,9 @@ func _initialize() -> void:
 		root.get_node("UIManager").nav_map.follow = false
 		root.get_node("UIManager").nav_map.center = Vector2(30000, -5000)
 		root.get_node("UIManager").nav_map.zoom = 0.0055
+	if args.size() > 3 and args[3] == "plain":
+		root.get_node("UIManager").char_ui.creation.visible = false
+		root.get_node("TimeSystem").set_speed(1)
 	if args.size() > 3 and args[3] == "char":
 		root.get_node("UIManager").char_ui.creation.visible = false
 		root.get_node("UIManager").char_ui.toggle()

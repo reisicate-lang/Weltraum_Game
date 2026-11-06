@@ -136,5 +136,36 @@ func _initialize() -> void:
 	_check("Speicherplatz 2 geladen (%d Cr)" % econ.credits, econ.credits == 1111)
 	_check("Speicherplatz-Info", save.slot_info(3).find("2222") >= 0)
 
+	# --- Neue Orte ---
+	gs.new_game()
+	for k in 30:
+		gs.step(1.0 / 60.0)
+	var salv = root.get_node("SalvageSystem")
+	_check("7 Orte im All", phys.locations.size() == 7)
+	phys.travel_to("kx7")
+	for k in int((phys.travel.t1 - phys.travel.t0) / 60.0 + 2.0) * 60:
+		gs.step(1.0 / 60.0)
+	_check("Am Asteroiden angedockt", phys.docked == "kx7" and salv.is_asteroid())
+	var g = root.get_node("ShipSystem").grid
+	var rock := Vector2i(-1, -1)
+	for i in g.tiles.size():
+		if g.zone[i] == 1 and g.tiles[i] == 2:
+			rock = g.pos(i)
+			break
+	var loot: Array = root.get_node("ShipConstructionSystem").salvage(rock, crew.player())
+	_check("Fels gibt Eis oder Erz", not loot.is_empty() and loot[0][0] in ["ice", "ore"])
+	phys.docked = "hephaistos"
+	var ore_heph: float = econ.market_price("ore")
+	phys.docked = "tycho"
+	_check("Raffinerie zahlt mehr für Erz (%.0f vs %.0f)" % [ore_heph, econ.market_price("ore")], ore_heph > econ.market_price("ore") * 1.5)
+	salv.clear()
+	root.get_node("FleetSystem").arrive(phys.loc("kepler"))
+	var locked := 0
+	for dv in g.devices.values():
+		if dv.type == "crate" and g.zone[g.idx(dv.pos)] == 1 and dv.lock_level > 0:
+			locked += 1
+	_check("Außenposten: verschlossene Lager (%d)" % locked, locked > 0)
+	_check("Geräusche erzeugt", root.get_node("SoundSystem")._sounds.size() == 3)
+
 	print("\n%d OK, %d Fehler" % [_ok, _failed])
 	quit(1 if _failed > 0 else 0)

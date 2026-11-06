@@ -131,6 +131,29 @@ func _put(g: ShipGrid, p: Vector2i, t: int) -> void:
 func is_wreck(i: int) -> bool:
 	return ShipSystem.grid.zone[i] == 1
 
+## Asteroid: ein Brocken aus Fels (Wände), der beim Abreißen Eis und Erz gibt
+func generate_asteroid() -> void:
+	var g := ShipSystem.grid
+	var c := Vector2(Config.WRECK_ENTRY_X + randi_range(-2, 4), Config.WRECK_TOP + 5)
+	var rx := randf_range(6.0, 10.0)
+	var ry := randf_range(3.5, 5.0)
+	for y in range(Config.WRECK_TOP, Config.WRECK_TOP + 11):
+		for x in range(int(c.x - rx) - 1, int(c.x + rx) + 2):
+			var p := Vector2i(x, y)
+			if not g.in_bounds(p):
+				continue
+			var d := Vector2((x - c.x) / rx, (y - c.y) / ry).length() + randf_range(-0.12, 0.12)
+			if d < 1.0:
+				_put(g, p, ShipGrid.Tile.WALL)
+	# Ein Landeplatz oben, damit man hinkommt
+	_put(g, Vector2i(Config.WRECK_ENTRY_X, Config.WRECK_TOP), ShipGrid.Tile.FLOOR)
+	wreck_name = "Asteroid " + ["KX-7a", "KX-7b", "Brocken 12", "Splitter 4"].pick_random()
+	investigated = true
+	EventBus.ship_changed.emit()
+
+func is_asteroid() -> bool:
+	return wreck_name.begins_with("Asteroid")
+
 ## Darf das Wrack entfernt werden? (Niemand darf darauf stehen)
 func clearable() -> bool:
 	var g := ShipSystem.grid

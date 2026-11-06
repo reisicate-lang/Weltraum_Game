@@ -61,6 +61,7 @@ func market_price(type: String) -> float:
 	# Schwarzmarkt: Datenchips bringen dort das Doppelte
 	if st.get("black", false) and type == "datachip":
 		local *= 2.0
+	local *= float(st.get("buys", {}).get(type, 1.0))
 	if st.get("black", false) and ItemSystem.item(type).contraband:
 		local *= 2.5
 	return ItemSystem.item(type).value * prices.get(type, 1.0) * glut * local * QuestSystem.price_factor(type)

@@ -40,6 +40,7 @@ QuestSystem="*res://scripts/quests/quest_system.gd"
 FleetSystem="*res://scripts/ships/fleet_system.gd"
 SaveSystem="*res://scripts/save/save_system.gd"
 UIManager="*res://scripts/ui/ui_manager.gd"
+SoundSystem="*res://scripts/core/sound_system.gd"
 
 [display]
 

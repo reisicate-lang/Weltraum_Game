@@ -56,6 +56,17 @@ func arrive(l: Dictionary) -> void:
 		SalvageSystem.wreck_name = String(w.name)
 		place.wreck = null
 		EventBus.ship_changed.emit()
+	elif l.kind == "asteroid":
+		SalvageSystem.generate_asteroid()
+		GameState.toast("Ein Felsbrocken liegt an der Leine. Abreißen bringt Eis und Erz.")
+	elif l.kind == "outpost":
+		SalvageSystem.generate()
+		# Außenposten: mehr Schlösser, mehr Beute
+		for dev in ShipSystem.grid.devices.values():
+			if dev.type == "crate" and ShipSystem.grid.zone[ShipSystem.grid.idx(dev.pos)] == 1:
+				dev.lock_level = maxi(dev.lock_level, randi_range(1, 3))
+				dev.inv.add(["datachip", "cell", "motor", "boltgun", "genemod"].pick_random(), 1, randf_range(60.0, 95.0))
+		GameState.toast("Der Außenposten ist verlassen. Die Lagerräume sind verschlossen.")
 	elif l.kind == "debris":
 		SalvageSystem.generate()
 		GameState.toast("Ein Wrack aus dem Trümmerfeld treibt heran: " + SalvageSystem.wreck_name)

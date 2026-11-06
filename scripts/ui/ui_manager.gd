@@ -137,6 +137,9 @@ func _build_top() -> void:
 		GameState.new_game()
 		char_ui.open_creation()))
 	row.add_child(_button("?", toggle_help))
+	for ch in row.get_children():
+		if ch is Button:
+			ch.add_theme_font_size_override("font_size", 13)
 
 func _build_left() -> void:
 	var p := _panel()

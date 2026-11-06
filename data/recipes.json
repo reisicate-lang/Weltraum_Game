@@ -218,5 +218,20 @@
   "time": 4,
   "action": "cook",
   "station": "chemstation"
+ },
+ {
+  "id": "melt",
+  "name": "Eis schmelzen",
+  "in": {
+   "ice": 1
+  },
+  "out": [
+   "watercan",
+   1,
+   100
+  ],
+  "time": 3,
+  "action": "cook",
+  "station": "chemstation"
  }
 ]

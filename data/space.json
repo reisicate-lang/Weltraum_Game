@@ -64,6 +64,37 @@
    "x": 42000,
    "y": 26000,
    "desc": "Reste der Kriegsflotte. Wracks gratis, aber kein Händler."
+  },
+  {
+   "id": "kx7",
+   "name": "Eisbrocken KX-7",
+   "kind": "asteroid",
+   "x": -22000,
+   "y": 31000,
+   "desc": "Asteroid aus Eis und Erz. Abbauen (Abreißen) bringt Wassereis und Erz."
+  },
+  {
+   "id": "kepler",
+   "name": "Außenposten Kepler",
+   "kind": "outpost",
+   "body": "moon",
+   "radius": 9000,
+   "phase": 3.6,
+   "desc": "Verlassene Forschungsbasis. Viel Beute, viele Schlösser, niemand zum Handeln."
+  },
+  {
+   "id": "hephaistos",
+   "name": "Raffinerie Hephaistos",
+   "kind": "station",
+   "x": -35000,
+   "y": -20000,
+   "market": 1.0,
+   "buys": {
+    "ore": 1.8,
+    "scrap": 1.6,
+    "ice": 1.4
+   },
+   "desc": "Industrieanlage. Zahlt gut für Erz, Eis und Schrott."
   }
  ],
  "shipyard": [

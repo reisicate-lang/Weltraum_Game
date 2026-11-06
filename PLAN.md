@@ -100,16 +100,18 @@ und werden Schritt für Schritt übertragen.
 - [x] Aufträge: Liefern und Transport mit Frist, Belohnung und Ansehen
 - [x] Schwarzmarkt, Schmuggel mit Kontrollen, Versicherung, Schiffskredit, Liegegebühr
 - [x] Tägliche Weltereignisse verändern Preise
-- [ ] Mehr Orte (Außenposten, Industrieanlagen) und Stationssystem wie die Ostranauts-Mod
+- [x] Neue Orte: Eisbrocken KX-7 (Eis und Erz abbauen), Außenposten Kepler (verschlossene Beute), Raffinerie Hephaistos (zahlt gut für Erz)
+- [ ] Stationssystem wie die Ostranauts-Mod (begehbare Stationen)
 
 ### Etappe 10 – Feinschliff (Godot)
 - [x] Einstellbare Simulationstiefe, Autosave-Intervall, Meteoriten an/aus
 - [x] Mod-Unterstützung: eigene .tres-Dateien in user://mods/ (Gegenstände, Geräte, Fähigkeiten, Traits, Hobbys)
 - [x] Drei Speicherplätze
-- [ ] Richtige Grafik (Sprites), Sound, Balancing
+- [x] Gezeichnete Symbole für alle Geräte, erzeugte Geräusche (Alarm, Meldung, Bauen)
+- [ ] Sprites aus Grafikdateien, Balancing
 
 ## Tests (Godot, ohne Fenster)
 - `tests/run_tests.gd` – Kernspiel, Etappe 1–6 (54 Prüfungen)
 - `tests/test_skills.gd` – Fähigkeiten, Traits, Hobbys, Lebenslauf, NPCs, Stationen (144)
 - `tests/test_systems.gd` – Temperatur, Feuer, Wasser, Anbau, Chemie (19)
-- `tests/test_world.gd` – Crew-Beziehungen, Aufträge, Fraktionen, Einstellungen, Mods, Speicherplätze (21)
+- `tests/test_world.gd` – Crew-Beziehungen, Aufträge, Fraktionen, Einstellungen, Mods, Speicherplätze, neue Orte (27)

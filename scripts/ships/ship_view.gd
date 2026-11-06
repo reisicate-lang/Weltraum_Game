@@ -156,8 +156,7 @@ func _draw_device(dev: Device, ghost: bool = false) -> void:
 		col.a = 0.45
 	draw_rect(r, col)
 	draw_rect(r, Color(0, 0, 0, 0.5), false, 1.0)
-	var font := ThemeDB.fallback_font
-	draw_string(font, r.position + Vector2(3, S * 0.5), d.display_name.substr(0, 2), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(1, 1, 1, 0.85))
+	_draw_icon(dev, r, 0.45 if ghost else 1.0)
 	if ghost:
 		return
 	# Füllstand / Ladung
@@ -294,3 +293,101 @@ func _draw_preview(g: ShipGrid) -> void:
 		if ok:
 			col = Color(0.9, 0.33, 0.29, 0.35) if GameState.tool in ["remove", "cancel"] else Color(0.35, 0.78, 0.9, 0.35)
 		draw_rect(_rect(p), col)
+
+## Einfache Symbole pro Gerät (nur Formen, keine Grafikdateien)
+func _draw_icon(dev: Device, r: Rect2, a: float) -> void:
+	var c := r.get_center()
+	var u := S * 0.8  # Größe des Geräts
+	var t := Time.get_ticks_msec() / 1000.0
+	var on := dev.powered or dev.producing or not dev.needs_power()
+	match dev.type:
+		"generator":
+			draw_circle(c, u * 0.3, Color(1, 0.7, 0.28, a) if dev.producing else Color(0.35, 0.27, 0.19, a))
+			if dev.producing:
+				draw_circle(c, u * (0.15 + sin(t * 4.0) * 0.03), Color(1, 0.95, 0.78, a))
+		"battery", "charger":
+			var cap := dev.data().capacity
+			var f := dev.charge / cap if cap > 0.0 else 0.0
+			var br := Rect2(c - Vector2(u * 0.2, u * 0.3), Vector2(u * 0.4, u * 0.6))
+			draw_rect(br, Color(0.1, 0.13, 0.12, a))
+			draw_rect(Rect2(br.position + Vector2(0, br.size.y * (1.0 - f)), Vector2(br.size.x, br.size.y * f)), Color(0.44, 0.81, 0.56, a) if f > 0.25 else Color(0.9, 0.33, 0.29, a))
+			if dev.type == "charger":
+				draw_line(c + Vector2(u * 0.05, -u * 0.2), c + Vector2(-u * 0.08, u * 0.02), Color(1, 0.82, 0.25, a), 2.0)
+				draw_line(c + Vector2(-u * 0.08, u * 0.02), c + Vector2(u * 0.05, u * 0.2), Color(1, 0.82, 0.25, a), 2.0)
+		"o2gen":
+			draw_circle(c, u * 0.3, Color(0.35, 0.78, 0.9, a))
+			draw_circle(c, u * 0.14, Color(0.9, 0.97, 1, a))
+			if dev.powered:
+				for k in 3:
+					var p := fmod(t * 0.7 + k / 3.0, 1.0)
+					draw_circle(c + Vector2(sin(k * 2.1) * u * 0.2, -u * 0.1 - p * u * 0.35), u * 0.05, Color(0.75, 0.94, 1, a * (1.0 - p)))
+		"scrubber", "heater":
+			var ang := t * 6.0 if dev.powered else 0.0
+			var col := Color(0.62, 0.7, 0.6, a) if dev.type == "scrubber" else Color(1, 0.5, 0.25, a)
+			for k in 4:
+				draw_line(c, c + Vector2.from_angle(ang + k * PI / 2.0) * u * 0.32, col, 3.0)
+			draw_circle(c, u * 0.08, Color(0.16, 0.2, 0.16, a))
+		"airtank":
+			draw_circle(c, u * 0.38, Color(0.53, 0.59, 0.67, a))
+			var f2 := dev.stock / maxf(1.0, dev.data().stock)
+			draw_rect(Rect2(c + Vector2(-u * 0.3, -u * 0.05), Vector2(u * 0.6 * f2, u * 0.1)), Color(0.35, 0.78, 0.9, a))
+		"bed":
+			draw_rect(Rect2(r.position + Vector2(2, 2), Vector2(r.size.x - 4, r.size.y * 0.3)), Color(0.85, 0.87, 0.92, a))
+			draw_rect(Rect2(r.position + Vector2(1, r.size.y * 0.38), Vector2(r.size.x - 2, r.size.y * 0.58)), Color(0.35, 0.45, 0.66, a))
+		"food", "crate", "terminal", "workbench", "chemstation", "locker":
+			draw_rect(r.grow(-u * 0.12), Color(0, 0, 0, 0.25 * a), false, 1.5)
+			match dev.type:
+				"food":
+					draw_line(Vector2(c.x, r.position.y + 3), Vector2(c.x, r.end.y - 3), Color(0.24, 0.2, 0.15, a), 1.5)
+				"crate":
+					draw_line(r.position + Vector2(4, 4), r.end - Vector2(4, 4), Color(0.23, 0.18, 0.12, a), 1.5)
+					var f3 := dev.inv.volume() / maxf(1.0, dev.data().storage) if dev.inv != null else 0.0
+					draw_rect(Rect2(Vector2(r.position.x + 2, r.end.y - 3), Vector2((r.size.x - 4) * f3, 2)), Color(0.95, 0.64, 0.23, a))
+				"terminal":
+					draw_rect(Rect2(c - Vector2(u * 0.3, u * 0.22), Vector2(u * 0.6, u * 0.36)), Color(0.35, 0.78, 0.9, a * (0.9 if on else 0.2)))
+				"workbench", "chemstation":
+					draw_line(c - Vector2(u * 0.25, u * 0.15), c + Vector2(u * 0.25, u * 0.15), Color(0.75, 0.75, 0.78, a), 3.0)
+					draw_circle(c + Vector2(u * 0.15, -u * 0.15), u * 0.08, Color(0.6, 0.85, 0.5, a) if dev.type == "chemstation" else Color(0.8, 0.8, 0.8, a))
+				"locker":
+					if dev.suit != null:
+						draw_circle(c - Vector2(0, u * 0.12), u * 0.13, Color(0.9, 0.91, 0.93, a))
+						draw_rect(Rect2(c + Vector2(-u * 0.16, 0), Vector2(u * 0.32, u * 0.3)), Color(0.9, 0.91, 0.93, a))
+		"water", "sink", "waterfilter":
+			draw_circle(c + Vector2(0, u * 0.05), u * 0.25, Color(0.79, 0.84, 0.89, a))
+			var f4 := dev.stock / maxf(1.0, dev.data().stock)
+			draw_circle(c + Vector2(0, u * 0.05), u * 0.18 * f4, Color(0.5, 0.83, 0.96, a))
+		"solar":
+			for k in range(1, 3):
+				draw_line(r.position + Vector2(r.size.x * k / 3.0, 0), r.position + Vector2(r.size.x * k / 3.0, r.size.y), Color(0.31, 0.44, 0.71, a), 1.0)
+				draw_line(r.position + Vector2(0, r.size.y * k / 3.0), r.position + Vector2(r.size.x, r.size.y * k / 3.0), Color(0.31, 0.44, 0.71, a), 1.0)
+		"pump":
+			draw_arc(c, u * 0.25, t * 10.0 if AirlockSystem.is_pumping(dev) else 0.3, (t * 10.0 if AirlockSystem.is_pumping(dev) else 0.3) + 4.5, 12, Color(0.35, 0.78, 0.9, a), 2.5)
+		"helm":
+			draw_arc(c, u * 0.28, PI, TAU, 12, Color(0.95, 0.64, 0.23, a), 3.0)
+			draw_circle(c, u * 0.08, Color(0.35, 0.78, 0.9, a))
+		"thruster":
+			draw_colored_polygon(PackedVector2Array([c + Vector2(-u * 0.25, -u * 0.3), c + Vector2(u * 0.25, -u * 0.3), c + Vector2(u * 0.35, u * 0.3), c + Vector2(-u * 0.35, u * 0.3)]), Color(0.45, 0.48, 0.52, a))
+			if PhysicsSystem.thrust > 0.0 and dev.powered:
+				draw_circle(c + Vector2(0, u * 0.45), u * (0.15 + randf() * 0.08), Color(1, 0.75, 0.3, a))
+		"fueltank":
+			draw_circle(c, u * 0.36, Color(0.6, 0.22, 0.2, a))
+			draw_string(ThemeDB.fallback_font, c + Vector2(-u * 0.12, u * 0.12), "F", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(1, 0.9, 0.8, a))
+		"autodock":
+			draw_rect(Rect2(c - Vector2(u * 0.2, u * 0.2), Vector2(u * 0.4, u * 0.4)), Color(0.35, 0.78, 0.9, a), false, 2.0)
+			draw_line(c - Vector2(u * 0.3, 0), c + Vector2(u * 0.3, 0), Color(0.35, 0.78, 0.9, a), 1.5)
+		"hydro", "autofarm":
+			var g2 := dev.growth
+			for k in 3:
+				var stem := c + Vector2((k - 1) * u * 0.22, u * 0.25)
+				draw_line(stem, stem - Vector2(0, u * (0.1 + 0.4 * g2)), Color(0.4, 0.8, 0.35, a), 2.0)
+				draw_circle(stem - Vector2(0, u * (0.1 + 0.4 * g2)), u * (0.04 + 0.08 * g2), Color(0.5, 0.9, 0.4, a))
+		"meatvat":
+			draw_circle(c, u * 0.3, Color(0.75, 0.35, 0.4, a))
+			draw_arc(c, u * 0.36, 0, TAU, 16, Color(0.6, 0.6, 0.65, a), 1.5)
+		"trainer":
+			draw_circle(c, u * 0.25, Color(0.6, 0.3, 0.3, a))
+			draw_arc(c, u * 0.35, 0, TAU, 16, Color(0.9, 0.9, 0.9, a), 1.0)
+		"extinguisher":
+			draw_rect(Rect2(c - Vector2(u * 0.12, u * 0.3), Vector2(u * 0.24, u * 0.6)), Color(0.85, 0.15, 0.15, a))
+		_:
+			draw_string(ThemeDB.fallback_font, r.position + Vector2(3, S * 0.5), dev.data().display_name.substr(0, 2), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(1, 1, 1, 0.85 * a))
