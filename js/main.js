@@ -67,9 +67,9 @@ G.start = function () {
 
   // Erster Besuch: Hilfe zeigen
   let seen = false;
-  try { seen = localStorage.getItem('weltraum_game_help_seen') === '1'; } catch (err) { /* egal */ }
+  try { seen = localStorage.getItem('weltraum_game_help_seen_v2') === '1'; } catch (err) { /* egal */ }
   G.UI.showHelp(!seen);
-  try { localStorage.setItem('weltraum_game_help_seen', '1'); } catch (err) { /* egal */ }
+  try { localStorage.setItem('weltraum_game_help_seen_v2', '1'); } catch (err) { /* egal */ }
 
   // Automatisch speichern, jede Minute (echte Zeit)
   setInterval(() => G.Save.save(true), 60000);
