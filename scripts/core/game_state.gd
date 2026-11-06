@@ -18,6 +18,9 @@ func new_game() -> void:
 	time = 0.0
 	ShipSystem.create_start_ship()
 	ShipConstructionSystem.jobs.clear()
+	EconomySystem.reset()
+	SalvageSystem.build_gangway()
+	SalvageSystem.generate()
 	CrewSystem.create_start_crew()
 	selected = CrewSystem.player()
 	EventBus.game_loaded.emit()
@@ -32,6 +35,7 @@ func step(dt: float) -> void:
 	AtmosphereSystem.step(dt)
 	DamageSystem.step(dt)
 	CrewSystem.step(dt)
+	EconomySystem.step(dt)
 
 func clock_text() -> String:
 	var secs := int((Config.START_MINUTES + time) * 60.0)

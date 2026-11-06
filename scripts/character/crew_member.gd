@@ -84,6 +84,9 @@ func release_job() -> void:
 	fetch = null
 	if job != null:
 		job.claimed_by = -1
+		# Unterbrochenes Einsammeln: die Sachen bleiben im Gepäck
+		if job.kind == "haul" and job.phase == "deliver":
+			ShipConstructionSystem.jobs.erase(grid().idx(ShipConstructionSystem.pos_of(job)))
 	job = null
 	path.clear()
 
@@ -305,6 +308,7 @@ func update(dt: float) -> void:
 				return
 			if _start_device("suit_off", func(d): return d.type == "locker" and d.suit == null and not d.broken):
 				return
+		SalvageSystem.reveal(self)
 		if carrying == null and _start_need():
 			return
 	# 5) Bauplan
@@ -349,6 +353,9 @@ func update(dt: float) -> void:
 func _finish_job() -> void:
 	var CS := ShipConstructionSystem
 	var g := grid()
+	if job.kind == "haul":
+		_finish_haul()
+		return
 	if job.kind == "move":
 		if job.phase == "pickup":
 			var dev := g.device_at(CS.pos_of(job))
@@ -386,6 +393,57 @@ func _finish_job() -> void:
 	job = null
 	CS.complete(finished, tile())
 
+## Einsammeln: Haufen aufheben, in die nächste Frachtkiste im Schiff bringen
+func _finish_haul() -> void:
+	var CS := ShipConstructionSystem
+	var g := grid()
+	var src := CS.pos_of(job)
+	if job.phase == "pickup":
+		var pile: Inventory = g.piles.get(g.idx(src))
+		if pile == null:
+			CS.jobs.erase(g.idx(src))
+			job = null
+			return
+		var carry: Array = []
+		for it in pile.items.duplicate():
+			if pile.move_to(inv, it.type, it.qty) > 0:
+				carry.append(it.type)
+		g.clean_piles()
+		if carry.is_empty():
+			GameState.toast(display_name + " kann nichts mehr tragen.")
+			CS.jobs.erase(g.idx(src))
+			job = null
+			return
+		var targets: Array = []
+		for dev in g.devices.values():
+			if dev.type == "crate" and g.zone[g.idx(dev.pos)] == 0:
+				for t in carry:
+					if dev.inv.room(t) > 0:
+						targets.append(dev.pos)
+						break
+		var res := ShipSystem.nearest_adjacent(tile(), targets)
+		if not res.ok:
+			GameState.toast("Keine Frachtkiste mit freiem Platz im Schiff.", "bad")
+			CS.jobs.erase(g.idx(src))
+			job = null
+			return
+		job.carry = carry
+		job.phase = "deliver"
+		job.tx = res.target.x
+		job.ty = res.target.y
+		job.progress = 0.0
+		path = res.path
+		return
+	var done: Dictionary = job
+	job = null
+	CS.jobs.erase(g.idx(src))
+	var crate := g.device_at(Vector2i(int(done.tx), int(done.ty)))
+	if crate != null and crate.inv != null:
+		for t in done.carry:
+			inv.move_to(crate.inv, t, 9999)
+	if g.piles.has(g.idx(src)):
+		CS.place("haul", src)
+
 ## Zu einem passenden Gerät gehen (Anzugschrank, Ladestation)
 func _start_device(kind: String, filter: Callable) -> bool:
 	var targets: Array = []
@@ -413,7 +471,7 @@ func _assign_job() -> void:
 			continue
 		if j.retry_at > GameState.time:
 			continue
-		if j.kind == "move" and j.phase == "deliver":
+		if (j.kind == "move" or j.kind == "haul") and j.phase == "deliver":
 			continue
 		var ok := true
 		var c := CS.cost(j)

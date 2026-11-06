@@ -17,7 +17,8 @@ func step(dt: float) -> void:
 			if dev.cond <= 0.0:
 				dev.cond = 0.0
 				dev.broken = true
-				GameState.toast(dev.data().display_name + " ist kaputt gegangen!", "bad")
+				if g.zone[i] != 1:
+					GameState.toast(dev.data().display_name + " ist kaputt gegangen!", "bad")
 	# Mikrometeoriten
 	if GameState.time / 1440.0 >= Config.FIRST_METEOR_DAY and randf() < Config.METEORS_PER_DAY * dt / 1440.0:
 		strike()
@@ -32,7 +33,7 @@ func strike() -> void:
 	var hull: Array[Vector2i] = []
 	for i in g.tiles.size():
 		var t := g.tiles[i]
-		if t != ShipGrid.Tile.WALL and t != ShipGrid.Tile.DOOR:
+		if (t != ShipGrid.Tile.WALL and t != ShipGrid.Tile.DOOR) or g.zone[i] == 1:
 			continue
 		var p := g.pos(i)
 		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
@@ -83,8 +84,11 @@ func _auto_repair() -> void:
 	var CS := ShipConstructionSystem
 	for i in g.tiles.size():
 		var t := g.tiles[i]
+		if g.zone[i] == 1:
+			continue  # Wracks werden nicht repariert
 		if (t == ShipGrid.Tile.WALL or t == ShipGrid.Tile.DOOR) and g.cond[i] < Config.AUTO_REPAIR_AT and not CS.jobs.has(i):
 			CS.place("repair", g.pos(i))
 	for i in g.devices:
-		if g.devices[i].cond < Config.AUTO_REPAIR_AT and not CS.jobs.has(i):
+		if g.zone[i] != 1 and g.devices[i].cond < Config.AUTO_REPAIR_AT and not CS.jobs.has(i):
 			CS.place("repair", g.pos(i))
+	CS.scan_refills()

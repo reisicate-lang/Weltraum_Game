@@ -120,7 +120,13 @@ func _click(t: Vector2i) -> void:
 	var g := ShipSystem.grid
 	if g.in_bounds(t):
 		var dev := g.device_at(t)
-		if (dev != null and dev.inv != null) or g.piles.has(g.idx(t)):
+		if dev != null and not dev.unknown and dev.type == "terminal":
+			UIManager.open_window("trade")
+			return
+		if dev != null and not dev.unknown and dev.type == "workbench":
+			UIManager.open_window("bench")
+			return
+		if (dev != null and dev.inv != null and not dev.unknown) or g.piles.has(g.idx(t)):
 			UIManager.open_container(t)
 			return
 	var sel: CrewMember = GameState.selected if GameState.selected != null else CrewSystem.player()
@@ -154,13 +160,14 @@ func _key(k: InputEventKey) -> void:
 		KEY_2: TimeSystem.set_speed(2)
 		KEY_3: TimeSystem.set_speed(3)
 		KEY_4: TimeSystem.set_speed(4)
-		KEY_ESCAPE: UIManager.set_tool("select"); UIManager.close_container()
+		KEY_ESCAPE: UIManager.set_tool("select"); UIManager.close_container(); UIManager.close_window()
 		KEY_B: UIManager.set_tool("floor")
 		KEY_M: UIManager.set_tool("wall")
 		KEY_T: UIManager.set_tool("door")
 		KEY_K: UIManager.set_tool("cable")
 		KEY_X: UIManager.set_tool("remove")
 		KEY_V: UIManager.set_tool("move")
+		KEY_Q: UIManager.set_tool("haul")
 		KEY_R: UIManager.set_tool("repair")
 		KEY_C: UIManager.set_tool("cancel")
 		KEY_L: GameState.view = "normal" if GameState.view == "air" else "air"

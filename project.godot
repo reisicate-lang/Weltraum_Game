@@ -24,6 +24,8 @@ AirlockSystem="*res://scripts/ships/airlock_system.gd"
 DamageSystem="*res://scripts/ships/damage_system.gd"
 ShipConstructionSystem="*res://scripts/ships/ship_construction_system.gd"
 CrewSystem="*res://scripts/crew/crew_system.gd"
+SalvageSystem="*res://scripts/salvage/salvage_system.gd"
+EconomySystem="*res://scripts/economy/economy_system.gd"
 SaveSystem="*res://scripts/save/save_system.gd"
 UIManager="*res://scripts/ui/ui_manager.gd"
 

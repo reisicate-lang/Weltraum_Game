@@ -43,7 +43,8 @@ func _initialize() -> void:
 			o2_ok = false
 	_check("Überall genug Sauerstoff", o2_ok)
 
-	# 2) Bauen mit Material
+	# 2) Bauen mit Material (Wrack weg, sonst holt Mira Stoff aus dem Wrack)
+	root.get_node("SalvageSystem").clear()
 	var x0: int = (ship.grid.width - 16) / 2
 	var y0: int = (ship.grid.height - 10) / 2
 	var target := Vector2i(x0 + 13, y0 + 3)  # im Cockpit
@@ -104,17 +105,77 @@ func _initialize() -> void:
 		dmg.strike()
 	var damaged := 0
 	for i in ship.grid.tiles.size():
-		if ship.grid.cond[i] < 100.0:
+		if ship.grid.cond[i] < 100.0 and ship.grid.zone[i] == 0 and ship.grid.tiles[i] >= 2:
 			damaged += 1
 	_check("Einschläge beschädigen die Hülle (%d Felder)" % damaged, damaged > 0)
 	_run(120)
 	var still := 0
 	for i in ship.grid.tiles.size():
-		if ship.grid.cond[i] < Config.AUTO_REPAIR_AT and ship.grid.tiles[i] >= 2:
+		if ship.grid.cond[i] < Config.AUTO_REPAIR_AT and ship.grid.tiles[i] >= 2 and ship.grid.zone[i] == 0:
 			still += 1
 	_check("Stark Beschädigtes wurde repariert (übrig: %d)" % still, still == 0)
 
-	# 8) Speichern und Laden
+	# 8) Bergung und Handel: Wrack ausschlachten, einsammeln, verkaufen
+	gs.new_game()
+	var econ = root.get_node("EconomySystem")
+	var salv = root.get_node("SalvageSystem")
+	_check("Wrack erzeugt: " + salv.wreck_name, salv.wreck_name != "")
+	var wreck_devs: Array = []
+	for i in ship.grid.devices:
+		if ship.grid.zone[i] == 1 and ship.grid.devices[i].type != "crate":
+			wreck_devs.append(ship.grid.pos(i))
+	_check("Wrack hat Geräte (%d)" % wreck_devs.size(), wreck_devs.size() >= 3)
+	for p in wreck_devs.slice(0, 3):
+		build.place("remove", p)
+	_run(60)
+	var wreck_piles: Array = []
+	for i in ship.grid.piles:
+		if ship.grid.zone[i] == 1:
+			wreck_piles.append(ship.grid.pos(i))
+	_check("Abgerissene Wrackteile liegen herum (%d Haufen)" % wreck_piles.size(), wreck_piles.size() > 0)
+	for p in wreck_piles:
+		build.place("haul", p)
+	_run(150)
+	var left := 0
+	for i in ship.grid.piles:
+		if ship.grid.zone[i] == 1:
+			left += 1
+	_check("Haufen eingesammelt (übrig: %d)" % left, left <= 1)
+	var term = econ.terminal()
+	var moved := 0
+	for dev in ship.grid.devices.values():
+		if dev.type == "crate" and ship.grid.zone[ship.grid.idx(dev.pos)] == 0:
+			for it in dev.inv.items.duplicate():
+				if it.type in ["scrap", "plate", "copper", "motor", "circuit", "cell", "pipe"]:
+					moved += dev.inv.move_to(term.inv, it.type, it.qty)
+	var cr0: int = econ.credits
+	econ.sell_all()
+	_check("Verkauf bringt Geld (%d -> %d Cr)" % [cr0, econ.credits], econ.credits > cr0)
+	econ.buy("fuelcan", 1)
+	_check("Kaufen legt Ware ins Terminal", term.inv.count("fuelcan") >= 1)
+	var old_name: String = salv.wreck_name
+	econ.credits = 5000
+	econ.buy_claim()
+	_check("Neues Bergungsrecht: neues Wrack", salv.wreck_name != "" and econ.credits == 5000 - Config.CLAIM_FEE)
+	econ.credits = 0
+	gs.time = econ.next_payment + 0.01
+	econ.step(0.0)
+	_check("Verpasste Rate wird gezählt", econ.strikes == 1)
+	econ.credits = 2000
+
+	# 9) Werkbank: Schrott einschmelzen
+	var bench_crate = null
+	for dev in ship.grid.devices.values():
+		if dev.type == "crate" and ship.grid.zone[ship.grid.idx(dev.pos)] == 0:
+			bench_crate = dev
+	bench_crate.inv.add("scrap", 6, 50.0)
+	var crafted := [false]
+	root.get_node("EventBus").toast.connect(func(t, _k): if t.begins_with("Werkbank"): crafted[0] = true)
+	econ.craft("plate")
+	_run(60)
+	_check("Werkbank hat eine Platte hergestellt", crafted[0])
+
+	# 10) Speichern und Laden
 	save.save_game(true)
 	var t_before: float = gs.time
 	var devs_before: int = ship.grid.devices.size()
@@ -122,6 +183,7 @@ func _initialize() -> void:
 	save.load_game(true)
 	_check("Zeit nach dem Laden gleich", absf(gs.time - t_before) < 0.001)
 	_check("Geräte nach dem Laden gleich", ship.grid.devices.size() == devs_before)
+	_check("Geld nach dem Laden gleich", econ.credits == 2000 and econ.strikes == 1)
 
 	print("\n%d Fehler" % _failed)
 	quit(1 if _failed > 0 else 0)

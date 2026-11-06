@@ -1,0 +1,180 @@
+## Bergung: Zufällige Wracks an der Bergungsleine unterhalb des Schiffs.
+## Jedes Wrack hat Räume, Lecks, beschädigte Geräte, Kisten mit
+## unbekanntem Inhalt, Schrott und alte Kabel.
+extends Node
+
+const NAMES := ["MV Kestrel", "Frachter Nansen-4", "Tankschiff Halcyon", "Bergbauschlepper Ox-12",
+	"Shuttle Meridian", "Kurierschiff Pallas", "Prospektor Vesna", "Versorger Hollis"]
+const DEVICE_POOL := ["generator", "battery", "o2gen", "scrubber", "bed", "food", "airtank", "locker", "water", "sink", "pump", "solar", "charger"]
+const LOOT := [["scrap", 6], ["plate", 5], ["copper", 5], ["circuit", 3], ["motor", 2], ["cell", 2], ["pipe", 4],
+	["glass", 2], ["filter", 2], ["fabric", 3], ["ration", 4], ["fuelcan", 1], ["aircan", 1], ["watercan", 1], ["datachip", 1]]
+
+var wreck_name := ""
+
+## Steg vom Außensteg des Schiffs hinunter zum Wrack
+func build_gangway() -> void:
+	var g := ShipSystem.grid
+	for y in range(27, Config.WRECK_TOP):
+		var p := Vector2i(Config.WRECK_ENTRY_X, y)
+		g.set_tile(p, ShipGrid.Tile.FLOOR)
+		g.zone[g.idx(p)] = 2
+
+func generate() -> void:
+	var g := ShipSystem.grid
+	var w := randi_range(15, 22)
+	var h := randi_range(7, 10)
+	var top := Config.WRECK_TOP
+	var left := clampi(Config.WRECK_ENTRY_X - randi_range(3, w - 4), 2, g.width - w - 2)
+	var inner: Array[Vector2i] = []
+	for y in range(top, top + h):
+		for x in range(left, left + w):
+			var edge := x == left or y == top or x == left + w - 1 or y == top + h - 1
+			_put(g, Vector2i(x, y), ShipGrid.Tile.WALL if edge else ShipGrid.Tile.FLOOR)
+			if not edge:
+				inner.append(Vector2i(x, y))
+	_put(g, Vector2i(Config.WRECK_ENTRY_X, top), ShipGrid.Tile.DOOR)
+	var doors: Array[Vector2i] = [Vector2i(Config.WRECK_ENTRY_X, top)]
+	# Innenwände
+	var x := left + randi_range(4, 6)
+	var splits := 0
+	while x < left + w - 4 and splits < 2:
+		if x != Config.WRECK_ENTRY_X:
+			for y in range(top, top + h):
+				_put(g, Vector2i(x, y), ShipGrid.Tile.WALL)
+			var dy := randi_range(top + 2, top + h - 3)
+			_put(g, Vector2i(x, dy), ShipGrid.Tile.DOOR if randf() < 0.7 else ShipGrid.Tile.FLOOR)
+			doors.append(Vector2i(x, dy))
+			splits += 1
+		x += randi_range(5, 8)
+	# Lecks in der Hülle
+	var hull: Array[Vector2i] = []
+	for y in range(top, top + h):
+		for xx in range(left, left + w):
+			var corner := (xx == left or xx == left + w - 1) and (y == top or y == top + h - 1)
+			var edge := xx == left or y == top or xx == left + w - 1 or y == top + h - 1
+			if edge and not corner and g.get_tile(Vector2i(xx, y)) == ShipGrid.Tile.WALL and xx != Config.WRECK_ENTRY_X:
+				hull.append(Vector2i(xx, y))
+	for k in randi_range(1, 3):
+		_put(g, hull.pick_random(), ShipGrid.Tile.FLOOR)
+	# Abgestandene Luft
+	for p in inner:
+		var i := g.idx(p)
+		if g.holds_air(i):
+			g.o2[i] = 11.0; g.n2[i] = 55.0; g.co2[i] = 2.5
+	# Plätze an den Wänden, nicht vor Türen
+	var spots: Array[Vector2i] = []
+	for p in inner:
+		if g.get_tile(p) != ShipGrid.Tile.FLOOR:
+			continue
+		var near_door := false
+		for d in doors:
+			if absi(d.x - p.x) <= 1 and absi(d.y - p.y) <= 1:
+				near_door = true
+		if near_door:
+			continue
+		var at_wall := false
+		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			if g.get_tile(p + d) == ShipGrid.Tile.WALL:
+				at_wall = true
+		if at_wall and not (g.get_tile(p + Vector2i(0, -1)) == ShipGrid.Tile.WALL and g.get_tile(p + Vector2i(0, 1)) == ShipGrid.Tile.WALL):
+			spots.append(p)
+	spots.shuffle()
+	for k in randi_range(5, 9):
+		if spots.is_empty():
+			break
+		var dev := g.place_device(DEVICE_POOL.pick_random(), spots.pop_back())
+		dev.cond = randf_range(8.0, 75.0)
+		dev.broken = randf() < 0.35
+		dev.unknown = true
+		if dev.data().stock >= 0.0:
+			dev.stock = floorf(dev.data().stock * randf() * 0.3)
+		dev.charge = 0.0
+		if dev.type == "locker":
+			dev.suit = {"o2": 0.0, "battery": 0.0} if randf() < 0.3 else null
+	for k in randi_range(2, 4):
+		if spots.is_empty():
+			break
+		var crate := g.place_device("crate", spots.pop_back())
+		crate.cond = randf_range(30.0, 90.0)
+		crate.unknown = true
+		for n in randi_range(2, 5):
+			var l: Array = LOOT.pick_random()
+			if l[0] == "datachip" and randf() < 0.6:
+				continue
+			crate.inv.add(l[0], randi_range(1, l[1]), randf_range(20.0, 95.0))
+	# Schrott und Kabel
+	var free := inner.filter(func(p): return g.walkable(p))
+	for k in randi_range(2, 5):
+		g.drop_items(free.pick_random(), ["scrap", "scrap", "copper", "pipe", "plate"].pick_random(), randi_range(1, 3), randf_range(15.0, 70.0))
+	var cy := top + randi_range(1, h - 2)
+	for cx in range(left + 1, left + w - 1):
+		if randf() < 0.8:
+			g.cables[g.idx(Vector2i(cx, cy))] = 1
+	wreck_name = NAMES.pick_random()
+	EventBus.ship_changed.emit()
+
+func _put(g: ShipGrid, p: Vector2i, t: int) -> void:
+	g.set_tile(p, t)
+	var i := g.idx(p)
+	g.zone[i] = 1
+	g.cond[i] = randf_range(25.0, 95.0)
+
+func is_wreck(i: int) -> bool:
+	return ShipSystem.grid.zone[i] == 1
+
+## Darf das Wrack entfernt werden? (Niemand darf darauf stehen)
+func clearable() -> bool:
+	var g := ShipSystem.grid
+	for c in CrewSystem.crew:
+		if g.zone[g.idx(c.tile())] == 1:
+			return false
+	return true
+
+func clear() -> void:
+	var g := ShipSystem.grid
+	for i in g.tiles.size():
+		if g.zone[i] != 1:
+			continue
+		g.devices.erase(i)
+		g.piles.erase(i)
+		ShipConstructionSystem.jobs.erase(i)
+		g.tiles[i] = ShipGrid.Tile.SPACE
+		g.cables[i] = 0
+		g.o2[i] = 0.0; g.n2[i] = 0.0; g.co2[i] = 0.0
+		g.zone[i] = 0
+	wreck_name = ""
+	EventBus.ship_changed.emit()
+
+func device_value(dev: Device) -> int:
+	var base := 0.0
+	var c := dev.data().cost
+	for t in c:
+		base += ItemSystem.item(t).value * c[t]
+	return int(base * (0.3 + 0.7 * dev.cond / 100.0))
+
+## Restwert beim Verschrotten
+func hull_value() -> int:
+	var g := ShipSystem.grid
+	var v := 0.0
+	var plate := ItemSystem.item("plate").value
+	for i in g.tiles.size():
+		if g.zone[i] != 1:
+			continue
+		var t := g.tiles[i]
+		if t == ShipGrid.Tile.WALL or t == ShipGrid.Tile.DOOR:
+			v += plate * 2
+		elif t == ShipGrid.Tile.FLOOR:
+			v += plate
+		if g.devices.has(i):
+			v += device_value(g.devices[i])
+			if g.devices[i].inv != null:
+				v += EconomySystem.inv_value(g.devices[i].inv)
+		if g.piles.has(i):
+			v += EconomySystem.inv_value(g.piles[i])
+	return int(v * Config.HULL_FACTOR)
+
+## Geräte in der Nähe eines Charakters werden erkannt
+func reveal(c: CrewMember) -> void:
+	for dev in ShipSystem.grid.devices.values():
+		if dev.unknown and absf(dev.pos.x + 0.5 - c.pos.x) <= 2.5 and absf(dev.pos.y + 0.5 - c.pos.y) <= 2.5:
+			dev.unknown = false

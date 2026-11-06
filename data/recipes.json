@@ -1,0 +1,83 @@
+[
+ {
+  "id": "plate",
+  "name": "Schrott einschmelzen",
+  "in": {
+   "scrap": 3
+  },
+  "out": [
+   "plate",
+   1,
+   65
+  ],
+  "time": 4
+ },
+ {
+  "id": "pipe",
+  "name": "Rohre biegen",
+  "in": {
+   "scrap": 2
+  },
+  "out": [
+   "pipe",
+   2,
+   70
+  ],
+  "time": 3
+ },
+ {
+  "id": "circuit",
+  "name": "Platine löten",
+  "in": {
+   "copper": 2,
+   "scrap": 1
+  },
+  "out": [
+   "circuit",
+   1,
+   55
+  ],
+  "time": 6
+ },
+ {
+  "id": "filter",
+  "name": "Filter flicken",
+  "in": {
+   "fabric": 1,
+   "scrap": 1
+  },
+  "out": [
+   "filter",
+   1,
+   60
+  ],
+  "time": 3
+ },
+ {
+  "id": "cell",
+  "name": "Akkuzelle aufbereiten",
+  "in": {
+   "scrap": 2,
+   "copper": 1
+  },
+  "out": [
+   "cell",
+   1,
+   45
+  ],
+  "time": 8
+ },
+ {
+  "id": "fabric",
+  "name": "Stoff aus Resten",
+  "in": {
+   "scrap": 1
+  },
+  "out": [
+   "fabric",
+   1,
+   50
+  ],
+  "time": 2
+ }
+]

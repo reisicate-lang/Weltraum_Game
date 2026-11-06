@@ -17,6 +17,8 @@ var inv: Inventory = null
 var suit = null
 ## Schleusenpumpe: gespeicherte Luft (kPa)
 var store := 0.0
+## Wrack-Geräte sind unbekannt, bis jemand nah herangeht
+var unknown := false
 
 func _init(t: String, p: Vector2i) -> void:
 	type = t
@@ -50,6 +52,8 @@ func usable() -> bool:
 
 func status_text() -> String:
 	var d := data()
+	if unknown:
+		return "Kiste · Inhalt unbekannt (näher herangehen)" if inv != null else "Unbekanntes Gerät (näher herangehen)"
 	var parts: PackedStringArray = [d.display_name]
 	if broken:
 		parts.append("KAPUTT")
@@ -73,7 +77,7 @@ func status_text() -> String:
 
 func to_data() -> Dictionary:
 	return {"type": type, "x": pos.x, "y": pos.y, "cond": cond, "broken": broken, "stock": stock,
-		"charge": charge, "items": inv.to_data() if inv != null else [], "suit": suit, "store": store}
+		"charge": charge, "items": inv.to_data() if inv != null else [], "suit": suit, "store": store, "unknown": unknown}
 
 static func from_data(d: Dictionary) -> Device:
 	var dev := Device.new(String(d.type), Vector2i(int(d.x), int(d.y)))
@@ -85,4 +89,5 @@ static func from_data(d: Dictionary) -> Device:
 		dev.inv.from_data(d.items)
 	dev.suit = d.get("suit")
 	dev.store = float(d.get("store", 0.0))
+	dev.unknown = bool(d.get("unknown", false))
 	return dev

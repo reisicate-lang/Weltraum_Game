@@ -9,6 +9,7 @@ const TOOLS := [
 	["door", "Tür", "T", "Klick auf eine Wand oder einen Boden."],
 	["cable", "Kabel", "K", "Kabel verbinden Geräte mit Strom."],
 	["move", "Versetzen", "V", "Vom Gerät zum Zielfeld ziehen. Ein Charakter trägt es dorthin."],
+	["haul", "Einsammeln", "Q", "Haufen markieren. Die Crew bringt alles in die nächste Frachtkiste im Schiff."],
 	["repair", "Reparieren", "R", "Auf Beschädigtes klicken. Stark Beschädigtes wird automatisch repariert."],
 	["remove", "Abreißen", "X", "Schicht für Schicht: Gerät, Kabel, Wand/Tür, Boden. Gibt Teile zurück."],
 	["cancel", "Plan löschen", "C", "Entfernt Baupläne. Rechtsklick geht auch."],
@@ -37,6 +38,13 @@ var container_box: VBoxContainer
 var help_panel: PanelContainer
 var open_pos := Vector2i(-1, -1)
 var _last_container := ""
+var window_panel: PanelContainer
+var window_box: VBoxContainer
+var window_kind := ""
+var trade_tab := "sell"
+var _last_window := ""
+var gameover_panel: PanelContainer
+var gameover_label: Label
 
 func _ready() -> void:
 	layer = CanvasLayer.new()
@@ -47,7 +55,10 @@ func _ready() -> void:
 	_build_toasts()
 	_build_container()
 	_build_help()
+	_build_window()
+	_build_gameover()
 	EventBus.toast.connect(_on_toast)
+	EconomySystem.game_over.connect(show_game_over)
 	EventBus.speed_changed.connect(func(_i): _refresh_speed())
 	EventBus.game_loaded.connect(func(): close_container())
 	var timer := Timer.new()
@@ -161,7 +172,9 @@ func _build_bottom() -> void:
 	var row := HBoxContainer.new()
 	box.add_child(row)
 	for t in TOOLS:
-		var b := _button("%s [%s]" % [t[1], t[2]], set_tool.bind(t[0]))
+		var b := _button(t[1], set_tool.bind(t[0]))
+		b.tooltip_text = "%s (Taste %s)" % [t[1], t[2]]
+		b.add_theme_font_size_override("font_size", 13)
 		b.toggle_mode = true
 		tool_buttons[t[0]] = b
 		row.add_child(b)
@@ -231,11 +244,170 @@ Für Arbeiten im Vakuum holt Mira selbst einen Raumanzug. Die Luftschleuse links
 pumpt die Luft ab, bevor die Außentür aufgeht. Draußen auf dem Steg liegt Mondmüll.
 E: Kiste oder Haufen neben dir durchsuchen
 L / P: Luft- und Strom-Ansicht · Mausrad: zoomen · Pfeiltasten: Ansicht
-Leertaste: Pause · 1–4: Geschwindigkeit · Strg+S: speichern""", Color(0.87, 0.9, 0.94), 14)
+Leertaste: Pause · 1–4: Geschwindigkeit · Strg+S: speichern
+
+Du schuldest der Bank 24 000 Cr, alle 7 Tage ist eine Rate fällig.
+Unten hängt ein Wrack: ausschlachten (Abreißen X), einsammeln (Q), im
+Handelsterminal im Cockpit verkaufen (anklicken).""", Color(0.87, 0.9, 0.94), 14)
 	text.custom_minimum_size = Vector2(560, 0)
 	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(text)
 	box.add_child(_button("Los geht's", func(): help_panel.visible = false))
+
+func _build_window() -> void:
+	window_panel = _panel()
+	window_panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	window_panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	window_panel.position.y = 56
+	window_panel.custom_minimum_size = Vector2(400, 0)
+	window_panel.visible = false
+	layer.add_child(window_panel)
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(390, 560)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	window_panel.add_child(scroll)
+	window_box = VBoxContainer.new()
+	window_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(window_box)
+
+func _build_gameover() -> void:
+	gameover_panel = _panel()
+	gameover_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	gameover_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	gameover_panel.grow_vertical = Control.GROW_DIRECTION_BOTH
+	gameover_panel.visible = false
+	layer.add_child(gameover_panel)
+	var box := VBoxContainer.new()
+	gameover_panel.add_child(box)
+	gameover_label = _label("", Color(0.87, 0.9, 0.94), 15)
+	gameover_label.custom_minimum_size = Vector2(420, 0)
+	gameover_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(gameover_label)
+	box.add_child(_button("Neues Spiel", func():
+		gameover_panel.visible = false
+		GameState.new_game()
+		TimeSystem.set_speed(1)))
+
+func show_game_over(title: String, text: String) -> void:
+	gameover_label.text = title.to_upper() + "\n\n" + text
+	gameover_panel.visible = true
+
+func open_window(kind: String) -> void:
+	window_kind = kind
+	window_panel.visible = true
+	close_container()
+	_last_window = ""
+	_refresh_window()
+
+func close_window() -> void:
+	window_kind = ""
+	if window_panel != null:
+		window_panel.visible = false
+
+func _row(text: String, buttons: Array, color: Color = Color(0.87, 0.9, 0.94)) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	var l := _label(text, color, 12)
+	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	row.add_child(l)
+	for b in buttons:
+		row.add_child(b)
+	return row
+
+func _refresh_window() -> void:
+	if window_kind == "":
+		return
+	var E := EconomySystem
+	var t := E.terminal()
+	var c: CrewMember = GameState.selected if GameState.selected != null else CrewSystem.player()
+	var key := JSON.stringify([window_kind, trade_tab, E.credits, E.debt, t.inv.to_data() if t != null else [], c.inv.to_data() if c != null else [], E.log_entries.size(), SalvageSystem.wreck_name, int(GameState.time / 60.0)])
+	if key == _last_window:
+		return
+	_last_window = key
+	for child in window_box.get_children():
+		child.queue_free()
+	var head := HBoxContainer.new()
+	var title := _label("Werkbank" if window_kind == "bench" else "Handelsterminal · Tycho-Schrottplatz", COL_AMBER, 15)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(title)
+	head.add_child(_button("✕", close_window))
+	window_box.add_child(head)
+	if window_kind == "bench":
+		window_box.add_child(_label("Aus Schrott und Resten Neues machen. Die Crew holt das Material selbst.", COL_MUTED, 12))
+		for r in E.recipes:
+			var parts: PackedStringArray = []
+			for k in r["in"]:
+				parts.append("%d× %s" % [r["in"][k], ItemSystem.item(k).display_name])
+			var txt := "%s\n%s → %d× %s" % [r.name, " + ".join(parts), int(r.out[1]), ItemSystem.item(r.out[0]).display_name]
+			window_box.add_child(_row(txt, [_button("Herstellen", E.craft.bind(r.id))]))
+		return
+	if not E.terminal_online():
+		window_box.add_child(_label("Kein Strom. Das Terminal ist offline.", Color(0.9, 0.33, 0.29), 12))
+	var tabs := HBoxContainer.new()
+	for tb in [["sell", "Verkaufen"], ["buy", "Kaufen"], ["bank", "Konto"], ["salvage", "Bergung"]]:
+		var b := _button(tb[1], func():
+			trade_tab = tb[0]
+			_last_window = ""
+			_refresh_window())
+		b.toggle_mode = true
+		b.button_pressed = trade_tab == tb[0]
+		tabs.add_child(b)
+	window_box.add_child(tabs)
+	window_box.add_child(_label("%d Cr" % E.credits, COL_AMBER, 20))
+	match trade_tab:
+		"sell":
+			window_box.add_child(_label("Was im Terminal liegt, kannst du verkaufen. Leg Sachen aus dem Gepäck hinein.", COL_MUTED, 12))
+			if t != null and not t.inv.items.is_empty():
+				var total := 0
+				for it in t.inv.items:
+					total += E.sell_price(it)
+					window_box.add_child(_row("%s ×%d · %d %%" % [ItemSystem.item(it.type).display_name, it.qty, int(it.cond)],
+						[_button("%d Cr" % E.sell_price(it), E.sell.bind(it.type, it.qty))]))
+				window_box.add_child(_row("Summe: %d Cr" % total, [_button("Alles verkaufen", E.sell_all)], COL_AMBER))
+			else:
+				window_box.add_child(_label("Das Terminal ist leer.", COL_MUTED, 12))
+			if c != null and not c.inv.items.is_empty():
+				window_box.add_child(_label("Gepäck von " + c.display_name, COL_MUTED, 11))
+				for it in c.inv.items:
+					window_box.add_child(_row("%s ×%d" % [ItemSystem.item(it.type).display_name, it.qty],
+						[_button("Hineinlegen", _put_terminal.bind(it.type, it.qty))]))
+		"buy":
+			window_box.add_child(_label("Gekauftes landet im Terminal. Preise ändern sich jeden Tag.", COL_MUTED, 12))
+			var ids := ItemSystem.items.keys()
+			ids.sort()
+			for id in ids:
+				var f: float = E.prices.get(id, 1.0)
+				var trend := "  ▲ teuer" if f > 1.1 else ("  ▼ günstig" if f < 0.9 else "")
+				window_box.add_child(_row(ItemSystem.item(id).display_name + trend,
+					[_button("%d Cr" % E.buy_price(id), E.buy.bind(id, 1)), _button("×5", E.buy.bind(id, 5))]))
+		"bank":
+			var days := maxf(0.0, (E.next_payment - GameState.time) / 1440.0)
+			window_box.add_child(_row("Restschuld", [_label("%d Cr" % E.debt, COL_AMBER, 13)]))
+			window_box.add_child(_row("Nächste Rate", [_label("%d Cr in %.1f Tagen" % [mini(Config.PAYMENT, E.debt), days], COL_AMBER, 13)]))
+			window_box.add_child(_row("Liegegebühr", [_label("%d Cr pro Tag" % Config.DOCK_FEE, COL_MUTED, 13)]))
+			window_box.add_child(_row("Verpasste Raten", [_label("%d von %d" % [E.strikes, Config.MAX_STRIKES], COL_MUTED, 13)]))
+			window_box.add_child(_row("Tilgen", [_button("500 Cr", E.pay_debt.bind(500)), _button("Alles", E.pay_debt.bind(999999))]))
+			window_box.add_child(_label("Kontoauszug", COL_MUTED, 11))
+			for e in E.log_entries:
+				window_box.add_child(_row(e.text, [_label(("%+d" % e.amount) if e.amount != 0 else "", COL_MUTED, 12)], COL_MUTED))
+		"salvage":
+			if SalvageSystem.wreck_name != "":
+				window_box.add_child(_row("Wrack an der Leine", [_label(SalvageSystem.wreck_name, COL_AMBER, 13)]))
+				window_box.add_child(_row("Restwert beim Verschrotten", [_label("%d Cr" % SalvageSystem.hull_value(), COL_AMBER, 13)]))
+				window_box.add_child(_label("Was du vorher ausbaust und einzeln verkaufst, bringt viel mehr.", COL_MUTED, 12))
+				window_box.add_child(_button("Wrack verschrotten", E.scrap_hull))
+			window_box.add_child(_button("Neues Bergungsrecht (%d Cr)" % Config.CLAIM_FEE, E.buy_claim))
+
+func _put_terminal(type: String, qty: int) -> void:
+	var c: CrewMember = GameState.selected if GameState.selected != null else CrewSystem.player()
+	var t := EconomySystem.terminal()
+	if c == null or t == null:
+		return
+	if not c.can_reach(t.pos):
+		GameState.toast(c.display_name + " muss neben dem Terminal stehen.")
+		return
+	c.inv.move_to(t.inv, type, qty)
+	_last_window = ""
 
 # ---------------- Aktionen ----------------
 
@@ -358,7 +530,10 @@ func _refresh() -> void:
 	else:
 		power_label.text = "⚡ %.1f kW erzeugt · %.1f kW verbraucht · Batterie %.1f/%.0f kWh%s" % [
 			net.production, net.demand, net.charge, net.capacity, "" if net.ok else " · STROMAUSFALL"]
-	money_label.text = "%d Baupläne offen" % ShipConstructionSystem.jobs.size()
+	money_label.text = "%d Cr · Schulden %d · Rate in %.1f T · %d Baupläne" % [EconomySystem.credits, EconomySystem.debt,
+		maxf(0.0, (EconomySystem.next_payment - GameState.time) / 1440.0), ShipConstructionSystem.jobs.size()]
+	money_label.add_theme_color_override("font_color", COL_AMBER)
+	_refresh_window()
 	_refresh_hover()
 	_refresh_container()
 

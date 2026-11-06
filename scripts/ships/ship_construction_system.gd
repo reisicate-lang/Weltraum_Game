@@ -18,6 +18,7 @@ func can_place(tool: String, p: Vector2i) -> bool:
 		return t == ShipGrid.Tile.FLOOR and not has_dev
 	match tool:
 		"repair": return DamageSystem.needs_repair(p)
+		"haul": return g.piles.has(i) and not jobs.has(i)
 		"move": return has_dev and not jobs.has(i)
 		"floor": return t == ShipGrid.Tile.SPACE
 		"wall": return (t == ShipGrid.Tile.SPACE or t == ShipGrid.Tile.FLOOR) and not has_dev
@@ -35,7 +36,9 @@ func place(tool: String, p: Vector2i) -> bool:
 		cancel(jobs[i])
 		return true
 	var job := {"x": p.x, "y": p.y, "progress": 0.0, "claimed_by": -1, "retry_at": 0.0, "paid": false}
-	if tool == "repair":
+	if tool == "haul":
+		job.merge({"kind": "haul", "phase": "pickup", "need": 0.2, "paid": true})
+	elif tool == "repair":
 		job.merge({"kind": "repair", "need": Config.REPAIR_TIME})
 	elif tool == "remove":
 		job.merge({"kind": "remove", "need": Config.REMOVE_TIME})
@@ -67,7 +70,7 @@ func place_move(src: Vector2i, dst: Vector2i) -> bool:
 
 ## Wo muss gerade gearbeitet werden?
 func target_of(job: Dictionary) -> Vector2i:
-	if job.kind == "move" and job.phase == "deliver":
+	if (job.kind == "move" or job.kind == "haul") and job.phase == "deliver":
 		return Vector2i(int(job.tx), int(job.ty))
 	return pos_of(job)
 
@@ -76,7 +79,28 @@ func cost(job: Dictionary) -> Dictionary:
 		"build": return Config.TILE_COST[int(job.tile)]
 		"cable": return Config.CABLE_COST
 		"device": return ItemSystem.device(job.dev).cost
+		"refill": return {job.item: int(job.qty)}
+		"craft": return EconomySystem.recipe(job.recipe)["in"]
 	return {}
+
+## Vorräte (Essen, Wasser, Brennstoff, Luft) automatisch aus dem Lager nachfüllen lassen
+func scan_refills() -> void:
+	var g := ShipSystem.grid
+	for i in g.devices:
+		var dev: Device = g.devices[i]
+		var d := dev.data()
+		if g.zone[i] == 1 or d.stock < 0.0 or dev.stock > d.stock * Config.REFILL_AT or jobs.has(i):
+			continue
+		for item_id in ItemSystem.items:
+			var it: ItemData = ItemSystem.item(item_id)
+			if not it.refill.has(dev.type):
+				continue
+			var want := int(ceil((d.stock - dev.stock) / float(it.refill[dev.type])))
+			var qty := mini(mini(want, maxi(1, int(Config.CARRY_WEIGHT / it.weight))), available(item_id))
+			if qty > 0:
+				jobs[i] = {"kind": "refill", "item": item_id, "qty": qty, "x": dev.pos.x, "y": dev.pos.y, "need": 0.5,
+					"progress": 0.0, "claimed_by": -1, "retry_at": 0.0, "paid": false}
+			break
 
 func pos_of(job: Dictionary) -> Vector2i:
 	return Vector2i(int(job.x), int(job.y))
@@ -142,6 +166,16 @@ func complete(job: Dictionary, worker_pos: Vector2i) -> void:
 	match job.kind:
 		"repair":
 			DamageSystem.repair(p)
+		"refill":
+			var dev := g.device_at(p)
+			if dev != null:
+				var per: float = ItemSystem.item(job.item).refill.get(dev.type, 0)
+				dev.stock = minf(dev.data().stock, dev.stock + per * int(job.qty))
+		"craft":
+			var r := EconomySystem.recipe(job.recipe)
+			var spot := drop_spot(worker_pos)
+			g.drop_items(spot, r.out[0], int(r.out[1]), float(r.out[2]))
+			GameState.toast("Werkbank: %s fertig." % ItemSystem.item(r.out[0]).display_name)
 		"build":
 			_move_pile_away(i, worker_pos)
 			g.set_tile(p, int(job.tile))
@@ -207,6 +241,9 @@ func missing(c: Dictionary, inv: Inventory) -> Dictionary:
 func label(job: Dictionary) -> String:
 	match job.kind:
 		"repair": return "Repariert"
+		"refill": return "Füllt nach: " + ItemSystem.item(job.item).display_name
+		"craft": return "Werkbank: " + String(EconomySystem.recipe(job.recipe).name)
+		"haul": return "Bringt Sachen ins Lager" if job.phase == "deliver" else "Sammelt ein"
 		"move": return "Trägt Gerät" if job.phase == "deliver" else "Hebt Gerät auf"
 		"remove": return "Reißt ab"
 		"cable": return "Verlegt Kabel"
@@ -216,6 +253,8 @@ func label(job: Dictionary) -> String:
 func to_data() -> Array:
 	var out: Array = []
 	for j in jobs.values():
+		if (j.kind == "move" or j.kind == "haul") and j.get("phase", "") == "deliver":
+			continue  # wird gerade getragen
 		var d: Dictionary = j.duplicate()
 		d.claimed_by = -1
 		out.append(d)

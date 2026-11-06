@@ -17,6 +17,7 @@ func save_game(silent: bool = false) -> bool:
 		"ship": ShipSystem.grid.to_data(),
 		"crew": CrewSystem.to_data(),
 		"jobs": ShipConstructionSystem.to_data(),
+		"economy": EconomySystem.to_data(),
 	}
 	var f := FileAccess.open(Config.SAVE_PATH, FileAccess.WRITE)
 	if f == null:
@@ -47,6 +48,7 @@ func load_game(silent: bool = false) -> bool:
 	ShipSystem.grid = ShipGrid.from_data(data.ship)
 	CrewSystem.from_data(data.crew)
 	ShipConstructionSystem.from_data(data.jobs)
+	EconomySystem.from_data(data.economy)
 	GameState.selected = CrewSystem.player()
 	EventBus.game_loaded.emit()
 	EventBus.ship_changed.emit()

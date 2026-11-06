@@ -65,7 +65,13 @@ func _draw_tile(g: ShipGrid, p: Vector2i) -> void:
 	var t := g.get_tile(p)
 	if t == ShipGrid.Tile.SPACE:
 		return
-	draw_rect(_rect(p), COL_FLOOR if (p.x + p.y) % 2 == 0 else COL_FLOOR_ALT)
+	var zone := g.zone[g.idx(p)]
+	var floor_col := COL_FLOOR if (p.x + p.y) % 2 == 0 else COL_FLOOR_ALT
+	if zone == 1:
+		floor_col = Color(0.2, 0.188, 0.172) if (p.x + p.y) % 2 == 0 else Color(0.184, 0.172, 0.157)
+	elif zone == 2:
+		floor_col = Color(0.17, 0.19, 0.21)
+	draw_rect(_rect(p), floor_col)
 	draw_rect(_rect(p, 0.02), Color(0.11, 0.145, 0.19), false, 1.0)
 	# Schleusenboden: Warnstreifen
 	if t == ShipGrid.Tile.FLOOR and AirlockSystem.is_lock_tile(g.idx(p)):
@@ -133,6 +139,11 @@ func _draw_cable(g: ShipGrid, p: Vector2i) -> void:
 func _draw_device(dev: Device, ghost: bool = false) -> void:
 	var d := dev.data()
 	var r := _rect(dev.pos, 0.1)
+	if dev.unknown and not ghost:
+		draw_rect(r, Color(0.23, 0.24, 0.26))
+		draw_rect(r, Color(0, 0, 0, 0.5), false, 1.0)
+		draw_string(ThemeDB.fallback_font, r.position + Vector2(S * 0.28, S * 0.58), "?", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(0.55, 0.57, 0.6))
+		return
 	var col := d.color
 	if ghost:
 		col.a = 0.45
@@ -187,6 +198,9 @@ func _draw_jobs() -> void:
 		var p := ShipConstructionSystem.pos_of(job)
 		var col := COL_REMOVE if job.kind == "remove" or job.get("missing", false) else COL_PLAN
 		col.a = pulse
+		if job.kind == "haul":
+			draw_rect(_rect(p, 0.08), Color(0.44, 0.81, 0.56, pulse), false, 2.0)
+			continue
 		if job.kind == "remove":
 			var o := Vector2(p) * S
 			draw_line(o + Vector2(0.2, 0.2) * S, o + Vector2(0.8, 0.8) * S, col, 2.5)

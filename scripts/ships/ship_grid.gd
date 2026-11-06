@@ -15,6 +15,8 @@ var n2 := PackedFloat32Array()
 var co2 := PackedFloat32Array()
 var cond := PackedFloat32Array()
 var door_open_until := PackedFloat64Array()
+## Bereich: 0 = dein Schiff, 1 = Wrack, 2 = Bergungsleine
+var zone := PackedByteArray()
 var devices: Dictionary = {}  ## Feld-Index -> Device
 var piles: Dictionary = {}    ## Feld-Index -> Inventory (Haufen auf dem Boden)
 
@@ -26,6 +28,7 @@ func _init(w: int = Config.WORLD_W, h: int = Config.WORLD_H) -> void:
 	o2.resize(n); n2.resize(n); co2.resize(n); door_open_until.resize(n)
 	cond.resize(n)
 	cond.fill(100.0)
+	zone.resize(n)
 
 func idx(p: Vector2i) -> int:
 	return p.y * width + p.x
@@ -96,13 +99,14 @@ func to_data() -> Dictionary:
 	for i in piles:
 		pl.append([i, piles[i].to_data()])
 	return {"w": width, "h": height, "tiles": Array(tiles), "cables": Array(cables),
-		"o2": Array(o2), "n2": Array(n2), "co2": Array(co2), "cond": Array(cond), "devices": devs, "piles": pl}
+		"o2": Array(o2), "n2": Array(n2), "co2": Array(co2), "cond": Array(cond), "zone": Array(zone), "devices": devs, "piles": pl}
 
 static func from_data(d: Dictionary) -> ShipGrid:
 	var g := ShipGrid.new(int(d.w), int(d.h))
 	for i in g.tiles.size():
 		g.tiles[i] = int(d.tiles[i]); g.cables[i] = int(d.cables[i])
 		g.o2[i] = float(d.o2[i]); g.n2[i] = float(d.n2[i]); g.co2[i] = float(d.co2[i]); g.cond[i] = float(d.cond[i])
+		g.zone[i] = int(d.zone[i]) if d.has("zone") else 0
 	for dd in d.devices:
 		var dev := Device.from_data(dd)
 		g.devices[g.idx(dev.pos)] = dev

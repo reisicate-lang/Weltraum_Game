@@ -49,6 +49,8 @@ func create_start_ship() -> void:
 	grid.place_device("generator", Vector2i(x0 + 1, y0 + 5))
 	grid.place_device("battery", Vector2i(x0 + 2, y0 + 5))
 	grid.place_device("airtank", Vector2i(x0 + 7, y0 + 5))
+	grid.place_device("terminal", Vector2i(x0 + 12, y0 + 5))
+	grid.place_device("workbench", Vector2i(x0 + 13, y0 + 5))
 	grid.place_device("locker", Vector2i(x0 + 1, y0 + 8))
 	grid.place_device("charger", Vector2i(x0 + 2, y0 + 8))
 	grid.place_device("pump", Vector2i(x0 - 1, y0 + 6))

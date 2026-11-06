@@ -53,7 +53,7 @@ const CARRY_WEIGHT := 40.0
 const CARRY_VOLUME := 40.0
 
 const SAVE_PATH := "user://savegame.json"
-const SAVE_VERSION := 1
+const SAVE_VERSION := 2
 
 ## Raumanzüge (Prozent, Verbrauch pro Minute)
 const SUIT_O2_USE := 100.0 / 120.0
@@ -75,3 +75,22 @@ const METEORS_PER_DAY := 0.7
 const FIRST_METEOR_DAY := 1.0
 const AUTO_REPAIR_AT := 50.0
 const REPAIR_TIME := 3.0
+
+## Wirtschaft (Credits = Cr)
+const START_CREDITS := 400
+const START_DEBT := 24000
+const PAYMENT := 1500
+const PAYMENT_DAYS := 7
+const LATE_FEE := 0.1
+const MAX_STRIKES := 3
+const DOCK_FEE := 45
+const BUY_MARKUP := 1.3
+const SELL_FACTOR := 0.75
+const CLAIM_FEE := 350
+const HULL_FACTOR := 0.25
+const PRICE_DRIFT := 0.06
+const REFILL_AT := 0.3
+
+## Wrack an der Bergungsleine
+const WRECK_TOP := 30
+const WRECK_ENTRY_X := 20
