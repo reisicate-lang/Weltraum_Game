@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "generator"
+display_name = "Generator"
+description = "Erzeugt 6 kW Strom. Verbraucht 1 Brennstoff pro Stunde."
+power = 6.0
+build_time = 6.0
+cost = {"plate": 4, "motor": 1, "circuit": 2}
+stock = 240.0
+stock_unit = "Brennstoff"
+capacity = 0.0
+storage = 0.0
+need = ""
+wears = true
+color = Color(0.29, 0.31, 0.35, 1)

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "fabric"
+display_name = "Stoff"
+weight = 1.0
+volume = 2.0
+value = 8
+description = "Für Betten und Anzüge."
+refill = {}

@@ -6,6 +6,19 @@ und arbeitet sich hoch: Wracks bergen, handeln, Schiffe umbauen, Crew anheuern, 
 
 Jede Etappe endet mit einer spielbaren, getesteten Version.
 
+## Umstieg auf Godot 4
+
+Ab jetzt wird das Spiel in Godot 4.3 mit GDScript gebaut. Die Etappen 1–6 existieren als Browser-Version in `web/`
+und werden Schritt für Schritt übertragen.
+
+- [x] Godot-Projekt mit Ordnerstruktur, Autoloads, Resources (Gegenstände, Geräte), Signals (EventBus)
+- [x] Übertragen: Schiffsraster, Bauen mit Material, Abreißen, Wegfindung (AStarGrid2D), Crew mit Bedürfnissen,
+      Luft pro Feld mit Lecks, Strom, Lebenserhaltung, Inventar, Kisten, Speichern (JSON), Oberfläche, WASD
+- [ ] Übertragen: Luftschleuse, Raumanzüge, Schäden (Etappe 3)
+- [ ] Übertragen: Einsammeln, Werkbank, Wracks, Handel, Kredit (Etappe 4–5)
+- [ ] Übertragen: Raumflug, Navigation, Flotte (Etappe 6)
+- [ ] Skill-, Hobby- und Trait-System mit Lebenslauf (eigener Prompt)
+
 ## Erledigt
 
 ### Etappe 1 – Fundament

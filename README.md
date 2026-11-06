@@ -1,51 +1,55 @@
 # Weltraum_Game
 
-Ein Weltraum-Survival- und Bauspiel für den Browser.
+Düstere Weltraum-Survival- und Raumschiff-Simulation von oben, spielmechanisch an Ostranauts angelehnt.
 
-## Spielen
+Das Spiel wird mit **Godot 4.3** (GDScript) entwickelt. Die frühere Browser-Version liegt im Ordner `web/`
+und dient als Vorlage für die Etappen, die noch nach Godot übertragen werden.
 
-Die Datei `index.html` im Browser öffnen (Doppelklick genügt).
+## Starten (Godot)
+
+1. Godot 4.3 herunterladen: https://godotengine.org/download (Standard-Version, nicht .NET)
+2. Godot öffnen, **Importieren**, die Datei `project.godot` aus diesem Ordner wählen
+3. Mit **F5** (oder dem Play-Knopf oben rechts) starten
+
+## Tests (ohne Fenster)
+
+```
+godot --headless --path . --script res://tests/run_tests.gd
+```
 
 ## Steuerung
 
 | Was | Wie |
 |---|---|
-| Deine Figur steuern | `WASD`, mit `Umschalt` rennen |
-| Laufen lassen | Werkzeug **Auswahl**, auf einen Boden klicken |
-| Kiste/Haufen durchsuchen | `E` (daneben stehen) oder draufklicken |
-| Gepäck ein-/ausblenden | `I` |
-| Bauen | Werkzeug wählen (Boden `B`, Wand `M`, Tür `T`), klicken oder Fläche ziehen |
-| Abreißen / Plan löschen | `X` / `C` |
-| Versetzen / Reparieren / Einsammeln | `V` / `R` / `Q` |
-| Handeln | Klick auf das Handelsterminal im Cockpit |
-| Aufgabe abbrechen | Rechtsklick auf Bauplan oder Charakter |
-| Ansicht bewegen | Maus ziehen oder Pfeiltasten, Mausrad zoomt |
-| Kabel / Geräte | `K` / `G` |
+| Deine Figur | `WASD`, `Umschalt` = rennen |
+| Hinlaufen lassen | Werkzeug **Auswahl**, Klick auf Boden |
+| Bauen | Boden `B`, Wand `M`, Tür `T`, Kabel `K`, Geräte-Menü unten |
+| Abreißen / Plan löschen | `X` / `C`, Rechtsklick bricht ab |
+| Kiste durchsuchen | `E` (daneben stehen) oder draufklicken |
 | Luft- / Strom-Ansicht | `L` / `P` |
-| Zeit | `Leertaste` Pause, `1` bis `4` für 1×, 10×, 60×, 300× (1× = Echtzeit) |
-| Speichern | `Strg+S` (außerdem automatisch jede Minute) |
+| Zeit | `Leertaste` Pause, `1`–`4` (1× = Echtzeit) |
+| Speichern | `Strg+S`, Autosave jede Minute |
 
-## Aufbau des Codes
+## Projektstruktur
 
-| Datei | Aufgabe |
-|---|---|
-| `js/config.js` | Einstellungen (Bauzeiten, Geschwindigkeiten, Weltgröße) |
-| `js/items.js` | Gegenstände und Inventare |
-| `js/world.js` | Die Welt aus Kacheln und das Startschiff |
-| `js/devices.js` | Geräte (Generator, Bett, Sauerstoff ...) |
-| `js/power.js` | Stromnetz |
-| `js/atmosphere.js` | Luft und Lecks |
-| `js/airlock.js` | Luftschleusen |
-| `js/damage.js` | Verschleiß, Mikrometeoriten, Reparaturen |
-| `js/economy.js` | Geld, Markt, Kredit, Werkbank-Aufträge |
-| `js/wreck.js` | Zufällige Wracks zum Ausschlachten |
-| `js/pathfinding.js` | Wegfindung der Charaktere |
-| `js/jobs.js` | Baupläne |
-| `js/characters.js` | Verhalten der Charaktere |
-| `js/render.js` | Zeichnen |
-| `js/input.js` | Maus, Touch, Tastatur |
-| `js/save.js` | Speichern und Laden |
-| `js/ui.js` | Menüs und Anzeigen |
-| `js/main.js` | Start und Spielschleife |
+```
+res://
+  scenes/main/        Hauptszene (Kamera, Eingabe)
+  scripts/core/       EventBus, GameState, TimeSystem, Config
+  scripts/ships/      ShipSystem, ShipGrid, Device, ShipConstructionSystem,
+                      ShipPowerSystem, AtmosphereSystem, OxygenSystem, ShipView
+  scripts/character/  CrewMember (Verhalten, Bedürfnisse)
+  scripts/crew/       CrewSystem
+  scripts/inventory/  ItemSystem, ItemData, Inventory
+  scripts/save/       SaveSystem (JSON)
+  scripts/ui/         UIManager
+  resources/items/    Gegenstände als .tres (ItemData)
+  resources/components/ Geräte als .tres (DeviceData)
+  tests/              Automatische Tests
+  web/                Alte Browser-Version (Vorlage)
+```
+
+Neue Gegenstände oder Geräte: einfach eine neue `.tres`-Datei in `resources/items/` bzw. `resources/components/` anlegen.
+Das Spiel lädt sie automatisch.
 
 Den Bauplan findest du in [PLAN.md](PLAN.md).

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "plate"
+display_name = "Stahlplatte"
+weight = 8.0
+volume = 4.0
+value = 18
+description = "Für Böden, Wände und Gehäuse."
+refill = {}

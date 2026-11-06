@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "cell"
+display_name = "Akkuzelle"
+weight = 2.0
+volume = 1.0
+value = 60
+description = "Speichert Strom. Für Batterien."
+refill = {}

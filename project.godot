@@ -1,0 +1,38 @@
+; Engine configuration file.
+; Godot 4.x – Weltraum_Game
+
+config_version=5
+
+[application]
+
+config/name="Weltraum_Game"
+config/description="Düstere Weltraum-Survival- und Raumschiff-Simulation (Ansicht von oben)."
+run/main_scene="res://scenes/main/main.tscn"
+config/features=PackedStringArray("4.3", "GL Compatibility")
+
+[autoload]
+
+EventBus="*res://scripts/core/event_bus.gd"
+ItemSystem="*res://scripts/inventory/item_system.gd"
+GameState="*res://scripts/core/game_state.gd"
+TimeSystem="*res://scripts/core/time_system.gd"
+ShipSystem="*res://scripts/ships/ship_system.gd"
+ShipPowerSystem="*res://scripts/ships/ship_power_system.gd"
+AtmosphereSystem="*res://scripts/ships/atmosphere_system.gd"
+OxygenSystem="*res://scripts/ships/oxygen_system.gd"
+ShipConstructionSystem="*res://scripts/ships/ship_construction_system.gd"
+CrewSystem="*res://scripts/crew/crew_system.gd"
+SaveSystem="*res://scripts/save/save_system.gd"
+UIManager="*res://scripts/ui/ui_manager.gd"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=800
+window/stretch/aspect="expand"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+environment/defaults/default_clear_color=Color(0.02, 0.027, 0.047, 1)

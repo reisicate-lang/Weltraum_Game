@@ -1,0 +1,216 @@
+## Zeichnet das Schiff von oben: Felder, Kabel, Geräte, Haufen,
+## Baupläne, Charaktere und Werkzeug-Vorschau. Ohne Grafikdateien,
+## nur mit einfachen Formen (draw_rect, draw_circle, ...).
+extends Node2D
+
+const S := Config.TILE_SIZE
+const COL_FLOOR := Color(0.165, 0.204, 0.259)
+const COL_FLOOR_ALT := Color(0.153, 0.192, 0.251)
+const COL_WALL := Color(0.655, 0.694, 0.753)
+const COL_WALL_EDGE := Color(0.294, 0.333, 0.4)
+const COL_DOOR := Color(0.788, 0.541, 0.173)
+const COL_PLAN := Color(0.349, 0.78, 0.902)
+const COL_REMOVE := Color(0.898, 0.329, 0.294)
+
+## Vom Hauptskript gesetzt: Feld unter der Maus und markierte Felder
+var hover := Vector2i(-1, -1)
+var preview: Array[Vector2i] = []
+
+func _process(_delta: float) -> void:
+	queue_redraw()
+
+func _draw() -> void:
+	var g := ShipSystem.grid
+	if g == null:
+		return
+	# Nur sichtbare Felder zeichnen
+	var view := get_viewport().get_canvas_transform().affine_inverse() * get_viewport_rect()
+	var x0 := maxi(0, floori(view.position.x / S))
+	var y0 := maxi(0, floori(view.position.y / S))
+	var x1 := mini(g.width - 1, ceili(view.end.x / S))
+	var y1 := mini(g.height - 1, ceili(view.end.y / S))
+	for y in range(y0, y1 + 1):
+		for x in range(x0, x1 + 1):
+			_draw_tile(g, Vector2i(x, y))
+	for y in range(y0, y1 + 1):
+		for x in range(x0, x1 + 1):
+			var i := g.idx(Vector2i(x, y))
+			if g.cables[i] == 1:
+				_draw_cable(g, Vector2i(x, y))
+	for i in g.piles:
+		_draw_pile(g.pos(i))
+	for i in g.devices:
+		_draw_device(g.devices[i])
+	if GameState.view == "air":
+		_draw_air(g, x0, y0, x1, y1)
+	_draw_jobs()
+	for c in CrewSystem.crew:
+		_draw_char(c)
+	_draw_preview(g)
+
+func _rect(p: Vector2i, inset: float = 0.0) -> Rect2:
+	return Rect2(Vector2(p) * S + Vector2(inset, inset) * S, Vector2(S, S) * (1.0 - 2.0 * inset))
+
+func _draw_tile(g: ShipGrid, p: Vector2i) -> void:
+	var t := g.get_tile(p)
+	if t == ShipGrid.Tile.SPACE:
+		return
+	draw_rect(_rect(p), COL_FLOOR if (p.x + p.y) % 2 == 0 else COL_FLOOR_ALT)
+	draw_rect(_rect(p, 0.02), Color(0.11, 0.145, 0.19), false, 1.0)
+	if t == ShipGrid.Tile.WALL:
+		draw_rect(_rect(p), COL_WALL)
+		for d in [Vector2i(0, -1), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(1, 0)]:
+			if not g.wall_like(p + d):
+				var r := _rect(p)
+				var e := S * 0.1
+				if d == Vector2i(0, -1):
+					r = Rect2(r.position, Vector2(S, e))
+				elif d == Vector2i(0, 1):
+					r = Rect2(r.position + Vector2(0, S - e), Vector2(S, e))
+				elif d == Vector2i(-1, 0):
+					r = Rect2(r.position, Vector2(e, S))
+				else:
+					r = Rect2(r.position + Vector2(S - e, 0), Vector2(e, S))
+				draw_rect(r, COL_WALL_EDGE)
+		_draw_cracks(p, g.cond[g.idx(p)])
+	elif t == ShipGrid.Tile.DOOR:
+		var horizontal := g.wall_like(p + Vector2i(-1, 0)) or g.wall_like(p + Vector2i(1, 0))
+		var gap := 0.3 if g.door_open(g.idx(p)) else 0.0
+		var o := Vector2(p) * S
+		if horizontal:
+			draw_rect(Rect2(o + Vector2(0.04, 0.36) * S, Vector2(0.44 - gap, 0.28) * S), COL_DOOR)
+			draw_rect(Rect2(o + Vector2(0.52 + gap, 0.36) * S, Vector2(0.44 - gap, 0.28) * S), COL_DOOR)
+		else:
+			draw_rect(Rect2(o + Vector2(0.36, 0.04) * S, Vector2(0.28, 0.44 - gap) * S), COL_DOOR)
+			draw_rect(Rect2(o + Vector2(0.36, 0.52 + gap) * S, Vector2(0.28, 0.44 - gap) * S), COL_DOOR)
+
+func _draw_cracks(p: Vector2i, c: float) -> void:
+	if c >= 85.0:
+		return
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(p)
+	var o := Vector2(p) * S
+	for k in (3 if c < 40.0 else 1):
+		var a := o + Vector2(rng.randf_range(0.2, 0.8), rng.randf_range(0.2, 0.8)) * S
+		var b := a + Vector2(rng.randf_range(-0.3, 0.3), rng.randf_range(-0.3, 0.3)) * S
+		draw_line(a, b, Color(0.08, 0.04, 0.02, 0.8), 1.5)
+
+func _draw_cable(g: ShipGrid, p: Vector2i) -> void:
+	var col := Color(0.84, 0.63, 0.24, 0.55)
+	if GameState.view == "power":
+		var net_id := ShipPowerSystem.net_of[g.idx(p)] if ShipPowerSystem.net_of.size() > g.idx(p) else -1
+		var ok := net_id >= 0 and ShipPowerSystem.nets[net_id].ok and ShipPowerSystem.nets[net_id].production > 0.0
+		col = Color(1, 0.82, 0.25) if ok else COL_REMOVE
+	var c := (Vector2(p) + Vector2(0.5, 0.5)) * S
+	var any := false
+	for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+		var q: Vector2i = p + d
+		if g.in_bounds(q) and g.cables[g.idx(q)] == 1:
+			draw_line(c, c + Vector2(d) * S * 0.5, col, 2.0)
+			any = true
+	if not any:
+		draw_line(c - Vector2(S * 0.2, 0), c + Vector2(S * 0.2, 0), col, 2.0)
+
+func _draw_device(dev: Device, ghost: bool = false) -> void:
+	var d := dev.data()
+	var r := _rect(dev.pos, 0.1)
+	var col := d.color
+	if ghost:
+		col.a = 0.45
+	draw_rect(r, col)
+	draw_rect(r, Color(0, 0, 0, 0.5), false, 1.0)
+	var font := ThemeDB.fallback_font
+	draw_string(font, r.position + Vector2(3, S * 0.5), d.display_name.substr(0, 2), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(1, 1, 1, 0.85))
+	if ghost:
+		return
+	# Füllstand / Ladung
+	var f := -1.0
+	if d.stock > 0.0:
+		f = dev.stock / d.stock
+	elif d.capacity > 0.0:
+		f = dev.charge / d.capacity
+	if f >= 0.0:
+		draw_rect(Rect2(r.position + Vector2(0, r.size.y - 3), Vector2(r.size.x * clampf(f, 0.0, 1.0), 3)), Color(0.44, 0.81, 0.56))
+	_draw_cracks(dev.pos, dev.cond)
+	var problem := (dev.needs_power() and not dev.powered) or (d.stock >= 0.0 and dev.stock <= 0.0) or dev.broken
+	if problem and int(Time.get_ticks_msec() / 400) % 2 == 0:
+		draw_circle(Vector2(dev.pos) * S + Vector2(0.82, 0.18) * S, S * 0.09, COL_REMOVE)
+
+func _draw_pile(p: Vector2i) -> void:
+	var o := Vector2(p) * S
+	for k in 3:
+		draw_rect(Rect2(o + Vector2(0.2 + k * 0.2, 0.35 + (k % 2) * 0.2) * S, Vector2(0.22, 0.18) * S), Color(0.6, 0.55, 0.48))
+
+func _draw_air(g: ShipGrid, x0: int, y0: int, x1: int, y1: int) -> void:
+	for y in range(y0, y1 + 1):
+		for x in range(x0, x1 + 1):
+			var i := g.idx(Vector2i(x, y))
+			if not g.holds_air(i):
+				continue
+			var o2 := g.o2[i]
+			var col := Color(0.44, 0.81, 0.56, 0.38)
+			if o2 < Config.O2_LOW:
+				col = Color(0.9, 0.33, 0.29, 0.3 + 0.35 * (1.0 - o2 / Config.O2_LOW))
+			elif o2 < Config.O2_OK or g.co2[i] > Config.CO2_BAD:
+				col = Color(0.95, 0.78, 0.23, 0.45)
+			draw_rect(_rect(Vector2i(x, y)), col)
+
+func _draw_jobs() -> void:
+	var pulse := 0.55 + 0.25 * sin(Time.get_ticks_msec() / 300.0)
+	for job in ShipConstructionSystem.jobs.values():
+		var p := ShipConstructionSystem.pos_of(job)
+		var col := COL_REMOVE if job.kind == "remove" or job.get("missing", false) else COL_PLAN
+		col.a = pulse
+		if job.kind == "remove":
+			var o := Vector2(p) * S
+			draw_line(o + Vector2(0.2, 0.2) * S, o + Vector2(0.8, 0.8) * S, col, 2.5)
+			draw_line(o + Vector2(0.8, 0.2) * S, o + Vector2(0.2, 0.8) * S, col, 2.5)
+		else:
+			draw_rect(_rect(p, 0.05), Color(COL_PLAN, 0.18))
+			draw_rect(_rect(p, 0.08), col, false, 1.5)
+			if job.kind == "device":
+				_draw_device(Device.new(job.dev, p), true)
+		if job.progress > 0.0:
+			var o := Vector2(p) * S
+			draw_rect(Rect2(o + Vector2(0.1, 0.82) * S, Vector2(0.8, 0.1) * S), Color(0, 0, 0, 0.6))
+			draw_rect(Rect2(o + Vector2(0.1, 0.82) * S, Vector2(0.8 * minf(1.0, job.progress / job.need), 0.1) * S), Color(0.95, 0.64, 0.23))
+
+func _draw_char(c: CrewMember) -> void:
+	var center := c.pos * S
+	var font := ThemeDB.fallback_font
+	if c.unconscious:
+		draw_circle(center, S * 0.28, Color(0.48, 0.42, 0.35))
+		draw_string(font, center + Vector2(-3, -S * 0.4), "!", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, COL_REMOVE)
+		return
+	draw_circle(center + Vector2(1, 2), S * 0.3, Color(0, 0, 0, 0.35))
+	draw_circle(center, S * 0.28, c.color)
+	draw_circle(center + Vector2.from_angle(c.facing) * S * 0.14, S * 0.11, Color(0.75, 0.91, 1.0))
+	if GameState.selected == c:
+		draw_arc(center, S * 0.42, 0, TAU, 32, Color(0.95, 0.64, 0.23), 1.5)
+	var label := ("▸ " if c.is_player else "") + c.display_name
+	draw_string(font, center + Vector2(-S, -S * 0.5), label, HORIZONTAL_ALIGNMENT_CENTER, S * 2, 11,
+		Color(0.95, 0.76, 0.31) if c.is_player else Color(0.91, 0.93, 0.96))
+	if not c.path.is_empty() and (c.order != null):
+		var prev := center
+		for q in c.path:
+			var nxt := (Vector2(q) + Vector2(0.5, 0.5)) * S
+			draw_line(prev, nxt, Color(0.95, 0.64, 0.23, 0.6), 1.0)
+			prev = nxt
+
+func _draw_preview(g: ShipGrid) -> void:
+	if not g.in_bounds(hover):
+		return
+	if GameState.tool == "select":
+		draw_rect(_rect(hover), Color(1, 1, 1, 0.15))
+		return
+	var tiles: Array[Vector2i] = []
+	if preview.is_empty():
+		tiles.append(hover)
+	else:
+		tiles = preview
+	for p in tiles:
+		var ok := ShipConstructionSystem.can_place(GameState.tool, p)
+		var col := Color(1, 1, 1, 0.06)
+		if ok:
+			col = Color(0.9, 0.33, 0.29, 0.35) if GameState.tool in ["remove", "cancel"] else Color(0.35, 0.78, 0.9, 0.35)
+		draw_rect(_rect(p), col)

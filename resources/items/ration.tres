@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "ration"
+display_name = "Essensration"
+weight = 0.5
+volume = 0.6
+value = 6
+description = "Füllt den Vorratsschrank um 1 Ration auf."
+refill = {"food": 1}

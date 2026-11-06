@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "water"
+display_name = "Wasserspender"
+description = "Trinkwasser."
+power = 0.0
+build_time = 3.0
+cost = {"plate": 2, "pipe": 2}
+stock = 80.0
+stock_unit = "L"
+capacity = 0.0
+storage = 0.0
+need = "water"
+wears = false
+color = Color(0.24, 0.33, 0.42, 1)
