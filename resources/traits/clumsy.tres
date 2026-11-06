@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="TraitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/traits/trait_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trait_id = "clumsy"
+trait_name = "Ungeschickt"
+description = "Zwei linke Hände. Feinarbeiten dauern länger."
+positive = false
+modifiers = {"work_fine": 0.8}
+conflicts = PackedStringArray("nimble")

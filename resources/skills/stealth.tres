@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "stealth"
+skill_name = "Heimlichkeit"
+description = "Unauffällig bleiben, Ware verstecken, Kontrollen umgehen."
+category = "sozial"
+learning_sources = PackedStringArray("Schmuggel am Schwarzmarkt")
+training_actions = PackedStringArray("smuggle", "study_stealth")
+required_skills = {}
+gameplay_effects = {"smuggle": 0.6}
+mastery_text = "Meister: Schmuggelware wird praktisch nie gefunden."

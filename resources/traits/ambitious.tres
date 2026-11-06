@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="TraitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/traits/trait_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trait_id = "ambitious"
+trait_name = "Ehrgeizig"
+description = "Will vorankommen. Lernt schneller, arbeitet etwas schneller, verträgt aber Misserfolge schlecht."
+positive = true
+modifiers = {"learn_speed": 1.3, "work_speed": 1.05, "stress_resist": 0.9}
+conflicts = PackedStringArray("lazy")

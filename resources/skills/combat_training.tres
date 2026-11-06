@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "combat_training"
+skill_name = "Kampfausbildung"
+description = "Taktik, Reaktion, Deckung, Belastbarkeit im Kampf. Verbessert Verteidigung und Bedrohungswirkung."
+category = "kampf"
+learning_sources = PackedStringArray("Jeder Kampf", "Training am Trainingsgerät")
+training_actions = PackedStringArray("fight_armed", "fight_unarmed", "fight_ranged", "train_combat", "train_combat_armed", "train_shooting", "study_combat_training")
+required_skills = {}
+gameplay_effects = {"defense": 0.5, "threat": 0.5}
+mastery_text = "Meister: Gegner überlegen es sich zweimal (Plünderer greifen seltener an)."

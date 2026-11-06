@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "mechanical"
+skill_name = "Maschinenbau"
+description = "Motoren, Pumpen, Lüfter, Generatoren, Kühlschränke. Mechanische Reparaturen gehen schneller."
+category = "technik"
+learning_sources = PackedStringArray("Motoren, Pumpen und Generatoren reparieren", "Möbel demontieren", "Lehrbuch Mechanik")
+training_actions = PackedStringArray("repair_mechanical", "install_mechanical", "repair_furniture", "deconstruct_furniture", "study_mechanical")
+required_skills = {}
+gameplay_effects = {"work_mechanical": 0.8}
+mastery_text = "Meister: Mechanische Geräte nutzen sich halb so schnell ab."

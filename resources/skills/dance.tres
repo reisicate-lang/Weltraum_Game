@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "dance"
+skill_name = "Tanz"
+description = "Bewegung, Rhythmus, Auftritt. Bringt Trinkgeld in der Stationsbar und senkt Stress."
+category = "sozial"
+learning_sources = PackedStringArray("Tanzen in der Stationsbar")
+training_actions = PackedStringArray("perform_dance", "study_dance")
+required_skills = {}
+gameplay_effects = {"perform_income": 0.5, "stress_relief": 0.4}
+mastery_text = "Meister: Auftritte bringen doppelte Gage."

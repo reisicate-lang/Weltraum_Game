@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "acting"
+skill_name = "Schauspiel"
+description = "Rollen spielen, bluffen, Gefühle vortäuschen. Hilft bei Kontrollen und Auftritten."
+category = "sozial"
+learning_sources = PackedStringArray("Auftritte in der Stationsbar", "Bluffen bei Kontrollen")
+training_actions = PackedStringArray("perform_acting", "bluff", "study_acting")
+required_skills = {}
+gameplay_effects = {"bluff": 0.6, "perform_income": 0.5}
+mastery_text = "Meister: Kontrollen am Schwarzmarkt werden fast immer weggeredet."

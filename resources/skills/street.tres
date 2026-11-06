@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "street"
+skill_name = "Straßenetikette"
+description = "Umgang mit zwielichtigen Leuten, Schwarzmarktkontakte nutzen, Gefahren einschätzen."
+category = "sozial"
+learning_sources = PackedStringArray("Geschäfte am Schwarzmarkt", "Gespräche mit Halbweltkontakten")
+training_actions = PackedStringArray("smuggle", "talk_street", "study_street")
+required_skills = {}
+gameplay_effects = {"talk_street": 1.0, "black_bonus": 0.2}
+mastery_text = "Meister: Der Schwarzmarkt zahlt dir 20 % mehr."

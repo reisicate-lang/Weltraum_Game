@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "electrical"
+skill_name = "Elektrotechnik"
+description = "Strom, Kabel, Batterien, Solarpanels, Elektronik. Reparaturen an elektrischen Geräten gehen schneller und präziser."
+category = "technik"
+learning_sources = PackedStringArray("Elektrische Geräte reparieren und einbauen", "Kabel verlegen", "Lehrbuch Elektrotechnik")
+training_actions = PackedStringArray("repair_electrical", "install_electrical", "lay_cable", "repair_nav", "install_sensor", "study_electrical")
+required_skills = {}
+gameplay_effects = {"work_electrical": 0.8, "cable_speed": 0.5}
+mastery_text = "Meister: Batterien und Solarpanels nutzen sich halb so schnell ab."

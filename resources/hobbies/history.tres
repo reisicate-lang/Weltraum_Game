@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="HobbyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/hobby_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+hobby_id = "history"
+hobby_name = "Geschichte"
+description = "Kennt den Krieg und seine Schiffe. Hilft beim Deuten von Wracks."
+related_skill = "forensic"
+effects = {"stress_relief": 5, "unlock": "talk_folk"}

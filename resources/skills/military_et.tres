@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "military_et"
+skill_name = "Militäretikette"
+description = "Ränge, Protokoll und Ton beim Militär. Öffnet Gespräche mit Patrouillen und Veteranen."
+category = "sozial"
+learning_sources = PackedStringArray("Gespräche mit Militär und Veteranen")
+training_actions = PackedStringArray("talk_military", "study_military_et")
+required_skills = {}
+gameplay_effects = {"talk_military": 1.0}
+mastery_text = "Meister: Patrouillen lassen dich ohne Kontrolle passieren."

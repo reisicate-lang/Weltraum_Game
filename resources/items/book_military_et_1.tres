@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "book_military_et_1"
+display_name = "Lehrbuch: Militäretikette (Grundlagen)"
+weight = 0.8
+volume = 1.0
+value = 40
+description = "Bringt Militäretikette bis 40 %. Lesen in Ruhezeiten."
+teaches = "military_et"
+book_level = 1

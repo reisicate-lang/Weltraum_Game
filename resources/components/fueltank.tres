@@ -15,3 +15,4 @@ stock_unit = "Treibstoff"
 wears = false
 thrust = 0.0
 color = Color(0.45, 0.22, 0.2, 1)
+tech = "propulsion"

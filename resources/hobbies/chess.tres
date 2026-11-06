@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="HobbyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/hobby_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+hobby_id = "chess"
+hobby_name = "Schach"
+description = "Strategiespiele. Schaltet Gespräche mit Offizieren frei, trainiert nebenbei Physik-Denken."
+related_skill = "physics"
+effects = {"stress_relief": 8, "unlock": "talk_military"}

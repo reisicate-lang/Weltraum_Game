@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "book_unarmed_2"
+display_name = "Lehrbuch: Waffenloser Kampf (Fortgeschritten)"
+weight = 1.0
+volume = 1.2
+value = 120
+description = "Bringt Waffenloser Kampf bis 75 %. Braucht 30 % Vorwissen."
+teaches = "unarmed"
+book_level = 2

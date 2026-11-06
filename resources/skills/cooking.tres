@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "cooking"
+skill_name = "Kochen"
+description = "Aus Rationen etwas Essbares machen. Mahlzeiten sättigen mehr und heben die Laune."
+category = "sozial"
+learning_sources = PackedStringArray("Essen zubereiten")
+training_actions = PackedStringArray("cook", "study_cooking")
+required_skills = {}
+gameplay_effects = {"meal_bonus": 0.6, "meal_mood": 0.5}
+mastery_text = "Meister: Mahlzeiten senken Stress deutlich."

@@ -17,3 +17,4 @@ storage = 0.0
 need = ""
 wears = true
 color = Color(0.18, 0.29, 0.37, 1)
+tech = "electrical"

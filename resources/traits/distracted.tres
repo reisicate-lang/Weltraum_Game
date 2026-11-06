@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="TraitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/traits/trait_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trait_id = "distracted"
+trait_name = "Unkonzentriert"
+description = "Kann sich schlecht konzentrieren. Lernt langsamer, macht Fehler bei Arbeiten."
+positive = false
+modifiers = {"learn_speed": 0.8, "work_speed": 0.9, "book_speed": 0.7}
+conflicts = PackedStringArray("smart")

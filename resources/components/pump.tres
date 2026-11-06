@@ -17,3 +17,4 @@ storage = 0.0
 need = ""
 wears = true
 color = Color(0.23, 0.27, 0.32, 1)
+tech = "robotic"

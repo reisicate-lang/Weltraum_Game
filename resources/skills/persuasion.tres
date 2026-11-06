@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "persuasion"
+skill_name = "Überzeugen"
+description = "Andere umstimmen, Konflikte vermeiden, bessere Bedingungen aushandeln."
+category = "sozial"
+learning_sources = PackedStringArray("Verhandeln", "Konflikte schlichten")
+training_actions = PackedStringArray("negotiate", "calm", "study_persuasion")
+required_skills = {}
+gameplay_effects = {"negotiate": 0.6, "calm": 0.5}
+mastery_text = "Meister: Plünderer lassen sich oft ganz ohne Kampf abwimmeln."

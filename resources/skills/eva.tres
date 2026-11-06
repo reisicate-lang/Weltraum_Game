@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "eva"
+skill_name = "Raumanzugpraxis"
+description = "Arbeiten im Vakuum, Umgang mit Raumanzügen, sparsamer Sauerstoffverbrauch, Außenreparaturen."
+category = "praxis"
+learning_sources = PackedStringArray("Arbeit im Raumanzug", "Raumanzug warten", "Lehrbuch Außeneinsatz")
+training_actions = PackedStringArray("eva_work", "suit_maintenance", "study_eva")
+required_skills = {}
+gameplay_effects = {"suit_o2_saving": 0.35, "eva_work": 0.4}
+mastery_text = "Meister: Anzug-Akku hält 30 % länger."

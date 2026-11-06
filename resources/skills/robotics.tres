@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "robotics"
+skill_name = "Robotik"
+description = "Steuerungen, Antriebe mit Sensorik, automatische Systeme wie Auto-Dock und Schleusenpumpe."
+category = "technik"
+learning_sources = PackedStringArray("Navigationscomputer reparieren", "Sensoren und Automatik einbauen", "Lehrbuch Robotik")
+training_actions = PackedStringArray("repair_nav", "install_sensor", "repair_robotic", "study_robotics")
+required_skills = {"electrical": 30}
+gameplay_effects = {"work_robotic": 0.8}
+mastery_text = "Meister: Auto-Dock braucht 30 % weniger Zeit."

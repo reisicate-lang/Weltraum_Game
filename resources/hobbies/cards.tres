@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="HobbyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/hobby_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+hobby_id = "cards"
+hobby_name = "Kartenspiel"
+description = "Spielt gern Karten. Kennt Spieler auf jeder Station, trainiert Glücksspiel."
+related_skill = "gambling"
+effects = {"stress_relief": 6, "unlock": "talk_street"}

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="TraitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/traits/trait_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trait_id = "social"
+trait_name = "Gesellig"
+description = "Kommt mit allen gut aus. Bessere Gespräche, weniger Stress in Gesellschaft."
+positive = true
+modifiers = {"social": 1.3, "stress_resist": 1.05}
+conflicts = PackedStringArray("introvert")

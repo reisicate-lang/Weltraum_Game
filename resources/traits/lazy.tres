@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="TraitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/traits/trait_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trait_id = "lazy"
+trait_name = "Bequem"
+description = "Macht es sich gern leicht. Lernt und arbeitet langsamer, erholt sich aber gut."
+positive = false
+modifiers = {"learn_speed": 0.75, "work_speed": 0.85, "recovery": 1.2}
+conflicts = PackedStringArray("ambitious")

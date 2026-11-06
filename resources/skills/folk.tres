@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "folk"
+skill_name = "Volksetikette"
+description = "Umgangsformen einfacher Leute: Arbeiter, Siedler, Schrotthändler. Öffnet Gespräche am Tycho-Schrottplatz."
+category = "sozial"
+learning_sources = PackedStringArray("Gespräche mit Arbeitern und Siedlern")
+training_actions = PackedStringArray("talk_folk", "study_folk")
+required_skills = {}
+gameplay_effects = {"talk_folk": 1.0}
+mastery_text = "Meister: Der Schrottplatz-Händler gibt Rabatt auf Bergungsrechte."

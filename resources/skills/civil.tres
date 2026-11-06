@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "civil"
+skill_name = "Bauingenieurwesen"
+description = "Tragende Strukturen, Böden, Wände und Möbel. Wer das kann, baut und repariert Rumpf und Einrichtung schneller und sauberer."
+category = "technik"
+learning_sources = PackedStringArray("Bauen und Reparieren von Wänden, Böden, Möbeln", "Lehrbuch Statik")
+training_actions = PackedStringArray("build_structure", "repair_structure", "repair_furniture", "deconstruct_furniture", "study_civil")
+required_skills = {}
+gameplay_effects = {"work_structure": 0.6, "work_furniture": 0.4}
+mastery_text = "Meister: Wände und Böden halten 20 % länger (weniger Schaden durch Einschläge)."

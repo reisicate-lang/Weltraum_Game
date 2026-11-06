@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "zerog"
+skill_name = "Schwerelosigkeit"
+description = "Bewegung und Arbeit außerhalb der Schwerkraft: schneller und sicherer im Vakuum unterwegs."
+category = "praxis"
+learning_sources = PackedStringArray("Bewegung im Vakuum", "Außeneinsätze")
+training_actions = PackedStringArray("eva_move", "eva_work", "study_zerog")
+required_skills = {}
+gameplay_effects = {"eva_speed": 0.5}
+mastery_text = "Meister: Im Vakuum genauso schnell wie drinnen."

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "hacking"
+skill_name = "Hacken"
+description = "Verschlossene Kisten und Terminals öffnen, Zugangssysteme umgehen, Software analysieren."
+category = "praxis"
+learning_sources = PackedStringArray("Verschlossene Kisten und Terminals knacken", "Datenchips analysieren")
+training_actions = PackedStringArray("hack", "analyze_software", "study_hacking")
+required_skills = {"software": 25}
+gameplay_effects = {"hack_power": 1.0}
+mastery_text = "Meister: Auch hochgesicherte Behälter (Stufe 3) gehen auf."

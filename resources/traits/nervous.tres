@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="TraitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/traits/trait_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trait_id = "nervous"
+trait_name = "Nervös"
+description = "Schnell gestresst, besonders in Gefahr."
+positive = false
+modifiers = {"stress_resist": 0.7, "combat": 0.85}
+conflicts = PackedStringArray("calm")

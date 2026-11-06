@@ -1,0 +1,603 @@
+{
+ "build_structure": {
+  "skills": [
+   "civil",
+   "construction"
+  ],
+  "difficulty": 0.3,
+  "gain": 1.0
+ },
+ "repair_structure": {
+  "skills": [
+   "civil"
+  ],
+  "difficulty": 0.4,
+  "gain": 1.0
+ },
+ "repair_furniture": {
+  "skills": [
+   "civil",
+   "combat_eng",
+   "construction",
+   "mechanical"
+  ],
+  "difficulty": 0.3,
+  "gain": 1.0
+ },
+ "deconstruct_furniture": {
+  "skills": [
+   "civil",
+   "combat_eng",
+   "construction",
+   "mechanical"
+  ],
+  "difficulty": 0.25,
+  "gain": 1.0
+ },
+ "study_civil": {
+  "skills": [
+   "civil"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "maintain_weapon": {
+  "skills": [
+   "combat_eng"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "deconstruct_military": {
+  "skills": [
+   "combat_eng"
+  ],
+  "difficulty": 0.6,
+  "gain": 1.0
+ },
+ "study_combat_eng": {
+  "skills": [
+   "combat_eng"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "build_device": {
+  "skills": [
+   "construction"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "study_construction": {
+  "skills": [
+   "construction"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "repair_electrical": {
+  "skills": [
+   "electrical"
+  ],
+  "difficulty": 0.6,
+  "gain": 1.0
+ },
+ "install_electrical": {
+  "skills": [
+   "electrical"
+  ],
+  "difficulty": 0.55,
+  "gain": 1.0
+ },
+ "lay_cable": {
+  "skills": [
+   "electrical"
+  ],
+  "difficulty": 0.25,
+  "gain": 1.0
+ },
+ "repair_nav": {
+  "skills": [
+   "electrical",
+   "robotics"
+  ],
+  "difficulty": 0.8,
+  "gain": 1.0
+ },
+ "install_sensor": {
+  "skills": [
+   "electrical",
+   "robotics"
+  ],
+  "difficulty": 0.7,
+  "gain": 1.0
+ },
+ "study_electrical": {
+  "skills": [
+   "electrical"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "repair_robotic": {
+  "skills": [
+   "robotics"
+  ],
+  "difficulty": 0.75,
+  "gain": 1.0
+ },
+ "study_robotics": {
+  "skills": [
+   "robotics"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "analyze_software": {
+  "skills": [
+   "software",
+   "hacking"
+  ],
+  "difficulty": 0.7,
+  "gain": 1.0
+ },
+ "repair_computer": {
+  "skills": [
+   "software"
+  ],
+  "difficulty": 0.65,
+  "gain": 1.0
+ },
+ "study_software": {
+  "skills": [
+   "software"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "repair_hull": {
+  "skills": [
+   "spaceship"
+  ],
+  "difficulty": 0.6,
+  "gain": 1.0
+ },
+ "repair_propulsion": {
+  "skills": [
+   "spaceship"
+  ],
+  "difficulty": 0.75,
+  "gain": 1.0
+ },
+ "install_propulsion": {
+  "skills": [
+   "spaceship"
+  ],
+  "difficulty": 0.7,
+  "gain": 1.0
+ },
+ "study_spaceship": {
+  "skills": [
+   "spaceship"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "repair_mechanical": {
+  "skills": [
+   "mechanical"
+  ],
+  "difficulty": 0.55,
+  "gain": 1.0
+ },
+ "install_mechanical": {
+  "skills": [
+   "mechanical"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "study_mechanical": {
+  "skills": [
+   "mechanical"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "fight_armed": {
+  "skills": [
+   "armed_melee",
+   "combat_training"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "train_combat_armed": {
+  "skills": [
+   "armed_melee",
+   "combat_training"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "study_armed_melee": {
+  "skills": [
+   "armed_melee"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "fight_unarmed": {
+  "skills": [
+   "unarmed",
+   "combat_training"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "train_combat": {
+  "skills": [
+   "unarmed",
+   "combat_training"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "study_unarmed": {
+  "skills": [
+   "unarmed"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "fight_ranged": {
+  "skills": [
+   "ranged",
+   "combat_training"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "train_shooting": {
+  "skills": [
+   "ranged",
+   "combat_training"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "study_ranged": {
+  "skills": [
+   "ranged"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "study_combat_training": {
+  "skills": [
+   "combat_training"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "eva_work": {
+  "skills": [
+   "eva",
+   "zerog"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "suit_maintenance": {
+  "skills": [
+   "eva"
+  ],
+  "difficulty": 0.4,
+  "gain": 1.0
+ },
+ "study_eva": {
+  "skills": [
+   "eva"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "hack": {
+  "skills": [
+   "hacking"
+  ],
+  "difficulty": 0.8,
+  "gain": 1.0
+ },
+ "study_hacking": {
+  "skills": [
+   "hacking"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "trade": {
+  "skills": [
+   "business"
+  ],
+  "difficulty": 0.4,
+  "gain": 1.0
+ },
+ "appraise": {
+  "skills": [
+   "business"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "study_business": {
+  "skills": [
+   "business"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "deconstruct_structure": {
+  "skills": [
+   "excavation"
+  ],
+  "difficulty": 0.3,
+  "gain": 1.0
+ },
+ "study_excavation": {
+  "skills": [
+   "excavation"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "pilot": {
+  "skills": [
+   "pilot",
+   "physics"
+  ],
+  "difficulty": 0.6,
+  "gain": 1.0
+ },
+ "dock": {
+  "skills": [
+   "pilot"
+  ],
+  "difficulty": 0.8,
+  "gain": 1.0
+ },
+ "study_pilot": {
+  "skills": [
+   "pilot"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "eva_move": {
+  "skills": [
+   "zerog"
+  ],
+  "difficulty": 0.3,
+  "gain": 1.0
+ },
+ "study_zerog": {
+  "skills": [
+   "zerog"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "perform_acting": {
+  "skills": [
+   "acting"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "bluff": {
+  "skills": [
+   "acting"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "study_acting": {
+  "skills": [
+   "acting"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "cook": {
+  "skills": [
+   "cooking"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "study_cooking": {
+  "skills": [
+   "cooking"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "perform_dance": {
+  "skills": [
+   "dance"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "study_dance": {
+  "skills": [
+   "dance"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "talk_folk": {
+  "skills": [
+   "folk"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "study_folk": {
+  "skills": [
+   "folk"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "investigate": {
+  "skills": [
+   "forensic"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "study_forensic": {
+  "skills": [
+   "forensic"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "gamble": {
+  "skills": [
+   "gambling"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "study_gambling": {
+  "skills": [
+   "gambling"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "talk_military": {
+  "skills": [
+   "military_et"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "study_military_et": {
+  "skills": [
+   "military_et"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "talk_oligarch": {
+  "skills": [
+   "oligarch_et"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "study_oligarch_et": {
+  "skills": [
+   "oligarch_et"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "negotiate": {
+  "skills": [
+   "persuasion"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "calm": {
+  "skills": [
+   "persuasion",
+   "psychology"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "study_persuasion": {
+  "skills": [
+   "persuasion"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "navigate": {
+  "skills": [
+   "physics"
+  ],
+  "difficulty": 0.6,
+  "gain": 1.0
+ },
+ "study_physics": {
+  "skills": [
+   "physics"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "counsel": {
+  "skills": [
+   "psychology"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "study_psychology": {
+  "skills": [
+   "psychology"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "perform_song": {
+  "skills": [
+   "song"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "study_song": {
+  "skills": [
+   "song"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "smuggle": {
+  "skills": [
+   "stealth",
+   "street"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "study_stealth": {
+  "skills": [
+   "stealth"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "talk_street": {
+  "skills": [
+   "street"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ },
+ "study_street": {
+  "skills": [
+   "street"
+  ],
+  "difficulty": 0.5,
+  "gain": 1.0
+ }
+}

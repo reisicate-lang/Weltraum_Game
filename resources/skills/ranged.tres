@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "ranged"
+skill_name = "Fernkampf"
+description = "Schießen mit Bolzenpistole und Signalpistole. Trefferchance auf Distanz."
+category = "kampf"
+learning_sources = PackedStringArray("Kämpfe mit Fernwaffe", "Schießübungen")
+training_actions = PackedStringArray("fight_ranged", "train_shooting", "study_ranged")
+required_skills = {}
+gameplay_effects = {"combat_ranged": 0.7}
+mastery_text = "Meister: Ein Schuss reicht oft, damit Plünderer fliehen."

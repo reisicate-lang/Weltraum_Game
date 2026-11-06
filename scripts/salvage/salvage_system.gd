@@ -10,6 +10,8 @@ const LOOT := [["scrap", 6], ["plate", 5], ["copper", 5], ["circuit", 3], ["moto
 	["glass", 2], ["filter", 2], ["fabric", 3], ["ration", 4], ["fuelcan", 1], ["aircan", 1], ["watercan", 1], ["datachip", 1]]
 
 var wreck_name := ""
+var investigated := false
+var cause := ""
 
 ## Steg vom Außensteg des Schiffs hinunter zum Wrack
 func build_gangway() -> void:
@@ -97,6 +99,11 @@ func generate() -> void:
 		var crate := g.place_device("crate", spots.pop_back())
 		crate.cond = randf_range(30.0, 90.0)
 		crate.unknown = true
+		# Manche Kisten sind verschlossen: mehr Wertsachen, aber Hacken nötig
+		if randf() < 0.35:
+			crate.lock_level = randi_range(1, 3)
+			for n in crate.lock_level:
+				crate.inv.add(["datachip", "circuit", "cell", "boltgun", "contraband"].pick_random(), 1, randf_range(50.0, 95.0))
 		for n in randi_range(2, 5):
 			var l: Array = LOOT.pick_random()
 			if l[0] == "datachip" and randf() < 0.6:
@@ -111,6 +118,8 @@ func generate() -> void:
 		if randf() < 0.8:
 			g.cables[g.idx(Vector2i(cx, cy))] = 1
 	wreck_name = NAMES.pick_random()
+	investigated = false
+	cause = ["ein Reaktorbrand", "ein Treffer im Krieg", "eine Kollision mit Trümmern", "ein Hüllenbruch durch Materialermüdung", "Meuterei an Bord"].pick_random()
 	EventBus.ship_changed.emit()
 
 func _put(g: ShipGrid, p: Vector2i, t: int) -> void:
@@ -152,6 +161,15 @@ func device_value(dev: Device) -> int:
 		base += ItemSystem.item(t).value * c[t]
 	return int(base * (0.3 + 0.7 * dev.cond / 100.0))
 
+## Geschätzter Wert: Je besser die Betriebswirtschaft, desto genauer
+func estimate_text(dev: Device) -> String:
+	var v := device_value(dev)
+	var acc := SkillSystem.appraisal()
+	if acc >= 0.99:
+		return "Bergungswert %d Cr" % v
+	var spread := int(v * (0.5 - 0.45 * acc))
+	return "Bergungswert ~%d–%d Cr" % [maxi(0, v - spread), v + spread]
+
 ## Restwert beim Verschrotten
 func hull_value() -> int:
 	var g := ShipSystem.grid
@@ -173,8 +191,33 @@ func hull_value() -> int:
 			v += EconomySystem.inv_value(g.piles[i])
 	return int(v * Config.HULL_FACTOR)
 
+## Forensik: Wrack untersuchen. Findet Ursache und manchmal ein Versteck.
+func investigate(c: CrewMember) -> String:
+	var g := ShipSystem.grid
+	if wreck_name == "":
+		return "Hier ist kein Wrack."
+	if g.zone[g.idx(c.tile())] != 1:
+		return c.display_name + " muss dafür auf dem Wrack sein."
+	if investigated:
+		return "Dieses Wrack wurde schon untersucht."
+	investigated = true
+	SkillSystem.train(c, "investigate", 20.0)
+	var text := ""
+	if SkillSystem.effect(c, "damage_insight") > 0.2:
+		text = "%s findet heraus: Das Wrack ging durch %s verloren. " % [c.display_name, cause]
+	else:
+		text = "%s findet Spuren, kann sie aber nicht deuten. " % c.display_name
+	var chance := 0.15 + SkillSystem.effect(c, "find_hidden")
+	if SkillSystem.mastered(c, "forensic") or randf() < chance:
+		g.drop_items(c.tile(), "datachip", randi_range(1, 2), randf_range(70.0, 100.0))
+		text += "Unter einer Bodenplatte liegt ein Versteck mit Datenchips!"
+	else:
+		text += "Kein Versteck gefunden."
+	return text
+
 ## Geräte in der Nähe eines Charakters werden erkannt
 func reveal(c: CrewMember) -> void:
 	for dev in ShipSystem.grid.devices.values():
 		if dev.unknown and absf(dev.pos.x + 0.5 - c.pos.x) <= 2.5 and absf(dev.pos.y + 0.5 - c.pos.y) <= 2.5:
 			dev.unknown = false
+			SkillSystem.train(c, "appraise", 1.0)

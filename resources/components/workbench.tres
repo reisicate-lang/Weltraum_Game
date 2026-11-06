@@ -12,3 +12,4 @@ build_time = 5.0
 cost = {"plate": 3, "motor": 1}
 storage = 0.0
 color = Color(0.38, 0.31, 0.22, 1)
+tech = "furniture"

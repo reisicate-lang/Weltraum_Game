@@ -27,6 +27,21 @@ var inv := Inventory.new(Config.CARRY_WEIGHT, Config.CARRY_VOLUME)
 var suit = null                     ## getragener Raumanzug {"o2", "battery"} oder null
 var carrying: Device = null         ## getragenes Gerät
 var waiting := false                ## wartet an einer Schleuse
+## --- Charakterentwicklung ---
+var skills: Dictionary = {}         ## skill_id -> {"p": Prozent, "xp": Erfahrung, "hist": [...]}
+var traits: Array[String] = []
+var hobbies: Array[String] = []
+var recent_actions: Dictionary = {} ## Aktion -> kürzlich geübte Minuten (Wiederholung bringt weniger)
+var last_trained := ""
+var stress := 10.0                  ## 0 = entspannt, 100 = Zusammenbruch
+var age := 18
+var history: Array[String] = []     ## Lebenslauf
+var contacts: Array[String] = []
+var enemies: Array[String] = []
+var salary := 0                     ## Credits pro Tag (Crew)
+var away_until := 0.0               ## auf der Station unterwegs bis (Spielzeit)
+## Aufgabenverteilung: welche Arbeiten dieser Charakter übernimmt
+var work_prefs := {"build": true, "repair": true, "remove": true, "haul": true, "refill": true, "craft": true, "hack": true, "eva": true}
 var _search_cooldown := 0.0
 var _flee_cooldown := 0.0
 var _warned := {}
@@ -126,7 +141,7 @@ func _turn_to(angle: float, amount: float) -> void:
 ## Läuft den Weg ab. false = Weg blockiert.
 func follow_path(dt: float) -> bool:
 	var g := grid()
-	var move := Config.WALK_SPEED * dt
+	var move := Config.WALK_SPEED * dt * move_factor()
 	while move > 0.0 and not path.is_empty():
 		var next: Vector2i = path[0]
 		if not g.walkable(next):
@@ -155,10 +170,20 @@ func follow_path(dt: float) -> bool:
 			move = 0.0
 	return true
 
+## Tempo-Faktor: im Vakuum (Schwerelosigkeit draußen) langsamer, außer man kann es
+func move_factor() -> float:
+	var g := grid()
+	if g.pressure(g.idx(tile())) < 5.0:
+		return clampf(0.6 + SkillSystem.effect(self, "eva_speed") * 0.8, 0.6, 1.1)
+	return 1.0
+
 ## Direkte Steuerung mit WASD (dist in Feldern)
 func manual_move(dir: Vector2, dist: float) -> void:
 	if unconscious or dir == Vector2.ZERO:
 		return
+	dist *= move_factor()
+	if move_factor() < 1.0 or grid().pressure(grid().idx(tile())) < 5.0:
+		SkillSystem.train(self, "eva_move", dist / Config.WALK_SPEED * 2.0)
 	if order != null or job != null or activity != null:
 		release_job()
 		stop_activity()
@@ -210,9 +235,10 @@ func _update_body(dt: float) -> void:
 	var sleeping: bool = activity != null and activity.get("need", "") == "sleep" and path.is_empty()
 	var in_suit := suit_ok()
 	if suit != null:
-		suit.battery = maxf(0.0, suit.battery - Config.SUIT_BATTERY_USE * dt)
+		var bat_f := 0.7 if SkillSystem.mastered(self, "eva") else 1.0
+		suit.battery = maxf(0.0, suit.battery - Config.SUIT_BATTERY_USE * dt * bat_f)
 		if in_suit:
-			suit.o2 = maxf(0.0, suit.o2 - Config.SUIT_O2_USE * dt)
+			suit.o2 = maxf(0.0, suit.o2 - Config.SUIT_O2_USE * dt * (1.0 - minf(0.5, SkillSystem.effect(self, "suit_o2_saving"))))
 	if in_suit:
 		needs.air += 30.0 * dt
 	else:
@@ -229,7 +255,7 @@ func _update_body(dt: float) -> void:
 	var h := dt / 60.0
 	var slow := 0.5 if sleeping else 1.0
 	for k in ["food", "water", "hygiene"]:
-		needs[k] -= Config.NEEDS[k].decay * h * slow
+		needs[k] -= Config.NEEDS[k].decay * h * slow * (TraitSystem.factor(self, "hunger") if k == "food" else 1.0)
 	if not sleeping:
 		needs.sleep -= Config.NEEDS.sleep.decay * h
 	for k in needs:
@@ -239,7 +265,10 @@ func _update_body(dt: float) -> void:
 	if needs.water <= 0.0: damage += 4.0
 	if needs.air < 25.0: damage += 600.0
 	if not in_suit and g.holds_air(i) and g.co2[i] > Config.CO2_BAD: damage += 3.0
-	health = clampf(health - damage * h if damage > 0.0 else health + 1.5 * h, 0.0, 100.0)
+	damage /= TraitSystem.factor(self, "toughness")
+	health = clampf(health - damage * h if damage > 0.0 else health + 1.5 * h * TraitSystem.factor(self, "recovery"), 0.0, 100.0)
+	_update_stress(dt, sleeping)
+	SkillSystem.decay_recent(self, dt)
 	if not unconscious and (health <= 0.0 or needs.air < 10.0):
 		unconscious = true
 		release_job()
@@ -255,6 +284,31 @@ func _update_body(dt: float) -> void:
 		var low := minf(suit.o2, suit.battery)
 		_warn("suit", low < Config.SUIT_RETURN_AT, "Der Raumanzug von " + display_name + " wird knapp.", low > 60.0)
 
+## Stress steigt bei schlechten Bedürfnissen, Gefahr und Schulden; sinkt im Schlaf und in der Freizeit
+func _update_stress(dt: float, sleeping: bool) -> void:
+	var h := dt / 60.0
+	var rise := 0.0
+	for k in ["food", "water", "sleep", "hygiene"]:
+		if needs[k] < 25.0:
+			rise += 4.0
+	if needs.air < 60.0:
+		rise += 30.0
+	if health < 50.0:
+		rise += 6.0
+	if job != null:
+		rise += 0.5
+	rise /= TraitSystem.factor(self, "stress_resist")
+	var fall := 4.0 if sleeping else 1.0
+	if activity != null and activity.get("kind", "") in ["hobby", "trainer"]:
+		fall += 6.0
+	stress = clampf(stress + (rise - fall) * h, 0.0, 100.0)
+	if stress >= 100.0 and not _warned.get("breakdown", false):
+		_warned["breakdown"] = true
+		GameState.toast(display_name + " hat einen Nervenzusammenbruch und braucht Ruhe.", "bad")
+		release_job()
+	if stress < 60.0:
+		_warned["breakdown"] = false
+
 func _warn(key: String, cond: bool, text: String, clear: bool) -> void:
 	if cond and not _warned.get(key, false):
 		_warned[key] = true
@@ -268,6 +322,9 @@ func update(dt: float) -> void:
 	_update_body(dt)
 	if unconscious:
 		task = "Bewusstlos"
+		return
+	if away_until > GameState.time:
+		task = "Auf der Station unterwegs"
 		return
 	if is_manual():
 		task = "Wird von dir gesteuert"
@@ -332,29 +389,72 @@ func update(dt: float) -> void:
 						job.retry_at = GameState.time + 0.5
 						release_job()
 					return
-				for type in c:
-					inv.take(type, int(c[type]))
+				var keys := c.keys()
+				for type in keys:
+					var n := int(c[type])
+					# Meister der Montage sparen manchmal ein Teil
+					if type == keys[0] and n > 1 and SkillSystem.mastered(self, "construction") and randf() < 0.25:
+						n -= 1
+					inv.take(type, n)
 				job.paid = true
 			_turn_to((Vector2(jp) + Vector2(0.5, 0.5) - pos).angle(), 0.3)
 			task = ShipConstructionSystem.label(job)
-			job.progress += dt
+			job.progress += dt * SkillSystem.work_speed(self, job)
+			SkillSystem.train_job(self, job, dt)
 			if job.progress >= job.need:
 				_finish_job()
 			return
 		else:
 			release_job()
 	task = "Kann keinen Bauplan erreichen" if not ShipConstructionSystem.jobs.is_empty() else "Wartet"
+	if check and stress >= 95.0:
+		task = "Zusammenbruch: braucht Ruhe"
+		return
 	if check:
 		_assign_job()
+		if job == null and activity == null and suit == null:
+			_start_free_time()
 		# Nichts zu tun: Raumanzug wieder ablegen
 		if job == null and activity == null and suit != null:
 			_start_device("suit_off", func(d): return d.type == "locker" and d.suit == null and not d.broken)
+
+func _pref_of(j: Dictionary) -> String:
+	match j.kind:
+		"build", "cable", "device": return "build"
+		"repair": return "repair"
+		"remove": return "remove"
+		"haul", "move": return "haul"
+		"refill": return "refill"
+		"craft": return "craft"
+		"hack": return "hack"
+	return "build"
+
+## Freizeit: Lesen, Hobby, Trainingsgerät
+func _start_free_time() -> void:
+	if needs.sleep < 40.0 or needs.food < 50.0:
+		return
+	var book := SkillSystem.readable_book(self)
+	if book != "":
+		activity = {"kind": "study", "book": book, "timer": 0.0}
+		return
+	var trainer_ok := false
+	for dev in grid().devices.values():
+		if dev.type == "trainer" and grid().zone[grid().idx(dev.pos)] == 0:
+			trainer_ok = true
+	if trainer_ok and (stress > 25.0 or "fitness" in hobbies):
+		if _start_device("trainer", func(d): return d.type == "trainer"):
+			return
+	if not hobbies.is_empty() and stress > 15.0:
+		activity = {"kind": "hobby", "timer": 0.0}
 
 func _finish_job() -> void:
 	var CS := ShipConstructionSystem
 	var g := grid()
 	if job.kind == "haul":
 		_finish_haul()
+		return
+	if job.kind == "hack":
+		_finish_hack()
 		return
 	if job.kind == "move":
 		if job.phase == "pickup":
@@ -391,7 +491,7 @@ func _finish_job() -> void:
 		return
 	var finished: Dictionary = job
 	job = null
-	CS.complete(finished, tile())
+	CS.complete(finished, tile(), self)
 
 ## Einsammeln: Haufen aufheben, in die nächste Frachtkiste im Schiff bringen
 func _finish_haul() -> void:
@@ -444,6 +544,21 @@ func _finish_haul() -> void:
 	if g.piles.has(g.idx(src)):
 		CS.place("haul", src)
 
+## Hacken eines verschlossenen Behälters
+func _finish_hack() -> void:
+	var CS := ShipConstructionSystem
+	var p := CS.pos_of(job)
+	CS.jobs.erase(grid().idx(p))
+	job = null
+	var dev := grid().device_at(p)
+	if dev == null or dev.lock_level <= 0:
+		return
+	if SkillSystem.hack_value(self) >= SkillSystem.hack_needed(dev.lock_level):
+		dev.lock_level = 0
+		GameState.toast("%s hat das Schloss geknackt." % display_name)
+	else:
+		GameState.toast("%s scheitert am Schloss (Stufe %d). Mehr Übung in Hacken und Software nötig." % [display_name, dev.lock_level], "bad")
+
 ## Zu einem passenden Gerät gehen (Anzugschrank, Ladestation)
 func _start_device(kind: String, filter: Callable) -> bool:
 	var targets: Array = []
@@ -472,6 +587,8 @@ func _assign_job() -> void:
 		if j.retry_at > GameState.time:
 			continue
 		if (j.kind == "move" or j.kind == "haul") and j.phase == "deliver":
+			continue
+		if not work_prefs.get(_pref_of(j), true):
 			continue
 		var ok := true
 		var c := CS.cost(j)
@@ -507,6 +624,9 @@ func _assign_job() -> void:
 			var tq := Vector2i(int(chosen.tx), int(chosen.ty))
 			if not safe_air(grid().idx(tq)):
 				hostile = true
+		if hostile and not work_prefs.get("eva", true):
+			chosen.retry_at = GameState.time + 0.5
+			return
 		if hostile:
 			if _start_device("suit_up", func(d): return d.type == "locker" and d.suit != null and not d.broken):
 				return
@@ -594,6 +714,24 @@ func _start_need() -> bool:
 	return false
 
 func _do_activity(dt: float) -> void:
+	var akind: String = activity.get("kind", "")
+	if akind == "study":
+		task = "Liest: " + ItemSystem.item(activity.book).display_name
+		activity.timer += dt
+		SkillSystem.study(self, activity.book, dt)
+		if activity.timer >= 30.0 or SkillSystem.readable_book(self) != activity.book:
+			stop_activity()
+		return
+	if akind == "hobby":
+		var names: PackedStringArray = []
+		for h in hobbies:
+			names.append(HobbySystem.get_hobby(h).hobby_name)
+		task = "Freizeit: " + ", ".join(names)
+		activity.timer += dt
+		HobbySystem.practice(self, dt)
+		if activity.timer >= 30.0 or stress <= 5.0:
+			stop_activity()
+		return
 	if activity.has("flee"):
 		task = "Sucht Luft zum Atmen"
 		if path.is_empty() or not follow_path(dt):
@@ -615,6 +753,15 @@ func _do_activity(dt: float) -> void:
 	if kind != "need":
 		activity.timer += dt
 		match kind:
+			"trainer":
+				var w := ""
+				for it in inv.items:
+					w = ItemSystem.item(it.type).weapon if ItemSystem.item(it.type).weapon != "" else w
+				task = "Trainiert" + (" mit Waffe" if w != "" else "")
+				SkillSystem.train(self, {"armed": "train_combat_armed", "ranged": "train_shooting"}.get(w, "train_combat"), dt)
+				stress = maxf(0.0, stress - 8.0 * dt / 60.0)
+				if activity.timer >= 30.0:
+					stop_activity()
 			"suit_up":
 				task = "Zieht Raumanzug an"
 				if dev.suit == null:
@@ -631,6 +778,7 @@ func _do_activity(dt: float) -> void:
 				elif activity.timer >= 0.5:
 					dev.suit = suit
 					suit = null
+					SkillSystem.train(self, "suit_maintenance", 2.0)
 					stop_activity()
 			"recharge":
 				task = "Lädt Anzug"
@@ -660,7 +808,13 @@ func _do_activity(dt: float) -> void:
 			stop_activity()
 		return
 	if activity.timer >= def.use_time:
-		needs[need] = minf(100.0, needs[need] + def.gain)
+		var gain: float = def.gain
+		if need == "food":
+			# Kochen: Mahlzeit sättigt mehr und senkt Stress
+			gain *= 1.0 + SkillSystem.effect(self, "meal_bonus")
+			stress = maxf(0.0, stress - 3.0 - SkillSystem.effect(self, "meal_mood") * 15.0)
+			SkillSystem.train(self, "cook", def.use_time)
+		needs[need] = minf(100.0, needs[need] + gain)
 		if dev.data().stock >= 0.0:
 			dev.stock = maxf(0.0, dev.stock - def.use)
 		stop_activity()
@@ -693,7 +847,9 @@ func _start_flee() -> bool:
 func to_data() -> Dictionary:
 	return {"id": id, "name": display_name, "color": color.to_html(), "x": pos.x, "y": pos.y,
 		"needs": needs.duplicate(), "health": health, "unconscious": unconscious,
-		"is_player": is_player, "items": inv.to_data(), "suit": suit}
+		"is_player": is_player, "items": inv.to_data(), "suit": suit,
+		"skills": skills, "traits": traits, "hobbies": hobbies, "stress": stress, "age": age, "history": history,
+		"contacts": contacts, "enemies": enemies, "salary": salary, "work_prefs": work_prefs, "last_trained": last_trained}
 
 static func from_data(d: Dictionary) -> CrewMember:
 	var c := CrewMember.new(int(d.id), String(d.name), Color.html(String(d.color)), Vector2i.ZERO)
@@ -705,4 +861,16 @@ static func from_data(d: Dictionary) -> CrewMember:
 	c.is_player = bool(d.is_player)
 	c.inv.from_data(d.items)
 	c.suit = d.get("suit")
+	c.skills = d.get("skills", {})
+	c.traits.assign(d.get("traits", []))
+	c.hobbies.assign(d.get("hobbies", []))
+	c.stress = float(d.get("stress", 10.0))
+	c.age = int(d.get("age", 18))
+	c.history.assign(d.get("history", []))
+	c.contacts.assign(d.get("contacts", []))
+	c.enemies.assign(d.get("enemies", []))
+	c.salary = int(d.get("salary", 0))
+	c.last_trained = String(d.get("last_trained", ""))
+	if d.has("work_prefs"):
+		c.work_prefs = d.work_prefs
 	return c

@@ -10,7 +10,8 @@
    1,
    65
   ],
-  "time": 4
+  "time": 4,
+  "action": "deconstruct_structure"
  },
  {
   "id": "pipe",
@@ -23,7 +24,8 @@
    2,
    70
   ],
-  "time": 3
+  "time": 3,
+  "action": "build_device"
  },
  {
   "id": "circuit",
@@ -37,7 +39,8 @@
    1,
    55
   ],
-  "time": 6
+  "time": 6,
+  "action": "repair_electrical"
  },
  {
   "id": "filter",
@@ -51,7 +54,8 @@
    1,
    60
   ],
-  "time": 3
+  "time": 3,
+  "action": "build_device"
  },
  {
   "id": "cell",
@@ -65,7 +69,8 @@
    1,
    45
   ],
-  "time": 8
+  "time": 8,
+  "action": "repair_electrical"
  },
  {
   "id": "fabric",
@@ -78,6 +83,38 @@
    1,
    50
   ],
-  "time": 2
+  "time": 2,
+  "action": "build_device"
+ },
+ {
+  "id": "crowbar",
+  "name": "Brechstange schmieden",
+  "in": {
+   "plate": 1,
+   "scrap": 2
+  },
+  "out": [
+   "crowbar",
+   1,
+   80
+  ],
+  "time": 5,
+  "action": "maintain_weapon"
+ },
+ {
+  "id": "boltgun",
+  "name": "Bolzenpistole bauen",
+  "in": {
+   "motor": 1,
+   "pipe": 2,
+   "circuit": 1
+  },
+  "out": [
+   "boltgun",
+   1,
+   75
+  ],
+  "time": 10,
+  "action": "maintain_weapon"
  }
 ]

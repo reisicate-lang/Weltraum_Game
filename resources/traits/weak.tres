@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="TraitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/traits/trait_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trait_id = "weak"
+trait_name = "Schwach"
+description = "Wenig Kraft. Trägt weniger, kämpft schlechter."
+positive = false
+modifiers = {"carry": 0.75, "combat": 0.8}
+conflicts = PackedStringArray("strong")

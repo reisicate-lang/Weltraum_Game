@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "pilot"
+skill_name = "Raumschiffsteuerung"
+description = "Fliegen, Andocken, Navigation und sparsamer Treibstoffverbrauch."
+category = "praxis"
+learning_sources = PackedStringArray("Fliegen am Steuerpult", "Andocken", "Lehrbuch Navigation")
+training_actions = PackedStringArray("pilot", "dock", "study_pilot")
+required_skills = {}
+gameplay_effects = {"fuel_saving": 0.25}
+mastery_text = "Meister: Andocken klappt auch bis 15 m/s und 600 m Abstand."

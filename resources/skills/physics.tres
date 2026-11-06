@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "physics"
+skill_name = "Physik"
+description = "Bahnmechanik, Thermodynamik, Materialkunde. Bessere Flugbahnvorhersage und Reiseplanung."
+category = "sozial"
+learning_sources = PackedStringArray("Navigation", "Lehrbuch Physik")
+training_actions = PackedStringArray("pilot", "navigate", "study_physics")
+required_skills = {}
+gameplay_effects = {"travel_saving": 0.2, "prediction": 1.0}
+mastery_text = "Meister: Schnellreisen dauern 20 % kürzer."

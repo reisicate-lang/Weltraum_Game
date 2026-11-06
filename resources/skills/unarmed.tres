@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "unarmed"
+skill_name = "Waffenloser Kampf"
+description = "Faustkampf, Ringen, Abwehr ohne Waffen."
+category = "kampf"
+learning_sources = PackedStringArray("Kämpfe ohne Waffe", "Training am Trainingsgerät")
+training_actions = PackedStringArray("fight_unarmed", "train_combat", "study_unarmed")
+required_skills = {}
+gameplay_effects = {"combat_unarmed": 0.6}
+mastery_text = "Meister: Waffenlos genauso gefährlich wie mit Waffe."

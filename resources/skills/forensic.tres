@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "forensic"
+skill_name = "Forensik"
+description = "Spuren lesen, Schadensursachen erkennen, Hinweise in Wracks finden."
+category = "sozial"
+learning_sources = PackedStringArray("Wracks untersuchen", "Schadensursachen ermitteln")
+training_actions = PackedStringArray("investigate", "study_forensic")
+required_skills = {}
+gameplay_effects = {"find_hidden": 0.6, "damage_insight": 1.0}
+mastery_text = "Meister: In jedem Wrack findet sich ein Versteck mit Wertsachen."

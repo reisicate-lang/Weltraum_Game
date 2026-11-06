@@ -19,6 +19,8 @@ var suit = null
 var store := 0.0
 ## Wrack-Geräte sind unbekannt, bis jemand nah herangeht
 var unknown := false
+## Schloss: 0 = offen, 1–3 = Sicherheitsstufe (Hacken nötig)
+var lock_level := 0
 
 func _init(t: String, p: Vector2i) -> void:
 	type = t
@@ -55,6 +57,8 @@ func status_text() -> String:
 	if unknown:
 		return "Kiste · Inhalt unbekannt (näher herangehen)" if inv != null else "Unbekanntes Gerät (näher herangehen)"
 	var parts: PackedStringArray = [d.display_name]
+	if lock_level > 0:
+		parts.append("verschlossen (Stufe %d)" % lock_level)
 	if broken:
 		parts.append("KAPUTT")
 	elif cond < 100.0:
@@ -73,11 +77,13 @@ func status_text() -> String:
 		parts.append("Vorrat: %d %s" % [int(stock), d.stock_unit])
 	if inv != null:
 		parts.append("%d / %d L belegt" % [int(inv.volume()), int(d.storage)])
+	if ShipSystem.grid != null and ShipSystem.grid.zone[ShipSystem.grid.idx(pos)] == 1:
+		parts.append(SalvageSystem.estimate_text(self))
 	return " · ".join(parts)
 
 func to_data() -> Dictionary:
 	return {"type": type, "x": pos.x, "y": pos.y, "cond": cond, "broken": broken, "stock": stock,
-		"charge": charge, "items": inv.to_data() if inv != null else [], "suit": suit, "store": store, "unknown": unknown}
+		"charge": charge, "items": inv.to_data() if inv != null else [], "suit": suit, "store": store, "unknown": unknown, "lock": lock_level}
 
 static func from_data(d: Dictionary) -> Device:
 	var dev := Device.new(String(d.type), Vector2i(int(d.x), int(d.y)))
@@ -90,4 +96,5 @@ static func from_data(d: Dictionary) -> Device:
 	dev.suit = d.get("suit")
 	dev.store = float(d.get("store", 0.0))
 	dev.unknown = bool(d.get("unknown", false))
+	dev.lock_level = int(d.get("lock", 0))
 	return dev

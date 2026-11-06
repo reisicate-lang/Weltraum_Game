@@ -19,6 +19,7 @@ func can_place(tool: String, p: Vector2i) -> bool:
 	match tool:
 		"repair": return DamageSystem.needs_repair(p)
 		"haul": return g.piles.has(i) and not jobs.has(i)
+		"hack": return has_dev and g.devices[i].lock_level > 0 and not jobs.has(i)
 		"move": return has_dev and not jobs.has(i)
 		"floor": return t == ShipGrid.Tile.SPACE
 		"wall": return (t == ShipGrid.Tile.SPACE or t == ShipGrid.Tile.FLOOR) and not has_dev
@@ -36,7 +37,9 @@ func place(tool: String, p: Vector2i) -> bool:
 		cancel(jobs[i])
 		return true
 	var job := {"x": p.x, "y": p.y, "progress": 0.0, "claimed_by": -1, "retry_at": 0.0, "paid": false}
-	if tool == "haul":
+	if tool == "hack":
+		job.merge({"kind": "hack", "need": 4.0 * g_lock(p), "paid": true})
+	elif tool == "haul":
 		job.merge({"kind": "haul", "phase": "pickup", "need": 0.2, "paid": true})
 	elif tool == "repair":
 		job.merge({"kind": "repair", "need": Config.REPAIR_TIME})
@@ -52,6 +55,10 @@ func place(tool: String, p: Vector2i) -> bool:
 		job.merge({"kind": "build", "tile": tile, "need": Config.TILE_BUILD_TIME[tile]})
 	jobs[i] = job
 	return true
+
+func g_lock(p: Vector2i) -> int:
+	var dev := ShipSystem.grid.device_at(p)
+	return dev.lock_level if dev != null else 1
 
 ## Gerät versetzen: von src nach dst (ein Charakter trägt es)
 func place_move(src: Vector2i, dst: Vector2i) -> bool:
@@ -129,7 +136,7 @@ func drop_spot(p: Vector2i) -> Vector2i:
 	return p
 
 ## Teile, die man beim Abreißen zurückbekommt
-func salvage(p: Vector2i) -> Array:
+func salvage(p: Vector2i, worker: CrewMember = null) -> Array:
 	var g := ShipSystem.grid
 	var i := g.idx(p)
 	var out: Array = []
@@ -141,6 +148,9 @@ func salvage(p: Vector2i) -> Array:
 			if n > 0:
 				out.append([type, n, randf_range(25.0, 90.0) * maxf(0.3, dev.cond / 100.0)])
 		out.append(["scrap", 1 + randi() % 2, 40.0])
+		# Kampftechnik: Kriegswracks im Trümmerfeld geben mehr her
+		if worker != null and g.zone[i] == 1 and PhysicsSystem.docked == "debris" and randf() < SkillSystem.effect(worker, "military_salvage"):
+			out.append([["motor", "circuit", "cell", "boltgun"].pick_random(), 1, randf_range(40.0, 85.0)])
 		if dev.inv != null:
 			for it in dev.inv.items:
 				out.append([it.type, it.qty, it.cond])
@@ -148,8 +158,11 @@ func salvage(p: Vector2i) -> Array:
 	var t := g.tiles[i]
 	if g.cables[i] == 1 and t == ShipGrid.Tile.FLOOR:
 		return [["copper", 1, randf_range(50.0, 90.0)]]
+	# Abbau: bessere Ausbeute beim Abreißen von Wänden und Böden
+	var yield_bonus := SkillSystem.effect(worker, "demolish_yield") if worker != null else 0.0
+	var full := worker != null and SkillSystem.mastered(worker, "excavation")
 	match t:
-		ShipGrid.Tile.WALL: out.append(["plate", 2, randf_range(40.0, 90.0) * g.cond[i] / 100.0])
+		ShipGrid.Tile.WALL: out.append(["plate", 2, 90.0 if full else minf(100.0, randf_range(40.0, 90.0) * g.cond[i] / 100.0 * (1.0 + yield_bonus))])
 		ShipGrid.Tile.DOOR:
 			out.append(["plate", 2, randf_range(40.0, 90.0)])
 			if randf() < 0.6:
@@ -158,7 +171,7 @@ func salvage(p: Vector2i) -> Array:
 	return out
 
 ## Auftrag fertig: Schiff verändern. worker_pos = wo der Arbeiter steht.
-func complete(job: Dictionary, worker_pos: Vector2i) -> void:
+func complete(job: Dictionary, worker_pos: Vector2i, worker: CrewMember = null) -> void:
 	var g := ShipSystem.grid
 	var p := pos_of(job)
 	var i := g.idx(p)
@@ -185,7 +198,7 @@ func complete(job: Dictionary, worker_pos: Vector2i) -> void:
 			_move_pile_away(i, worker_pos)
 			g.place_device(job.dev, p)
 		"remove":
-			var loot := salvage(p)
+			var loot := salvage(p, worker)
 			var t := g.tiles[i]
 			var becomes_space := t == ShipGrid.Tile.FLOOR and g.cables[i] == 0 and not g.devices.has(i)
 			if g.devices.has(i):
@@ -224,7 +237,7 @@ func sources() -> Array:
 	var g := ShipSystem.grid
 	var out: Array = []
 	for i in g.devices:
-		if g.devices[i].inv != null:
+		if g.devices[i].inv != null and g.devices[i].lock_level == 0 and g.devices[i].type != "terminal":
 			out.append({"pos": g.pos(i), "inv": g.devices[i].inv})
 	for i in g.piles:
 		out.append({"pos": g.pos(i), "inv": g.piles[i]})
@@ -241,6 +254,7 @@ func missing(c: Dictionary, inv: Inventory) -> Dictionary:
 func label(job: Dictionary) -> String:
 	match job.kind:
 		"repair": return "Repariert"
+		"hack": return "Hackt Schloss"
 		"refill": return "Füllt nach: " + ItemSystem.item(job.item).display_name
 		"craft": return "Werkbank: " + String(EconomySystem.recipe(job.recipe).name)
 		"haul": return "Bringt Sachen ins Lager" if job.phase == "deliver" else "Sammelt ein"

@@ -60,11 +60,29 @@ func market_price(type: String) -> float:
 		local *= 2.0
 	return ItemSystem.item(type).value * prices.get(type, 1.0) * glut * local
 
+## Wer handelt? Die ausgewählte Figur (sonst die Spielerfigur)
+func trader() -> CrewMember:
+	return GameState.selected if GameState.selected != null else CrewSystem.player()
+
 func buy_price(type: String) -> int:
-	return int(ceil(market_price(type) * Config.BUY_MARKUP))
+	var disc := minf(0.3, SkillSystem.effect(trader(), "buy_discount"))
+	return int(ceil(market_price(type) * Config.BUY_MARKUP * (1.0 - disc) * negotiated_factor(false)))
 
 func sell_price(it: Dictionary) -> int:
-	return int(market_price(it.type) * Config.SELL_FACTOR * (0.2 + 0.8 * it.cond / 100.0) * it.qty)
+	var bonus := SkillSystem.effect(trader(), "sell_bonus")
+	if PhysicsSystem.station().get("black", false):
+		bonus += SkillSystem.effect(trader(), "black_bonus")
+	if it.type == "datachip" and SkillSystem.any_mastered("software"):
+		bonus += 0.25
+	return int(market_price(it.type) * Config.SELL_FACTOR * (0.2 + 0.8 * it.cond / 100.0) * it.qty * (1.0 + bonus) * negotiated_factor(true))
+
+## Ausgehandelte bessere Preise (Überzeugen) gelten bis zum Ende des Tages
+var deal_until := 0.0
+var deal_bonus := 0.0
+func negotiated_factor(selling: bool) -> float:
+	if GameState.time > deal_until:
+		return 1.0
+	return 1.0 + deal_bonus if selling else 1.0 - deal_bonus * 0.5
 
 func inv_value(inv: Inventory) -> int:
 	var s := 0
@@ -88,6 +106,7 @@ func sell(type: String, qty: int) -> void:
 		return
 	credits += total
 	supply[type] = supply.get(type, 0.0) + sold
+	SkillSystem.train(trader(), "trade", 2.0)
 	book("Verkauf: %s ×%d" % [ItemSystem.item(type).display_name, sold], total)
 
 func sell_all() -> void:
@@ -113,6 +132,7 @@ func buy(type: String, qty: int) -> void:
 	credits -= n * price
 	supply[type] = supply.get(type, 0.0) - n * 0.5
 	t.inv.add(type, n, 100.0)
+	SkillSystem.train(trader(), "trade", 1.0)
 	book("Kauf: %s ×%d" % [ItemSystem.item(type).display_name, n], -n * price)
 
 func pay_debt(amount: int) -> void:

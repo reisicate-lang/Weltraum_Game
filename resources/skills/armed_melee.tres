@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "armed_melee"
+skill_name = "Nahkampf mit Waffe"
+description = "Umgang mit Brechstange, Messer und Rohrzange im Kampf."
+category = "kampf"
+learning_sources = PackedStringArray("Kämpfe mit Nahkampfwaffe", "Training am Trainingsgerät mit Waffe")
+training_actions = PackedStringArray("fight_armed", "train_combat_armed", "study_armed_melee")
+required_skills = {}
+gameplay_effects = {"combat_armed": 0.6}
+mastery_text = "Meister: Mit Nahkampfwaffe verletzt man Gegner fast immer."

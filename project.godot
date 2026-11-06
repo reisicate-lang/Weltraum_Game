@@ -14,6 +14,9 @@ config/features=PackedStringArray("4.3", "GL Compatibility")
 
 EventBus="*res://scripts/core/event_bus.gd"
 ItemSystem="*res://scripts/inventory/item_system.gd"
+SkillSystem="*res://scripts/skills/skill_system.gd"
+TraitSystem="*res://scripts/traits/trait_system.gd"
+HobbySystem="*res://scripts/skills/hobby_system.gd"
 GameState="*res://scripts/core/game_state.gd"
 TimeSystem="*res://scripts/core/time_system.gd"
 ShipSystem="*res://scripts/ships/ship_system.gd"

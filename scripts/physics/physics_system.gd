@@ -134,8 +134,7 @@ func autodock_ok() -> bool:
 
 ## Pilot-Fähigkeit spart Treibstoff (siehe SkillSystem)
 func fuel_factor() -> float:
-	var skills = get_node_or_null("/root/SkillSystem")
-	return skills.pilot_fuel_factor() if skills != null else 1.0
+	return SkillSystem.pilot_fuel_factor()
 
 # ---------------- Simulation ----------------
 
@@ -193,9 +192,7 @@ func step(dt: float) -> void:
 			use_fuel(need)
 			acc += Vector2.from_angle(angle) * amax * thrust
 			_no_fuel_warned = false
-			var sk = get_node_or_null("/root/SkillSystem")
-			if sk != null:
-				sk.train_all_at("helm", "pilot", dt * 0.5)
+			SkillSystem.train_all_at("helm", "pilot", dt * 0.5)
 		elif not _no_fuel_warned:
 			_no_fuel_warned = true
 			GameState.toast("Kein Treibstoff!" if amax > 0.0 else "Keine Triebwerke mit Strom!", "bad")
@@ -248,7 +245,11 @@ func nearest() -> Dictionary:
 
 func can_dock(id: String) -> bool:
 	var r := rel_to(id)
-	return r.dist < float(space.dock_dist) and r.speed < float(space.dock_speed)
+	# Meister der Raumschiffsteuerung docken auch aus mehr Abstand und schneller an
+	var m := 1.0
+	if SkillSystem.any_mastered("pilot"):
+		m = 2.5
+	return r.dist < float(space.dock_dist) * m and r.speed < float(space.dock_speed) * m
 
 func dock(id: String, force: bool = false) -> bool:
 	if not force and not can_dock(id):
@@ -257,9 +258,7 @@ func dock(id: String, force: bool = false) -> bool:
 	thrust = 0.0
 	match_target = ""
 	FleetSystem.arrive(loc(id))
-	var sk = get_node_or_null("/root/SkillSystem")
-	if sk != null:
-		sk.train_all_at("helm", "pilot", 0.3 if force else 3.0)
+	SkillSystem.train_all_at("helm", "dock", 0.3 if force else 8.0)
 	GameState.toast("Angedockt: " + loc(id).name)
 	return true
 
@@ -291,12 +290,14 @@ func start_autodock() -> void:
 		GameState.toast("Nicht genug Treibstoff zum Andocken.", "bad")
 		return
 	use_fuel(need)
-	autodock = {"to": n.id, "t0": secs(), "t1": secs() + 300.0 + n.dist * 5.0}
+	var t_dock: float = (300.0 + n.dist * 5.0) * (0.7 if SkillSystem.any_mastered("robotics") else 1.0)
+	autodock = {"to": n.id, "t0": secs(), "t1": secs() + t_dock}
 	GameState.toast("Auto-Dock läuft: " + loc(n.id).name)
 
 func travel_info(id: String) -> Dictionary:
 	var r := rel_to(id)
-	return {"dist": r.dist, "fuel": r.dist * float(space.travel_fuel_per_km) * fuel_factor(), "secs": r.dist / float(space.travel_speed) + 600.0}
+	var tf := SkillSystem.travel_factor()
+	return {"dist": r.dist, "fuel": r.dist * float(space.travel_fuel_per_km) * fuel_factor() * tf, "secs": (r.dist / float(space.travel_speed) + 600.0) * tf}
 
 func travel_to(id: String) -> void:
 	if not helm_ok():
@@ -315,6 +316,8 @@ func travel_to(id: String) -> void:
 		return
 	use_fuel(info.fuel)
 	travel = {"to": id, "t0": secs(), "t1": secs() + info.secs, "from": pos}
+	SkillSystem.train_all_at("helm", "navigate", 10.0)
+	SkillSystem.train_all_at("helm", "pilot", 5.0)
 	GameState.toast("Schnellreise nach %s: %.1f Stunden." % [loc(id).name, info.secs / 3600.0])
 
 func status() -> String:

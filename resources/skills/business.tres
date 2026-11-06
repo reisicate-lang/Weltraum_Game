@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "business"
+skill_name = "Betriebswirtschaft"
+description = "Werte erkennen, Preise einschätzen, besser handeln, Risiken bewerten."
+category = "praxis"
+learning_sources = PackedStringArray("Handeln am Terminal", "Waren schätzen", "Lehrbuch Betriebswirtschaft")
+training_actions = PackedStringArray("trade", "appraise", "study_business")
+required_skills = {}
+gameplay_effects = {"sell_bonus": 0.15, "buy_discount": 0.1, "appraise": 1.0}
+mastery_text = "Meister: Bergungswerte werden exakt angezeigt und Preise sagen ihren Trend voraus."

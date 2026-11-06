@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "software"
+skill_name = "Softwaretechnik"
+description = "Programme, Steuerrechner, Datenauswertung. Hilft beim Hacken und bei Steuerpult und Terminal."
+category = "technik"
+learning_sources = PackedStringArray("Software analysieren", "Terminals und Steuerpulte warten", "Datenchips auswerten", "Lehrbuch Programmierung")
+training_actions = PackedStringArray("analyze_software", "repair_computer", "study_software")
+required_skills = {}
+gameplay_effects = {"work_computer": 0.6, "hack_assist": 0.3}
+mastery_text = "Meister: Datenchips lassen sich vor dem Verkauf aufwerten (+25 % Preis)."

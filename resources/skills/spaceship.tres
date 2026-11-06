@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "spaceship"
+skill_name = "Raumschifftechnik"
+description = "Rumpf, Triebwerke, Tanks und Druckhülle. Hüllenbrüche und Triebwerke werden schneller repariert."
+category = "technik"
+learning_sources = PackedStringArray("Schiffsstruktur reparieren", "Triebwerke und Tanks warten", "Lehrbuch Raumschiffbau")
+training_actions = PackedStringArray("repair_hull", "repair_propulsion", "install_propulsion", "study_spaceship")
+required_skills = {"civil": 20, "mechanical": 20}
+gameplay_effects = {"work_hull": 0.7, "work_propulsion": 0.7}
+mastery_text = "Meister: Triebwerke verbrauchen 10 % weniger Treibstoff."

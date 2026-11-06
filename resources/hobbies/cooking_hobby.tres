@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="HobbyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/hobby_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+hobby_id = "cooking_hobby"
+hobby_name = "Hobbykoch"
+description = "Kocht leidenschaftlich gern. Trainiert Kochen, Crew freut sich."
+related_skill = "cooking"
+effects = {"stress_relief": 8, "relation_bonus": 8}

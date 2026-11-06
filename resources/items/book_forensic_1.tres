@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "book_forensic_1"
+display_name = "Lehrbuch: Forensik (Grundlagen)"
+weight = 0.8
+volume = 1.0
+value = 40
+description = "Bringt Forensik bis 40 %. Lesen in Ruhezeiten."
+teaches = "forensic"
+book_level = 1

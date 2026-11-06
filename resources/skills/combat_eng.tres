@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "combat_eng"
+skill_name = "Kampftechnik"
+description = "Wartung von Waffen, Panzerung und militärischer Technik. Hilft beim Ausschlachten von Kriegswracks."
+category = "technik"
+learning_sources = PackedStringArray("Waffen warten", "Militärische Wracks ausschlachten", "Lehrbuch Waffentechnik")
+training_actions = PackedStringArray("maintain_weapon", "deconstruct_military", "repair_furniture", "deconstruct_furniture", "study_combat_eng")
+required_skills = {"mechanical": 20}
+gameplay_effects = {"military_salvage": 0.5, "weapon_care": 0.5}
+mastery_text = "Meister: Aus Wracks im Trümmerfeld fallen deutlich mehr Teile."

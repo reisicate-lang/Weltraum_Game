@@ -23,6 +23,8 @@ extends Resource
 @export var need: String = ""
 ## Nutzt sich das Gerät im Betrieb ab?
 @export var wears: bool = false
+## Technik-Art für Fähigkeiten: "mechanical", "electrical", "robotic", "computer", "propulsion", "furniture"
+@export var tech: String = "furniture"
 ## Schub in kN (nur Triebwerke)
 @export var thrust: float = 0.0
 ## Farbe für die einfache Darstellung

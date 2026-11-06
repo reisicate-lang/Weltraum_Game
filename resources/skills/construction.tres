@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "construction"
+skill_name = "Montage"
+description = "Allgemeines Zusammenbauen und Aufstellen. Beschleunigt jeden Bauauftrag ein wenig."
+category = "technik"
+learning_sources = PackedStringArray("Jeder Bauauftrag", "Möbel montieren und demontieren", "Lehrbuch Montage")
+training_actions = PackedStringArray("build_structure", "build_device", "repair_furniture", "deconstruct_furniture", "study_construction")
+required_skills = {}
+gameplay_effects = {"work_build": 0.4}
+mastery_text = "Meister: Bauen verbraucht manchmal weniger Material."

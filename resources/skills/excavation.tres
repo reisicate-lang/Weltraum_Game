@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "excavation"
+skill_name = "Abbau"
+description = "Grobes Abtragen: Wände, Böden, Hüllenteile schneiden und zerlegen. Mehr Ausbeute beim Abreißen."
+category = "praxis"
+learning_sources = PackedStringArray("Wände und Böden abreißen", "Hüllenteile schneiden")
+training_actions = PackedStringArray("deconstruct_structure", "study_excavation")
+required_skills = {}
+gameplay_effects = {"work_demolish": 0.8, "demolish_yield": 0.3}
+mastery_text = "Meister: Abgerissene Wände geben fast immer volle Platten zurück."

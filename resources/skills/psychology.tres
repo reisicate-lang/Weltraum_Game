@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_id = "psychology"
+skill_name = "Psychologie"
+description = "Verhalten einschätzen, Stress erkennen, Konflikte in der Crew verstehen und entschärfen."
+category = "sozial"
+learning_sources = PackedStringArray("Gespräche mit der Crew", "Konflikte schlichten")
+training_actions = PackedStringArray("counsel", "calm", "study_psychology")
+required_skills = {}
+gameplay_effects = {"stress_insight": 1.0, "counsel": 0.6}
+mastery_text = "Meister: Ein Gespräch senkt den Stress eines Crewmitglieds stark."

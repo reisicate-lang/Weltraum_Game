@@ -12,5 +12,12 @@ extends Resource
 ## Neupreis in Credits
 @export var value: int = 1
 @export_multiline var description: String = ""
+## Lehrbuch: welche Fähigkeit und bis zu welchem Fortschritt (Stufe 1: 40 %, 2: 75 %, 3: 100 %)
+@export var teaches: String = ""
+@export var book_level: int = 0
+## Waffe: "armed" (Nahkampf) oder "ranged" (Fernkampf)
+@export var weapon: String = ""
+## Schmuggelware (am Schwarzmarkt viel wert, kann bei Kontrollen beschlagnahmt werden)
+@export var contraband: bool = false
 ## Welches Gerät damit aufgefüllt wird und um wie viel, z. B. {"generator": 40}
 @export var refill: Dictionary = {}
