@@ -6,11 +6,17 @@ const DIR := "res://resources/hobbies/"
 var hobbies: Dictionary = {}
 
 func _ready() -> void:
-	var dir := DirAccess.open(DIR)
+	_load_from(DIR)
+	_load_from("user://mods/hobbies/")  # Mods
+
+func _load_from(path: String) -> void:
+	var dir := DirAccess.open(path)
+	if dir == null:
+		return
 	for file in dir.get_files():
 		var f := file.trim_suffix(".remap")
 		if f.ends_with(".tres"):
-			var h: HobbyData = load(DIR + f)
+			var h: HobbyData = load(path + f)
 			hobbies[h.hobby_id] = h
 
 func get_hobby(id: String) -> HobbyData:

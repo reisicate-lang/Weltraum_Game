@@ -63,7 +63,7 @@ func market_price(type: String) -> float:
 		local *= 2.0
 	if st.get("black", false) and ItemSystem.item(type).contraband:
 		local *= 2.5
-	return ItemSystem.item(type).value * prices.get(type, 1.0) * glut * local
+	return ItemSystem.item(type).value * prices.get(type, 1.0) * glut * local * QuestSystem.price_factor(type)
 
 ## Wer handelt? Die ausgewählte Figur (sonst die Spielerfigur)
 func trader() -> CrewMember:
@@ -110,6 +110,7 @@ func sell(type: String, qty: int) -> void:
 		t.inv.take(type, n)
 		credits -= 300
 		book("Schmuggelware beschlagnahmt, Strafe", -300)
+		QuestSystem.change_rep("patrol", -10.0)
 		GameState.toast("Kontrolle! Die Schmuggelware wurde beschlagnahmt. 300 Cr Strafe.", "bad")
 		return
 	for st in t.inv.take(type, qty):
@@ -119,6 +120,10 @@ func sell(type: String, qty: int) -> void:
 		return
 	credits += total
 	supply[type] = supply.get(type, 0.0) + sold
+	QuestSystem.change_rep(QuestSystem.faction_of(PhysicsSystem.docked), 0.5)
+	if ItemSystem.item(type).contraband:
+		QuestSystem.change_rep("syndicate", 3.0)
+		QuestSystem.change_rep("patrol", -2.0)
 	SkillSystem.train(trader(), "trade", 2.0)
 	book("Verkauf: %s ×%d" % [ItemSystem.item(type).display_name, sold], total)
 

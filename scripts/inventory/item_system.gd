@@ -12,11 +12,15 @@ var devices: Dictionary = {}  ## id -> DeviceData
 func _ready() -> void:
 	_load_dir(ITEM_DIR, items)
 	_load_dir(DEVICE_DIR, devices)
+	# Mods: eigene .tres-Dateien in user://mods/items/ und user://mods/components/
+	_load_dir("user://mods/items/", items, true)
+	_load_dir("user://mods/components/", devices, true)
 
-func _load_dir(path: String, into: Dictionary) -> void:
+func _load_dir(path: String, into: Dictionary, optional: bool = false) -> void:
 	var dir := DirAccess.open(path)
 	if dir == null:
-		push_error("Ordner fehlt: " + path)
+		if not optional:
+			push_error("Ordner fehlt: " + path)
 		return
 	for file in dir.get_files():
 		# Im exportierten Spiel heißen die Dateien *.tres.remap

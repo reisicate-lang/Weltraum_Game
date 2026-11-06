@@ -26,6 +26,7 @@ func new_game() -> void:
 	CrewSystem.create_start_crew()
 	NPCSystem.reset()
 	WaterSystem.reset()
+	QuestSystem.reset()
 	DialogueSystem.reset()
 	# Standard-Lebenslauf für Mira (im Startbildschirm änderbar)
 	var mira := CrewSystem.player()
@@ -51,6 +52,7 @@ func step(dt: float) -> void:
 	DamageSystem.step(dt)
 	CrewSystem.step(dt)
 	EconomySystem.step(dt)
+	QuestSystem.step(dt)
 
 func clock_text() -> String:
 	var secs := int((Config.START_MINUTES + time) * 60.0)

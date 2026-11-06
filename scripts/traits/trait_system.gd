@@ -6,11 +6,17 @@ const DIR := "res://resources/traits/"
 var traits: Dictionary = {}
 
 func _ready() -> void:
-	var dir := DirAccess.open(DIR)
+	_load_from(DIR)
+	_load_from("user://mods/traits/")  # Mods
+
+func _load_from(path: String) -> void:
+	var dir := DirAccess.open(path)
+	if dir == null:
+		return
 	for file in dir.get_files():
 		var f := file.trim_suffix(".remap")
 		if f.ends_with(".tres"):
-			var t: TraitData = load(DIR + f)
+			var t: TraitData = load(path + f)
 			traits[t.trait_id] = t
 
 func get_trait(id: String) -> TraitData:

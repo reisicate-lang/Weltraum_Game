@@ -88,20 +88,28 @@ und werden Schritt für Schritt übertragen.
 - [x] Hydrokultur von Hand (Pflege, Ernte), Auto-Farm (teuer, mit Gen-Mod täglich), Fleischtank (Käfig-Version)
 - [x] Nahrungsblock, Fleischklumpen, Saatgut, Chemiestation (Filter, Brennstoff, Gen-Mods)
 
-### Etappe 8 – Crew
-- [ ] Mehrere Charaktere, übertragbar zwischen Spielständen
-- [ ] Persönlichkeiten, Fähigkeiten, Beziehungen, Moral, Stress, Konflikte
-- [ ] Zufriedenheitssystem, Gehaltsforderungen, Crew anheuern
-- [ ] Geschichten und Dialoge nur über die Charaktere, keine Textbildschirme
+### Etappe 8 – Crew (Godot)
+- [x] Mehrere Charaktere: Crew anheuern, Lohn, Kündigung bei fehlendem Lohn
+- [x] Persönlichkeiten (Traits), Fähigkeiten, Hobbys, Stress, Moral
+- [x] Beziehungen (Nähe, gemeinsame Hobbys, Geselligkeit), Streit bei Stress, Schlichten (Psychologie/Überzeugen)
+- [x] Geschichten über die Charaktere: kurze Sätze aus ihrem Lebenslauf, keine Textbildschirme
+- [x] Charaktere exportieren und in andere Spielstände übernehmen
 
-### Etappe 9 – Lebendige Welt
-- [ ] Fraktionen, Handelsrouten, Aufträge, Handelsverträge
-- [ ] Schwarzmarkt, Versicherungen, Schiffskredite, Miete
-- [ ] Verlassene Außenposten, Industrieanlagen, Bergungsgebiete
-- [ ] Stationssystem (wie die Ostranauts-Mod), Welt entwickelt sich weiter
+### Etappe 9 – Lebendige Welt (Godot)
+- [x] Fraktionen mit Ansehen (Händlergilde, Konsortium, Syndikat, Patrouille)
+- [x] Aufträge: Liefern und Transport mit Frist, Belohnung und Ansehen
+- [x] Schwarzmarkt, Schmuggel mit Kontrollen, Versicherung, Schiffskredit, Liegegebühr
+- [x] Tägliche Weltereignisse verändern Preise
+- [ ] Mehr Orte (Außenposten, Industrieanlagen) und Stationssystem wie die Ostranauts-Mod
 
-### Etappe 10 – Feinschliff
-- [ ] Einstellbare Simulationstiefe
-- [ ] Mod-Unterstützung (Gegenstände, Geräte, Schiffe als Datendateien)
-- [ ] Mehrere Speicherplätze, Export/Import
-- [ ] Bessere Grafik, Sound, Balancing
+### Etappe 10 – Feinschliff (Godot)
+- [x] Einstellbare Simulationstiefe, Autosave-Intervall, Meteoriten an/aus
+- [x] Mod-Unterstützung: eigene .tres-Dateien in user://mods/ (Gegenstände, Geräte, Fähigkeiten, Traits, Hobbys)
+- [x] Drei Speicherplätze
+- [ ] Richtige Grafik (Sprites), Sound, Balancing
+
+## Tests (Godot, ohne Fenster)
+- `tests/run_tests.gd` – Kernspiel, Etappe 1–6 (54 Prüfungen)
+- `tests/test_skills.gd` – Fähigkeiten, Traits, Hobbys, Lebenslauf, NPCs, Stationen (144)
+- `tests/test_systems.gd` – Temperatur, Feuer, Wasser, Anbau, Chemie (19)
+- `tests/test_world.gd` – Crew-Beziehungen, Aufträge, Fraktionen, Einstellungen, Mods, Speicherplätze (21)

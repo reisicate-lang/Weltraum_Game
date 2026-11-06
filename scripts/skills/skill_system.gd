@@ -20,11 +20,17 @@ var skills: Dictionary = {}     ## id -> SkillData
 var actions: Dictionary = {}    ## Aktion -> {skills, difficulty, gain}
 
 func _ready() -> void:
-	var dir := DirAccess.open(DIR)
+	_load_from(DIR)
+	_load_from("user://mods/skills/")  # Mods
+
+func _load_from(path: String) -> void:
+	var dir := DirAccess.open(path)
+	if dir == null:
+		return
 	for file in dir.get_files():
 		var f := file.trim_suffix(".remap")
 		if f.ends_with(".tres"):
-			var s: SkillData = load(DIR + f)
+			var s: SkillData = load(path + f)
 			skills[s.skill_id] = s
 	var af := FileAccess.open("res://data/skill_actions.json", FileAccess.READ)
 	actions = JSON.parse_string(af.get_as_text())

@@ -156,7 +156,8 @@ func register_wreck() -> void:
 	SalvageSystem.clear()
 	GameState.toast("Angemeldet! Im Handelsterminal unter „Schiffe“ kannst du an Bord wechseln.")
 
-func buy(kind: String) -> void:
+## on_credit: mit Schiffskredit (Preis +20 % auf die Schulden)
+func buy(kind: String, on_credit: bool = false) -> void:
 	var st := PhysicsSystem.station()
 	if st.is_empty() or not st.get("shipyard", false):
 		GameState.toast("Hier gibt es keine Werft.")
@@ -165,11 +166,15 @@ func buy(kind: String) -> void:
 	for s in PhysicsSystem.space.shipyard:
 		if s.id == kind:
 			t = s
-	if EconomySystem.credits < int(t.price):
-		GameState.toast("Nicht genug Credits.")
-		return
-	EconomySystem.credits -= int(t.price)
-	EconomySystem.book("Schiff gekauft: " + t.name, -int(t.price))
+	if on_credit:
+		EconomySystem.debt += int(int(t.price) * 1.2)
+		EconomySystem.book("Schiffskredit: " + t.name + " (+%d Cr Schulden)" % int(int(t.price) * 1.2), 0)
+	else:
+		if EconomySystem.credits < int(t.price):
+			GameState.toast("Nicht genug Credits.")
+			return
+		EconomySystem.credits -= int(t.price)
+		EconomySystem.book("Schiff gekauft: " + t.name, -int(t.price))
 	var g := ShipGrid.new()
 	_build_template(g, t)
 	ships.append({"id": next_id, "name": t.name, "location": here(), "data": g.to_data()})

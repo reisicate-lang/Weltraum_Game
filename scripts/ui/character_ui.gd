@@ -212,6 +212,12 @@ func _hobbies(c: CrewMember) -> void:
 func _life(c: CrewMember) -> void:
 	for line in c.history:
 		box.add_child(_wrap(line))
+	for other in CrewSystem.crew:
+		if other != c:
+			box.add_child(ui._label("Beziehung zu %s: %+d" % [other.display_name, int(CrewSocial.relation(c, other))], ui.COL_MUTED, 12))
+	box.add_child(ui._label("Moral der Crew: %d %%" % int(CrewSocial.morale()), ui.COL_AMBER, 12))
+	box.add_child(ui._button("Charakter exportieren (für andere Spielstände)", func():
+		GameState.toast("Gespeichert: " + CrewSocial.export_character(c))))
 	if not c.contacts.is_empty():
 		box.add_child(ui._label("Kontakte: " + ", ".join(c.contacts), Color(0.44, 0.81, 0.56), 12))
 	if not c.enemies.is_empty():
@@ -280,6 +286,15 @@ func refresh_creation() -> void:
 					CharacterSystem.choose_hobby(c, id)
 					refresh_creation()))
 		creation_box.add_child(row)
+	var imports := CrewSocial.exported_list()
+	if not imports.is_empty():
+		var irow := HFlowContainer.new()
+		irow.add_child(ui._label("Gespeicherten Charakter übernehmen: ", ui.COL_MUTED, 12))
+		for file in imports:
+			irow.add_child(ui._button(file.trim_suffix(".json").replace("_", " "), func():
+				CrewSocial.import_character(file)
+				refresh_creation()))
+		creation_box.add_child(irow)
 	var bottom := HBoxContainer.new()
 	bottom.add_child(ui._button("Von vorn", func():
 		CharacterSystem.begin(c)

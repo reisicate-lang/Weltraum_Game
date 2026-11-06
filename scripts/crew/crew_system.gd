@@ -18,9 +18,15 @@ func player() -> CrewMember:
 			return c
 	return null
 
+var _hour := 0.0
+
 func step(dt: float) -> void:
 	for c in crew:
 		c.update(dt)
+	_hour += dt
+	if _hour >= 60.0:
+		_hour = 0.0
+		CrewSocial.hourly()
 
 func at(world_pos: Vector2) -> CrewMember:
 	for c in crew:

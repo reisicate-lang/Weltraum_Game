@@ -13,6 +13,7 @@ config/features=PackedStringArray("4.3", "GL Compatibility")
 [autoload]
 
 EventBus="*res://scripts/core/event_bus.gd"
+Settings="*res://scripts/core/settings.gd"
 ItemSystem="*res://scripts/inventory/item_system.gd"
 SkillSystem="*res://scripts/skills/skill_system.gd"
 TraitSystem="*res://scripts/traits/trait_system.gd"
@@ -35,6 +36,7 @@ PhysicsSystem="*res://scripts/physics/physics_system.gd"
 CharacterSystem="*res://scripts/character/character_system.gd"
 NPCSystem="*res://scripts/npcs/npc_system.gd"
 DialogueSystem="*res://scripts/dialogue/dialogue_system.gd"
+QuestSystem="*res://scripts/quests/quest_system.gd"
 FleetSystem="*res://scripts/ships/fleet_system.gd"
 SaveSystem="*res://scripts/save/save_system.gd"
 UIManager="*res://scripts/ui/ui_manager.gd"

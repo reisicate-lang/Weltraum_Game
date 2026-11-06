@@ -35,6 +35,7 @@ var recent_actions: Dictionary = {} ## Aktion -> kürzlich geübte Minuten (Wied
 var last_trained := ""
 var stress := 10.0                  ## 0 = entspannt, 100 = Zusammenbruch
 var body_temp := 37.0               ## Körpertemperatur in °C
+var relations: Dictionary = {}      ## andere Crew-ID (Text) -> Beziehung -100..100
 var age := 18
 var history: Array[String] = []     ## Lebenslauf
 var contacts: Array[String] = []
@@ -888,7 +889,7 @@ func to_data() -> Dictionary:
 		"is_player": is_player, "items": inv.to_data(), "suit": suit,
 		"skills": skills, "traits": traits, "hobbies": hobbies, "stress": stress, "age": age, "history": history,
 		"contacts": contacts, "enemies": enemies, "salary": salary, "work_prefs": work_prefs, "last_trained": last_trained,
-		"careers": get_meta("careers", []), "body_temp": body_temp}
+		"careers": get_meta("careers", []), "body_temp": body_temp, "relations": relations}
 
 static func from_data(d: Dictionary) -> CrewMember:
 	var c := CrewMember.new(int(d.id), String(d.name), Color.html(String(d.color)), Vector2i.ZERO)
@@ -914,4 +915,5 @@ static func from_data(d: Dictionary) -> CrewMember:
 		c.work_prefs = d.work_prefs
 	c.set_meta("careers", d.get("careers", []))
 	c.body_temp = float(d.get("body_temp", 37.0))
+	c.relations = d.get("relations", {})
 	return c

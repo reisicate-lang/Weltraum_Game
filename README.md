@@ -16,6 +16,8 @@ und dient als Vorlage für die Etappen, die noch nach Godot übertragen werden.
 ```
 godot --headless --path . --script res://tests/run_tests.gd
 godot --headless --path . --script res://tests/test_skills.gd
+godot --headless --path . --script res://tests/test_systems.gd
+godot --headless --path . --script res://tests/test_world.gd
 ```
 
 ## Steuerung
@@ -27,7 +29,8 @@ godot --headless --path . --script res://tests/test_skills.gd
 | Bauen | Boden `B`, Wand `M`, Tür `T`, Kabel `K`, Geräte-Menü unten |
 | Abreißen / Plan löschen | `X` / `C`, Rechtsklick bricht ab |
 | Kiste durchsuchen | `E` (daneben stehen) oder draufklicken |
-| Luft- / Strom-Ansicht | `L` / `P` |
+| Luft- / Strom- / Wärme-Ansicht | `L` / `P` / `O` |
+| Fenster bauen | `Z` |
 | Zeit | `Leertaste` Pause, `1`–`4` (1× = Echtzeit) |
 | Charaktermenü (Fähigkeiten, Traits, Hobbys, Lebenslauf, Aufgaben) | `I` |
 | Navigation | `N`, fliegen mit `WASD`, `F` andocken |
@@ -64,7 +67,13 @@ res://
   web/                Alte Browser-Version (Vorlage)
 ```
 
-Neue Gegenstände, Geräte, Fähigkeiten, Traits oder Hobbys: einfach eine neue `.tres`-Datei in `resources/items/` bzw. `resources/components/` anlegen.
+## Mods
+
+Eigene Gegenstände, Geräte, Fähigkeiten, Traits oder Hobbys als `.tres`-Dateien in den Godot-Benutzerordner legen:
+`user://mods/items/`, `user://mods/components/`, `user://mods/skills/`, `user://mods/traits/`, `user://mods/hobbies/`.
+Den genauen Pfad zeigt das Einstellungsfenster (⚙). Als Vorlage dienen die Dateien in `resources/`.
+
+Neue Gegenstände, Geräte, Fähigkeiten, Traits oder Hobbys im Spiel selbst: einfach eine neue `.tres`-Datei in `resources/items/` bzw. `resources/components/` anlegen.
 Das Spiel lädt sie automatisch.
 
 Den Bauplan findest du in [PLAN.md](PLAN.md).

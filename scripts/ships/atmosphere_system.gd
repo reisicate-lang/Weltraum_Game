@@ -8,7 +8,7 @@ var _acc := 0.0
 func step(dt: float) -> void:
 	_acc += dt
 	# Bündeln: bei 1x etwa alle 1,5 Spielsekunden, bei hoher Geschwindigkeit seltener
-	var threshold := 0.025 * maxf(1.0, Config.SPEEDS[TimeSystem.speed_index] / 10.0)
+	var threshold := 0.025 * maxf(1.0, Config.SPEEDS[TimeSystem.speed_index] / 10.0) * Settings.sim_factor()
 	if _acc < threshold:
 		return
 	var d := _acc

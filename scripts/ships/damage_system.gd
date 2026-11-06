@@ -25,7 +25,7 @@ func step(dt: float) -> void:
 				if g.zone[i] != 1:
 					GameState.toast(dev.data().display_name + " ist kaputt gegangen!", "bad")
 	# Mikrometeoriten
-	if GameState.time / 1440.0 >= Config.FIRST_METEOR_DAY and randf() < Config.METEORS_PER_DAY * dt / 1440.0:
+	if Settings.meteors and GameState.time / 1440.0 >= Config.FIRST_METEOR_DAY and randf() < Config.METEORS_PER_DAY * dt / 1440.0:
 		strike()
 	_scan -= dt
 	if _scan <= 0.0:
@@ -69,6 +69,7 @@ func strike() -> void:
 		EventBus.ship_changed.emit()
 		ShipConstructionSystem.place("door" if was_door else "wall", p)
 		GameState.toast("Hüllenbruch! Ein Mikrometeorit hat ein Loch geschlagen.", "bad")
+		QuestSystem.claim_damage("Hüllenbruch")
 	else:
 		GameState.toast("Mikrometeorit-Einschlag! Die Hülle ist beschädigt.", "bad")
 

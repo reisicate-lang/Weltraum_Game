@@ -10,7 +10,7 @@ var _acc := 0.0
 
 func step(dt: float) -> void:
 	_acc += dt
-	if _acc < 0.1:
+	if _acc < 0.1 * Settings.sim_factor():
 		return
 	var d := _acc
 	_acc = 0.0
@@ -71,6 +71,7 @@ func ignite(i: int) -> void:
 	if g.holds_air(i) and g.o2[i] >= Config.FIRE_O2_MIN and g.fire[i] == 0:
 		g.fire[i] = 1
 		GameState.toast("Feuer an Bord!", "bad")
+		QuestSystem.claim_damage("Feuer")
 		ShipConstructionSystem.place("extinguish", g.pos(i))
 
 func extinguish(i: int) -> void:

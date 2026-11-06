@@ -130,8 +130,9 @@ func _build_top() -> void:
 	money_label = _label("", COL_MUTED, 12)
 	row.add_child(money_label)
 	row.add_child(_button("Charakter [I]", func(): char_ui.toggle()))
-	row.add_child(_button("Speichern", func(): SaveSystem.save_game()))
-	row.add_child(_button("Laden", func(): SaveSystem.load_game()))
+	row.add_child(_button("Speichern", func(): open_slots(true)))
+	row.add_child(_button("Laden", func(): open_slots(false)))
+	row.add_child(_button("⚙", open_settings))
 	row.add_child(_button("Neues Spiel", func():
 		GameState.new_game()
 		char_ui.open_creation()))
@@ -423,6 +424,71 @@ func show_game_over(title: String, text: String) -> void:
 	gameover_label.text = title.to_upper() + "\n\n" + text
 	gameover_panel.visible = true
 
+# ---------------- Speicherplätze und Einstellungen ----------------
+
+var _dialog: PanelContainer
+
+func _show_dialog(title: String, build: Callable) -> void:
+	if _dialog != null:
+		_dialog.queue_free()
+	_dialog = _panel()
+	_dialog.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	_dialog.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_dialog.grow_vertical = Control.GROW_DIRECTION_BOTH
+	layer.add_child(_dialog)
+	var box := VBoxContainer.new()
+	box.custom_minimum_size = Vector2(420, 0)
+	_dialog.add_child(box)
+	var head := HBoxContainer.new()
+	var t := _label(title, COL_AMBER, 16)
+	t.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(t)
+	head.add_child(_button("✕", func(): _dialog.queue_free()))
+	box.add_child(head)
+	build.call(box)
+
+func open_slots(saving: bool) -> void:
+	_show_dialog("Speichern" if saving else "Laden", func(box: VBoxContainer):
+		for s in [1, 2, 3]:
+			box.add_child(_row("Platz %d: %s" % [s, SaveSystem.slot_info(s)], [_button("Hier speichern" if saving else "Laden", func():
+				SaveSystem.slot = s
+				if saving:
+					SaveSystem.save_game()
+				else:
+					SaveSystem.load_game()
+				_dialog.queue_free())])))
+
+func open_settings() -> void:
+	_show_dialog("Einstellungen", func(box: VBoxContainer):
+		var depth := OptionButton.new()
+		for k in Settings.DEPTHS:
+			depth.add_item(k)
+		depth.select(Settings.DEPTHS.keys().find(Settings.depth))
+		depth.item_selected.connect(func(i):
+			Settings.depth = Settings.DEPTHS.keys()[i]
+			Settings.save())
+		box.add_child(_row("Simulationstiefe (Luft und Wärme)", [depth]))
+		var auto := SpinBox.new()
+		auto.min_value = 15
+		auto.max_value = 600
+		auto.step = 15
+		auto.value = Settings.autosave_seconds
+		auto.value_changed.connect(func(v):
+			Settings.autosave_seconds = v
+			Settings.save())
+		box.add_child(_row("Autosave alle … Sekunden", [auto]))
+		var met := CheckBox.new()
+		met.text = "Mikrometeoriten"
+		met.button_pressed = Settings.meteors
+		met.toggled.connect(func(on):
+			Settings.meteors = on
+			Settings.save())
+		box.add_child(met)
+		var mods := _label("Mods: eigene .tres-Dateien nach %s legen (Unterordner items, components, skills, traits, hobbies)." % ProjectSettings.globalize_path("user://mods"), COL_MUTED, 11)
+		mods.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		mods.custom_minimum_size = Vector2(400, 0)
+		box.add_child(mods))
+
 func open_window(kind: String) -> void:
 	window_kind = kind
 	window_panel.visible = true
@@ -482,7 +548,7 @@ func _refresh_window() -> void:
 	if st.get("black", false):
 		window_box.add_child(_label("Schwarzmarkt: Datenchips bringen hier das Doppelte.", COL_MUTED, 12))
 	var tabs := HBoxContainer.new()
-	for tb in [["sell", "Verkaufen"], ["buy", "Kaufen"], ["bank", "Konto"], ["salvage", "Bergung"], ["ships", "Schiffe"], ["station", "Station"], ["crew", "Crew"]]:
+	for tb in [["sell", "Verkaufen"], ["buy", "Kaufen"], ["bank", "Konto"], ["salvage", "Bergung"], ["ships", "Schiffe"], ["station", "Station"], ["crew", "Crew"], ["jobs", "Aufträge"]]:
 		var b := _button(tb[1], func():
 			trade_tab = tb[0]
 			_last_window = ""
@@ -528,6 +594,32 @@ func _refresh_window() -> void:
 			window_box.add_child(_label("Kontoauszug", COL_MUTED, 11))
 			for e in E.log_entries:
 				window_box.add_child(_row(e.text, [_label(("%+d" % e.amount) if e.amount != 0 else "", COL_MUTED, 12)], COL_MUTED))
+		"jobs":
+			var Q := QuestSystem
+			for e in Q.events:
+				window_box.add_child(_label("Nachrichten: " + e.text, Color(0.95, 0.76, 0.31), 12))
+			window_box.add_child(_label("ANSEHEN", COL_MUTED, 11))
+			for f in Q.FACTIONS:
+				window_box.add_child(_row(Q.FACTIONS[f].name, [_label("%+d" % int(Q.reputation.get(f, 0.0)), COL_AMBER, 12)]))
+			window_box.add_child(_label("ANGENOMMENE AUFTRÄGE", COL_MUTED, 11))
+			if Q.accepted.is_empty():
+				window_box.add_child(_label("Keine.", COL_MUTED, 12))
+			for o in Q.accepted.duplicate():
+				window_box.add_child(_row(Q.describe(o), [_button("Abliefern", func():
+					Q.deliver(o)
+					_last_window = ""
+					_refresh_window())]))
+			window_box.add_child(_label("ANGEBOTE HIER", COL_MUTED, 11))
+			for o in Q.offers_here().duplicate():
+				window_box.add_child(_row(Q.describe(o), [_button("Annehmen", func():
+					Q.accept(o)
+					_last_window = ""
+					_refresh_window())]))
+			window_box.add_child(_row("Versicherung (%d Cr/Woche, zahlt %d Cr je Hüllenbruch oder Feuer)" % [Q.INSURANCE_PREMIUM, Q.INSURANCE_PAYOUT],
+				[_button("Kündigen" if Q.insured else "Abschließen", func():
+					Q.set_insured(not Q.insured)
+					_last_window = ""
+					_refresh_window())]))
 		"station":
 			if st.is_empty():
 				window_box.add_child(_label("Nur angedockt an einer Station.", COL_MUTED, 12))
@@ -577,7 +669,8 @@ func _refresh_window() -> void:
 			if st.get("shipyard", false):
 				window_box.add_child(_label("Werft", COL_MUTED, 11))
 				for t2 in PhysicsSystem.space.shipyard:
-					window_box.add_child(_row("%s · %s" % [t2.name, t2.desc], [_button("%d Cr" % int(t2.price), F.buy.bind(t2.id))]))
+					window_box.add_child(_row("%s · %s" % [t2.name, t2.desc], [_button("%d Cr" % int(t2.price), F.buy.bind(t2.id, false)),
+						_button("Auf Kredit", F.buy.bind(t2.id, true))]))
 			else:
 				window_box.add_child(_label("Schiffe kaufen und verkaufen: Werft am Kármán-Ring.", COL_MUTED, 12))
 		"salvage":
