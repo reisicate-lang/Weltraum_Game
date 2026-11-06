@@ -17,7 +17,15 @@ und werden Schritt für Schritt übertragen.
 - [x] Übertragen: Luftschleuse, Raumanzüge, Ladestation, Versetzen, Solarpanel, Schäden, Reparatur (Etappe 3) – 20 Tests
 - [x] Übertragen: Nachfüllen, Einsammeln, Werkbank (Rezepte in data/recipes.json), Wracks, Handelsterminal, Markt, Kredit, Pfändung (Etappe 4–5) – 32 Tests
 - [x] Übertragen: Raumflug mit Schwerkraft, Navigationskarte, Andocken, Auto-Dock, Schnellreise, Absturz, Flotte, Wrack anmelden (Etappe 6) – 54 Tests
-- [ ] Skill-, Hobby- und Trait-System mit Lebenslauf (eigener Prompt)
+- [x] Skill-, Hobby- und Trait-System (eigener Prompt) – 144 Tests
+  - 32 Fähigkeiten als Resources (Technik, Kampf, Praxis, Soziales), 83 Trainingsaktionen in `data/skill_actions.json`
+  - Lernen nur durch passende Tätigkeiten, Schwierigkeit, Abschwächung bei Wiederholung, Voraussetzungen (Stopp bei 40 %), 0–100 %, Meisterschaft
+  - Wirkungen: Arbeitstempo je Technik-Art, Treibstoff, Reisezeit, Anzug-Sauerstoff, Handel, Schätzgenauigkeit, Hacken (verschlossene Kisten),
+    Kampfkraft (Plünderer), Gespräche je Etikette, Bar (Gesang, Tanz, Schauspiel, Glücksspiel), Kochen, Forensik, Schmuggel, Psychologie
+  - 64 Lehrbücher (Grundlagen bis 40 %, Fortgeschritten bis 75 %), Lesen in Ruhezeiten
+  - 16 Eigenschaften (Traits), 10 Hobbys, Stress
+  - Lebenslauf mit 14 Stationen, Zufallsereignissen, Kontakten, Feinden, Startgeld
+  - Crew anheuern (Lohn, Kündigung), Aufgabenverteilung, Charaktermenü mit Details und Lernhistorie
 
 ## Erledigt
 

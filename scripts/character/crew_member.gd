@@ -350,7 +350,9 @@ func update(dt: float) -> void:
 		stop_activity()
 		if _start_flee():
 			return
-	# 3) Tätigkeit
+	# 3) Tätigkeit (Freizeit wird für Arbeit unterbrochen)
+	if activity != null and activity.get("kind", "") in ["study", "hobby", "trainer"] and _has_open_job():
+		stop_activity()
 	if activity != null:
 		_do_activity(dt)
 		return
@@ -417,6 +419,13 @@ func update(dt: float) -> void:
 		# Nichts zu tun: Raumanzug wieder ablegen
 		if job == null and activity == null and suit != null:
 			_start_device("suit_off", func(d): return d.type == "locker" and d.suit == null and not d.broken)
+
+## Gibt es einen offenen Auftrag, den dieser Charakter übernehmen würde?
+func _has_open_job() -> bool:
+	for j in ShipConstructionSystem.jobs.values():
+		if j.claimed_by == -1 and j.retry_at <= GameState.time and not j.get("missing", false) and work_prefs.get(_pref_of(j), true):
+			return true
+	return false
 
 func _pref_of(j: Dictionary) -> String:
 	match j.kind:
@@ -849,7 +858,8 @@ func to_data() -> Dictionary:
 		"needs": needs.duplicate(), "health": health, "unconscious": unconscious,
 		"is_player": is_player, "items": inv.to_data(), "suit": suit,
 		"skills": skills, "traits": traits, "hobbies": hobbies, "stress": stress, "age": age, "history": history,
-		"contacts": contacts, "enemies": enemies, "salary": salary, "work_prefs": work_prefs, "last_trained": last_trained}
+		"contacts": contacts, "enemies": enemies, "salary": salary, "work_prefs": work_prefs, "last_trained": last_trained,
+		"careers": get_meta("careers", [])}
 
 static func from_data(d: Dictionary) -> CrewMember:
 	var c := CrewMember.new(int(d.id), String(d.name), Color.html(String(d.color)), Vector2i.ZERO)
@@ -873,4 +883,5 @@ static func from_data(d: Dictionary) -> CrewMember:
 	c.last_trained = String(d.get("last_trained", ""))
 	if d.has("work_prefs"):
 		c.work_prefs = d.work_prefs
+	c.set_meta("careers", d.get("careers", []))
 	return c

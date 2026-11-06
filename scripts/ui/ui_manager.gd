@@ -48,8 +48,10 @@ var nav_map: Control
 var nav_side: VBoxContainer
 var nav_open := false
 var _last_nav := ""
+var char_ui
 var gameover_panel: PanelContainer
 var gameover_label: Label
+var station_reply := ""
 
 func _ready() -> void:
 	layer = CanvasLayer.new()
@@ -63,6 +65,9 @@ func _ready() -> void:
 	_build_window()
 	_build_nav()
 	_build_gameover()
+	char_ui = load("res://scripts/ui/character_ui.gd").new()
+	add_child(char_ui)
+	char_ui.setup(self)
 	EventBus.toast.connect(_on_toast)
 	EconomySystem.game_over.connect(show_game_over)
 	EventBus.speed_changed.connect(func(_i): _refresh_speed())
@@ -123,9 +128,12 @@ func _build_top() -> void:
 	row.add_child(spacer)
 	money_label = _label("", COL_MUTED, 12)
 	row.add_child(money_label)
+	row.add_child(_button("Charakter [I]", func(): char_ui.toggle()))
 	row.add_child(_button("Speichern", func(): SaveSystem.save_game()))
 	row.add_child(_button("Laden", func(): SaveSystem.load_game()))
-	row.add_child(_button("Neues Spiel", func(): GameState.new_game()))
+	row.add_child(_button("Neues Spiel", func():
+		GameState.new_game()
+		char_ui.open_creation()))
 	row.add_child(_button("?", toggle_help))
 
 func _build_left() -> void:
@@ -420,6 +428,7 @@ func open_window(kind: String) -> void:
 	_last_window = ""
 	_refresh_window()
 	_refresh_nav()
+	char_ui.refresh()
 
 func close_window() -> void:
 	window_kind = ""
@@ -442,7 +451,7 @@ func _refresh_window() -> void:
 	var E := EconomySystem
 	var t := E.terminal()
 	var c: CrewMember = GameState.selected if GameState.selected != null else CrewSystem.player()
-	var key := JSON.stringify([window_kind, trade_tab, E.credits, E.debt, t.inv.to_data() if t != null else [], c.inv.to_data() if c != null else [], E.log_entries.size(), SalvageSystem.wreck_name, int(GameState.time / 60.0)])
+	var key := JSON.stringify([station_reply, CrewSystem.crew.size(), window_kind, trade_tab, E.credits, E.debt, t.inv.to_data() if t != null else [], c.inv.to_data() if c != null else [], E.log_entries.size(), SalvageSystem.wreck_name, int(GameState.time / 60.0)])
 	if key == _last_window:
 		return
 	_last_window = key
@@ -469,7 +478,7 @@ func _refresh_window() -> void:
 	if st.get("black", false):
 		window_box.add_child(_label("Schwarzmarkt: Datenchips bringen hier das Doppelte.", COL_MUTED, 12))
 	var tabs := HBoxContainer.new()
-	for tb in [["sell", "Verkaufen"], ["buy", "Kaufen"], ["bank", "Konto"], ["salvage", "Bergung"], ["ships", "Schiffe"]]:
+	for tb in [["sell", "Verkaufen"], ["buy", "Kaufen"], ["bank", "Konto"], ["salvage", "Bergung"], ["ships", "Schiffe"], ["station", "Station"], ["crew", "Crew"]]:
 		var b := _button(tb[1], func():
 			trade_tab = tb[0]
 			_last_window = ""
@@ -515,6 +524,37 @@ func _refresh_window() -> void:
 			window_box.add_child(_label("Kontoauszug", COL_MUTED, 11))
 			for e in E.log_entries:
 				window_box.add_child(_row(e.text, [_label(("%+d" % e.amount) if e.amount != 0 else "", COL_MUTED, 12)], COL_MUTED))
+		"station":
+			if st.is_empty():
+				window_box.add_child(_label("Nur angedockt an einer Station.", COL_MUTED, 12))
+			else:
+				window_box.add_child(_label("Wer redet: %s (ausgewählte Figur)" % E.trader().display_name, COL_MUTED, 12))
+				if station_reply != "":
+					var rl := _label(station_reply, Color(0.95, 0.76, 0.31), 13)
+					rl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+					rl.custom_minimum_size = Vector2(370, 0)
+					window_box.add_child(rl)
+				for o in DialogueSystem.options():
+					var b := _button("Wählen", func():
+						station_reply = DialogueSystem.choose(o.id)
+						_last_window = ""
+						_refresh_window())
+					b.disabled = not o.ok
+					window_box.add_child(_row(o.text + ("" if o.ok else "  (" + o.why + ")"), [b], Color(0.87, 0.9, 0.94) if o.ok else COL_MUTED))
+		"crew":
+			if st.is_empty():
+				window_box.add_child(_label("Bewerber gibt es nur an Stationen.", COL_MUTED, 12))
+			for cand in NPCSystem.candidates_here():
+				var best: Array = cand.skills.keys()
+				best.sort_custom(func(a, b): return SkillSystem.progress(cand, a) > SkillSystem.progress(cand, b))
+				var parts: PackedStringArray = []
+				for id in best.slice(0, 3):
+					parts.append("%s %d %%" % [SkillSystem.skill(id).skill_name, int(SkillSystem.progress(cand, id))])
+				var trs: PackedStringArray = []
+				for tid in cand.traits:
+					trs.append(TraitSystem.get_trait(tid).trait_name)
+				window_box.add_child(_row("%s, %d J. · %s · %s · %d Cr/Tag" % [cand.display_name, cand.age, ", ".join(parts), ", ".join(trs), cand.salary],
+					[_button("Anheuern", NPCSystem.hire.bind(cand))]))
 		"ships":
 			var F := FleetSystem
 			window_box.add_child(_row("Aktuelles Schiff", [_label(F.current_name, COL_AMBER, 13)]))
@@ -542,6 +582,9 @@ func _refresh_window() -> void:
 				window_box.add_child(_row("Restwert beim Verschrotten", [_label("%d Cr" % SalvageSystem.hull_value(), COL_AMBER, 13)]))
 				window_box.add_child(_label("Was du vorher ausbaust und einzeln verkaufst, bringt viel mehr.", COL_MUTED, 12))
 				window_box.add_child(_button("Wrack verschrotten", E.scrap_hull))
+				window_box.add_child(_button("Wrack untersuchen (Forensik, Figur muss auf dem Wrack sein)", func():
+					station_reply = SalvageSystem.investigate(E.trader())
+					GameState.toast(station_reply)))
 			window_box.add_child(_button("Neues Bergungsrecht (%d Cr)" % Config.CLAIM_FEE, E.buy_claim))
 
 func _put_terminal(type: String, qty: int) -> void:
@@ -681,6 +724,7 @@ func _refresh() -> void:
 	money_label.add_theme_color_override("font_color", COL_AMBER)
 	_refresh_window()
 	_refresh_nav()
+	char_ui.refresh()
 	_refresh_hover()
 	_refresh_container()
 
@@ -725,6 +769,13 @@ func _refresh_container() -> void:
 	head.add_child(title)
 	head.add_child(_button("✕", close_container))
 	container_box.add_child(head)
+	if dev != null and dev.lock_level > 0:
+		container_box.add_child(_label("Verschlossen (Sicherheitsstufe %d). Nötig: Hacken+Software %d (beste Figur hat %d)." % [
+			dev.lock_level, int(SkillSystem.hack_needed(dev.lock_level)), int(_best_hack())], Color(0.9, 0.33, 0.29), 12))
+		container_box.add_child(_button("Hacken lassen", func():
+			if ShipConstructionSystem.place("hack", open_pos):
+				GameState.toast("Hack-Auftrag erteilt.")))
+		return
 	if inv == null or inv.items.is_empty():
 		container_box.add_child(_label("Leer.", COL_MUTED, 12))
 	else:
@@ -734,6 +785,12 @@ func _refresh_container() -> void:
 		container_box.add_child(_label("Aus dem Gepäck von " + c.display_name, COL_MUTED, 11))
 		for it in c.inv.items:
 			container_box.add_child(_item_row(it, "Hineinlegen", _transfer.bind(false, it.type, it.qty)))
+
+func _best_hack() -> float:
+	var best := 0.0
+	for c in CrewSystem.crew:
+		best = maxf(best, SkillSystem.hack_value(c))
+	return best
 
 func _item_row(it: Dictionary, action: String, cb: Callable) -> HBoxContainer:
 	var row := HBoxContainer.new()

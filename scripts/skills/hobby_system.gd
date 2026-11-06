@@ -50,3 +50,10 @@ func practice(c: CrewMember, minutes: float) -> void:
 		if h.related_skill != "":
 			SkillSystem.train(c, "study_" + h.related_skill, minutes * 0.3)
 	c.stress = maxf(0.0, c.stress - stress_relief(c) * minutes / 60.0)
+	# Musik und Gesang heben die Stimmung der Crew in der Nähe
+	if "music" in c.hobbies:
+		SkillSystem.train(c, "perform_song", minutes * 0.3)
+		var mood := 3.0 + SkillSystem.effect(c, "crew_mood") * 15.0
+		for other in CrewSystem.crew:
+			if other != c and other.pos.distance_to(c.pos) < 5.0:
+				other.stress = maxf(0.0, other.stress - mood * minutes / 60.0)

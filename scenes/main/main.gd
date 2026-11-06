@@ -15,6 +15,8 @@ var _pan_origin := Vector2.ZERO
 func _ready() -> void:
 	cam.position = Vector2(Config.WORLD_W, Config.WORLD_H) * Config.TILE_SIZE * 0.5
 	cam.zoom = Vector2(1.4, 1.4)
+	# Zu Spielbeginn den Lebenslauf wählen lassen
+	UIManager.char_ui.open_creation.call_deferred()
 	EventBus.game_loaded.connect(func(): _drag_start = Vector2i(-1, -1))
 
 func _tile_at_mouse() -> Vector2i:
@@ -193,3 +195,4 @@ func _key(k: InputEventKey) -> void:
 		KEY_P: GameState.view = "normal" if GameState.view == "power" else "power"
 		KEY_E: UIManager.interact()
 		KEY_H: UIManager.toggle_help()
+		KEY_I: UIManager.char_ui.toggle()

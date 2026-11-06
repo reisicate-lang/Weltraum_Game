@@ -15,6 +15,8 @@ var next_day := 1440.0
 var log_entries: Array[Dictionary] = []
 var over := false
 var recipes: Array = []
+## Faktor auf die Kreditrate (Verhandlung mit dem Bankier)
+var payment_factor := 1.0
 
 func _ready() -> void:
 	var f := FileAccess.open("res://data/recipes.json", FileAccess.READ)
@@ -29,6 +31,7 @@ func reset() -> void:
 	next_day = 1440.0
 	log_entries.clear()
 	over = false
+	payment_factor = 1.0
 	for id in ItemSystem.items:
 		prices[id] = randf_range(0.85, 1.15)
 		supply[id] = 0.0
@@ -58,6 +61,8 @@ func market_price(type: String) -> float:
 	# Schwarzmarkt: Datenchips bringen dort das Doppelte
 	if st.get("black", false) and type == "datachip":
 		local *= 2.0
+	if st.get("black", false) and ItemSystem.item(type).contraband:
+		local *= 2.5
 	return ItemSystem.item(type).value * prices.get(type, 1.0) * glut * local
 
 ## Wer handelt? Die ausgewählte Figur (sonst die Spielerfigur)
@@ -99,6 +104,14 @@ func sell(type: String, qty: int) -> void:
 		return
 	var total := 0
 	var sold := 0
+	# Schmuggelware: Kontrolle möglich
+	if ItemSystem.item(type).contraband and not DialogueSystem.smuggle_check(trader()):
+		var n := t.inv.count(type)
+		t.inv.take(type, n)
+		credits -= 300
+		book("Schmuggelware beschlagnahmt, Strafe", -300)
+		GameState.toast("Kontrolle! Die Schmuggelware wurde beschlagnahmt. 300 Cr Strafe.", "bad")
+		return
 	for st in t.inv.take(type, qty):
 		total += sell_price(st)
 		sold += st.qty
@@ -149,14 +162,16 @@ func buy_claim() -> void:
 	if not terminal_online():
 		GameState.toast("Das Handelsterminal ist offline.", "bad")
 		return
-	if credits < Config.CLAIM_FEE:
+	var fee: int = Config.CLAIM_FEE / 2 if DialogueSystem.claim_discount else Config.CLAIM_FEE
+	if credits < fee:
 		GameState.toast("Nicht genug Credits für ein Bergungsrecht.")
 		return
 	if not SalvageSystem.clearable():
 		GameState.toast("Erst alle Crewmitglieder vom Wrack holen.")
 		return
-	credits -= Config.CLAIM_FEE
-	book("Bergungsrecht für neues Wrack", -Config.CLAIM_FEE)
+	credits -= fee
+	DialogueSystem.claim_discount = false
+	book("Bergungsrecht für neues Wrack", -fee)
 	SalvageSystem.clear()
 	SalvageSystem.generate()
 	GameState.toast("Ein neues Wrack wurde an die Bergungsleine geschleppt: " + SalvageSystem.wreck_name)
@@ -203,6 +218,7 @@ func step(_dt: float) -> void:
 		for id in prices:
 			prices[id] = clampf(prices[id] * (1.0 + randf_range(-1.0, 1.0) * Config.PRICE_DRIFT), 0.5, 1.6)
 			supply[id] = supply[id] * 0.7
+		NPCSystem.pay_wages()
 		if PhysicsSystem.station().is_empty():
 			continue
 		if credits >= Config.DOCK_FEE:
@@ -213,7 +229,7 @@ func step(_dt: float) -> void:
 			book("Liegegebühr: kein Geld, %d Cr auf die Schulden" % Config.DOCK_FEE, 0)
 	if debt > 0 and GameState.time >= next_payment:
 		next_payment += Config.PAYMENT_DAYS * 1440.0
-		var rate := mini(Config.PAYMENT, debt)
+		var rate := mini(int(Config.PAYMENT * payment_factor), debt)
 		if credits >= rate:
 			credits -= rate
 			debt -= rate
@@ -232,7 +248,8 @@ func step(_dt: float) -> void:
 				GameState.toast("Rate verpasst! %d Cr Strafzins. Noch %d bis zur Pfändung." % [fee, Config.MAX_STRIKES - strikes], "bad")
 
 func to_data() -> Dictionary:
-	return {"credits": credits, "debt": debt, "next_payment": next_payment, "strikes": strikes, "prices": prices,
+	return {"payment_factor": payment_factor, "claim_discount": DialogueSystem.claim_discount, "rate_lowered": DialogueSystem.rate_lowered,
+		"credits": credits, "debt": debt, "next_payment": next_payment, "strikes": strikes, "prices": prices,
 		"supply": supply, "next_day": next_day, "log": log_entries, "wreck": SalvageSystem.wreck_name}
 
 func from_data(d: Dictionary) -> void:
@@ -241,3 +258,6 @@ func from_data(d: Dictionary) -> void:
 	log_entries.assign(d.log)
 	SalvageSystem.wreck_name = String(d.wreck)
 	over = false
+	payment_factor = float(d.get("payment_factor", 1.0))
+	DialogueSystem.claim_discount = bool(d.get("claim_discount", false))
+	DialogueSystem.rate_lowered = bool(d.get("rate_lowered", false))

@@ -1,0 +1,312 @@
+{
+ "careers": [
+  {
+   "id": "school",
+   "name": "Schule auf dem Mond",
+   "years": 4,
+   "min_age": 14,
+   "max_age": 18,
+   "requires": [],
+   "skills": {
+    "physics": 12,
+    "construction": 8,
+    "folk": 10
+   },
+   "credits": 0,
+   "hobby_choice": true,
+   "text": "Lernte in der Mondschule das Nötigste über Physik und Technik."
+  },
+  {
+   "id": "shipyard",
+   "name": "Werftlehre",
+   "years": 3,
+   "min_age": 16,
+   "requires": [],
+   "skills": {
+    "construction": 25,
+    "civil": 18,
+    "mechanical": 15,
+    "spaceship": 10,
+    "eva": 10
+   },
+   "credits": 300,
+   "items": [
+    "crowbar"
+   ],
+   "text": "Lehre in einer Mondwerft: schweißen, montieren, Hüllen flicken."
+  },
+  {
+   "id": "electrician",
+   "name": "Bordelektrikerin",
+   "years": 3,
+   "min_age": 17,
+   "requires": [],
+   "skills": {
+    "electrical": 30,
+    "robotics": 10,
+    "software": 8
+   },
+   "credits": 400,
+   "text": "Verlegte Kabel und reparierte Steuerungen auf Frachtern."
+  },
+  {
+   "id": "military",
+   "name": "Militärdienst",
+   "years": 4,
+   "min_age": 18,
+   "requires": [],
+   "skills": {
+    "combat_training": 30,
+    "ranged": 25,
+    "armed_melee": 15,
+    "military_et": 30,
+    "combat_eng": 15,
+    "eva": 15,
+    "zerog": 15
+   },
+   "credits": 600,
+   "items": [
+    "boltgun"
+   ],
+   "traits_add": [
+    "hardy"
+   ],
+   "enemy_chance": 0.4,
+   "text": "Diente im Krieg auf einer Fregatte. Sah mehr, als ihr lieb war."
+  },
+  {
+   "id": "street",
+   "name": "Jahre auf der Straße",
+   "years": 3,
+   "min_age": 14,
+   "requires": [],
+   "skills": {
+    "street": 30,
+    "stealth": 25,
+    "unarmed": 20,
+    "gambling": 15,
+    "acting": 10
+   },
+   "credits": -100,
+   "traits_add": [
+    "nervous"
+   ],
+   "contact": "Schieberin Vex (Habitat L4)",
+   "text": "Schlug sich in den Gängen von L4 durch."
+  },
+  {
+   "id": "university",
+   "name": "Universität: Physik",
+   "years": 4,
+   "min_age": 18,
+   "requires": [
+    "school"
+   ],
+   "skills": {
+    "physics": 35,
+    "software": 20,
+    "pilot": 10,
+    "psychology": 8
+   },
+   "credits": -400,
+   "traits_add": [
+    "smart"
+   ],
+   "text": "Studierte Bahnmechanik am Kármán-Ring. Hat noch Studienschulden."
+  },
+  {
+   "id": "trader",
+   "name": "Handelskontor",
+   "years": 3,
+   "min_age": 18,
+   "requires": [],
+   "skills": {
+    "business": 35,
+    "persuasion": 25,
+    "oligarch_et": 20
+   },
+   "credits": 1200,
+   "contact": "Bankier Aurel Lindqvist (Kármán-Ring)",
+   "text": "Arbeitete im Kontor einer Handelsgesellschaft."
+  },
+  {
+   "id": "miner",
+   "name": "Bergbaukolonie",
+   "years": 3,
+   "min_age": 16,
+   "requires": [],
+   "skills": {
+    "excavation": 35,
+    "eva": 25,
+    "zerog": 25,
+    "mechanical": 10
+   },
+   "credits": 500,
+   "traits_add": [
+    "strong"
+   ],
+   "text": "Baute Eis und Erz auf einem Asteroiden ab."
+  },
+  {
+   "id": "pilot_school",
+   "name": "Pilotenschule",
+   "years": 3,
+   "min_age": 18,
+   "requires": [
+    "school"
+   ],
+   "skills": {
+    "pilot": 35,
+    "physics": 10,
+    "zerog": 15,
+    "robotics": 8
+   },
+   "credits": -200,
+   "text": "Lernte fliegen und andocken auf Schulschuttles."
+  },
+  {
+   "id": "medic",
+   "name": "Sanitätsdienst",
+   "years": 3,
+   "min_age": 18,
+   "requires": [],
+   "skills": {
+    "forensic": 25,
+    "psychology": 25,
+    "persuasion": 10
+   },
+   "credits": 300,
+   "traits_add": [
+    "calm"
+   ],
+   "text": "Versorgte Verletzte nach Unfällen und Gefechten."
+  },
+  {
+   "id": "hacker",
+   "name": "Datenhändlerin",
+   "years": 3,
+   "min_age": 17,
+   "requires": [],
+   "skills": {
+    "software": 25,
+    "hacking": 25,
+    "stealth": 10,
+    "street": 10
+   },
+   "credits": 400,
+   "enemy_chance": 0.5,
+   "text": "Knackte Datenchips für zwielichtige Kunden."
+  },
+  {
+   "id": "bar",
+   "name": "Barmusikerin",
+   "years": 2,
+   "min_age": 16,
+   "requires": [],
+   "skills": {
+    "song": 30,
+    "dance": 20,
+    "acting": 20,
+    "cooking": 10,
+    "folk": 15
+   },
+   "credits": 100,
+   "traits_add": [
+    "social"
+   ],
+   "text": "Sang in den Bars der Stationen für ein paar Credits."
+  },
+  {
+   "id": "cook",
+   "name": "Schiffsköchin",
+   "years": 2,
+   "min_age": 16,
+   "requires": [],
+   "skills": {
+    "cooking": 35,
+    "folk": 10,
+    "psychology": 8
+   },
+   "credits": 200,
+   "text": "Kochte für die Crew eines Erzfrachters."
+  },
+  {
+   "id": "salvager",
+   "name": "Bergungscrew",
+   "years": 3,
+   "min_age": 17,
+   "requires": [],
+   "skills": {
+    "excavation": 20,
+    "eva": 20,
+    "forensic": 15,
+    "business": 10,
+    "civil": 10
+   },
+   "credits": 500,
+   "text": "Schlachtete Wracks im Trümmerfeld aus."
+  }
+ ],
+ "events": [
+  {
+   "text": "Ein schwerer Unfall: monatelang im Krankenhaus.",
+   "traits_add": [
+    "fragile"
+   ],
+   "credits": -200
+  },
+  {
+   "text": "Glück im Spiel: ein großer Gewinn.",
+   "credits": 600
+  },
+  {
+   "text": "Verlor alles bei einem Betrug.",
+   "credits": -500
+  },
+  {
+   "text": "Machte sich einen gefährlichen Feind.",
+   "enemy": true
+  },
+  {
+   "text": "Fand einen Mentor, der viel beibrachte.",
+   "learn": 10
+  },
+  {
+   "text": "Hielt durch harte Zeiten durch und wurde zäher.",
+   "traits_add": [
+    "hardy"
+   ],
+   "traits_remove": [
+    "fragile"
+   ]
+  },
+  {
+   "text": "Wurde durch die Arbeit bequem.",
+   "traits_add": [
+    "lazy"
+   ],
+   "traits_remove": [
+    "ambitious"
+   ]
+  },
+  {
+   "text": "Packte der Ehrgeiz.",
+   "traits_add": [
+    "ambitious"
+   ],
+   "traits_remove": [
+    "lazy"
+   ]
+  },
+  {
+   "text": "Ruhige Jahre, nichts Besonderes.",
+   "credits": 100
+  },
+  {
+   "text": "Erbte ein altes Lehrbuch.",
+   "item": "book"
+  }
+ ],
+ "start_age": 14,
+ "max_age": 60
+}

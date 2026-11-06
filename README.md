@@ -15,6 +15,7 @@ und dient als Vorlage für die Etappen, die noch nach Godot übertragen werden.
 
 ```
 godot --headless --path . --script res://tests/run_tests.gd
+godot --headless --path . --script res://tests/test_skills.gd
 ```
 
 ## Steuerung
@@ -28,6 +29,8 @@ godot --headless --path . --script res://tests/run_tests.gd
 | Kiste durchsuchen | `E` (daneben stehen) oder draufklicken |
 | Luft- / Strom-Ansicht | `L` / `P` |
 | Zeit | `Leertaste` Pause, `1`–`4` (1× = Echtzeit) |
+| Charaktermenü (Fähigkeiten, Traits, Hobbys, Lebenslauf, Aufgaben) | `I` |
+| Navigation | `N`, fliegen mit `WASD`, `F` andocken |
 | Speichern | `Strg+S`, Autosave jede Minute |
 
 ## Projektstruktur
@@ -41,15 +44,27 @@ res://
   scripts/character/  CrewMember (Verhalten, Bedürfnisse)
   scripts/crew/       CrewSystem
   scripts/inventory/  ItemSystem, ItemData, Inventory
+  scripts/skills/     SkillSystem, HobbySystem, SkillData, HobbyData
+  scripts/traits/     TraitSystem, TraitData
+  scripts/character/  CharacterSystem (Lebenslauf), CrewMember
+  scripts/npcs/       NPCSystem (Bewerber, Plünderer)
+  scripts/dialogue/   DialogueSystem (Gespräche auf Stationen)
+  scripts/economy/    EconomySystem
+  scripts/salvage/    SalvageSystem (Wracks)
+  scripts/physics/    PhysicsSystem (Raumflug)
   scripts/save/       SaveSystem (JSON)
   scripts/ui/         UIManager
   resources/items/    Gegenstände als .tres (ItemData)
   resources/components/ Geräte als .tres (DeviceData)
+  resources/skills/   32 Fähigkeiten (SkillData)
+  resources/traits/   16 Eigenschaften (TraitData)
+  resources/hobbies/  10 Hobbys (HobbyData)
+  data/               Rezepte, Raumfahrt, Lebenslauf, Trainingsaktionen (JSON)
   tests/              Automatische Tests
   web/                Alte Browser-Version (Vorlage)
 ```
 
-Neue Gegenstände oder Geräte: einfach eine neue `.tres`-Datei in `resources/items/` bzw. `resources/components/` anlegen.
+Neue Gegenstände, Geräte, Fähigkeiten, Traits oder Hobbys: einfach eine neue `.tres`-Datei in `resources/items/` bzw. `resources/components/` anlegen.
 Das Spiel lädt sie automatisch.
 
 Den Bauplan findest du in [PLAN.md](PLAN.md).

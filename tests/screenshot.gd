@@ -22,6 +22,9 @@ func _initialize() -> void:
 		root.get_node("UIManager").nav_map.follow = false
 		root.get_node("UIManager").nav_map.center = Vector2(30000, -5000)
 		root.get_node("UIManager").nav_map.zoom = 0.0055
+	if args.size() > 3 and args[3] == "char":
+		root.get_node("UIManager").char_ui.creation.visible = false
+		root.get_node("UIManager").char_ui.toggle()
 	for i in frames:
 		await process_frame
 	var img := root.get_texture().get_image()
