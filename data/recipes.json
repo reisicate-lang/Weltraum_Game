@@ -11,7 +11,8 @@
    65
   ],
   "time": 4,
-  "action": "deconstruct_structure"
+  "action": "deconstruct_structure",
+  "station": "workbench"
  },
  {
   "id": "pipe",
@@ -25,7 +26,8 @@
    70
   ],
   "time": 3,
-  "action": "build_device"
+  "action": "build_device",
+  "station": "workbench"
  },
  {
   "id": "circuit",
@@ -40,7 +42,8 @@
    55
   ],
   "time": 6,
-  "action": "repair_electrical"
+  "action": "repair_electrical",
+  "station": "workbench"
  },
  {
   "id": "filter",
@@ -55,7 +58,8 @@
    60
   ],
   "time": 3,
-  "action": "build_device"
+  "action": "build_device",
+  "station": "workbench"
  },
  {
   "id": "cell",
@@ -70,7 +74,8 @@
    45
   ],
   "time": 8,
-  "action": "repair_electrical"
+  "action": "repair_electrical",
+  "station": "workbench"
  },
  {
   "id": "fabric",
@@ -84,7 +89,8 @@
    50
   ],
   "time": 2,
-  "action": "build_device"
+  "action": "build_device",
+  "station": "workbench"
  },
  {
   "id": "crowbar",
@@ -99,7 +105,8 @@
    80
   ],
   "time": 5,
-  "action": "maintain_weapon"
+  "action": "maintain_weapon",
+  "station": "workbench"
  },
  {
   "id": "boltgun",
@@ -115,6 +122,101 @@
    75
   ],
   "time": 10,
-  "action": "maintain_weapon"
+  "action": "maintain_weapon",
+  "station": "workbench"
+ },
+ {
+  "id": "foodblock",
+  "name": "Nahrungsblock pressen",
+  "in": {
+   "ration": 4
+  },
+  "out": [
+   "foodblock",
+   1,
+   100
+  ],
+  "time": 5,
+  "action": "cook",
+  "station": "workbench"
+ },
+ {
+  "id": "jacket",
+  "name": "Thermojacke nähen",
+  "in": {
+   "fabric": 3
+  },
+  "out": [
+   "thermojacket",
+   1,
+   90
+  ],
+  "time": 6,
+  "action": "build_device",
+  "station": "workbench"
+ },
+ {
+  "id": "chemfilter",
+  "name": "Filterkartusche (Chemie)",
+  "in": {
+   "scrap": 1,
+   "watercan": 1
+  },
+  "out": [
+   "filter",
+   2,
+   90
+  ],
+  "time": 6,
+  "action": "repair_electrical",
+  "station": "chemstation"
+ },
+ {
+  "id": "chemfuel",
+  "name": "Brennstoff synthetisieren",
+  "in": {
+   "scrap": 2,
+   "watercan": 1
+  },
+  "out": [
+   "fuelcan",
+   1,
+   100
+  ],
+  "time": 10,
+  "action": "repair_mechanical",
+  "station": "chemstation"
+ },
+ {
+  "id": "genemod",
+  "name": "Gen-Mod herstellen",
+  "in": {
+   "seeds": 2,
+   "datachip": 1,
+   "circuit": 1
+  },
+  "out": [
+   "genemod",
+   1,
+   100
+  ],
+  "time": 20,
+  "action": "analyze_software",
+  "station": "chemstation"
+ },
+ {
+  "id": "seeds",
+  "name": "Saatgut aus Rationen",
+  "in": {
+   "ration": 2
+  },
+  "out": [
+   "seeds",
+   2,
+   100
+  ],
+  "time": 4,
+  "action": "cook",
+  "station": "chemstation"
  }
 ]

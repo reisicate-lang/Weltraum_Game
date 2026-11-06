@@ -34,6 +34,7 @@ var hobbies: Array[String] = []
 var recent_actions: Dictionary = {} ## Aktion -> kürzlich geübte Minuten (Wiederholung bringt weniger)
 var last_trained := ""
 var stress := 10.0                  ## 0 = entspannt, 100 = Zusammenbruch
+var body_temp := 37.0               ## Körpertemperatur in °C
 var age := 18
 var history: Array[String] = []     ## Lebenslauf
 var contacts: Array[String] = []
@@ -71,7 +72,7 @@ func can_reach(p: Vector2i) -> bool:
 	return absi(t.x - p.x) <= 1 and absi(t.y - p.y) <= 1
 
 func safe_air(i: int) -> bool:
-	return grid().holds_air(i) and grid().o2[i] >= Config.O2_LOW
+	return grid().holds_air(i) and grid().o2[i] >= Config.O2_LOW and grid().fire[i] == 0 and grid().temp[i] < 50.0
 
 func suit_ok() -> bool:
 	return suit != null and suit.o2 > 0.0 and suit.battery > 0.0
@@ -265,6 +266,24 @@ func _update_body(dt: float) -> void:
 	if needs.water <= 0.0: damage += 4.0
 	if needs.air < 25.0: damage += 600.0
 	if not in_suit and g.holds_air(i) and g.co2[i] > Config.CO2_BAD: damage += 3.0
+	# Körpertemperatur: Kälte (ohne Anzug), Hitze durch Feuer
+	var tt: float = g.temp[i] if g.holds_air(i) else Config.SPACE_TEMP
+	if in_suit or suit != null:
+		tt = Config.ROOM_TEMP
+	var insulation := 0.5 if inv.count("thermojacket") > 0 else 1.0
+	if tt < 12.0:
+		body_temp -= (12.0 - tt) / 30.0 * h * insulation
+	elif tt > 45.0:
+		body_temp += (tt - 45.0) / 20.0 * h
+	else:
+		body_temp += (37.0 - body_temp) * minf(1.0, h * 2.0)
+	body_temp = clampf(body_temp, 25.0, 43.0)
+	if body_temp < 35.0:
+		damage += (35.0 - body_temp) * 8.0
+	if body_temp > 39.5:
+		damage += (body_temp - 39.5) * 15.0
+	if g.fire[i] == 1:
+		damage += 60.0
 	damage /= TraitSystem.factor(self, "toughness")
 	health = clampf(health - damage * h if damage > 0.0 else health + 1.5 * h * TraitSystem.factor(self, "recovery"), 0.0, 100.0)
 	_update_stress(dt, sleeping)
@@ -280,6 +299,7 @@ func _update_body(dt: float) -> void:
 		GameState.toast(display_name + " ist wieder bei Bewusstsein.")
 	_warn("air", needs.air < 40.0, display_name + " bekommt kaum Luft!", needs.air > 95.0)
 	_warn("health", health < 30.0, display_name + " geht es sehr schlecht.", health > 50.0)
+	_warn("cold", body_temp < 35.5, display_name + " friert. Eine Heizung oder Thermojacke hilft.", body_temp > 36.5)
 	if suit != null:
 		var low := minf(suit.o2, suit.battery)
 		_warn("suit", low < Config.SUIT_RETURN_AT, "Der Raumanzug von " + display_name + " wird knapp.", low > 60.0)
@@ -299,6 +319,11 @@ func _update_stress(dt: float, sleeping: bool) -> void:
 		rise += 0.5
 	rise /= TraitSystem.factor(self, "stress_resist")
 	var fall := 4.0 if sleeping else 1.0
+	# Blick aus dem Fenster beruhigt
+	for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1), Vector2i(2, 0), Vector2i(-2, 0), Vector2i(0, 2), Vector2i(0, -2)]:
+		if grid().get_tile(tile() + d) == ShipGrid.Tile.WINDOW:
+			fall += 1.5
+			break
 	if activity != null and activity.get("kind", "") in ["hobby", "trainer"]:
 		fall += 6.0
 	stress = clampf(stress + (rise - fall) * h, 0.0, 100.0)
@@ -344,7 +369,7 @@ func update(dt: float) -> void:
 	var g := grid()
 	var i := g.idx(tile())
 	_flee_cooldown -= dt
-	if not suit_ok() and not safe_air(i) and needs.air < 50.0 and not (activity != null and activity.has("flee")) and _flee_cooldown <= 0.0:
+	if not suit_ok() and not safe_air(i) and (needs.air < 50.0 or g.fire[i] == 1 or g.temp[i] >= 50.0) and not (activity != null and activity.has("flee")) and _flee_cooldown <= 0.0:
 		_flee_cooldown = 0.05
 		release_job()
 		stop_activity()
@@ -430,6 +455,8 @@ func _has_open_job() -> bool:
 func _pref_of(j: Dictionary) -> String:
 	match j.kind:
 		"build", "cable", "device": return "build"
+		"tend", "harvest": return "refill"
+		"extinguish": return "repair"
 		"repair": return "repair"
 		"remove": return "remove"
 		"haul", "move": return "haul"
@@ -826,6 +853,8 @@ func _do_activity(dt: float) -> void:
 		needs[need] = minf(100.0, needs[need] + gain)
 		if dev.data().stock >= 0.0:
 			dev.stock = maxf(0.0, dev.stock - def.use)
+			if need in ["water", "hygiene"]:
+				WaterSystem.add_waste(def.use)
 		stop_activity()
 
 func _start_flee() -> bool:
@@ -859,7 +888,7 @@ func to_data() -> Dictionary:
 		"is_player": is_player, "items": inv.to_data(), "suit": suit,
 		"skills": skills, "traits": traits, "hobbies": hobbies, "stress": stress, "age": age, "history": history,
 		"contacts": contacts, "enemies": enemies, "salary": salary, "work_prefs": work_prefs, "last_trained": last_trained,
-		"careers": get_meta("careers", [])}
+		"careers": get_meta("careers", []), "body_temp": body_temp}
 
 static func from_data(d: Dictionary) -> CrewMember:
 	var c := CrewMember.new(int(d.id), String(d.name), Color.html(String(d.color)), Vector2i.ZERO)
@@ -884,4 +913,5 @@ static func from_data(d: Dictionary) -> CrewMember:
 	if d.has("work_prefs"):
 		c.work_prefs = d.work_prefs
 	c.set_meta("careers", d.get("careers", []))
+	c.body_temp = float(d.get("body_temp", 37.0))
 	return c

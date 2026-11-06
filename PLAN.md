@@ -79,13 +79,14 @@ und werden Schritt für Schritt übertragen.
 - [x] Mehrere Schiffe: kaufen, wechseln, verkaufen; Wrack als eigenes Schiff anmelden
 - [x] Wracks bleiben an ihrem Ort; Trümmerfeld liefert gratis Wracks
 
-### Etappe 7 – Tiefere Schiffssysteme
-- [ ] Temperatur, Heizung, Kühlung, Körpertemperatur, Kleidung mit Schutzwerten
-- [ ] Wasser und Abwasser, Rohrleitungen, Wasserfilter
-- [ ] Feuer (braucht Sauerstoff), Löschen
-- [ ] Fenster, Steuerpult
-- [ ] Essen anbauen: von Hand und automatisch (teuer, begrenzt, Gen-Mods, tägliche Ernte)
-- [ ] Essen als Block-Version, Fleisch als Klumpen oder Käfig-Version, Chemiestation
+### Etappe 7 – Tiefere Schiffssysteme (Godot, 19 Tests)
+- [x] Temperatur pro Feld, Wärmeverlust ans All, Heizung (mit Thermostat), Abwärme des Generators
+- [x] Körpertemperatur, Unterkühlung, Überhitzung, Thermojacke, Raumanzug schützt
+- [x] Feuer (braucht Sauerstoff, springt über, beschädigt Geräte), Löschen, Feuerlöscher-Station, Vakuum erstickt Feuer
+- [x] Fenster (senken Stress, kosten Wärme)
+- [x] Wasserkreislauf: Abwasser, Wasserfilter mit Filterkartuschen (Rohrleitungen vereinfacht als Schiffsnetz)
+- [x] Hydrokultur von Hand (Pflege, Ernte), Auto-Farm (teuer, mit Gen-Mod täglich), Fleischtank (Käfig-Version)
+- [x] Nahrungsblock, Fleischklumpen, Saatgut, Chemiestation (Filter, Brennstoff, Gen-Mods)
 
 ### Etappe 8 – Crew
 - [ ] Mehrere Charaktere, übertragbar zwischen Spielständen

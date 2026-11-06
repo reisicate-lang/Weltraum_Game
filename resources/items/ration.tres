@@ -10,4 +10,4 @@ weight = 0.5
 volume = 0.6
 value = 6
 description = "Füllt den Vorratsschrank um 1 Ration auf."
-refill = {"food": 1}
+refill = {"food": 1, "meatvat": 1}

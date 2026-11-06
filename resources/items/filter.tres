@@ -10,4 +10,4 @@ weight = 1.0
 volume = 1.5
 value = 35
 description = "Für CO₂-Filter und Wasseraufbereitung."
-refill = {}
+refill = {"waterfilter": 20}

@@ -189,11 +189,12 @@ func scrap_hull() -> void:
 func craft(recipe_id: String) -> void:
 	var g := ShipSystem.grid
 	var bench: Device = null
+	var station: String = recipe(recipe_id).get("station", "workbench")
 	for dev in g.devices.values():
-		if dev.type == "workbench" and g.zone[g.idx(dev.pos)] != 1:
+		if dev.type == station and g.zone[g.idx(dev.pos)] != 1:
 			bench = dev
 	if bench == null:
-		GameState.toast("Du brauchst eine Werkbank.")
+		GameState.toast("Dafür brauchst du: " + ItemSystem.device(station).display_name)
 		return
 	var key := g.idx(bench.pos)
 	if ShipConstructionSystem.jobs.has(key):

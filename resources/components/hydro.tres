@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "hydro"
+display_name = "Hydrokultur"
+description = "Pflanzen von Hand: braucht Pflege und Wasser, nach 3 Tagen Ernte (4 Rationen). Braucht 0,3 kW Licht."
+power = -0.3
+build_time = 4.0
+cost = {"plate": 2, "pipe": 2, "glass": 1}
+stock = 40.0
+stock_unit = "L Wasser"
+storage = 0.0
+need = ""
+wears = false
+tech = "mechanical"
+color = Color(0.2, 0.45, 0.2, 1)

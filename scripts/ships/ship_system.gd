@@ -60,6 +60,10 @@ func create_start_ship() -> void:
 	for y in range(y0 + 6, y0 + 9):
 		grid.cables[grid.idx(Vector2i(x0 + 11, y))] = 1
 	grid.cables[grid.idx(Vector2i(x0 + 12, y0 + 8))] = 1
+	grid.place_device("heater", Vector2i(x0 + 8, y0 + 1))
+	grid.cables[grid.idx(Vector2i(x0 + 8, y0 + 1))] = 1
+	grid.place_device("heater", Vector2i(x0 + 13, y0 + 1))
+	grid.cables[grid.idx(Vector2i(x0 + 13, y0 + 1))] = 1
 	grid.place_device("terminal", Vector2i(x0 + 12, y0 + 5))
 	grid.place_device("workbench", Vector2i(x0 + 13, y0 + 5))
 	grid.place_device("locker", Vector2i(x0 + 1, y0 + 8))

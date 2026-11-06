@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "waterfilter"
+display_name = "Wasserfilter"
+description = "Bereitet Abwasser aus Waschbecken und Toilette wieder zu Trinkwasser auf. Braucht 0,5 kW und Filterkartuschen."
+power = -0.5
+build_time = 5.0
+cost = {"plate": 2, "pipe": 3, "filter": 1}
+stock = 20.0
+stock_unit = "Filterleistung"
+storage = 0.0
+need = ""
+wears = true
+tech = "mechanical"
+color = Color(0.2, 0.4, 0.45, 1)

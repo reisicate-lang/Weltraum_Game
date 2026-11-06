@@ -57,6 +57,13 @@ func strike() -> void:
 			dev.cond = maxf(0.0, dev.cond - randf() * 30.0)
 			if dev.cond <= 0.0:
 				dev.broken = true
+	# Einschläge können Feuer auslösen (auf einem Nachbarfeld mit Luft)
+	if randf() < 0.2:
+		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var q: Variant = p + d
+			if g.in_bounds(q) and g.holds_air(g.idx(q)) and g.pressure(g.idx(q)) > 50.0:
+				TemperatureSystem.ignite(g.idx(q))
+				break
 	if g.cond[i] <= 0.0:
 		g.set_tile(p, ShipGrid.Tile.FLOOR)
 		EventBus.ship_changed.emit()

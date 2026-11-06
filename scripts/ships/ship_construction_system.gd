@@ -5,7 +5,7 @@ extends Node
 ## Feld-Index -> Auftrag (Dictionary)
 var jobs: Dictionary = {}
 
-const TOOL_TILE := {"floor": 1, "wall": 2, "door": 3}
+const TOOL_TILE := {"floor": 1, "wall": 2, "door": 3, "window": 4}
 
 func can_place(tool: String, p: Vector2i) -> bool:
 	var g := ShipSystem.grid
@@ -20,9 +20,10 @@ func can_place(tool: String, p: Vector2i) -> bool:
 		"repair": return DamageSystem.needs_repair(p)
 		"haul": return g.piles.has(i) and not jobs.has(i)
 		"hack": return has_dev and g.devices[i].lock_level > 0 and not jobs.has(i)
+		"extinguish": return g.fire[i] == 1 and not jobs.has(i)
 		"move": return has_dev and not jobs.has(i)
 		"floor": return t == ShipGrid.Tile.SPACE
-		"wall": return (t == ShipGrid.Tile.SPACE or t == ShipGrid.Tile.FLOOR) and not has_dev
+		"wall", "window": return (t == ShipGrid.Tile.SPACE or t == ShipGrid.Tile.FLOOR) and not has_dev
 		"door": return t != ShipGrid.Tile.DOOR and not has_dev
 		"cable": return t != ShipGrid.Tile.SPACE and g.cables[i] == 0
 		"remove": return t != ShipGrid.Tile.SPACE
@@ -37,7 +38,9 @@ func place(tool: String, p: Vector2i) -> bool:
 		cancel(jobs[i])
 		return true
 	var job := {"x": p.x, "y": p.y, "progress": 0.0, "claimed_by": -1, "retry_at": 0.0, "paid": false}
-	if tool == "hack":
+	if tool == "extinguish":
+		job.merge({"kind": "extinguish", "need": 1.0, "paid": true})
+	elif tool == "hack":
 		job.merge({"kind": "hack", "need": 4.0 * g_lock(p), "paid": true})
 	elif tool == "haul":
 		job.merge({"kind": "haul", "phase": "pickup", "need": 0.2, "paid": true})
@@ -168,6 +171,7 @@ func salvage(p: Vector2i, worker: CrewMember = null) -> Array:
 			if randf() < 0.6:
 				out.append(["circuit", 1, randf_range(30.0, 80.0)])
 		ShipGrid.Tile.FLOOR: out.append(["plate", 1, randf_range(40.0, 90.0)])
+		ShipGrid.Tile.WINDOW: out.append(["glass", 2, randf_range(40.0, 90.0)])
 	return out
 
 ## Auftrag fertig: Schiff verändern. worker_pos = wo der Arbeiter steht.
@@ -177,6 +181,10 @@ func complete(job: Dictionary, worker_pos: Vector2i, worker: CrewMember = null) 
 	var i := g.idx(p)
 	jobs.erase(i)
 	match job.kind:
+		"tend", "harvest":
+			WaterSystem.finish_farm_job(job)
+		"extinguish":
+			TemperatureSystem.extinguish(i)
 		"repair":
 			DamageSystem.repair(p)
 		"refill":
@@ -205,7 +213,7 @@ func complete(job: Dictionary, worker_pos: Vector2i, worker: CrewMember = null) 
 				g.devices.erase(i)
 			elif g.cables[i] == 1 and t == ShipGrid.Tile.FLOOR:
 				g.cables[i] = 0
-			elif t == ShipGrid.Tile.WALL or t == ShipGrid.Tile.DOOR:
+			elif t == ShipGrid.Tile.WALL or t == ShipGrid.Tile.DOOR or t == ShipGrid.Tile.WINDOW:
 				g.set_tile(p, ShipGrid.Tile.FLOOR)
 			else:
 				g.set_tile(p, ShipGrid.Tile.SPACE)
@@ -254,6 +262,9 @@ func missing(c: Dictionary, inv: Inventory) -> Dictionary:
 func label(job: Dictionary) -> String:
 	match job.kind:
 		"repair": return "Repariert"
+		"tend": return "Pflegt Pflanzen"
+		"harvest": return "Erntet"
+		"extinguish": return "Löscht Feuer"
 		"hack": return "Hackt Schloss"
 		"refill": return "Füllt nach: " + ItemSystem.item(job.item).display_name
 		"craft": return "Werkbank: " + String(EconomySystem.recipe(job.recipe).name)

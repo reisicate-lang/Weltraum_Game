@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "chemstation"
+display_name = "Chemiestation"
+description = "Stellt Filterkartuschen, Brennstoff und Gen-Mods her."
+power = -0.8
+build_time = 6.0
+cost = {"plate": 3, "pipe": 2, "glass": 1, "circuit": 1}
+stock = -1.0
+stock_unit = ""
+storage = 0.0
+need = ""
+wears = false
+tech = "electrical"
+color = Color(0.35, 0.3, 0.5, 1)

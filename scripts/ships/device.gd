@@ -21,6 +21,10 @@ var store := 0.0
 var unknown := false
 ## Schloss: 0 = offen, 1–3 = Sicherheitsstufe (Hacken nötig)
 var lock_level := 0
+## Anbau und Fleischtank
+var growth := 0.0
+var tended_at := 0.0
+var genemod := false
 
 func _init(t: String, p: Vector2i) -> void:
 	type = t
@@ -71,6 +75,10 @@ func status_text() -> String:
 		parts.append("Anzug: O₂ %d %%, Akku %d %%" % [int(suit.o2), int(suit.battery)] if suit != null else "leer (Anzug ist unterwegs)")
 	if type == "pump":
 		parts.append("Speicher %d kPa" % int(store))
+	if type in ["hydro", "autofarm", "meatvat"]:
+		parts.append("Wachstum %d %%" % int(growth * 100.0) + (" · Gen-Mod" if genemod else ""))
+	if type == "hydro":
+		parts.append("gepflegt" if GameState.time - tended_at < 1440.0 else "braucht Pflege")
 	if d.capacity > 0.0:
 		parts.append("%.1f / %.0f kWh" % [charge, d.capacity])
 	if d.stock >= 0.0:
@@ -83,7 +91,8 @@ func status_text() -> String:
 
 func to_data() -> Dictionary:
 	return {"type": type, "x": pos.x, "y": pos.y, "cond": cond, "broken": broken, "stock": stock,
-		"charge": charge, "items": inv.to_data() if inv != null else [], "suit": suit, "store": store, "unknown": unknown, "lock": lock_level}
+		"charge": charge, "items": inv.to_data() if inv != null else [], "suit": suit, "store": store, "unknown": unknown, "lock": lock_level,
+		"growth": growth, "tended_at": tended_at, "genemod": genemod}
 
 static func from_data(d: Dictionary) -> Device:
 	var dev := Device.new(String(d.type), Vector2i(int(d.x), int(d.y)))
@@ -97,4 +106,7 @@ static func from_data(d: Dictionary) -> Device:
 	dev.store = float(d.get("store", 0.0))
 	dev.unknown = bool(d.get("unknown", false))
 	dev.lock_level = int(d.get("lock", 0))
+	dev.growth = float(d.get("growth", 0.0))
+	dev.tended_at = float(d.get("tended_at", 0.0))
+	dev.genemod = bool(d.get("genemod", false))
 	return dev

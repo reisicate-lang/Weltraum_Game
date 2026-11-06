@@ -43,6 +43,9 @@ func _draw() -> void:
 		_draw_device(g.devices[i])
 	if GameState.view == "air":
 		_draw_air(g, x0, y0, x1, y1)
+	if GameState.view == "heat":
+		_draw_heat(g, x0, y0, x1, y1)
+	_draw_fire(g, x0, y0, x1, y1)
 	_draw_jobs()
 	for c in CrewSystem.crew:
 		_draw_char(c)
@@ -95,6 +98,10 @@ func _draw_tile(g: ShipGrid, p: Vector2i) -> void:
 					r = Rect2(r.position + Vector2(S - e, 0), Vector2(e, S))
 				draw_rect(r, COL_WALL_EDGE)
 		_draw_cracks(p, g.cond[g.idx(p)])
+	elif t == ShipGrid.Tile.WINDOW:
+		draw_rect(_rect(p), Color(0.35, 0.55, 0.7))
+		draw_rect(_rect(p, 0.12), Color(0.55, 0.8, 0.95, 0.8))
+		draw_line(Vector2(p) * S + Vector2(0.25, 0.7) * S, Vector2(p) * S + Vector2(0.7, 0.25) * S, Color(1, 1, 1, 0.6), 1.5)
 	elif t == ShipGrid.Tile.DOOR:
 		var horizontal := g.wall_like(p + Vector2i(-1, 0)) or g.wall_like(p + Vector2i(1, 0))
 		var gap := 0.3 if g.door_open(g.idx(p)) else 0.0
@@ -191,6 +198,28 @@ func _draw_air(g: ShipGrid, x0: int, y0: int, x1: int, y1: int) -> void:
 			elif o2 < Config.O2_OK or g.co2[i] > Config.CO2_BAD:
 				col = Color(0.95, 0.78, 0.23, 0.45)
 			draw_rect(_rect(Vector2i(x, y)), col)
+
+func _draw_heat(g: ShipGrid, x0: int, y0: int, x1: int, y1: int) -> void:
+	for y in range(y0, y1 + 1):
+		for x in range(x0, x1 + 1):
+			var i := g.idx(Vector2i(x, y))
+			if not g.holds_air(i):
+				continue
+			var t := g.temp[i]
+			var col := Color(0.3, 0.5, 0.95, clampf((15.0 - t) / 40.0, 0.0, 0.6)) if t < 15.0 else Color(0.95, 0.45, 0.2, clampf((t - 25.0) / 40.0, 0.0, 0.6))
+			if t >= 15.0 and t <= 25.0:
+				col = Color(0.44, 0.81, 0.56, 0.25)
+			draw_rect(_rect(Vector2i(x, y)), col)
+
+func _draw_fire(g: ShipGrid, x0: int, y0: int, x1: int, y1: int) -> void:
+	var tm := Time.get_ticks_msec() / 120.0
+	for y in range(y0, y1 + 1):
+		for x in range(x0, x1 + 1):
+			if g.fire[g.idx(Vector2i(x, y))] == 1:
+				var c := (Vector2(x, y) + Vector2(0.5, 0.6)) * S
+				for k in 3:
+					var off := Vector2(sin(tm + k * 2.1), -absf(cos(tm * 1.3 + k))) * S * 0.2
+					draw_circle(c + off, S * (0.28 - k * 0.07), [Color(0.9, 0.3, 0.1, 0.8), Color(1, 0.6, 0.15, 0.85), Color(1, 0.9, 0.5, 0.9)][k])
 
 func _draw_jobs() -> void:
 	var pulse := 0.55 + 0.25 * sin(Time.get_ticks_msec() / 300.0)

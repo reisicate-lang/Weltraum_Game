@@ -140,6 +140,9 @@ func _click(t: Vector2i) -> void:
 		if dev != null and not dev.unknown and dev.type == "workbench":
 			UIManager.open_window("bench")
 			return
+		if dev != null and not dev.unknown and dev.type == "chemstation":
+			UIManager.open_window("chem")
+			return
 		if (dev != null and dev.inv != null and not dev.unknown) or g.piles.has(g.idx(t)):
 			UIManager.open_container(t)
 			return
@@ -193,6 +196,8 @@ func _key(k: InputEventKey) -> void:
 		KEY_C: UIManager.set_tool("cancel")
 		KEY_L: GameState.view = "normal" if GameState.view == "air" else "air"
 		KEY_P: GameState.view = "normal" if GameState.view == "power" else "power"
+		KEY_O: GameState.view = "normal" if GameState.view == "heat" else "heat"
+		KEY_Z: UIManager.set_tool("window")
 		KEY_E: UIManager.interact()
 		KEY_H: UIManager.toggle_help()
 		KEY_I: UIManager.char_ui.toggle()

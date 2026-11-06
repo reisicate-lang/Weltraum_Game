@@ -20,6 +20,7 @@ func save_game(silent: bool = false) -> bool:
 		"economy": EconomySystem.to_data(),
 		"physics": PhysicsSystem.to_data(),
 		"fleet": FleetSystem.to_data(),
+		"wastewater": WaterSystem.wastewater,
 	}
 	var f := FileAccess.open(Config.SAVE_PATH, FileAccess.WRITE)
 	if f == null:
@@ -53,6 +54,7 @@ func load_game(silent: bool = false) -> bool:
 	EconomySystem.from_data(data.economy)
 	PhysicsSystem.from_data(data.physics)
 	FleetSystem.from_data(data.fleet)
+	WaterSystem.wastewater = float(data.get("wastewater", 0.0))
 	GameState.selected = CrewSystem.player()
 	EventBus.game_loaded.emit()
 	EventBus.ship_changed.emit()

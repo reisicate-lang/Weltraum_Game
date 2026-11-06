@@ -193,6 +193,10 @@ func job_profile(job: Dictionary) -> Dictionary:
 			return {"actions": [String(EconomySystem.recipe(job.recipe).get("action", "build_device"))], "effects": ["work_build"]}
 		"hack":
 			return {"actions": ["hack", "analyze_software"], "effects": ["hack_assist", "hack_power"], "fine": true}
+		"tend", "harvest":
+			return {"actions": ["cook"], "effects": ["meal_bonus"]}
+		"extinguish":
+			return {"actions": ["repair_structure"], "effects": ["work_structure"]}
 	return {"actions": [], "effects": []}
 
 func _install_action(tech: String) -> String:
@@ -235,6 +239,8 @@ func work_speed(c: CrewMember, job: Dictionary) -> float:
 		speed *= 0.8 + effect(c, "eva_work") * 0.5
 	if c.stress > 70.0:
 		speed *= 0.8
+	if job.kind == "extinguish" and not PhysicsSystem.ship_devices("extinguisher").is_empty():
+		speed *= 3.0
 	return maxf(0.2, speed)
 
 ## Arbeit an einem Auftrag trainiert die passenden Fähigkeiten

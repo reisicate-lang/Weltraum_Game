@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "extinguisher"
+display_name = "Feuerlöscher-Station"
+description = "Die Crew löscht Brände in der Nähe schneller."
+power = 0.0
+build_time = 2.0
+cost = {"plate": 1, "pipe": 1}
+stock = -1.0
+stock_unit = ""
+storage = 0.0
+need = ""
+wears = false
+tech = "furniture"
+color = Color(0.7, 0.15, 0.15, 1)

@@ -10,4 +10,4 @@ weight = 10.0
 volume = 10.0
 value = 8
 description = "Füllt Wasserspender oder Waschbecken um 10 L auf."
-refill = {"water": 10, "sink": 10}
+refill = {"water": 10, "sink": 10, "hydro": 10}

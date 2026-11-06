@@ -7,6 +7,7 @@ const TOOLS := [
 	["floor", "Boden", "B", "Klicken oder Fläche ziehen. Boden geht nur im Weltraum."],
 	["wall", "Wand", "M", "Ziehen zeichnet eine Linie oder den Rand eines Rechtecks."],
 	["door", "Tür", "T", "Klick auf eine Wand oder einen Boden."],
+	["window", "Fenster", "Z", "Wie eine Wand, aber aus Panzerglas. Der Ausblick senkt Stress, kostet aber Wärme."],
 	["cable", "Kabel", "K", "Kabel verbinden Geräte mit Strom."],
 	["move", "Versetzen", "V", "Vom Gerät zum Zielfeld ziehen. Ein Charakter trägt es dorthin."],
 	["haul", "Einsammeln", "Q", "Haufen markieren. Die Crew bringt alles in die nächste Frachtkiste im Schiff."],
@@ -148,7 +149,7 @@ func _build_left() -> void:
 	box.add_child(name_label)
 	task_label = _label("", COL_MUTED, 12)
 	box.add_child(task_label)
-	for key in [["health", "Gesundheit"], ["air", "Atmung"], ["food", "Hunger"], ["water", "Durst"], ["sleep", "Energie"], ["hygiene", "Hygiene"], ["suit_o2", "Anzug O₂"], ["suit_bat", "Anzug-Akku"]]:
+	for key in [["health", "Gesundheit"], ["warmth", "Körperwärme"], ["stress", "Ruhe"], ["air", "Atmung"], ["food", "Hunger"], ["water", "Durst"], ["sleep", "Energie"], ["hygiene", "Hygiene"], ["suit_o2", "Anzug O₂"], ["suit_bat", "Anzug-Akku"]]:
 		var row := HBoxContainer.new()
 		var l := _label(key[1], COL_MUTED, 12)
 		l.custom_minimum_size = Vector2(80, 0)
@@ -207,6 +208,7 @@ func _build_bottom() -> void:
 	row.add_child(spacer)
 	row.add_child(_button("Luft [L]", func(): GameState.view = "normal" if GameState.view == "air" else "air"))
 	row.add_child(_button("Strom [P]", func(): GameState.view = "normal" if GameState.view == "power" else "power"))
+	row.add_child(_button("Wärme [O]", func(): GameState.view = "normal" if GameState.view == "heat" else "heat"))
 	power_label = _label("", COL_MUTED, 12)
 	box.add_child(power_label)
 	var info := HBoxContainer.new()
@@ -257,7 +259,7 @@ Rechtsklick: Bauplan oder Aufgabe abbrechen · Versetzen V · Reparieren R
 Für Arbeiten im Vakuum holt Mira selbst einen Raumanzug. Die Luftschleuse links
 pumpt die Luft ab, bevor die Außentür aufgeht. Draußen auf dem Steg liegt Mondmüll.
 E: Kiste oder Haufen neben dir durchsuchen
-L / P: Luft- und Strom-Ansicht · Mausrad: zoomen · Pfeiltasten: Ansicht
+L / P / O: Luft-, Strom- und Wärme-Ansicht · Mausrad: zoomen · Pfeiltasten: Ansicht
 Leertaste: Pause · 1–4: Geschwindigkeit · Strg+S: speichern
 
 Du schuldest der Bank 24 000 Cr, alle 7 Tage ist eine Rate fällig.
@@ -459,14 +461,16 @@ func _refresh_window() -> void:
 		child.queue_free()
 	var head := HBoxContainer.new()
 	var st := PhysicsSystem.station()
-	var title := _label("Werkbank" if window_kind == "bench" else "Handelsterminal" + (" · " + String(st.name) if not st.is_empty() else ""), COL_AMBER, 15)
+	var title := _label({"bench": "Werkbank", "chem": "Chemiestation"}.get(window_kind, "Handelsterminal" + (" · " + String(st.name) if not st.is_empty() else "")), COL_AMBER, 15)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
 	head.add_child(_button("✕", close_window))
 	window_box.add_child(head)
-	if window_kind == "bench":
-		window_box.add_child(_label("Aus Schrott und Resten Neues machen. Die Crew holt das Material selbst.", COL_MUTED, 12))
+	if window_kind in ["bench", "chem"]:
+		window_box.add_child(_label("Die Crew holt das Material selbst und legt das Ergebnis daneben.", COL_MUTED, 12))
 		for r in E.recipes:
+			if r.get("station", "workbench") != ("workbench" if window_kind == "bench" else "chemstation"):
+				continue
 			var parts: PackedStringArray = []
 			for k in r["in"]:
 				parts.append("%d× %s" % [r["in"][k], ItemSystem.item(k).display_name])
@@ -698,6 +702,8 @@ func _refresh() -> void:
 		name_label.text = ("▸ " if c.is_player else "") + c.display_name
 		task_label.text = c.task + (" · trägt " + c.carrying.data().display_name if c.carrying != null else "")
 		need_bars.health.value = c.health
+		need_bars.warmth.value = clampf((c.body_temp - 33.0) / 4.0 * 100.0, 0.0, 100.0)
+		need_bars.stress.value = 100.0 - c.stress
 		for k in ["air", "food", "water", "sleep", "hygiene"]:
 			need_bars[k].value = c.needs[k]
 		need_bars.suit_o2.get_parent().visible = c.suit != null

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "meatvat"
+display_name = "Fleischtank"
+description = "Züchtet Fleisch in einem Käfig: frisst Rationen, liefert jeden Tag einen Fleischklumpen. Braucht 1 kW."
+power = -1.0
+build_time = 6.0
+cost = {"plate": 3, "pipe": 2, "motor": 1}
+stock = 10.0
+stock_unit = "Futter"
+storage = 0.0
+need = ""
+wears = false
+tech = "mechanical"
+color = Color(0.5, 0.2, 0.25, 1)

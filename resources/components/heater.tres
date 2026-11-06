@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "heater"
+display_name = "Heizung"
+description = "Hält den Raum warm (bis 21 °C). Braucht 1 kW, aber nur wenn es kalt ist."
+power = -1.0
+build_time = 4.0
+cost = {"plate": 2, "copper": 2, "circuit": 1}
+stock = -1.0
+stock_unit = ""
+storage = 0.0
+need = ""
+wears = true
+tech = "electrical"
+color = Color(0.55, 0.25, 0.15, 1)

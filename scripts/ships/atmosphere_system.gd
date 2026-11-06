@@ -47,7 +47,7 @@ func _simulate(dt: float) -> void:
 func _flow(g: ShipGrid, a: int, b: int) -> float:
 	var ta := g.tiles[a]
 	var tb := g.tiles[b]
-	if ta == ShipGrid.Tile.WALL or tb == ShipGrid.Tile.WALL:
+	if ta == ShipGrid.Tile.WALL or tb == ShipGrid.Tile.WALL or ta == ShipGrid.Tile.WINDOW or tb == ShipGrid.Tile.WINDOW:
 		return 0.0
 	var a_air := g.holds_air(a)
 	var b_air := g.holds_air(b)

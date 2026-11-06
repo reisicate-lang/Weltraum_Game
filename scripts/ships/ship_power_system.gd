@@ -67,7 +67,10 @@ func step(dt: float) -> void:
 			if dev.broken:
 				dev.powered = false
 			else:
-				net.demand += -d.power
+				# Heizung und Schleusenpumpe brauchen nur Strom, wenn sie arbeiten
+				var idle: bool = (dev.type == "heater" and g.temp[i] >= Config.ROOM_TEMP - 0.5) or (dev.type == "pump" and not AirlockSystem.is_pumping(dev))
+				if not idle:
+					net.demand += -d.power
 				consumers.get_or_add(dev.net, []).append(dev)
 		if d.capacity > 0.0:
 			batteries.get_or_add(dev.net, []).append(dev)

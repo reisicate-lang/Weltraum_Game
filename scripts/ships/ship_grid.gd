@@ -4,7 +4,7 @@
 class_name ShipGrid
 extends RefCounted
 
-enum Tile { SPACE = 0, FLOOR = 1, WALL = 2, DOOR = 3 }
+enum Tile { SPACE = 0, FLOOR = 1, WALL = 2, DOOR = 3, WINDOW = 4 }
 
 var width: int
 var height: int
@@ -17,6 +17,9 @@ var cond := PackedFloat32Array()
 var door_open_until := PackedFloat64Array()
 ## Bereich: 0 = dein Schiff, 1 = Wrack, 2 = Bergungsleine
 var zone := PackedByteArray()
+## Temperatur in °C und Feuer (1 = brennt)
+var temp := PackedFloat32Array()
+var fire := PackedByteArray()
 var devices: Dictionary = {}  ## Feld-Index -> Device
 var piles: Dictionary = {}    ## Feld-Index -> Inventory (Haufen auf dem Boden)
 
@@ -29,6 +32,9 @@ func _init(w: int = Config.WORLD_W, h: int = Config.WORLD_H) -> void:
 	cond.resize(n)
 	cond.fill(100.0)
 	zone.resize(n)
+	temp.resize(n)
+	temp.fill(Config.SPACE_TEMP)
+	fire.resize(n)
 
 func idx(p: Vector2i) -> int:
 	return p.y * width + p.x
@@ -48,6 +54,7 @@ func set_tile(p: Vector2i, t: int) -> void:
 	var i := idx(p)
 	tiles[i] = t
 	cond[i] = 100.0
+	fire[i] = 0
 	if t == Tile.SPACE:
 		cables[i] = 0
 		o2[i] = 0.0; n2[i] = 0.0; co2[i] = 0.0
@@ -61,7 +68,7 @@ func walkable(p: Vector2i) -> bool:
 
 func wall_like(p: Vector2i) -> bool:
 	var t := get_tile(p)
-	return t == Tile.WALL or t == Tile.DOOR
+	return t == Tile.WALL or t == Tile.DOOR or t == Tile.WINDOW
 
 func holds_air(i: int) -> bool:
 	return tiles[i] == Tile.FLOOR or tiles[i] == Tile.DOOR
@@ -74,6 +81,7 @@ func pressure(i: int) -> float:
 
 func fill_air(i: int) -> void:
 	o2[i] = Config.AIR_O2; n2[i] = Config.AIR_N2; co2[i] = Config.AIR_CO2
+	temp[i] = Config.ROOM_TEMP
 
 func place_device(type: String, p: Vector2i) -> Device:
 	var dev := Device.new(type, p)
@@ -99,7 +107,7 @@ func to_data() -> Dictionary:
 	for i in piles:
 		pl.append([i, piles[i].to_data()])
 	return {"w": width, "h": height, "tiles": Array(tiles), "cables": Array(cables),
-		"o2": Array(o2), "n2": Array(n2), "co2": Array(co2), "cond": Array(cond), "zone": Array(zone), "devices": devs, "piles": pl}
+		"o2": Array(o2), "n2": Array(n2), "co2": Array(co2), "cond": Array(cond), "zone": Array(zone), "temp": Array(temp), "devices": devs, "piles": pl}
 
 static func from_data(d: Dictionary) -> ShipGrid:
 	var g := ShipGrid.new(int(d.w), int(d.h))
@@ -107,6 +115,7 @@ static func from_data(d: Dictionary) -> ShipGrid:
 		g.tiles[i] = int(d.tiles[i]); g.cables[i] = int(d.cables[i])
 		g.o2[i] = float(d.o2[i]); g.n2[i] = float(d.n2[i]); g.co2[i] = float(d.co2[i]); g.cond[i] = float(d.cond[i])
 		g.zone[i] = int(d.zone[i]) if d.has("zone") else 0
+		g.temp[i] = float(d.temp[i]) if d.has("temp") else (Config.ROOM_TEMP if g.holds_air(i) else Config.SPACE_TEMP)
 	for dd in d.devices:
 		var dev := Device.from_data(dd)
 		g.devices[g.idx(dev.pos)] = dev

@@ -17,9 +17,9 @@ const WALK_SPEED := 150.0
 const SPRINT := 1.6
 
 ## Bauzeiten und Kosten der Kacheln
-const TILE_BUILD_TIME := {1: 2.0, 2: 3.0, 3: 4.0}
-const TILE_COST := {1: {"plate": 1}, 2: {"plate": 2}, 3: {"plate": 2, "circuit": 1}}
-const TILE_NAMES := {0: "Weltraum", 1: "Boden", 2: "Wand", 3: "Tür"}
+const TILE_BUILD_TIME := {1: 2.0, 2: 3.0, 3: 4.0, 4: 4.0}
+const TILE_COST := {1: {"plate": 1}, 2: {"plate": 2}, 3: {"plate": 2, "circuit": 1}, 4: {"glass": 2, "plate": 1}}
+const TILE_NAMES := {0: "Weltraum", 1: "Boden", 2: "Wand", 3: "Tür", 4: "Fenster"}
 const REMOVE_TIME := 1.5
 const CABLE_TIME := 1.0
 const CABLE_COST := {"copper": 1}
@@ -94,3 +94,13 @@ const REFILL_AT := 0.3
 ## Wrack an der Bergungsleine
 const WRECK_TOP := 30
 const WRECK_ENTRY_X := 20
+
+## Temperatur (°C)
+const ROOM_TEMP := 21.0
+const SPACE_TEMP := -60.0
+const HEAT_LOSS := 0.02        ## Wärmeverlust an das All pro Minute (Anteil)
+const HEATER_RATE := 1.5       ## Grad pro Minute
+const BODY_TEMP := 37.0
+## Feuer
+const FIRE_O2_MIN := 12.0
+const FIRE_SPREAD := 0.004     ## Chance pro Minute, auf ein Nachbarfeld überzuspringen
