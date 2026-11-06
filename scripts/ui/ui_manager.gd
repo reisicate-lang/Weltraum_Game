@@ -43,6 +43,11 @@ var window_box: VBoxContainer
 var window_kind := ""
 var trade_tab := "sell"
 var _last_window := ""
+var nav_root: HBoxContainer
+var nav_map: Control
+var nav_side: VBoxContainer
+var nav_open := false
+var _last_nav := ""
 var gameover_panel: PanelContainer
 var gameover_label: Label
 
@@ -56,6 +61,7 @@ func _ready() -> void:
 	_build_container()
 	_build_help()
 	_build_window()
+	_build_nav()
 	_build_gameover()
 	EventBus.toast.connect(_on_toast)
 	EconomySystem.game_over.connect(show_game_over)
@@ -106,7 +112,7 @@ func _build_top() -> void:
 	row.add_child(_label("WELTRAUM_GAME", COL_AMBER, 16))
 	clock_label = _label("Tag 1  08:00:00")
 	row.add_child(clock_label)
-	var names := ["❚❚", "1×", "10×", "60×", "300×"]
+	var names := ["❚❚", "1×", "10×", "60×", "300×", "1000×"]
 	for i in names.size():
 		var b := _button(names[i], TimeSystem.set_speed.bind(i))
 		b.toggle_mode = true
@@ -248,7 +254,9 @@ Leertaste: Pause · 1–4: Geschwindigkeit · Strg+S: speichern
 
 Du schuldest der Bank 24 000 Cr, alle 7 Tage ist eine Rate fällig.
 Unten hängt ein Wrack: ausschlachten (Abreißen X), einsammeln (Q), im
-Handelsterminal im Cockpit verkaufen (anklicken).""", Color(0.87, 0.9, 0.94), 14)
+Handelsterminal im Cockpit verkaufen (anklicken).
+N: Navigation am Steuerpult · Fliegen mit WASD · Schnellreise zu Stationen
+und ins Trümmerfeld. Vorsicht: Die Erde zieht dich an.""", Color(0.87, 0.9, 0.94), 14)
 	text.custom_minimum_size = Vector2(560, 0)
 	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(text)
@@ -269,6 +277,119 @@ func _build_window() -> void:
 	window_box = VBoxContainer.new()
 	window_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(window_box)
+
+func _build_nav() -> void:
+	nav_root = HBoxContainer.new()
+	nav_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	nav_root.offset_top = 48
+	nav_root.visible = false
+	layer.add_child(nav_root)
+	nav_map = Control.new()
+	nav_map.set_script(load("res://scripts/ui/nav_map.gd"))
+	nav_map.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	nav_map.clip_contents = true
+	nav_root.add_child(nav_map)
+	var side := _panel()
+	(side.get_theme_stylebox("panel") as StyleBoxFlat).bg_color = Color(0.05, 0.07, 0.106, 1.0)
+	side.custom_minimum_size = Vector2(380, 0)
+	nav_root.add_child(side)
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	side.add_child(scroll)
+	nav_side = VBoxContainer.new()
+	nav_side.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(nav_side)
+
+func toggle_nav(show = null) -> void:
+	var want: bool = (not nav_open) if show == null else bool(show)
+	if want and PhysicsSystem.ship_devices("helm").is_empty():
+		GameState.toast("Dein Schiff hat kein Steuerpult.")
+		return
+	nav_open = want
+	nav_root.visible = want
+	if not want:
+		PhysicsSystem.thrust = 0.0
+	else:
+		nav_map.follow = true
+		_last_nav = ""
+		_refresh_nav()
+
+func _fmt_dist(km: float) -> String:
+	if km < 1.0:
+		return "%d m" % int(km * 1000.0)
+	return "%.1f km" % km if km < 100.0 else "%d km" % int(km)
+
+func _fmt_speed(v: float) -> String:
+	return "%d m/s" % int(v * 1000.0) if v < 1.0 else "%.2f km/s" % v
+
+func _refresh_nav() -> void:
+	if not nav_open:
+		return
+	var P := PhysicsSystem
+	var e: Dictionary = P.space.earth
+	var alt := P.pos.distance_to(Vector2(e.x, e.y)) - float(e.r)
+	var rows: Array = [P.status(), _fmt_speed(P.vel.length()), _fmt_dist(alt), int(P.fuel()), P.max_thrust(), snappedf(P.mass(), 0.1)]
+	for l in P.locations:
+		var r := P.rel_to(l.id)
+		rows.append([_fmt_dist(r.dist), _fmt_speed(r.speed), P.can_dock(l.id)])
+	var key := JSON.stringify(rows)
+	if key == _last_nav:
+		return
+	_last_nav = key
+	for c in nav_side.get_children():
+		c.queue_free()
+	var head := HBoxContainer.new()
+	var title := _label("NAVIGATION", COL_AMBER, 15)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(title)
+	head.add_child(_button("✕", toggle_nav.bind(false)))
+	nav_side.add_child(head)
+	nav_side.add_child(_label(P.status(), COL_AMBER, 14))
+	nav_side.add_child(_row("Geschwindigkeit", [_label(_fmt_speed(P.vel.length()), COL_AMBER, 12)]))
+	nav_side.add_child(_row("Höhe über der Erde", [_label(_fmt_dist(alt), Color(0.9, 0.33, 0.29) if alt < float(P.space.warn_alt) else COL_AMBER, 12)]))
+	nav_side.add_child(_row("Treibstoff", [_label("%d" % int(P.fuel()), COL_AMBER, 12)]))
+	nav_side.add_child(_row("Schub / Masse", [_label("%d kN / %.1f t" % [int(P.max_thrust()), P.mass()], COL_AMBER, 12)]))
+	if not P.helm_ok():
+		nav_side.add_child(_label("Das Steuerpult hat keinen Strom.", Color(0.9, 0.33, 0.29), 12))
+	if P.docked != "":
+		nav_side.add_child(_button("Abdocken", P.undock))
+	elif P.travel.is_empty() and P.autodock.is_empty():
+		var b := _button("Auto-Dock (nächster Ort)", P.start_autodock)
+		b.disabled = not P.autodock_ok()
+		nav_side.add_child(b)
+	nav_side.add_child(_label("ZIELE", COL_MUTED, 11))
+	for l in P.locations:
+		var r := P.rel_to(l.id)
+		var here: bool = P.docked == l.id
+		var btns: Array = []
+		if not here and P.travel.is_empty():
+			if r.dist < 300.0:
+				btns.append(_button("Angleichen", func(): P.match_target = l.id))
+			btns.append(_button("Ausrichten", func(): P.angle = (r.pos - P.pos).angle()))
+			if P.can_dock(l.id):
+				btns.append(_button("Andocken", func(): P.dock(l.id)))
+			var info := P.travel_info(l.id)
+			var tb := _button("Reisen %.1f h · %d T" % [info.secs / 3600.0, int(ceil(info.fuel))], P.travel_to.bind(l.id))
+			tb.tooltip_text = l.desc
+			btns.append(tb)
+		nav_side.add_child(_label("%s%s · %s · Δv %s" % [l.name, " (hier)" if here else "", _fmt_dist(r.dist), _fmt_speed(r.speed)], Color(0.87, 0.9, 0.94), 12))
+		var row := HBoxContainer.new()
+		for b in btns:
+			b.add_theme_font_size_override("font_size", 11)
+			row.add_child(b)
+		nav_side.add_child(row)
+	var zoom_row := HBoxContainer.new()
+	zoom_row.add_child(_button("Schiff zeigen", func():
+		nav_map.follow = true
+		nav_map.zoom = 40.0))
+	zoom_row.add_child(_button("Ganzes System", func():
+		nav_map.follow = false
+		nav_map.center = Vector2(30000, -5000)
+		nav_map.zoom = minf(nav_map.size.x, nav_map.size.y) / 150000.0))
+	nav_side.add_child(zoom_row)
+	var help := _label("W Schub · S Gegenschub · A/D drehen · F andocken · Mausrad zoomen. Andocken: näher als 250 m und langsamer als 6 m/s.", COL_MUTED, 11)
+	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	nav_side.add_child(help)
 
 func _build_gameover() -> void:
 	gameover_panel = _panel()
@@ -298,6 +419,7 @@ func open_window(kind: String) -> void:
 	close_container()
 	_last_window = ""
 	_refresh_window()
+	_refresh_nav()
 
 func close_window() -> void:
 	window_kind = ""
@@ -327,7 +449,8 @@ func _refresh_window() -> void:
 	for child in window_box.get_children():
 		child.queue_free()
 	var head := HBoxContainer.new()
-	var title := _label("Werkbank" if window_kind == "bench" else "Handelsterminal · Tycho-Schrottplatz", COL_AMBER, 15)
+	var st := PhysicsSystem.station()
+	var title := _label("Werkbank" if window_kind == "bench" else "Handelsterminal" + (" · " + String(st.name) if not st.is_empty() else ""), COL_AMBER, 15)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
 	head.add_child(_button("✕", close_window))
@@ -342,9 +465,11 @@ func _refresh_window() -> void:
 			window_box.add_child(_row(txt, [_button("Herstellen", E.craft.bind(r.id))]))
 		return
 	if not E.terminal_online():
-		window_box.add_child(_label("Kein Strom. Das Terminal ist offline.", Color(0.9, 0.33, 0.29), 12))
+		window_box.add_child(_label("Offline: kein Strom oder nicht an einer Station angedockt.", Color(0.9, 0.33, 0.29), 12))
+	if st.get("black", false):
+		window_box.add_child(_label("Schwarzmarkt: Datenchips bringen hier das Doppelte.", COL_MUTED, 12))
 	var tabs := HBoxContainer.new()
-	for tb in [["sell", "Verkaufen"], ["buy", "Kaufen"], ["bank", "Konto"], ["salvage", "Bergung"]]:
+	for tb in [["sell", "Verkaufen"], ["buy", "Kaufen"], ["bank", "Konto"], ["salvage", "Bergung"], ["ships", "Schiffe"]]:
 		var b := _button(tb[1], func():
 			trade_tab = tb[0]
 			_last_window = ""
@@ -390,6 +515,27 @@ func _refresh_window() -> void:
 			window_box.add_child(_label("Kontoauszug", COL_MUTED, 11))
 			for e in E.log_entries:
 				window_box.add_child(_row(e.text, [_label(("%+d" % e.amount) if e.amount != 0 else "", COL_MUTED, 12)], COL_MUTED))
+		"ships":
+			var F := FleetSystem
+			window_box.add_child(_row("Aktuelles Schiff", [_label(F.current_name, COL_AMBER, 13)]))
+			window_box.add_child(_label("Deine anderen Schiffe", COL_MUTED, 11))
+			if F.ships.is_empty():
+				window_box.add_child(_label("Keine weiteren Schiffe.", COL_MUTED, 12))
+			for s in F.ships:
+				var b: Array = []
+				if s.location == F.here():
+					b.append(_button("An Bord gehen", F.switch_to.bind(int(s.id))))
+					if st.get("shipyard", false):
+						b.append(_button("Verkaufen", F.sell.bind(int(s.id))))
+				window_box.add_child(_row("%s · liegt bei %s" % [s.name, PhysicsSystem.loc(s.location).name], b))
+			if SalvageSystem.wreck_name != "" and not st.is_empty():
+				window_box.add_child(_button("Wrack „%s“ als Schiff anmelden (%d Cr)" % [SalvageSystem.wreck_name, F.REGISTER_FEE], F.register_wreck))
+			if st.get("shipyard", false):
+				window_box.add_child(_label("Werft", COL_MUTED, 11))
+				for t2 in PhysicsSystem.space.shipyard:
+					window_box.add_child(_row("%s · %s" % [t2.name, t2.desc], [_button("%d Cr" % int(t2.price), F.buy.bind(t2.id))]))
+			else:
+				window_box.add_child(_label("Schiffe kaufen und verkaufen: Werft am Kármán-Ring.", COL_MUTED, 12))
 		"salvage":
 			if SalvageSystem.wreck_name != "":
 				window_box.add_child(_row("Wrack an der Leine", [_label(SalvageSystem.wreck_name, COL_AMBER, 13)]))
@@ -534,6 +680,7 @@ func _refresh() -> void:
 		maxf(0.0, (EconomySystem.next_payment - GameState.time) / 1440.0), ShipConstructionSystem.jobs.size()]
 	money_label.add_theme_color_override("font_color", COL_AMBER)
 	_refresh_window()
+	_refresh_nav()
 	_refresh_hover()
 	_refresh_container()
 

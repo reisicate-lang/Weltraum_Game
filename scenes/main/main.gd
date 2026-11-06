@@ -32,6 +32,18 @@ func _process(delta: float) -> void:
 	if Input.is_physical_key_pressed(KEY_UP): pan.y -= 1
 	if Input.is_physical_key_pressed(KEY_DOWN): pan.y += 1
 	cam.position += pan * 600.0 * delta / cam.zoom.x
+	# Navigationskarte offen: WASD steuert das Schiff
+	if UIManager.nav_open:
+		var P := PhysicsSystem
+		if P.docked == "" and P.travel.is_empty() and P.autodock.is_empty() and TimeSystem.speed_index > 0:
+			var turn := 0.0
+			if Input.is_physical_key_pressed(KEY_A): turn -= 1.0
+			if Input.is_physical_key_pressed(KEY_D): turn += 1.0
+			P.angle += turn * float(P.space.rot_speed) * delta
+			P.thrust = 1.0 if Input.is_physical_key_pressed(KEY_W) else (-0.5 if Input.is_physical_key_pressed(KEY_S) else 0.0)
+		else:
+			P.thrust = 0.0
+		return
 	# Deine Figur mit WASD (echte Geschwindigkeit, nicht in der Pause)
 	var p := CrewSystem.player()
 	if p != null and TimeSystem.speed_index > 0:
@@ -160,7 +172,14 @@ func _key(k: InputEventKey) -> void:
 		KEY_2: TimeSystem.set_speed(2)
 		KEY_3: TimeSystem.set_speed(3)
 		KEY_4: TimeSystem.set_speed(4)
-		KEY_ESCAPE: UIManager.set_tool("select"); UIManager.close_container(); UIManager.close_window()
+		KEY_5: TimeSystem.set_speed(5)
+		KEY_N: UIManager.toggle_nav()
+		KEY_F:
+			if UIManager.nav_open:
+				var n := PhysicsSystem.nearest()
+				if not PhysicsSystem.dock(n.id):
+					GameState.toast("Zu weit weg oder zu schnell zum Andocken.")
+		KEY_ESCAPE: UIManager.set_tool("select"); UIManager.close_container(); UIManager.close_window(); UIManager.toggle_nav(false)
 		KEY_B: UIManager.set_tool("floor")
 		KEY_M: UIManager.set_tool("wall")
 		KEY_T: UIManager.set_tool("door")

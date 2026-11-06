@@ -14,6 +14,14 @@ func _initialize() -> void:
 	if args.size() > 2:
 		for k in int(args[2]) * 60:
 			root.get_node("GameState").step(1.0 / 60.0)
+	if args.size() > 3 and args[3] == "nav":
+		root.get_node("UIManager").toggle_nav(true)
+		root.get_node("PhysicsSystem").undock()
+		for k in 600:
+			root.get_node("GameState").step(1.0 / 60.0)
+		root.get_node("UIManager").nav_map.follow = false
+		root.get_node("UIManager").nav_map.center = Vector2(30000, -5000)
+		root.get_node("UIManager").nav_map.zoom = 0.0055
 	for i in frames:
 		await process_frame
 	var img := root.get_texture().get_image()

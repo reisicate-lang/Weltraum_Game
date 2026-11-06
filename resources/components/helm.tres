@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "helm"
+display_name = "Steuerpult"
+description = "Zum Fliegen und Navigieren (Taste N). Braucht 0,3 kW."
+power = -0.3
+build_time = 6.0
+cost = {"plate": 2, "circuit": 3, "glass": 1}
+stock = -1.0
+stock_unit = ""
+wears = false
+thrust = 0.0
+color = Color(0.2, 0.3, 0.42, 1)

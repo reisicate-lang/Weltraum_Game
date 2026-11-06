@@ -19,6 +19,8 @@ func new_game() -> void:
 	ShipSystem.create_start_ship()
 	ShipConstructionSystem.jobs.clear()
 	EconomySystem.reset()
+	PhysicsSystem.reset()
+	FleetSystem.reset()
 	SalvageSystem.build_gangway()
 	SalvageSystem.generate()
 	CrewSystem.create_start_crew()
@@ -29,6 +31,7 @@ func new_game() -> void:
 ## Ein Simulationsschritt (dt in Spielminuten)
 func step(dt: float) -> void:
 	time += dt
+	PhysicsSystem.step(dt)
 	ShipPowerSystem.step(dt)
 	AirlockSystem.step(dt)
 	OxygenSystem.step(dt)

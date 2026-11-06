@@ -175,7 +175,63 @@ func _initialize() -> void:
 	_run(60)
 	_check("Werkbank hat eine Platte hergestellt", crafted[0])
 
-	# 10) Speichern und Laden
+	# 10) Raumflug: abdocken, Umlaufbahn, Schub, andocken, reisen, Flotte, Absturz
+	var phys = root.get_node("PhysicsSystem")
+	var fleet = root.get_node("FleetSystem")
+	_run(0.1)
+	_check("Angedockt an Tycho, Steuerpult hat Strom", phys.docked == "tycho" and phys.helm_ok())
+	_check("Schub vorhanden (%d kN)" % int(phys.max_thrust()), phys.max_thrust() >= 80.0)
+	var wreck_before: String = salv.wreck_name
+	_check("Abdocken klappt", phys.undock())
+	_check("Wrack bleibt beim Abdocken an Tycho", salv.wreck_name == "")
+	var moon := Vector2(60000, 0)
+	var d0: float = phys.pos.distance_to(moon)
+	_run(120)
+	_check("Schiff bleibt im Mondorbit (%d km statt %d km)" % [int(phys.pos.distance_to(moon)), int(d0)], absf(phys.pos.distance_to(moon) - d0) < 400.0)
+	var f0: float = phys.fuel()
+	var v0: Vector2 = phys.vel
+	phys.thrust = 1.0
+	_run(1)
+	phys.thrust = 0.0
+	_check("Schub verändert die Geschwindigkeit (%.3f km/s)" % (phys.vel - v0).length(), (phys.vel - v0).length() > 0.05)
+	_check("Schub verbraucht Treibstoff (%.1f)" % (f0 - phys.fuel()), f0 - phys.fuel() > 1.0)
+	# nah heran, angleichen, andocken
+	var tp: Dictionary = phys.rel_to("tycho")
+	phys.pos = tp.pos + Vector2(0.1, 0)
+	phys.vel = tp.vel + Vector2(0.03, 0)
+	phys.match_target = "tycho"
+	_run(0.5)
+	_check("Geschwindigkeit angeglichen (%.4f km/s)" % phys.rel_to("tycho").speed, phys.rel_to("tycho").speed < 0.006)
+	# nach dem Angleichen langsam heranschweben (wie mit kurzem Schub)
+	phys.pos = phys.rel_to("tycho").pos + Vector2(0.1, 0)
+	_check("Manuell angedockt", phys.dock("tycho"))
+	_check("Wrack wieder da: " + salv.wreck_name, salv.wreck_name == wreck_before)
+	# Schnellreise
+	var info: Dictionary = phys.travel_info("karman")
+	phys.travel_to("karman")
+	_run(info.secs / 60.0 + 1.0)
+	_check("Schnellreise zum Kármán-Ring", phys.docked == "karman")
+	_check("Handel am Kármán-Ring möglich", econ.terminal_online())
+	_check("Crew lebt nach der Reise (%d)" % int(crew.player().health), crew.player().health > 50.0)
+	# Flotte
+	econ.credits = 50000
+	fleet.buy("lumen")
+	_check("Shuttle gekauft", fleet.ships.size() == 1)
+	fleet.switch_to(int(fleet.ships[0].id))
+	_check("An Bord der Lumen", fleet.current_name == "Shuttle Lumen")
+	_run(2)
+	_check("Lumen: Steuerpult und Triebwerk laufen", phys.helm_ok() and phys.max_thrust() > 0.0)
+	_check("Mira atmet auf der Lumen (%d)" % int(crew.player().needs.air), crew.player().needs.air > 90.0)
+	fleet.switch_to(int(fleet.ships[0].id))
+	_check("Zurück auf der Rostlaube", fleet.current_name == "Rostlaube")
+	_run(0.1)
+	phys.travel_to("debris")
+	_run(phys.travel_info("debris").secs / 60.0 + 30.0)
+	_check("Im Trümmerfeld gibt es ein Gratis-Wrack", phys.docked == "debris" and salv.wreck_name != "")
+	_check("Im Trümmerfeld kein Handel", not econ.terminal_online())
+
+	# 11) Speichern und Laden
+	var credits_before: int = econ.credits
 	save.save_game(true)
 	var t_before: float = gs.time
 	var devs_before: int = ship.grid.devices.size()
@@ -183,7 +239,17 @@ func _initialize() -> void:
 	save.load_game(true)
 	_check("Zeit nach dem Laden gleich", absf(gs.time - t_before) < 0.001)
 	_check("Geräte nach dem Laden gleich", ship.grid.devices.size() == devs_before)
-	_check("Geld nach dem Laden gleich", econ.credits == 2000 and econ.strikes == 1)
+	_check("Geld nach dem Laden gleich", econ.credits == credits_before)
+	_check("Ort nach dem Laden gleich", phys.docked == "debris" and fleet.ships.size() == 1)
+
+	# 12) Absturz: Schiff knapp über der Erde ohne Geschwindigkeit
+	phys.docked = ""
+	phys.pos = Vector2(7000, 0)
+	phys.vel = Vector2.ZERO
+	var over := [false]
+	econ.game_over.connect(func(_t, _x): over[0] = true)
+	_run(30)
+	_check("Absturz an der Erde", phys.crashed and over[0])
 
 	print("\n%d Fehler" % _failed)
 	quit(1 if _failed > 0 else 0)

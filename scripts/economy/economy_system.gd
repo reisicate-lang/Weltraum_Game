@@ -44,15 +44,21 @@ func terminal() -> Device:
 			return dev
 	return null
 
+## Handel geht nur angedockt an einer Station
 func terminal_online() -> bool:
 	var t := terminal()
-	return t != null and t.powered and not t.broken
+	return t != null and t.powered and not t.broken and not PhysicsSystem.station().is_empty()
 
 # ---------------- Preise ----------------
 
 func market_price(type: String) -> float:
 	var glut: float = 1.0 / (1.0 + float(supply.get(type, 0.0)) / 20.0)
-	return ItemSystem.item(type).value * prices.get(type, 1.0) * glut
+	var st := PhysicsSystem.station()
+	var local: float = st.get("market", 1.0)
+	# Schwarzmarkt: Datenchips bringen dort das Doppelte
+	if st.get("black", false) and type == "datachip":
+		local *= 2.0
+	return ItemSystem.item(type).value * prices.get(type, 1.0) * glut * local
 
 func buy_price(type: String) -> int:
 	return int(ceil(market_price(type) * Config.BUY_MARKUP))
@@ -177,6 +183,8 @@ func step(_dt: float) -> void:
 		for id in prices:
 			prices[id] = clampf(prices[id] * (1.0 + randf_range(-1.0, 1.0) * Config.PRICE_DRIFT), 0.5, 1.6)
 			supply[id] = supply[id] * 0.7
+		if PhysicsSystem.station().is_empty():
+			continue
 		if credits >= Config.DOCK_FEE:
 			credits -= Config.DOCK_FEE
 			book("Liegegebühr", -Config.DOCK_FEE)

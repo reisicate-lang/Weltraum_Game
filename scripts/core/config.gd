@@ -9,7 +9,7 @@ const WORLD_H := 44
 
 ## Bei 1x ist eine Sekunde im Spiel eine echte Sekunde.
 const MINUTES_PER_SECOND := 1.0 / 60.0
-const SPEEDS: Array[float] = [0.0, 1.0, 10.0, 60.0, 300.0]
+const SPEEDS: Array[float] = [0.0, 1.0, 10.0, 60.0, 300.0, 1000.0]
 const START_MINUTES := 8 * 60
 
 ## Laufgeschwindigkeit: 2,5 Kacheln pro Sekunde (in Kacheln pro Spielminute)
@@ -53,7 +53,7 @@ const CARRY_WEIGHT := 40.0
 const CARRY_VOLUME := 40.0
 
 const SAVE_PATH := "user://savegame.json"
-const SAVE_VERSION := 2
+const SAVE_VERSION := 3
 
 ## Raumanzüge (Prozent, Verbrauch pro Minute)
 const SUIT_O2_USE := 100.0 / 120.0

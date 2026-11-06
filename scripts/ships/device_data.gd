@@ -23,5 +23,7 @@ extends Resource
 @export var need: String = ""
 ## Nutzt sich das Gerät im Betrieb ab?
 @export var wears: bool = false
+## Schub in kN (nur Triebwerke)
+@export var thrust: float = 0.0
 ## Farbe für die einfache Darstellung
 @export var color: Color = Color(0.35, 0.4, 0.45)

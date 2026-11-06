@@ -1,0 +1,87 @@
+{
+ "earth": {
+  "name": "Erde",
+  "x": 0,
+  "y": 0,
+  "r": 6371,
+  "gm": 40000
+ },
+ "moon": {
+  "name": "Mond",
+  "x": 60000,
+  "y": 0,
+  "r": 1737,
+  "gm": 600
+ },
+ "crash_alt": 400,
+ "warn_alt": 3000,
+ "moon_crash_alt": 30,
+ "dock_dist": 0.25,
+ "dock_speed": 0.006,
+ "autodock_dist": 80,
+ "autodock_speed": 0.6,
+ "collide_speed": 0.012,
+ "travel_speed": 4,
+ "travel_fuel_per_km": 0.0033333,
+ "burn": 4,
+ "rot_speed": 1.2,
+ "locations": [
+  {
+   "id": "tycho",
+   "name": "Tycho-Schrottplatz",
+   "kind": "station",
+   "body": "moon",
+   "radius": 3000,
+   "phase": 0.5,
+   "market": 1.0,
+   "desc": "Schrotthändler im Mondorbit. Hier fing alles an."
+  },
+  {
+   "id": "karman",
+   "name": "Kármán-Ring",
+   "kind": "station",
+   "body": "earth",
+   "radius": 14000,
+   "phase": 2.0,
+   "market": 1.1,
+   "shipyard": true,
+   "desc": "Große Handelsstation im Erdorbit mit Werft."
+  },
+  {
+   "id": "l4",
+   "name": "Habitat L4",
+   "kind": "station",
+   "x": 30000,
+   "y": -51962,
+   "market": 0.9,
+   "black": true,
+   "desc": "Abgelegenes Habitat. Hier fragt keiner, woher die Ware stammt."
+  },
+  {
+   "id": "debris",
+   "name": "Trümmerfeld Achilles",
+   "kind": "debris",
+   "x": 42000,
+   "y": 26000,
+   "desc": "Reste der Kriegsflotte. Wracks gratis, aber kein Händler."
+  }
+ ],
+ "shipyard": [
+  {
+   "id": "lumen",
+   "name": "Shuttle Lumen",
+   "price": 9000,
+   "w": 10,
+   "h": 7,
+   "desc": "Klein und sparsam. Zwei Räume, ein Triebwerk."
+  },
+  {
+   "id": "bairn",
+   "name": "Frachter Bairn",
+   "price": 26000,
+   "w": 18,
+   "h": 11,
+   "desc": "Viel Frachtraum, drei Triebwerke, Platz für Crew."
+  }
+ ]
+}

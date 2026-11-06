@@ -16,7 +16,7 @@ und werden Schritt für Schritt übertragen.
       Luft pro Feld mit Lecks, Strom, Lebenserhaltung, Inventar, Kisten, Speichern (JSON), Oberfläche, WASD
 - [x] Übertragen: Luftschleuse, Raumanzüge, Ladestation, Versetzen, Solarpanel, Schäden, Reparatur (Etappe 3) – 20 Tests
 - [x] Übertragen: Nachfüllen, Einsammeln, Werkbank (Rezepte in data/recipes.json), Wracks, Handelsterminal, Markt, Kredit, Pfändung (Etappe 4–5) – 32 Tests
-- [ ] Übertragen: Raumflug, Navigation, Flotte (Etappe 6)
+- [x] Übertragen: Raumflug mit Schwerkraft, Navigationskarte, Andocken, Auto-Dock, Schnellreise, Absturz, Flotte, Wrack anmelden (Etappe 6) – 54 Tests
 - [ ] Skill-, Hobby- und Trait-System mit Lebenslauf (eigener Prompt)
 
 ## Erledigt
