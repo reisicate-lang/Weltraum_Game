@@ -146,8 +146,9 @@ for (const [type, d] of Object.entries(G.DEVICES)) {
 G.MINUTES_PER_SECOND = 1 / 60;
 G.SPEEDS = [0, 1, 10, 60, 300];         // 0 = Pause
 
-// Laufgeschwindigkeit: 1,5 Kacheln pro Sekunde (in Kacheln pro Minute)
-G.WALK_SPEED = 90;
+// Laufgeschwindigkeit: 3 Kacheln pro Sekunde (in Kacheln pro Minute)
+G.WALK_SPEED = 180;
+G.SPRINT = 1.6; // mit gedrückter Umschalttaste läuft deine Figur so viel schneller
 
 // Spielbeginn: Tag 1, 08:00 Uhr (in Minuten)
 G.START_MINUTES = 8 * 60;

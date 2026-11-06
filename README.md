@@ -10,7 +10,7 @@ Die Datei `index.html` im Browser öffnen (Doppelklick genügt).
 
 | Was | Wie |
 |---|---|
-| Deine Figur steuern | `WASD` |
+| Deine Figur steuern | `WASD`, mit `Umschalt` rennen |
 | Laufen lassen | Werkzeug **Auswahl**, auf einen Boden klicken |
 | Kiste/Haufen durchsuchen | `E` (daneben stehen) oder draufklicken |
 | Gepäck ein-/ausblenden | `I` |

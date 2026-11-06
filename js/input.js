@@ -227,7 +227,8 @@ G.Input = {
       if (k.has('w')) dy -= 1;
       if (k.has('s')) dy += 1;
       if (dx || dy) {
-        G.Chars.manualMove(p, dx, dy, G.WALK_SPEED / 60 * realDt);
+        const sprint = k.has('shift') ? G.SPRINT : 1;
+        G.Chars.manualMove(p, dx, dy, G.WALK_SPEED / 60 * realDt * sprint);
         // Kamera folgt weich
         cam.x += (p.x - cam.x) * Math.min(1, realDt * 4);
         cam.y += (p.y - cam.y) * Math.min(1, realDt * 4);
