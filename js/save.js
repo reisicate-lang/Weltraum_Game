@@ -16,7 +16,11 @@ G.Save = {
         o2: Array.from(S.world.o2, v => +v.toFixed(2)),
         n2: Array.from(S.world.n2, v => +v.toFixed(2)),
         co2: Array.from(S.world.co2, v => +v.toFixed(3)),
-        devices: [...S.world.devices.values()].map(d => ({ type: d.type, x: d.x, y: d.y, stock: d.stock, charge: d.charge })),
+        cond: Array.from(S.world.cond, v => Math.round(v)),
+        devices: [...S.world.devices.values()].map(d => ({
+          type: d.type, x: d.x, y: d.y, stock: d.stock, charge: d.charge,
+          cond: d.cond, broken: d.broken, suit: d.suit, store: d.store,
+        })),
       },
       view: S.view,
       time: S.time,
@@ -26,8 +30,10 @@ G.Save = {
       chars: S.chars.map(c => ({
         id: c.id, name: c.name, color: c.color, x: c.x, y: c.y, facing: c.facing,
         needs: { ...c.needs }, health: c.health, unconscious: c.unconscious,
+        suit: c.suit, carrying: c.carrying ? { ...c.carrying, claimedBy: null } : null,
       })),
-      jobs: [...S.jobs.values()].map(j => ({ x: j.x, y: j.y, kind: j.kind, tile: j.tile, dev: j.dev, progress: j.progress, need: j.need })),
+      jobs: [...S.jobs.values()].filter(j => !(j.kind === 'move' && j.phase === 'deliver'))
+        .map(j => ({ x: j.x, y: j.y, kind: j.kind, tile: j.tile, dev: j.dev, tx: j.tx, ty: j.ty, phase: j.phase, progress: j.progress, need: j.need })),
     };
   },
 
@@ -40,11 +46,13 @@ G.Save = {
       world.o2[i] = d.o2[i] || 0;
       world.n2[i] = d.n2[i] || 0;
       world.co2[i] = d.co2[i] || 0;
+      world.cond[i] = d.cond ? d.cond[i] : 100;
     }
     for (const dv of d.devices || []) {
       const dev = G.Devices.create(dv.type, dv.x, dv.y);
       if (dv.stock !== undefined) dev.stock = dv.stock;
       if (dv.charge !== undefined) dev.charge = dv.charge;
+      for (const k of ['cond', 'broken', 'suit', 'store']) if (dv[k] !== undefined) dev[k] = dv[k];
       world.devices.set(world.idx(dv.x, dv.y), dev);
     }
     const jobs = new Map();
@@ -66,6 +74,9 @@ G.Save = {
       selectedId: data.selectedId ?? (chars[0] && chars[0].id),
     };
     G.Power.dirty = true;
+    G.Airlock.dirty = true;
+    // Wer beim Speichern etwas getragen hat, stellt es jetzt ab
+    for (const c of chars) if (c.carrying) G.Chars.dropCarried(c);
   },
 
   save(silent) {

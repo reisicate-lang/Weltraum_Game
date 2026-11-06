@@ -76,6 +76,7 @@ G.Render = {
     this.drawJobs();
     this.drawPaths();
     for (const c of S.chars) this.drawChar(c, s);
+    this.drawEffects();
     this.drawCursor();
   },
 
@@ -112,6 +113,15 @@ G.Render = {
     ctx.strokeStyle = C.floorLine;
     ctx.lineWidth = 0.04;
     ctx.strokeRect(x + 0.02, y + 0.02, 0.96, 0.96);
+    // Schleusenboden: Warnstreifen
+    if (t === T.FLOOR && G.Airlock.isLockTile(world.idx(x, y))) {
+      ctx.save();
+      ctx.beginPath(); ctx.rect(x, y, 1, 1); ctx.clip();
+      ctx.strokeStyle = 'rgba(242,163,58,0.22)';
+      ctx.lineWidth = 0.12;
+      for (let k = -1; k < 2; k += 0.35) { ctx.beginPath(); ctx.moveTo(x + k, y + 1); ctx.lineTo(x + k + 1, y); ctx.stroke(); }
+      ctx.restore();
+    }
 
     if (t === T.WALL) {
       ctx.fillStyle = C.wall;
@@ -135,6 +145,7 @@ G.Render = {
           ctx.fillRect(bx, by, bw, bh);
         }
       }
+      this.drawCracks(x, y, world.cond[world.idx(x, y)]);
     } else if (t === T.DOOR) {
       // Tür: Ausrichtung je nachdem, wo die Wände sind
       const horizontal = world.wallLike(x - 1, y) || world.wallLike(x + 1, y);
@@ -150,6 +161,13 @@ G.Render = {
         ctx.fillRect(x + 0.36, y + 0.04, 0.28, 0.44 - gap);
         ctx.fillRect(x + 0.36, y + 0.52 + gap, 0.28, 0.44 - gap);
       }
+      // Schleusentür: blaue Markierung
+      if (G.Airlock.doorLock.has(world.idx(x, y))) {
+        ctx.fillStyle = '#59c7e6';
+        if (horizontal) { ctx.fillRect(x + 0.02, y + 0.3, 0.08, 0.4); ctx.fillRect(x + 0.9, y + 0.3, 0.08, 0.4); }
+        else { ctx.fillRect(x + 0.3, y + 0.02, 0.4, 0.08); ctx.fillRect(x + 0.3, y + 0.9, 0.4, 0.08); }
+      }
+      this.drawCracks(x, y, world.cond[world.idx(x, y)]);
     }
   },
 
@@ -158,7 +176,21 @@ G.Render = {
     const pulse = 0.55 + 0.25 * Math.sin(performance.now() / 300);
     for (const job of G.state.jobs.values()) {
       const { x, y } = job;
-      if (job.kind === 'remove') {
+      if (job.kind === 'move') {
+        // Pfeil von der Quelle zum Ziel
+        ctx.strokeStyle = C.plan; ctx.globalAlpha = pulse; ctx.lineWidth = 0.06; ctx.setLineDash([0.15, 0.1]);
+        ctx.beginPath(); ctx.moveTo(x + 0.5, y + 0.5); ctx.lineTo(job.tx + 0.5, job.ty + 0.5); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.strokeRect(job.tx + 0.1, job.ty + 0.1, 0.8, 0.8);
+        ctx.globalAlpha = 1;
+        continue;
+      }
+      if (job.kind === 'repair') {
+        ctx.globalAlpha = pulse;
+        ctx.strokeStyle = '#f2a33a'; ctx.lineWidth = 0.07;
+        ctx.beginPath(); ctx.moveTo(x + 0.25, y + 0.75); ctx.lineTo(x + 0.7, y + 0.3); ctx.stroke();
+        ctx.beginPath(); ctx.arc(x + 0.72, y + 0.28, 0.12, 0, Math.PI * 2); ctx.stroke();
+      } else if (job.kind === 'remove') {
         ctx.strokeStyle = C.remove;
         ctx.globalAlpha = pulse;
         ctx.lineWidth = 0.08;
@@ -232,19 +264,33 @@ G.Render = {
     ctx.beginPath();
     ctx.ellipse(c.x + 0.04, c.y + 0.08, 0.3, 0.24, 0, 0, Math.PI * 2);
     ctx.fill();
-    // Körper
-    ctx.fillStyle = c.color;
+    // Körper (im Raumanzug weiß mit farbigem Ring)
+    ctx.fillStyle = c.suit ? '#e6e9ee' : c.color;
     ctx.beginPath();
-    ctx.arc(c.x, c.y + bob, 0.28, 0, Math.PI * 2);
+    ctx.arc(c.x, c.y + bob, c.suit ? 0.31 : 0.28, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-    ctx.lineWidth = 0.04;
+    ctx.strokeStyle = c.suit ? c.color : 'rgba(0,0,0,0.5)';
+    ctx.lineWidth = c.suit ? 0.07 : 0.04;
     ctx.stroke();
+    if (c.suit) {
+      // Rucksack mit Lebenserhaltung
+      ctx.fillStyle = '#8a95a6';
+      const bx = c.x - Math.cos(c.facing) * 0.2, by = c.y + bob - Math.sin(c.facing) * 0.2;
+      ctx.beginPath(); ctx.arc(bx, by, 0.13, 0, Math.PI * 2); ctx.fill();
+    }
     // Visier zeigt die Blickrichtung
-    ctx.fillStyle = '#bfe9ff';
+    ctx.fillStyle = c.suit ? '#f2c14e' : '#bfe9ff';
     ctx.beginPath();
-    ctx.arc(c.x + Math.cos(c.facing) * 0.14, c.y + bob + Math.sin(c.facing) * 0.14, 0.11, 0, Math.PI * 2);
+    ctx.arc(c.x + Math.cos(c.facing) * 0.14, c.y + bob + Math.sin(c.facing) * 0.14, c.suit ? 0.14 : 0.11, 0, Math.PI * 2);
     ctx.fill();
+    // Getragenes Gerät
+    if (c.carrying) {
+      ctx.save();
+      ctx.translate(c.x - 0.3, c.y - 0.75);
+      ctx.scale(0.6, 0.6);
+      this.drawDevice(c.carrying, 0, 0, true);
+      ctx.restore();
+    }
     // Funken beim Arbeiten
     if (working && Math.random() < 0.6) {
       const jx = c.job.x + 0.5, jy = c.job.y + 0.5;
@@ -412,6 +458,52 @@ G.Render = {
         ctx.fillStyle = '#d0dbe6';
         ctx.fillRect(x + 0.42, y + 0.68, 0.16, 0.12);
         break;
+      case 'solar':
+        ctx.fillStyle = '#1d2f5a';
+        ctx.fillRect(x + 0.05, y + 0.05, 0.9, 0.9);
+        ctx.strokeStyle = '#4f6fb5'; ctx.lineWidth = 0.03;
+        for (let k = 1; k < 3; k++) {
+          ctx.beginPath(); ctx.moveTo(x + 0.05 + k * 0.3, y + 0.05); ctx.lineTo(x + 0.05 + k * 0.3, y + 0.95); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(x + 0.05, y + 0.05 + k * 0.3); ctx.lineTo(x + 0.95, y + 0.05 + k * 0.3); ctx.stroke();
+        }
+        if (dev.producing) { ctx.fillStyle = 'rgba(160,200,255,0.25)'; ctx.fillRect(x + 0.05, y + 0.05, 0.45, 0.45); }
+        break;
+      case 'locker':
+        box('#46505e', 0.06);
+        ctx.fillStyle = '#2b323c';
+        ctx.fillRect(x + 0.16, y + 0.14, 0.68, 0.72);
+        if (dev.suit) {
+          ctx.fillStyle = '#e6e9ee';
+          ctx.beginPath(); ctx.arc(cx, y + 0.34, 0.13, 0, Math.PI * 2); ctx.fill();
+          ctx.fillRect(cx - 0.17, y + 0.46, 0.34, 0.34);
+          ctx.fillStyle = '#f2c14e';
+          ctx.beginPath(); ctx.arc(cx, y + 0.34, 0.07, 0, Math.PI * 2); ctx.fill();
+        }
+        break;
+      case 'charger': {
+        box('#4b4636', 0.16);
+        const f = (dev.charge || 0) / G.DEVICES.charger.capacity;
+        ctx.fillStyle = '#1e1c15'; ctx.fillRect(x + 0.26, y + 0.56, 0.48, 0.14);
+        ctx.fillStyle = f > 0.25 ? '#ffd23f' : '#e5544b'; ctx.fillRect(x + 0.26, y + 0.56, 0.48 * f, 0.14);
+        ctx.fillStyle = '#ffd23f';
+        ctx.beginPath(); ctx.moveTo(cx + 0.04, y + 0.2); ctx.lineTo(cx - 0.1, y + 0.4); ctx.lineTo(cx, y + 0.4); ctx.lineTo(cx - 0.04, y + 0.52); ctx.lineTo(cx + 0.1, y + 0.32); ctx.lineTo(cx, y + 0.32); ctx.closePath(); ctx.fill();
+        // Griff zum Tragen
+        ctx.strokeStyle = '#8a8470'; ctx.lineWidth = 0.05;
+        ctx.beginPath(); ctx.moveTo(x + 0.35, y + 0.16); ctx.lineTo(x + 0.35, y + 0.08); ctx.lineTo(x + 0.65, y + 0.08); ctx.lineTo(x + 0.65, y + 0.16); ctx.stroke();
+        break;
+      }
+      case 'pump': {
+        box('#3b4652');
+        ctx.save(); ctx.translate(cx, cy);
+        const lock = !ghost && G.Airlock.lockOfPump(dev);
+        const active = lock && lock.requestUntil >= G.state.time && dev.powered;
+        ctx.rotate(active ? t * 10 : 0);
+        ctx.strokeStyle = '#59c7e6'; ctx.lineWidth = 0.06;
+        ctx.beginPath(); ctx.arc(0, 0, 0.24, 0.3, Math.PI * 1.7); ctx.stroke();
+        ctx.restore();
+        circle(0.08, '#59c7e6');
+        break;
+      }
       case 'sink':
         box('#57636f');
         ctx.fillStyle = '#c9d6e2';
@@ -421,13 +513,63 @@ G.Render = {
         break;
     }
     if (ghost) return;
+    // Abnutzung und Schäden sichtbar machen
+    if (dev.cond < 60) {
+      ctx.fillStyle = 'rgba(30,20,10,' + (0.45 * (1 - dev.cond / 60)) + ')';
+      ctx.fillRect(x + 0.1, y + 0.1, 0.8, 0.8);
+      this.drawCracks(x, y, dev.cond);
+    }
+    if (dev.broken) {
+      if (Math.random() < 0.3) {
+        ctx.fillStyle = Math.random() < 0.5 ? '#ffd27a' : '#ffffff';
+        ctx.fillRect(x + 0.2 + Math.random() * 0.6, y + 0.2 + Math.random() * 0.6, 0.06, 0.06);
+      }
+      ctx.strokeStyle = '#e5544b'; ctx.lineWidth = 0.06;
+      ctx.beginPath(); ctx.moveTo(x + 0.25, y + 0.25); ctx.lineTo(x + 0.75, y + 0.75); ctx.moveTo(x + 0.75, y + 0.25); ctx.lineTo(x + 0.25, y + 0.75); ctx.stroke();
+    }
     // Rote Lampe: Gerät hat keinen Strom bzw. Vorrat ist leer
     const problem = (G.Devices.needsPower(dev) && !dev.powered) || (dev.stock !== undefined && dev.stock <= 0)
-      || (dev.type === 'generator' && dev.net < 0);
+      || (dev.type === 'generator' && dev.net < 0) || (dev.type === 'solar' && !dev.producing) || dev.broken;
     if (problem && Math.sin(t * 6) > -0.3) {
       ctx.fillStyle = '#e5544b';
       ctx.beginPath(); ctx.arc(x + 0.82, y + 0.18, 0.09, 0, Math.PI * 2); ctx.fill();
     }
+  },
+
+  // Risse: je schlechter der Zustand, desto mehr. Immer gleich pro Feld (kein Flackern).
+  drawCracks(x, y, cond) {
+    if (cond >= 85) return;
+    const ctx = this.ctx;
+    let seed = (x * 73856093) ^ (y * 19349663);
+    const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+    const count = cond < 30 ? 4 : cond < 60 ? 2 : 1;
+    ctx.strokeStyle = cond < 30 ? 'rgba(20,10,5,0.85)' : 'rgba(20,10,5,0.6)';
+    ctx.lineWidth = cond < 30 ? 0.05 : 0.035;
+    for (let k = 0; k < count; k++) {
+      let px = x + 0.2 + rnd() * 0.6, py = y + 0.2 + rnd() * 0.6;
+      ctx.beginPath(); ctx.moveTo(px, py);
+      for (let s = 0; s < 3; s++) {
+        px = Math.min(x + 0.95, Math.max(x + 0.05, px + (rnd() - 0.5) * 0.4));
+        py = Math.min(y + 0.95, Math.max(y + 0.05, py + (rnd() - 0.5) * 0.4));
+        ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+  },
+
+  // Einschlag-Blitze von Mikrometeoriten
+  drawEffects() {
+    const ctx = this.ctx, now = performance.now();
+    G.Damage.effects = G.Damage.effects.filter(e => now - e.start < 1500);
+    for (const e of G.Damage.effects) {
+      const p = (now - e.start) / 1500;
+      ctx.globalAlpha = 1 - p;
+      ctx.fillStyle = '#fff3c4';
+      ctx.beginPath(); ctx.arc(e.x + 0.5, e.y + 0.5, 0.2 + p * 1.6, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#ffb347'; ctx.lineWidth = 0.08;
+      ctx.beginPath(); ctx.arc(e.x + 0.5, e.y + 0.5, 0.4 + p * 2.5, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
   },
 
   // Luft-Ansicht: grün = gut, gelb = knapp, rot = keine Luft
@@ -458,6 +600,21 @@ G.Render = {
       if (!S.world.inBounds(inp.hover.x, inp.hover.y)) return;
       ctx.fillStyle = this.COLORS.hover;
       ctx.fillRect(inp.hover.x, inp.hover.y, 1, 1);
+      return;
+    }
+    if (tool === 'move') {
+      const a = inp.dragStart;
+      if (a) {
+        ctx.strokeStyle = 'rgba(89,199,230,0.8)'; ctx.lineWidth = 0.06; ctx.setLineDash([0.15, 0.1]);
+        ctx.beginPath(); ctx.moveTo(a.x + 0.5, a.y + 0.5); ctx.lineTo(inp.hover.x + 0.5, inp.hover.y + 0.5); ctx.stroke();
+        ctx.setLineDash([]);
+        const okT = S.world.get(inp.hover.x, inp.hover.y) === G.T.FLOOR && !S.world.device(inp.hover.x, inp.hover.y);
+        ctx.fillStyle = okT ? 'rgba(89,199,230,0.35)' : 'rgba(229,84,75,0.35)';
+        ctx.fillRect(inp.hover.x, inp.hover.y, 1, 1);
+      } else {
+        ctx.fillStyle = G.Jobs.canPlace('move', inp.hover.x, inp.hover.y) ? 'rgba(89,199,230,0.35)' : 'rgba(255,255,255,0.06)';
+        ctx.fillRect(inp.hover.x, inp.hover.y, 1, 1);
+      }
       return;
     }
     for (const t of tiles) {

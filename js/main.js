@@ -27,6 +27,7 @@ G.newGame = function () {
   G.state.selectedId = mira.id;
   G.state.camera = { x: world.w / 2, y: world.h / 2, zoom: 1.4 };
   G.Power.dirty = true;
+  G.Airlock.dirty = true;
 };
 
 G.setSpeed = function (i) {
@@ -53,8 +54,10 @@ G.clampCamera = function () {
 G.step = function (dt) {
   G.state.time += dt;
   G.Power.update(dt);
+  G.Airlock.update(dt);
   G.Devices.update(dt);
   G.Atmo.update(dt);
+  G.Damage.update(dt);
   for (const c of G.state.chars) G.Chars.update(c, dt);
 };
 
@@ -67,23 +70,27 @@ G.start = function () {
 
   // Erster Besuch: Hilfe zeigen
   let seen = false;
-  try { seen = localStorage.getItem('weltraum_game_help_seen_v2') === '1'; } catch (err) { /* egal */ }
+  try { seen = localStorage.getItem('weltraum_game_help_seen_v3') === '1'; } catch (err) { /* egal */ }
   G.UI.showHelp(!seen);
-  try { localStorage.setItem('weltraum_game_help_seen_v2', '1'); } catch (err) { /* egal */ }
+  try { localStorage.setItem('weltraum_game_help_seen_v3', '1'); } catch (err) { /* egal */ }
 
   // Automatisch speichern, jede Minute (echte Zeit)
   setInterval(() => G.Save.save(true), 60000);
 
-  const STEP = 1 / 60; // ein Simulationsschritt = 1 Spielsekunde
-  let last = performance.now(), acc = 0;
+  // Jedes Bild wird die vergangene Spielzeit berechnet. Damit nichts
+  // überspringt, wird sie in Schritte von höchstens 1 Spielsekunde geteilt.
+  // So läuft alles flüssig, auch bei 1x.
+  const MAX_STEP = 1 / 60;
+  let last = performance.now();
   function frame(now) {
     const realDt = Math.min(0.1, (now - last) / 1000);
     last = now;
     G.Input.update(realDt);
-    acc += realDt * G.SPEEDS[G.state.speedIndex] * G.MINUTES_PER_SECOND;
-    let n = 0;
-    while (acc >= STEP && n < 400) { G.step(STEP); acc -= STEP; n++; }
-    if (n === 400) acc = 0;
+    const total = realDt * G.SPEEDS[G.state.speedIndex] * G.MINUTES_PER_SECOND;
+    if (total > 0) {
+      const n = Math.ceil(total / MAX_STEP);
+      for (let k = 0; k < n; k++) G.step(total / n);
+    }
     G.Render.draw();
     G.UI.update();
     requestAnimationFrame(frame);

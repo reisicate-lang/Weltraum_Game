@@ -2,9 +2,11 @@
 // characters.js – Die Charaktere (Crew)
 // Reihenfolge, was ein Charakter tut:
 //   1. Laufbefehl vom Spieler
-//   2. Laufende Tätigkeit (essen, schlafen, vor schlechter Luft fliehen ...)
-//   3. Bedürfnisse erfüllen, wenn sie zu niedrig sind
-//   4. Baupläne abarbeiten
+//   2. Bei schlechter Luft (ohne Anzug): Luft anhalten, dann fliehen
+//   3. Laufende Tätigkeit (essen, schlafen, Anzug an/aus, laden ...)
+//   4. Anzug fast leer? Zurück und aufladen
+//   5. Bedürfnisse erfüllen, wenn sie zu niedrig sind
+//   6. Baupläne abarbeiten
 // ============================================================
 
 G.Chars = {
@@ -22,18 +24,30 @@ G.Chars = {
       order: null,     // Laufbefehl vom Spieler {x, y}
       job: null,       // aktueller Bauplan
       activity: null,  // aktuelle Tätigkeit
+      suit: null,      // getragener Raumanzug { o2, battery }
+      carrying: null,  // getragenes Gerät
       needs: { food: 85, water: 80, sleep: 75, hygiene: 80, air: 100 },
       health: 100,
       unconscious: false,
+      waiting: false,  // wartet gerade an einer Schleuse
       task: 'Wartet',
       searchCooldown: 0,
-      warned: {},      // welche Warnungen schon angezeigt wurden
+      warned: {},
     };
   },
 
   tileX(c) { return Math.floor(c.x); },
   tileY(c) { return Math.floor(c.y); },
   tileIdx(c) { return G.state.world.idx(this.tileX(c), this.tileY(c)); },
+
+  // Kann man hier ohne Anzug atmen?
+  safeAir(i) {
+    const world = G.state.world;
+    return world.holdsAir(i) && world.o2[i] >= G.AIR.O2_LOW;
+  },
+
+  // Trägt der Charakter einen funktionierenden Anzug?
+  suitOk(c) { return !!(c.suit && c.suit.o2 > 0 && c.suit.battery > 0); },
 
   // Spieler gibt einen Laufbefehl
   orderMove(c, tx, ty) {
@@ -48,6 +62,7 @@ G.Chars = {
   },
 
   releaseJob(c) {
+    if (c.carrying) this.dropCarried(c);
     if (c.job) c.job.claimedBy = null;
     c.job = null;
     c.path = [];
@@ -59,21 +74,84 @@ G.Chars = {
     c.path = [];
   },
 
+  // Getragenes Gerät in der Nähe abstellen (z. B. wenn die Arbeit unterbrochen wird)
+  dropCarried(c) {
+    const dev = c.carrying, world = G.state.world;
+    if (!dev) return;
+    c.carrying = null;
+    if (c.job && c.job.kind === 'move') {
+      G.state.jobs.delete(world.idx(c.job.x, c.job.y));
+      c.job = null;
+    }
+    const cx = this.tileX(c), cy = this.tileY(c);
+    let spot = null;
+    for (let r = 1; r < 6 && !spot; r++) {
+      for (let dy = -r; dy <= r && !spot; dy++) {
+        for (let dx = -r; dx <= r && !spot; dx++) {
+          const x = cx + dx, y = cy + dy;
+          if (world.get(x, y) === G.T.FLOOR && !world.device(x, y) && !G.state.jobs.has(world.idx(x, y))) spot = { x, y };
+        }
+      }
+    }
+    if (!spot) spot = { x: cx, y: cy };
+    dev.x = spot.x; dev.y = spot.y;
+    world.devices.set(world.idx(spot.x, spot.y), dev);
+    G.Jobs.changed();
+  },
+
+  // ---------------- Bewegung ----------------
+
+  // Freie Sicht zwischen zwei Punkten? (für glattere Wege)
+  canSee(ax, ay, bx, by) {
+    const world = G.state.world;
+    const dx = bx - ax, dy = by - ay;
+    const len = Math.hypot(dx, dy);
+    if (len < 0.01) return true;
+    const nx = -dy / len * 0.3, ny = dx / len * 0.3; // Körperbreite
+    const steps = Math.ceil(len / 0.15);
+    for (let s = 1; s <= steps; s++) {
+      const px = ax + dx * s / steps, py = ay + dy * s / steps;
+      for (const k of [-1, 0, 1]) {
+        const tx = Math.floor(px + nx * k), ty = Math.floor(py + ny * k);
+        if (!world.walkable(tx, ty) || world.tiles[world.idx(tx, ty)] === G.T.DOOR) return false;
+      }
+    }
+    return true;
+  },
+
+  // Blickrichtung weich drehen
+  turnTo(c, angle, dt) {
+    let d = angle - c.facing;
+    while (d > Math.PI) d -= Math.PI * 2;
+    while (d < -Math.PI) d += Math.PI * 2;
+    const max = 720 * dt; // so schnell dreht sich der Kopf (Bogenmaß pro Minute)
+    c.facing += Math.max(-max, Math.min(max, d));
+  },
+
   // Läuft den Weg ab. Gibt false zurück, wenn der Weg blockiert ist.
   followPath(c, dt) {
     const world = G.state.world;
     let move = G.WALK_SPEED * dt;
+    c.waiting = false;
     while (move > 0 && c.path.length) {
+      // Wegpunkte überspringen, wenn man direkt hinsehen kann (keine Zickzack-Wege)
+      while (c.path.length > 1 && world.tiles[world.idx(c.path[0].x, c.path[0].y)] !== G.T.DOOR
+        && this.canSee(c.x, c.y, c.path[1].x + 0.5, c.path[1].y + 0.5)) c.path.shift();
+
       const next = c.path[0];
       if (!world.walkable(next.x, next.y)) return false;
-      // Türen öffnen sich, wenn jemand durchgeht
       const ni = world.idx(next.x, next.y), ci = this.tileIdx(c);
-      if (world.tiles[ni] === G.T.DOOR) world.doorOpenUntil[ni] = G.state.time + 0.05; // 3 Sekunden
+      // Türen: Schleusen erst durchlassen, wenn der Druck passt
+      if (world.tiles[ni] === G.T.DOOR && ni !== ci) {
+        if (!G.Airlock.canPass(ni)) { c.waiting = true; return true; }
+        world.doorOpenUntil[ni] = G.state.time + 0.05;
+      }
       if (world.tiles[ci] === G.T.DOOR) world.doorOpenUntil[ci] = G.state.time + 0.05;
+
       const tx = next.x + 0.5, ty = next.y + 0.5;
       const dx = tx - c.x, dy = ty - c.y;
       const d = Math.hypot(dx, dy);
-      if (d > 0.0001) c.facing = Math.atan2(dy, dx);
+      if (d > 0.0001) this.turnTo(c, Math.atan2(dy, dx), dt);
       if (d <= move) {
         c.x = tx; c.y = ty;
         move -= d;
@@ -92,22 +170,35 @@ G.Chars = {
     return Math.abs(cx - x) <= 1 && Math.abs(cy - y) <= 1 && !(cx === x && cy === y);
   },
 
+  face(c, x, y, dt) { this.turnTo(c, Math.atan2(y + 0.5 - c.y, x + 0.5 - c.x), dt); },
+
   // ---------------- Körper: Atmen, Bedürfnisse, Gesundheit ----------------
   updateBody(c, dt) {
     const world = G.state.world, A = G.AIR, N = G.NEEDS, n = c.needs;
     const i = this.tileIdx(c);
     const sleeping = c.activity && c.activity.need === 'sleep' && !c.path.length;
 
-    // Atmen: O2 wird zu CO2
-    let o2 = 0;
-    if (world.holdsAir(i)) {
-      const used = Math.min(world.o2[i], A.BREATH_O2 * dt);
-      world.o2[i] -= used;
-      world.co2[i] += used;
-      o2 = world.o2[i];
+    // Raumanzug versorgt mit Luft, solange Sauerstoff und Akku reichen
+    const suitOk = this.suitOk(c);
+    if (c.suit) {
+      c.suit.battery = Math.max(0, c.suit.battery - G.SUIT.BATTERY_USE * dt);
+      if (suitOk) c.suit.o2 = Math.max(0, c.suit.o2 - G.SUIT.O2_USE * dt);
     }
-    if (o2 < A.O2_LOW) n.air -= (A.O2_LOW - o2) / A.O2_LOW * 40 * dt; // im Vakuum: nach gut 1 Minute wird's knapp
-    else n.air += 30 * dt;
+
+    if (suitOk) {
+      n.air += 30 * dt;
+    } else {
+      // Atmen aus der Raumluft: O2 wird zu CO2
+      let o2 = 0;
+      if (world.holdsAir(i)) {
+        const used = Math.min(world.o2[i], A.BREATH_O2 * dt);
+        world.o2[i] -= used;
+        world.co2[i] += used;
+        o2 = world.o2[i];
+      }
+      if (o2 < A.O2_LOW) n.air -= (A.O2_LOW - o2) / A.O2_LOW * 40 * dt; // im Vakuum: nach gut 1 Minute wird's knapp
+      else n.air += 30 * dt;
+    }
 
     // Bedürfnisse sinken mit der Zeit (im Schlaf langsamer)
     const h = dt / 60;
@@ -123,7 +214,7 @@ G.Chars = {
     if (n.food <= 0) damage += 2;
     if (n.water <= 0) damage += 4;
     if (n.air < 25) damage += 600; // Sauerstoffmangel ist schnell gefährlich
-    if (world.holdsAir(i) && world.co2[i] > A.CO2_BAD) damage += 3;
+    if (!suitOk && world.holdsAir(i) && world.co2[i] > A.CO2_BAD) damage += 3;
     if (damage) c.health -= damage * h;
     else c.health += 1.5 * h;
     c.health = Math.max(0, Math.min(100, c.health));
@@ -140,8 +231,10 @@ G.Chars = {
 
     // Warnungen (nur einmal, bis es wieder besser ist)
     this.warn(c, 'air', n.air < 40, c.name + ' bekommt kaum Luft!', n.air > 95);
-    this.warn(c, 'co2', world.holdsAir(i) && world.co2[i] > A.CO2_BAD, 'Zu viel CO₂ in der Luft. Ein CO₂-Filter hilft.');
+    this.warn(c, 'co2', !suitOk && world.holdsAir(i) && world.co2[i] > A.CO2_BAD, 'Zu viel CO₂ in der Luft. Ein CO₂-Filter hilft.');
     this.warn(c, 'health', c.health < 30, c.name + ' geht es sehr schlecht.', c.health > 50);
+    if (c.suit) this.warn(c, 'suit', Math.min(c.suit.o2, c.suit.battery) < G.SUIT.RETURN_AT,
+      'Der Raumanzug von ' + c.name + ' wird knapp.', Math.min(c.suit.o2, c.suit.battery) > 60);
   },
 
   // Zeigt eine Warnung einmal an. Erst wenn "clear" zutrifft, kann sie wiederkommen.
@@ -161,7 +254,7 @@ G.Chars = {
       if (!c.path.length) {
         c.order = null;
       } else {
-        c.task = 'Läuft';
+        c.task = c.waiting ? 'Wartet auf Schleuse' : 'Läuft';
         if (!this.followPath(c, dt)) {
           const p = G.Path.find(this.tileX(c), this.tileY(c), c.order.x, c.order.y);
           if (p) c.path = p; else { c.order = null; c.path = []; }
@@ -170,11 +263,12 @@ G.Chars = {
       }
     }
 
-    // 2) Schlechte Luft: Luft anhalten und dann weg hier! (unterbricht alles andere)
+    // 2) Schlechte Luft ohne Anzug: Luft anhalten und dann weg hier!
     const i = this.tileIdx(c);
     c.fleeCooldown = (c.fleeCooldown || 0) - dt;
-    if (S.world.o2[i] < G.AIR.O2_LOW && c.needs.air < 50 && !(c.activity && c.activity.flee) && c.fleeCooldown <= 0) {
+    if (!this.suitOk(c) && !this.safeAir(i) && c.needs.air < 50 && !(c.activity && c.activity.flee) && c.fleeCooldown <= 0) {
       c.fleeCooldown = 0.05;
+      this.releaseJob(c);
       this.stopActivity(c);
       if (this.startFlee(c)) return;
     }
@@ -182,31 +276,35 @@ G.Chars = {
     // 3) Laufende Tätigkeit
     if (c.activity) { this.doActivity(c, dt); return; }
 
-    // Regelmäßig prüfen, ob ein Bedürfnis dran ist
+    // Regelmäßig prüfen (alle 3 Sekunden), was zu tun ist
     c.searchCooldown -= dt;
     const check = c.searchCooldown <= 0;
     if (check) {
-      c.searchCooldown = 0.05; // alle 3 Sekunden
-      if (this.startNeed(c)) return;
+      c.searchCooldown = 0.05;
+      // 4) Anzug fast leer: aufladen oder ausziehen
+      if (c.suit && Math.min(c.suit.o2, c.suit.battery) < G.SUIT.RETURN_AT && !c.carrying) {
+        this.releaseJob(c);
+        if (c.suit.o2 >= G.SUIT.RETURN_AT && this.startDevice(c, 'recharge', d => d.type === 'charger' && d.charge > 0.05)) return;
+        if (this.startDevice(c, 'suitOff', d => d.type === 'locker' && !d.suit && !d.broken)) return;
+      }
+      // 5) Bedürfnisse
+      if (!c.carrying && this.startNeed(c)) return;
     }
 
-    // 4) Bauplan abarbeiten
+    // 6) Bauplan abarbeiten
     if (c.job) {
+      const tgt = G.Jobs.target(c.job);
       if (S.jobs.get(G.Jobs.key(c.job.x, c.job.y)) !== c.job) {
         this.releaseJob(c);
       } else if (c.path.length) {
-        c.task = 'Geht zu: ' + G.Jobs.label(c.job);
+        c.task = c.waiting ? 'Wartet auf Schleuse' : 'Geht zu: ' + G.Jobs.label(c.job);
         if (!this.followPath(c, dt)) this.releaseJob(c);
         return;
-      } else if (this.isNextTo(c, c.job.x, c.job.y)) {
-        c.facing = Math.atan2(c.job.y + 0.5 - c.y, c.job.x + 0.5 - c.x);
+      } else if (this.isNextTo(c, tgt.x, tgt.y)) {
+        this.face(c, tgt.x, tgt.y, dt);
         c.task = G.Jobs.label(c.job);
         c.job.progress += dt;
-        if (c.job.progress >= c.job.need) {
-          const done = c.job;
-          c.job = null;
-          G.Jobs.complete(done);
-        }
+        if (c.job.progress >= c.job.need) this.finishJob(c);
         return;
       } else {
         this.releaseJob(c);
@@ -215,7 +313,44 @@ G.Chars = {
 
     // Nichts zu tun: nach Bauplänen suchen
     c.task = S.jobs.size ? 'Kann keinen Bauplan erreichen' : 'Wartet';
-    if (check && G.Jobs.assign(c)) c.task = 'Geht zu: ' + G.Jobs.label(c.job);
+    if (!check) return;
+    const r = G.Jobs.assign(c);
+    if (r === true) { c.task = 'Geht zu: ' + G.Jobs.label(c.job); return; }
+    if (r === 'suit') return;
+    // Nichts mehr zu tun: zurück ins Schiff und Anzug ablegen
+    if (c.suit) this.startDevice(c, 'suitOff', d => d.type === 'locker' && !d.suit && !d.broken);
+  },
+
+  finishJob(c) {
+    const job = c.job;
+    if (job.kind === 'move' && job.phase === 'pickup') {
+      if (!G.Jobs.pickUp(c, job)) { c.job = null; return; }
+      const res = G.Path.nearestAdjacent(c, [{ x: job.tx, y: job.ty }]);
+      if (!res.target) { G.UI.toast(c.name + ' kommt nicht zum Ziel und stellt das Gerät ab.'); this.dropCarried(c); return; }
+      c.path = res.path;
+      return;
+    }
+    c.job = null;
+    if (job.kind === 'move') G.Jobs.deliver(c, job);
+    else G.Jobs.complete(job);
+  },
+
+  // Zu einem passenden Gerät gehen (z. B. Anzugschrank). Gibt true zurück, wenn es losgeht.
+  startDevice(c, kind, filter) {
+    const devs = [...G.state.world.devices.values()].filter(d => filter(d) && (!d.claimedBy || d.claimedBy === c.id));
+    const res = G.Path.nearestAdjacent(c, devs);
+    if (!res.target) return false;
+    this.stopActivity(c);
+    res.target.claimedBy = c.id;
+    c.activity = { kind, dev: res.target, timer: 0 };
+    c.path = res.path;
+    return true;
+  },
+
+  startSuitUp(c) {
+    if (c.suit) return false;
+    if (c.job) this.releaseJob(c);
+    return this.startDevice(c, 'suitUp', d => d.type === 'locker' && d.suit && !d.broken);
   },
 
   // Sucht ein Gerät für das dringendste Bedürfnis
@@ -235,7 +370,7 @@ G.Chars = {
       }
       this.releaseJob(c);
       res.target.claimedBy = c.id;
-      c.activity = { need, dev: res.target, timer: 0 };
+      c.activity = { kind: 'need', need, dev: res.target, timer: 0 };
       c.path = res.path;
       return true;
     }
@@ -251,26 +386,52 @@ G.Chars = {
     const a = c.activity, world = G.state.world;
 
     if (a.flee) {
-      c.task = 'Sucht Luft zum Atmen';
+      c.task = c.waiting ? 'Wartet auf Schleuse' : 'Sucht Luft zum Atmen';
       if (!c.path.length || !this.followPath(c, dt)) this.stopActivity(c);
       return;
     }
 
-    const def = G.NEEDS[a.need];
     const dev = a.dev;
     // Gibt es das Gerät noch?
     if (world.devices.get(world.idx(dev.x, dev.y)) !== dev) { this.stopActivity(c); return; }
+    const names = { suitUp: 'Raumanzug holen', suitOff: 'Raumanzug ablegen', recharge: 'Anzug laden' };
     if (c.path.length) {
-      c.task = 'Geht zu: ' + G.DEVICES[dev.type].name;
+      c.task = c.waiting ? 'Wartet auf Schleuse' : 'Geht zu: ' + (names[a.kind] || G.DEVICES[dev.type].name);
       if (!this.followPath(c, dt)) this.stopActivity(c);
       return;
     }
-    if (!this.isNextTo(c, dev.x, dev.y) || !G.Devices.usable(dev)) { this.stopActivity(c); return; }
-
-    c.facing = Math.atan2(dev.y + 0.5 - c.y, dev.x + 0.5 - c.x);
-    c.task = def.verb;
+    if (!this.isNextTo(c, dev.x, dev.y)) { this.stopActivity(c); return; }
+    this.face(c, dev.x, dev.y, dt);
     a.timer += dt;
 
+    switch (a.kind) {
+      case 'suitUp':
+        c.task = 'Zieht Raumanzug an';
+        if (!dev.suit) { this.stopActivity(c); return; }
+        if (a.timer >= 0.5) { c.suit = dev.suit; dev.suit = null; this.stopActivity(c); c.searchCooldown = 0; }
+        return;
+      case 'suitOff':
+        c.task = 'Zieht Raumanzug aus';
+        if (dev.suit || !c.suit) { this.stopActivity(c); return; }
+        if (a.timer >= 0.5) { dev.suit = c.suit; c.suit = null; this.stopActivity(c); }
+        return;
+      case 'recharge': {
+        c.task = 'Lädt Anzug';
+        if (!c.suit) { this.stopActivity(c); return; }
+        const add = Math.min(G.SUIT.CHARGE * dt, 100 - c.suit.battery);
+        const kwh = add / 100 * G.SUIT.KWH_PER_100;
+        if (dev.charge < kwh) { this.stopActivity(c); return; }
+        dev.charge -= kwh;
+        c.suit.battery += add;
+        if (c.suit.battery >= 99.9) this.stopActivity(c);
+        return;
+      }
+    }
+
+    // Bedürfnis erfüllen
+    const def = G.NEEDS[a.need];
+    if (!G.Devices.usable(dev)) { this.stopActivity(c); return; }
+    c.task = def.verb;
     if (a.need === 'sleep') {
       c.needs.sleep = Math.min(100, c.needs.sleep + def.gain / 60 * dt);
       if (c.needs.sleep >= 100) this.stopActivity(c);

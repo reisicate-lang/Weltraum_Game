@@ -17,10 +17,13 @@ Läuft im Browser (HTML + JavaScript).
 - [x] Bedürfnisse: Hunger, Durst, Hygiene (Waschbecken), Schlaf, Atmung, Gesundheit
 
 ## Etappe 3 – Weltraum & Schaden
-- [ ] Besseres Airlock-System, Raumanzüge, Außeneinsätze
-- [ ] Tragbare Batterie-Ladestation (für Raumanzüge)
-- [ ] Generator braucht Treibstoff
-- [ ] Schadenssystem mit sichtbarem Schaden, Reparatur
+- [x] Luftschleuse mit Pumpe (pumpt ab und wieder auf, nie beide Türen offen)
+- [x] Raumanzüge mit Anzugschrank, Außeneinsätze, Außensteg
+- [x] Tragbare Batterie-Ladestation + Werkzeug "Versetzen"
+- [x] Generator braucht Brennstoff, Solarpanel als Alternative
+- [x] Schäden: Verschleiß, Mikrometeoriten, sichtbare Risse, Reparatur (auch automatisch)
+- [x] Echtzeit (1 Sekunde = 1 Sekunde), Vorspulen bis 300×, flüssigere Bewegung
+- [x] Rechtsklick bricht Baupläne und Aufgaben ab
 
 ## Etappe 4 – Schiffe & Reisen
 - [ ] Mehrere eigene Schiffe

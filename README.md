@@ -13,6 +13,8 @@ Die Datei `index.html` im Browser öffnen (Doppelklick genügt).
 | Laufen | Werkzeug **Auswahl**, auf einen Boden klicken |
 | Bauen | Werkzeug wählen (Boden `B`, Wand `M`, Tür `T`), klicken oder Fläche ziehen |
 | Abreißen / Plan löschen | `X` / `C` |
+| Versetzen / Reparieren | `V` / `R` |
+| Aufgabe abbrechen | Rechtsklick auf Bauplan oder Charakter |
 | Ansicht bewegen | Maus ziehen, `WASD` oder Pfeiltasten, Mausrad zoomt |
 | Kabel / Geräte | `K` / `G` |
 | Luft- / Strom-Ansicht | `L` / `P` |
@@ -28,6 +30,8 @@ Die Datei `index.html` im Browser öffnen (Doppelklick genügt).
 | `js/devices.js` | Geräte (Generator, Bett, Sauerstoff ...) |
 | `js/power.js` | Stromnetz |
 | `js/atmosphere.js` | Luft und Lecks |
+| `js/airlock.js` | Luftschleusen |
+| `js/damage.js` | Verschleiß, Mikrometeoriten, Reparaturen |
 | `js/pathfinding.js` | Wegfindung der Charaktere |
 | `js/jobs.js` | Baupläne |
 | `js/characters.js` | Verhalten der Charaktere |

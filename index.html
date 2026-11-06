@@ -52,6 +52,8 @@
       <button type="button" id="btn-devices" aria-haspopup="true"><span class="t-name">Geräte</span><kbd>G</kbd></button>
       <div id="dev-menu" class="dev-menu" hidden></div>
     </span>
+    <button type="button" data-tool="move"><span class="t-name">Versetzen</span><kbd>V</kbd></button>
+    <button type="button" data-tool="repair"><span class="t-name">Reparieren</span><kbd>R</kbd></button>
     <span class="sep"></span>
     <button type="button" data-tool="remove" class="danger"><span class="t-name">Abreißen</span><kbd>X</kbd></button>
     <button type="button" data-tool="cancel" class="danger"><span class="t-name">Plan löschen</span><kbd>C</kbd></button>
@@ -79,11 +81,14 @@
       <dt>Bauen</dt><dd>Werkzeug unten wählen, dann klicken oder eine Fläche ziehen. Mira arbeitet die blauen Baupläne ab.</dd>
       <dt>Geräte</dt><dd><kbd>G</kbd> öffnet die Liste. Geräte mit Stromverbrauch brauchen ein <b>Kabel</b> <kbd>K</kbd> auf ihrem Feld, verbunden mit einem Generator.</dd>
       <dt>Luft</dt><dd>Jeder Raum hat eigene Luft. Wo Boden an den Weltraum grenzt, entweicht sie. <kbd>L</kbd> zeigt die Luft an, <kbd>P</kbd> das Stromnetz.</dd>
+      <dt>Abbrechen</dt><dd><b>Rechtsklick</b> auf einen Bauplan löscht ihn. Rechtsklick auf Mira bricht ab, was sie gerade tut.</dd>
+      <dt>Draußen</dt><dd>Für Arbeiten im Vakuum holt Mira selbst einen <b>Raumanzug</b> aus dem Anzugschrank. Die <b>Luftschleuse</b> links pumpt die Luft ab, bevor die Außentür aufgeht.</dd>
+      <dt>Schäden</dt><dd>Geräte nutzen sich ab, Mikrometeoriten treffen die Hülle. Stark Beschädigtes repariert Mira von selbst, sonst <b>Reparieren</b> <kbd>R</kbd>.</dd>
       <dt>Ansicht</dt><dd>Ziehen mit der Maus, <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> oder Pfeiltasten. Mausrad zum Zoomen.</dd>
       <dt>Zeit</dt><dd>Bei 1× läuft die Zeit wie in echt. <kbd>Leertaste</kbd> Pause, <kbd>1</kbd> bis <kbd>4</kbd> für 1×, 10×, 60× und 300×</dd>
       <dt>Speichern</dt><dd><kbd>Strg</kbd>+<kbd>S</kbd>. Außerdem jede Minute automatisch.</dd>
     </dl>
-    <p class="tip">Vorsicht mit der Außentür links: Wer sie öffnet, lässt Luft ins All. Neue Räume brauchen ringsum Wände, sonst bleibt dort Vakuum.</p>
+    <p class="tip">Der Generator verbraucht Brennstoff. Baue Solarpanels draußen auf dem Steg links, damit der Strom nicht ausgeht.</p>
     <button type="button" id="help-close" class="primary">Los geht's</button>
   </div>
 </div>
@@ -93,6 +98,8 @@
 <script src="js/devices.js"></script>
 <script src="js/power.js"></script>
 <script src="js/atmosphere.js"></script>
+<script src="js/airlock.js"></script>
+<script src="js/damage.js"></script>
 <script src="js/pathfinding.js"></script>
 <script src="js/jobs.js"></script>
 <script src="js/characters.js"></script>

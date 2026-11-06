@@ -61,8 +61,15 @@ G.Input = {
       const p = this.pan;
       this.pan = null;
       if (p.moved) return;
-      if (p.button === 2 && S.tool !== 'select') { G.UI.setTool('select'); return; }
+      if (p.button === 2) { this.rightClick(this.tileAt(e)); return; }
       if (p.button === 0 && S.tool === 'select') this.click(this.tileAt(e));
+      return;
+    }
+    if (this.dragStart && S.tool === 'move') {
+      const a = this.dragStart, b = this.tileAt(e);
+      this.dragStart = null;
+      if (a.x !== b.x || a.y !== b.y) G.Jobs.placeMove(a.x, a.y, b.x, b.y);
+      else G.UI.toast('Halte die Maustaste gedrückt und ziehe vom Gerät zum Zielfeld.');
       return;
     }
     if (this.dragStart) {
@@ -72,6 +79,35 @@ G.Input = {
       for (const t of tiles) if (G.Jobs.place(S.tool, t.x, t.y)) count++;
       if (!count && tiles.length === 1) G.UI.toast(this.whyNot(S.tool, tiles[0]));
     }
+  },
+
+  // Rechtsklick: Aufgaben abbrechen
+  //  - auf einen Bauplan: Plan löschen
+  //  - auf einen Charakter: er hört auf mit dem, was er gerade tut
+  //  - sonst im Baumodus: zurück zur Auswahl
+  rightClick(t) {
+    const S = G.state;
+    if (S.world.inBounds(t.x, t.y)) {
+      const k = S.world.idx(t.x, t.y);
+      const c = G.Chars.at(t.wx, t.wy);
+      if (c) {
+        if (c.job) S.jobs.delete(G.Jobs.key(c.job.x, c.job.y));
+        G.Chars.releaseJob(c);
+        G.Chars.stopActivity(c);
+        c.order = null;
+        G.UI.toast(c.name + ': Aufgabe abgebrochen.');
+        return;
+      }
+      // Auch das Ziel eines "Versetzen"-Auftrags zählt
+      let job = S.jobs.get(k);
+      if (!job) job = [...S.jobs.values()].find(j => j.kind === 'move' && j.tx === t.x && j.ty === t.y);
+      if (job) {
+        S.jobs.delete(G.Jobs.key(job.x, job.y));
+        G.UI.toast('Bauplan abgebrochen.');
+        return;
+      }
+    }
+    if (S.tool !== 'select') G.UI.setTool('select');
   },
 
   // Klick mit dem Auswahl-Werkzeug
@@ -93,6 +129,7 @@ G.Input = {
     if (tool === 'door') return 'Hier ist schon eine Tür.';
     if (tool === 'remove') return 'Hier gibt es nichts zum Abreißen.';
     if (tool === 'cancel') return 'Hier ist kein Bauplan.';
+    if (tool === 'repair') return 'Hier ist nichts beschädigt.';
     if (tool === 'cable') return world.get(t.x, t.y) === G.T.SPACE ? 'Kabel brauchen Boden oder Wand.' : 'Hier liegt schon ein Kabel.';
     if (tool.startsWith('dev:')) return 'Geräte brauchen einen freien Boden.';
     return '';
@@ -103,7 +140,7 @@ G.Input = {
     const a = this.dragStart, b = this.hover;
     if (!a || !b) return null;
     const tool = G.state.tool;
-    if (tool === 'door') return [{ x: b.x, y: b.y }];
+    if (tool === 'door' || tool === 'repair' || tool === 'move') return [{ x: b.x, y: b.y }];
     const x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x);
     const y0 = Math.min(a.y, b.y), y1 = Math.max(a.y, b.y);
     const out = [];
@@ -143,9 +180,11 @@ G.Input = {
       case '1': G.setSpeed(1); break;
       case '2': G.setSpeed(2); break;
       case '3': G.setSpeed(3); break;
-      case '4': G.setSpeed(4); break;
       case 'escape': G.UI.setTool('select'); G.UI.showHelp(false); G.UI.showDevMenu(false); break;
       case 'k': G.UI.setTool('cable'); break;
+      case 'v': G.UI.setTool('move'); break;
+      case 'r': G.UI.setTool('repair'); break;
+      case '4': G.setSpeed(4); break;
       case 'g': G.UI.showDevMenu(); break;
       case 'l': G.UI.setView(G.state.view === 'air' ? 'normal' : 'air'); break;
       case 'p': G.UI.setView(G.state.view === 'power' ? 'normal' : 'power'); break;

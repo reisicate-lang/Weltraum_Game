@@ -37,15 +37,19 @@ G.CABLE_TIME = 1;       // Kabel verlegen
 // Geräte. power: + erzeugt Strom, - verbraucht Strom (in kW)
 // ------------------------------------------------------------
 G.DEVICES = {
-  generator: { name: 'Generator', power: 6, buildTime: 6, desc: 'Erzeugt 6 kW Strom.' },
+  generator: { name: 'Generator', power: 6, stock: 240, unit: 'Brennstoff', buildTime: 6, wears: true, desc: 'Erzeugt 6 kW Strom. Verbraucht 1 Brennstoff pro Stunde.' },
+  solar:     { name: 'Solarpanel', power: 1.5, buildTime: 5, desc: 'Erzeugt 1,5 kW ohne Brennstoff. Funktioniert nur draußen im Vakuum.' },
   battery:   { name: 'Batterie', capacity: 30, buildTime: 4, desc: 'Speichert bis zu 30 kWh überschüssigen Strom.' },
-  o2gen:     { name: 'Sauerstoff-Generator', power: -1.5, buildTime: 5, desc: 'Füllt Sauerstoff nach (bis 21 kPa). Braucht 1,5 kW.' },
-  scrubber:  { name: 'CO₂-Filter', power: -1, buildTime: 5, desc: 'Entfernt ausgeatmetes CO₂. Braucht 1 kW.' },
+  o2gen:     { name: 'Sauerstoff-Generator', power: -1.5, buildTime: 5, wears: true, desc: 'Füllt Sauerstoff nach (bis 21 kPa). Braucht 1,5 kW.' },
+  scrubber:  { name: 'CO₂-Filter', power: -1, buildTime: 5, wears: true, desc: 'Entfernt ausgeatmetes CO₂. Braucht 1 kW.' },
   airtank:   { name: 'Lufttank', stock: 4000, unit: 'kPa', buildTime: 4, desc: 'Füllt Luft nach, wenn der Druck unter 95 kPa fällt.' },
   bed:       { name: 'Bett', buildTime: 4, need: 'sleep', desc: 'Zum Schlafen.' },
   food:      { name: 'Vorratsschrank', stock: 40, unit: 'Rationen', buildTime: 3, need: 'food', desc: 'Enthält Essensrationen.' },
   water:     { name: 'Wasserspender', stock: 80, unit: 'L', buildTime: 3, need: 'water', desc: 'Trinkwasser.' },
   sink:      { name: 'Waschbecken', stock: 80, unit: 'L', buildTime: 3, need: 'hygiene', desc: 'Zum Waschen.' },
+  locker:    { name: 'Anzugschrank', power: -0.5, buildTime: 4, desc: 'Bewahrt einen Raumanzug auf und füllt Sauerstoff und Akku auf. Braucht 0,5 kW.' },
+  charger:   { name: 'Tragbare Ladestation', capacity: 10, buildTime: 3, portable: true, desc: 'Akku mit 10 kWh. Lädt Raumanzüge auch draußen. Am Kabel lädt sie sich selbst auf. Mit "Versetzen" umstellbar.' },
+  pump:      { name: 'Schleusenpumpe', power: -1, buildTime: 6, wears: true, desc: 'Macht einen kleinen Raum zur Luftschleuse: pumpt die Luft ab und wieder hinein. Braucht 1 kW.' },
 };
 
 // ------------------------------------------------------------
@@ -78,12 +82,48 @@ G.NEEDS = {
   air:     { name: 'Atmung' },
 };
 
+// ------------------------------------------------------------
+// Raumanzüge (Werte in Prozent, Verbrauch pro Minute)
+// ------------------------------------------------------------
+G.SUIT = {
+  O2_USE: 100 / 120,      // Sauerstoff reicht 2 Stunden
+  BATTERY_USE: 100 / 150, // Akku reicht 2,5 Stunden
+  REFILL: 10,             // Anzugschrank füllt 10 % pro Minute auf
+  CHARGE: 10,             // Ladestation lädt 10 % pro Minute
+  KWH_PER_100: 0.5,       // so viel Strom braucht eine volle Akkuladung
+  RETURN_AT: 30,          // darunter geht der Charakter zurück
+};
+
+// ------------------------------------------------------------
+// Schleuse
+// ------------------------------------------------------------
+G.AIRLOCK = {
+  MAX_SIZE: 12,     // größer darf ein Raum nicht sein, um als Schleuse zu zählen
+  PUMP_RATE: 600,   // kPa (summiert über alle Felder) pro Minute
+  TOLERANCE: 6,     // so nah muss der Druck passen, damit die Tür aufgeht
+  STORE_MAX: 3000,  // so viel Luft kann die Pumpe speichern
+};
+
+// ------------------------------------------------------------
+// Schäden
+// ------------------------------------------------------------
+G.DAMAGE = {
+  WEAR_PER_DAY: 4,       // laufende Geräte verlieren so viel Zustand pro Tag
+  METEORS_PER_DAY: 0.7,  // durchschnittliche Einschläge pro Tag
+  FIRST_METEOR_DAY: 1,   // vorher gibt es keine Einschläge
+  AUTO_REPAIR_AT: 50,    // darunter wird automatisch repariert
+  REPAIR_TIME: 3,
+  FUEL_PER_HOUR: 1,
+};
+
 // Die Werkzeuge im Baumenü
 G.TOOLS = {
   select: { name: 'Auswahl', hint: 'Klick auf den Boden: Charakter läuft dorthin. Ziehen: Ansicht verschieben.' },
   floor:  { name: 'Boden', hint: 'Klicken oder Fläche ziehen. Boden kann nur im Weltraum gebaut werden.' },
   wall:   { name: 'Wand', hint: 'Ziehen zeichnet eine Linie oder den Rand eines Rechtecks.' },
   door:   { name: 'Tür', hint: 'Klick auf eine Wand oder einen Boden.' },
+  move:   { name: 'Versetzen', hint: 'Vom Gerät zum Zielfeld ziehen. Ein Charakter trägt es dorthin.' },
+  repair: { name: 'Reparieren', hint: 'Auf beschädigte Wände, Türen oder Geräte klicken. Stark Beschädigtes wird automatisch repariert.' },
   cable:  { name: 'Kabel', hint: 'Kabel verbinden Geräte mit Strom. Ein Gerät braucht ein Kabel auf seinem eigenen Feld.' },
   remove: { name: 'Abreißen', hint: 'Schicht für Schicht: erst Gerät, dann Kabel, dann Wand/Tür (wird Boden), dann Boden.' },
   cancel: { name: 'Plan löschen', hint: 'Entfernt Baupläne, die noch nicht gebaut sind.' },
@@ -104,5 +144,5 @@ G.WALK_SPEED = 90;
 G.START_MINUTES = 8 * 60;
 
 // Name, unter dem der Spielstand im Browser gespeichert wird
-G.SAVE_KEY = 'weltraum_game_save_v2';
-G.SAVE_VERSION = 2;
+G.SAVE_KEY = 'weltraum_game_save_v3';
+G.SAVE_VERSION = 3;

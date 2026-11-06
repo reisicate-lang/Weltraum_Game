@@ -20,6 +20,8 @@ G.Atmo = {
       const aClosed = ta === T.DOOR && !world.doorOpen(a);
       const bClosed = tb === T.DOOR && !world.doorOpen(b);
       if (!aAir || !bAir) return (aClosed || bClosed) ? 0 : -1; // -1 = Leck ins All
+      // Schleusentüren sind ganz dicht, normale Türen haben Lüftungsschlitze
+      if ((aClosed && G.Airlock.doorLock.has(a)) || (bClosed && G.Airlock.doorLock.has(b))) return 0;
       if (aClosed || bClosed) return A.DOOR_SLITS;
       return A.DIFFUSION;
     };

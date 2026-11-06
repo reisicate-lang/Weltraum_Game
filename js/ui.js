@@ -143,6 +143,11 @@ G.UI = {
         + this.bar(N.water.name, sel.needs.water, N.water.at)
         + this.bar(N.sleep.name, sel.needs.sleep, N.sleep.at)
         + this.bar(N.hygiene.name, sel.needs.hygiene, N.hygiene.at);
+      if (sel.suit) {
+        needsHtml += '<div class="needs-sub">Raumanzug</div>'
+          + this.bar('Anzug O₂', sel.suit.o2, G.SUIT.RETURN_AT * 1.5)
+          + this.bar('Anzug-Akku', sel.suit.battery, G.SUIT.RETURN_AT * 1.5);
+      }
     }
     if (needsHtml !== this.lastNeedsHtml) { el.needs.innerHTML = needsHtml; this.lastNeedsHtml = needsHtml; }
 

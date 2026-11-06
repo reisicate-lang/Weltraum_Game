@@ -40,13 +40,26 @@ G.Power = {
     const world = G.state.world;
     for (const net of this.nets) { net.production = 0; net.demand = 0; net.charge = 0; net.capacity = 0; net.batteries = []; net.consumers = []; }
 
-    for (const dev of world.devices.values()) {
+    for (const [i, dev] of world.devices) {
       const def = G.DEVICES[dev.type];
+      dev.producing = false;
       if (dev.net < 0) { dev.powered = false; continue; }
       const net = this.nets[dev.net];
-      if (def.power > 0) net.production += def.power;
-      if (def.power < 0) { net.demand += -def.power; net.consumers.push(dev); }
-      if (dev.type === 'battery') { net.batteries.push(dev); net.charge += dev.charge; net.capacity += def.capacity; }
+      if (def.power > 0 && !dev.broken) {
+        // Generator braucht Brennstoff, Solarpanel braucht freie Sicht (Vakuum)
+        if (dev.type === 'generator' && dev.stock > 0) {
+          dev.producing = true;
+          dev.stock = Math.max(0, dev.stock - G.DAMAGE.FUEL_PER_HOUR * dt / 60);
+          if (dev.stock <= 0) G.UI.toast('Der Generator hat keinen Brennstoff mehr!', 'bad');
+        }
+        if (dev.type === 'solar' && world.pressure(i) < 5) dev.producing = true;
+        if (dev.producing) net.production += def.power;
+      }
+      if (def.power < 0) {
+        if (dev.broken) dev.powered = false;
+        else { net.demand += -def.power; net.consumers.push(dev); }
+      }
+      if (def.capacity) { net.batteries.push(dev); net.charge += dev.charge; net.capacity += def.capacity; }
     }
 
     for (const net of this.nets) {
@@ -57,7 +70,7 @@ G.Power = {
         // Überschuss in die Batterien
         let left = energy;
         for (const b of net.batteries) {
-          const cap = G.DEVICES.battery.capacity;
+          const cap = G.DEVICES[b.type].capacity;
           const add = Math.min(left, cap - b.charge);
           b.charge += add; left -= add;
         }

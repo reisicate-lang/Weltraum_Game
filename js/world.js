@@ -17,6 +17,8 @@ G.World = class World {
     this.o2 = new Float32Array(n);
     this.n2 = new Float32Array(n);
     this.co2 = new Float32Array(n);
+    // Zustand von Wänden und Türen (100 = wie neu, 0 = kaputt)
+    this.cond = new Float32Array(n).fill(100);
   }
 
   idx(x, y) { return y * this.w + x; }
@@ -29,6 +31,7 @@ G.World = class World {
     if (!this.inBounds(x, y)) return;
     const i = this.idx(x, y);
     this.tiles[i] = t;
+    this.cond[i] = 100;
     if (t === G.T.SPACE) { this.cables[i] = 0; this.o2[i] = this.n2[i] = this.co2[i] = 0; }
   }
 
@@ -86,8 +89,20 @@ G.createStartShip = function (world) {
   for (let x = x0; x <= midX; x++) world.set(x, y0 + 4, T.WALL);
   world.set(x0 + 8, y0 + 4, T.DOOR);
 
-  // Außentür (später wird daraus eine Luftschleuse)
+  // Innentür der Luftschleuse
   world.set(x0, y0 + 7, T.DOOR);
+
+  // Luftschleuse links am Schiff (2x2 Felder innen)
+  for (let y = y0 + 5; y <= y0 + 8; y++) {
+    for (let x = x0 - 3; x <= x0 - 1; x++) {
+      const edge = x === x0 - 3 || y === y0 + 5 || y === y0 + 8;
+      world.set(x, y, edge ? T.WALL : T.FLOOR);
+    }
+  }
+  world.set(x0 - 3, y0 + 7, T.DOOR); // Außentür
+
+  // Außensteg im Vakuum, von hier aus kann man außen bauen
+  for (let y = y0 + 1; y <= y0 + 9; y++) world.set(x0 - 4, y, T.FLOOR);
 
   // Einrichtung
   const place = (type, x, y) => world.devices.set(world.idx(x, y), G.Devices.create(type, x, y));
@@ -102,13 +117,23 @@ G.createStartShip = function (world) {
   place('generator', x0 + 1, y0 + 5);
   place('battery', x0 + 2, y0 + 5);
   place('airtank', x0 + 7, y0 + 5);
+  place('locker', x0 + 1, y0 + 8);
+  place('charger', x0 + 2, y0 + 8);
+  place('pump', x0 - 1, y0 + 6);
 
   // Kabel vom Generator bis ins Cockpit und hoch in die Wohnkabine
   for (let x = x0 + 1; x <= x0 + 14; x++) world.cables[world.idx(x, y0 + 5)] = 1;
   for (let y = y0 + 1; y <= y0 + 5; y++) world.cables[world.idx(x0 + 9, y)] = 1;
+  // ... zum Anzugschrank, zur Ladestation und zur Schleusenpumpe
+  for (let y = y0 + 6; y <= y0 + 8; y++) world.cables[world.idx(x0 + 1, y)] = 1;
+  world.cables[world.idx(x0 + 2, y0 + 8)] = 1;
+  for (let x = x0 - 1; x <= x0; x++) world.cables[world.idx(x, y0 + 5)] = 1;
+  world.cables[world.idx(x0 - 1, y0 + 6)] = 1;
 
-  // Überall im Schiff normale Luft
-  for (let i = 0; i < world.tiles.length; i++) if (world.holdsAir(i)) world.fillAir(i);
+  // Überall im Schiff normale Luft (der Außensteg bleibt Vakuum)
+  for (let i = 0; i < world.tiles.length; i++) {
+    if (world.holdsAir(i) && i % world.w !== x0 - 4) world.fillAir(i);
+  }
 
-  return { x: x0 + 3, y: y0 + 7 };
+  return { x: x0 + 4, y: y0 + 7 };
 };

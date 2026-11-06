@@ -202,3 +202,4 @@ body.paused .paused-badge { display: block; }
   .views { margin-left: 0; }
   .need { grid-template-columns: 64px 1fr 22px; }
 }
+.needs-sub { font: 600 11px/1 var(--font-display); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-top: 6px; }
