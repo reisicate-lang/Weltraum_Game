@@ -136,6 +136,28 @@ func _initialize() -> void:
 	_check("Speicherplatz 2 geladen (%d Cr)" % econ.credits, econ.credits == 1111)
 	_check("Speicherplatz-Info", save.slot_info(3).find("2222") >= 0)
 
+	# --- Ziele wie ein Spieler durchspielen ---
+	gs.new_game()
+	var G = root.get_node("GoalSystem")
+	var build = root.get_node("ShipConstructionSystem")
+	var gg = root.get_node("ShipSystem").grid
+	var x0: int = (gg.width - 16) / 2
+	var y0: int = (gg.height - 10) / 2
+	_check("Erstes Ziel: Raumanzug", G.current().id == "suit")
+	build.place("floor", Vector2i(x0 - 5, y0 + 4))
+	for k in 60 * 3:
+		gs.step(1.0 / 60.0)
+	_check("Ziel Raumanzug erreicht", "suit" in G.done)
+	for i in gg.piles.keys():
+		if gg.zone[i] == 0:
+			build.place("haul", gg.pos(i))
+	for k in 60 * 60:
+		gs.step(1.0 / 60.0)
+	_check("Ziel Mondmüll erreicht", "junk" in G.done)
+	var cr_goal: int = econ.credits
+	_check("Ziele geben Belohnung", G.done.size() >= 2 and cr_goal > 0)
+	_check("Ziel-Anzeige zeigt das nächste Ziel", G.current().id == "strip")
+
 	# --- Neue Orte ---
 	gs.new_game()
 	for k in 30:

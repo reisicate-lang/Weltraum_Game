@@ -36,6 +36,7 @@ func save_game(silent: bool = false) -> bool:
 		"fleet": FleetSystem.to_data(),
 		"wastewater": WaterSystem.wastewater,
 		"quests": QuestSystem.to_data(),
+		"goals": GoalSystem.to_data(),
 	}
 	var f := FileAccess.open(path(), FileAccess.WRITE)
 	if f == null:
@@ -72,6 +73,8 @@ func load_game(silent: bool = false) -> bool:
 	WaterSystem.wastewater = float(data.get("wastewater", 0.0))
 	if data.has("quests"):
 		QuestSystem.from_data(data.quests)
+	if data.has("goals"):
+		GoalSystem.from_data(data.goals)
 	GameState.selected = CrewSystem.player()
 	EventBus.game_loaded.emit()
 	EventBus.ship_changed.emit()

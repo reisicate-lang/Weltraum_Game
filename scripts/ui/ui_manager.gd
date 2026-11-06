@@ -53,6 +53,7 @@ var char_ui
 var gameover_panel: PanelContainer
 var gameover_label: Label
 var station_reply := ""
+var goal_label: Label
 
 func _ready() -> void:
 	layer = CanvasLayer.new()
@@ -175,6 +176,11 @@ func _build_left() -> void:
 		row.add_child(bar)
 		box.add_child(row)
 		need_bars[key[0]] = bar
+	box.add_child(_label("ZIEL", COL_MUTED, 11))
+	goal_label = _label("", COL_AMBER, 12)
+	goal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	goal_label.custom_minimum_size = Vector2(250, 0)
+	box.add_child(goal_label)
 	box.add_child(_label("GEPÄCK", COL_MUTED, 11))
 	inv_label = _label("", Color(0.87, 0.9, 0.94), 12)
 	inv_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -815,6 +821,8 @@ func _refresh() -> void:
 		for it in c.inv.items:
 			lines.append("%s ×%d (%d %%)" % [ItemSystem.item(it.type).display_name, it.qty, int(it.cond)])
 		inv_label.text = ("%.1f / %d kg\n" % [c.inv.weight(), int(Config.CARRY_WEIGHT)]) + ("\n".join(lines) if not lines.is_empty() else "leer")
+	var goal := GoalSystem.current()
+	goal_label.text = ("%s (%d/%d)" % [goal.text, GoalSystem.done.size() + 1, GoalSystem.GOALS.size()]) if not goal.is_empty() else "Alle Ziele erreicht. Mach, was du willst."
 	var net := ShipPowerSystem.main_net()
 	if net.is_empty():
 		power_label.text = "⚡ Kein Stromnetz"

@@ -108,6 +108,7 @@ func deliver(o: Dictionary) -> bool:
 	EconomySystem.book("Auftrag erfüllt", int(o.reward))
 	change_rep(o.faction, 8.0)
 	accepted.erase(o)
+	GoalSystem.on_contract_done()
 	SkillSystem.train(EconomySystem.trader(), "trade", 10.0)
 	GameState.toast("Auftrag erfüllt: +%d Cr, Ansehen bei %s steigt." % [o.reward, FACTIONS.get(o.faction, {"name": "?"}).name])
 	return true

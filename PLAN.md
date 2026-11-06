@@ -108,10 +108,11 @@ und werden Schritt für Schritt übertragen.
 - [x] Mod-Unterstützung: eigene .tres-Dateien in user://mods/ (Gegenstände, Geräte, Fähigkeiten, Traits, Hobbys)
 - [x] Drei Speicherplätze
 - [x] Gezeichnete Symbole für alle Geräte, erzeugte Geräusche (Alarm, Meldung, Bauen)
+- [x] Zielführung: 11 Ziele vom ersten Raumanzug bis zur abbezahlten Schuld, mit Belohnungen
 - [ ] Sprites aus Grafikdateien, Balancing
 
 ## Tests (Godot, ohne Fenster)
 - `tests/run_tests.gd` – Kernspiel, Etappe 1–6 (54 Prüfungen)
 - `tests/test_skills.gd` – Fähigkeiten, Traits, Hobbys, Lebenslauf, NPCs, Stationen (144)
 - `tests/test_systems.gd` – Temperatur, Feuer, Wasser, Anbau, Chemie (19)
-- `tests/test_world.gd` – Crew-Beziehungen, Aufträge, Fraktionen, Einstellungen, Mods, Speicherplätze, neue Orte (27)
+- `tests/test_world.gd` – Crew-Beziehungen, Aufträge, Fraktionen, Einstellungen, Mods, Speicherplätze, neue Orte, Ziele (32)
