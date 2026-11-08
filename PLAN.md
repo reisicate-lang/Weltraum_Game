@@ -109,10 +109,11 @@ und werden Schritt für Schritt übertragen.
 - [x] Drei Speicherplätze
 - [x] Gezeichnete Symbole für alle Geräte, erzeugte Geräusche (Alarm, Meldung, Bauen)
 - [x] Zielführung: 11 Ziele vom ersten Raumanzug bis zur abbezahlten Schuld, mit Belohnungen
-- [ ] Sprites aus Grafikdateien, Balancing
+- [x] Balancing: Wochen-Simulation (`tests/balance_week.gd`) – Bergung allein reicht knapp für die erste Rate (Bergungsrecht 200 Cr, Verkauf 85 %)
+- [ ] Sprites aus Grafikdateien
 
 ## Tests (Godot, ohne Fenster)
 - `tests/run_tests.gd` – Kernspiel, Etappe 1–6 (54 Prüfungen)
 - `tests/test_skills.gd` – Fähigkeiten, Traits, Hobbys, Lebenslauf, NPCs, Stationen (144)
-- `tests/test_systems.gd` – Temperatur, Feuer, Wasser, Anbau, Chemie (19)
+- `tests/test_systems.gd` – Temperatur, Feuer, Wasser, Anbau, Chemie (21)
 - `tests/test_world.gd` – Crew-Beziehungen, Aufträge, Fraktionen, Einstellungen, Mods, Speicherplätze, neue Orte, Ziele (32)

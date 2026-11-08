@@ -25,6 +25,8 @@ func _initialize() -> void:
 	var build = root.get_node("ShipConstructionSystem")
 	var save = root.get_node("SaveSystem")
 	var power = root.get_node("ShipPowerSystem")
+	# Meteoriten werden in test_systems geprüft; hier stören sie die Stabilitätsprüfung
+	root.get_node("Settings").meteors = false
 	gs.new_game()
 
 	_check("Gegenstände geladen", root.get_node("ItemSystem").items.size() >= 15)
