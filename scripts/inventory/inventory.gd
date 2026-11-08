@@ -35,7 +35,11 @@ func room(type: String) -> int:
 	var d: ItemData = ItemSystem.item(type)
 	var w := (max_weight - weight()) / d.weight
 	var v := (max_volume - volume()) / d.volume
-	return maxi(0, int(floor(minf(w, v) + 0.000001)))
+	var r := minf(w, v)
+	# Ohne Grenze (Haufen auf dem Boden): int(INF) wäre in Godot negativ
+	if is_inf(r) or r > 1000000.0:
+		return 1000000
+	return maxi(0, int(floor(r + 0.000001)))
 
 ## Legt einen Stapel hinein. Gibt zurück, wie viel hineingepasst hat.
 func add(type: String, qty: int, cond: float = 100.0) -> int:

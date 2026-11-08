@@ -214,6 +214,8 @@ func complete(job: Dictionary, worker_pos: Vector2i, worker: CrewMember = null) 
 			var t := g.tiles[i]
 			var becomes_space := t == ShipGrid.Tile.FLOOR and g.cables[i] == 0 and not g.devices.has(i)
 			if g.devices.has(i):
+				if g.zone[i] == 1:
+					GoalSystem.stripped += 1
 				g.devices.erase(i)
 			elif g.cables[i] == 1 and t == ShipGrid.Tile.FLOOR:
 				g.cables[i] = 0

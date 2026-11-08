@@ -28,6 +28,14 @@ func _initialize() -> void:
 	var water = root.get_node("WaterSystem")
 	var econ = root.get_node("EconomySystem")
 	gs.new_game()
+	# Haufen ohne Grenze müssen Gegenstände aufnehmen (früher int(INF) -> 0 Platz)
+	var heap := Inventory.new()
+	_check("Haufen nimmt Gegenstände auf", heap.add("plate", 5) == 5 and heap.count("plate") == 5)
+	var junk_ok := false
+	for pi in ship.grid.piles:
+		if not ship.grid.piles[pi].items.is_empty():
+			junk_ok = true
+	_check("Mondmüll am Steg ist nicht leer", junk_ok)
 	root.get_node("SalvageSystem").clear()
 	Config.METEORS_PER_DAY
 	var g = ship.grid

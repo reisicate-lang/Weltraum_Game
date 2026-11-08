@@ -19,11 +19,13 @@ const GOALS := [
 
 var done: Array[String] = []
 var _contracts_done := 0
+var stripped := 0              ## im Wrack abgerissene Geräte
 var _timer := 0.0
 
 func reset() -> void:
 	done.clear()
 	_contracts_done = 0
+	stripped = 0
 
 func current() -> Dictionary:
 	for g in GOALS:
@@ -70,11 +72,7 @@ func _g_strip() -> bool:
 	for e in EconomySystem.log_entries:
 		if String(e.text).begins_with("Verkauf"):
 			return true
-	var g := ShipSystem.grid
-	for i in g.piles:
-		if g.zone[i] == 1:
-			return true
-	return false
+	return stripped > 0
 
 func _g_sell() -> bool:
 	for e in EconomySystem.log_entries:
@@ -110,8 +108,9 @@ func _g_debt() -> bool:
 	return EconomySystem.debt <= 0
 
 func to_data() -> Dictionary:
-	return {"done": done, "contracts": _contracts_done}
+	return {"done": done, "contracts": _contracts_done, "stripped": stripped}
 
 func from_data(d: Dictionary) -> void:
 	done.assign(d.get("done", []))
 	_contracts_done = int(d.get("contracts", 0))
+	stripped = int(d.get("stripped", 0))

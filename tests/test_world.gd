@@ -156,7 +156,7 @@ func _initialize() -> void:
 	_check("Ziel Mondmüll erreicht", "junk" in G.done)
 	var cr_goal: int = econ.credits
 	_check("Ziele geben Belohnung", G.done.size() >= 2 and cr_goal > 0)
-	_check("Ziel-Anzeige zeigt das nächste Ziel", G.current().id == "strip")
+	_check("Ziel-Anzeige zeigt das nächste Ziel (%s)" % G.current().get("id", ""), G.current().id == "strip")
 
 	# --- Neue Orte ---
 	gs.new_game()
