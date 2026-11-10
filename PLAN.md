@@ -118,3 +118,4 @@ und werden Schritt für Schritt übertragen.
 - `tests/test_systems.gd` – Temperatur, Feuer, Wasser, Anbau, Chemie (21)
 - `tests/test_world.gd` – Crew-Beziehungen, Aufträge, Fraktionen, Einstellungen, Mods, Speicherplätze, neue Orte, Ziele (32)
 - `tests/test_stations.gd` – begehbare Stationen: Aufbau, Luft, Gespräche, Verkauf, Speichern, Abdocken (36)
+- `tests/test_undock.gd` – manuelles Abdocken: Gründe, Sperre gegen Wieder-Andocken, alle Zeitstufen, Speichern (49)

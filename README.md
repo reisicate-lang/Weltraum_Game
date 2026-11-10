@@ -22,6 +22,7 @@ godot --headless --path . --script res://tests/test_skills.gd
 godot --headless --path . --script res://tests/test_systems.gd
 godot --headless --path . --script res://tests/test_world.gd
 godot --headless --path . --script res://tests/test_stations.gd
+godot --headless --path . --script res://tests/test_undock.gd
 ```
 
 ## Steuerung
@@ -38,7 +39,7 @@ godot --headless --path . --script res://tests/test_stations.gd
 | Fenster bauen | `Z` |
 | Zeit | `Leertaste` Pause, `1`–`4` (1× = Echtzeit) |
 | Charaktermenü (Fähigkeiten, Traits, Hobbys, Lebenslauf, Aufgaben) | `I` |
-| Navigation | `N`, fliegen mit `WASD`, `F` andocken |
+| Navigation | `N`, fliegen mit `WASD`, `F` andocken, `U` abdocken |
 | Speichern | `Strg+S`, Autosave jede Minute |
 
 ## Projektstruktur

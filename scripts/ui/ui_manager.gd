@@ -368,7 +368,7 @@ func _refresh_nav() -> void:
 	var P := PhysicsSystem
 	var e: Dictionary = P.space.earth
 	var alt := P.pos.distance_to(Vector2(e.x, e.y)) - float(e.r)
-	var rows: Array = [P.status(), _fmt_speed(P.vel.length()), _fmt_dist(alt), int(P.fuel()), P.max_thrust(), snappedf(P.mass(), 0.1)]
+	var rows: Array = [int(ceil(P.redock_wait(P.undock_lock_id))), P.status(), _fmt_speed(P.vel.length()), _fmt_dist(alt), int(P.fuel()), P.max_thrust(), snappedf(P.mass(), 0.1)]
 	for l in P.locations:
 		var r := P.rel_to(l.id)
 		rows.append([_fmt_dist(r.dist), _fmt_speed(r.speed), P.can_dock(l.id)])
@@ -392,7 +392,7 @@ func _refresh_nav() -> void:
 	if not P.helm_ok():
 		nav_side.add_child(_label("Das Steuerpult hat keinen Strom.", Color(0.9, 0.33, 0.29), 12))
 	if P.docked != "":
-		nav_side.add_child(_button("Abdocken", P.undock))
+		nav_side.add_child(_button("Abdocken [U]", P.request_undock))
 	elif P.travel.is_empty() and P.autodock.is_empty():
 		var b := _button("Auto-Dock (nächster Ort)", P.start_autodock)
 		b.disabled = not P.autodock_ok()
@@ -408,6 +408,10 @@ func _refresh_nav() -> void:
 			btns.append(_button("Ausrichten", func(): P.angle = (r.pos - P.pos).angle()))
 			if P.can_dock(l.id):
 				btns.append(_button("Andocken", func(): P.dock(l.id)))
+			elif P.redock_locked(l.id) and r.dist < float(P.space.dock_dist) * 3.0:
+				var lb := _button("Andocken in %d s" % int(ceil(P.redock_wait(l.id))), func(): GameState.toast(P.dock_block_reason(l.id)))
+				lb.disabled = true
+				btns.append(lb)
 			var info := P.travel_info(l.id)
 			var tb := _button("Reisen %.1f h · %d T" % [info.secs / 3600.0, int(ceil(info.fuel))], P.travel_to.bind(l.id))
 			tb.tooltip_text = l.desc
@@ -427,7 +431,7 @@ func _refresh_nav() -> void:
 		nav_map.center = Vector2(30000, -5000)
 		nav_map.zoom = minf(nav_map.size.x, nav_map.size.y) / 150000.0))
 	nav_side.add_child(zoom_row)
-	var help := _label("W Schub · S Gegenschub · A/D drehen · F andocken · Mausrad zoomen. Andocken: näher als 250 m und langsamer als 6 m/s.", COL_MUTED, 11)
+	var help := _label("W Schub · S Gegenschub · A/D drehen · F andocken · U abdocken · Mausrad zoomen. Andocken: näher als 250 m und langsamer als 6 m/s.", COL_MUTED, 11)
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	nav_side.add_child(help)
 

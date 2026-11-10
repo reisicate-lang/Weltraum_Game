@@ -18,6 +18,21 @@ var match_target := ""          ## Geschwindigkeit an dieses Ziel angleichen
 var thrust := 0.0               ## -0.5 .. 1 (vom Spieler)
 var crashed := false
 var _warned := false
+## Sperre gegen sofortiges Wieder-Andocken am selben Ort (technische Entscheidung):
+## nach dem Abdocken REDOCK_LOCK_SECS Spielsekunden kein Andocken an diesem Ort
+const REDOCK_LOCK_SECS := 15.0
+const UNDOCK_PUSH := 0.003          ## Abstoß beim Abdocken in km/s (3 m/s, weit unter collide_speed)
+var undock_lock_id := ""
+## Flugbahn intern in doppelter Genauigkeit: Vector2 hat nur 32 Bit, bei
+## 60 000 km sind das ~4 m Raster. Viele kleine Schritte (1×) würden sich
+## sonst zu großen Fehlern aufsummieren. pos/vel bleiben die lesbaren Werte.
+var _px := 0.0
+var _py := 0.0
+var _vx := 0.0
+var _vy := 0.0
+var _p32 := Vector2.INF
+var _v32 := Vector2.INF
+var undock_lock_until := 0.0
 var _no_fuel_warned := false
 
 
@@ -27,6 +42,8 @@ func _ready() -> void:
 	locations = space.locations
 
 func reset() -> void:
+	undock_lock_id = ""
+	undock_lock_until = 0.0
 	docked = "tycho"
 	travel = {}
 	autodock = {}
@@ -169,12 +186,19 @@ func step(dt: float) -> void:
 			autodock = {}
 			dock(dest, true)
 		return
+	# Wurde pos/vel von außen gesetzt (Abdocken, Laden, Zusammenstoß)? Dann übernehmen.
+	if pos != _p32:
+		_px = pos.x
+		_py = pos.y
+	if vel != _v32:
+		_vx = vel.x
+		_vy = vel.y
 	var acc := gravity(pos)
 	var amax := max_thrust() / maxf(1.0, mass()) / 1000.0
 	# Angleichen: Geschwindigkeit relativ zum Ziel abbauen
 	if match_target != "":
 		var r := rel_to(match_target)
-		var dv: Vector2 = r.vel - vel
+		var dv: Vector2 = r.vel - Vector2(_vx, _vy)
 		if dv.length() < 0.0005 or amax <= 0.0 or not helm_ok():
 			match_target = ""
 		else:
@@ -182,7 +206,8 @@ func step(dt: float) -> void:
 			var need := working_thrusters() * float(space.burn) * (a / amax) * dt * fuel_factor()
 			if fuel() >= need:
 				use_fuel(need)
-				vel += dv.normalized() * a * s
+				_vx += dv.normalized().x * a * s
+				_vy += dv.normalized().y * a * s
 				angle = dv.angle()
 			else:
 				match_target = ""
@@ -197,8 +222,14 @@ func step(dt: float) -> void:
 			_no_fuel_warned = true
 			GameState.toast("Kein Treibstoff!" if amax > 0.0 else "Keine Triebwerke mit Strom!", "bad")
 	# Halb-implizites Euler-Verfahren: stabil für Umlaufbahnen
-	vel += acc * s
-	pos += vel * s
+	_vx += acc.x * s
+	_vy += acc.y * s
+	_px += _vx * s
+	_py += _vy * s
+	pos = Vector2(_px, _py)
+	vel = Vector2(_vx, _vy)
+	_p32 = pos
+	_v32 = vel
 	_check_hazards()
 
 func _check_hazards() -> void:
@@ -243,7 +274,24 @@ func nearest() -> Dictionary:
 			best.id = l.id
 	return best
 
+## Ist das Andocken an diesem Ort gerade wegen frischen Abdockens gesperrt?
+func redock_locked(id: String) -> bool:
+	return id == undock_lock_id and secs() < undock_lock_until
+
+func redock_wait(id: String) -> float:
+	return maxf(0.0, undock_lock_until - secs()) if id == undock_lock_id else 0.0
+
+## Grund, warum man hier nicht andocken kann ("" = es geht)
+func dock_block_reason(id: String) -> String:
+	if redock_locked(id):
+		return "Gerade erst abgedockt. Andocken an %s ist in %d s wieder möglich." % [loc(id).name, int(ceil(redock_wait(id)))]
+	if not can_dock(id):
+		return "Zu weit weg oder zu schnell zum Andocken."
+	return ""
+
 func can_dock(id: String) -> bool:
+	if redock_locked(id):
+		return false
 	var r := rel_to(id)
 	# Meister der Raumschiffsteuerung docken auch aus mehr Abstand und schneller an
 	var m := 1.0
@@ -264,23 +312,69 @@ func dock(id: String, force: bool = false) -> bool:
 	GameState.toast("Angedockt: " + loc(id).name)
 	return true
 
+## Grund, der das Abdocken verhindert ("" = Abdocken möglich)
+func undock_block_reason() -> String:
+	if docked == "":
+		return "Das Schiff ist nicht angedockt."
+	if crashed:
+		return "Das Schiff ist zerstört."
+	var helms := ship_devices("helm")
+	if helms.is_empty():
+		return "Kein Steuerpult an Bord."
+	if helms.all(func(h): return h.broken):
+		return "Das Steuerpult ist kaputt. Erst reparieren."
+	if not helm_ok():
+		return "Das Steuerpult braucht Strom."
+	var g := ShipSystem.grid
+	var on_wreck: PackedStringArray = []
+	var on_station: PackedStringArray = []
+	var in_hatch: PackedStringArray = []
+	for c in CrewSystem.crew:
+		var i := g.idx(c.tile())
+		if g.zone[i] == 1:
+			on_wreck.append(c.display_name)
+		elif g.zone[i] == StationSystem.ZONE:
+			on_station.append(c.display_name)
+		elif StationSystem.is_hatch(i):
+			in_hatch.append(c.display_name)
+	if not on_wreck.is_empty():
+		return "Noch auf dem Wrack: %s. Erst alle zurück an Bord holen." % ", ".join(on_wreck)
+	if not on_station.is_empty():
+		return "Noch auf der Station: %s. Erst alle zurück an Bord holen." % ", ".join(on_station)
+	if not in_hatch.is_empty():
+		return "%s steht in der Luke zur Station." % ", ".join(in_hatch)
+	return ""
+
+## Abdocken über die Bedienung (Knopf, Taste U): meldet immer Erfolg oder Grund
+func request_undock() -> bool:
+	if docked == "":
+		GameState.toast(undock_block_reason())
+		return false
+	return undock()
+
+## Abdocken. Nicht angedockt gilt als erledigt (für Reisen).
 func undock() -> bool:
 	if docked == "":
 		return true
-	if not helm_ok():
-		GameState.toast("Das Steuerpult braucht Strom.", "bad")
+	var why := undock_block_reason()
+	if why != "":
+		GameState.toast(why, "bad")
 		return false
-	if not SalvageSystem.clearable():
-		GameState.toast("Erst alle Crewmitglieder vom Wrack holen.")
-		return false
-	if not StationSystem.clearable():
-		GameState.toast("Erst alle Crewmitglieder von der Station zurück an Bord holen.")
-		return false
+	var from := docked
+	# Ohne Sprung: genau Lage und Bewegung des Ortes übernehmen, Ausrichtung bleibt
+	var st := loc_state(loc(from), secs())
+	pos = st.pos
+	vel = st.vel
+	thrust = 0.0
+	match_target = ""
 	StationSystem.clear()
-	FleetSystem.leave(loc(docked))
-	GameState.toast("Abgedockt von " + loc(docked).name + ".")
+	FleetSystem.leave(loc(from))
 	docked = ""
-	vel += Vector2.from_angle(angle + PI) * 0.003
+	# Sanfter Abstoß nach hinten
+	vel += Vector2.from_angle(angle + PI) * UNDOCK_PUSH
+	undock_lock_id = from
+	undock_lock_until = secs() + REDOCK_LOCK_SECS
+	GameState.toast("Abgedockt von %s. Das Schiff treibt frei – Steuerung in der Navigation (WASD)." % loc(from).name)
 	return true
 
 func start_autodock() -> void:
@@ -288,6 +382,9 @@ func start_autodock() -> void:
 		GameState.toast("Kein funktionierendes Auto-Dock-Modul an Bord.", "bad")
 		return
 	var n := nearest()
+	if redock_locked(n.id):
+		GameState.toast(dock_block_reason(n.id))
+		return
 	if n.dist > float(space.autodock_dist) or n.speed > float(space.autodock_speed):
 		GameState.toast("Zu weit weg oder zu schnell für das Auto-Dock.")
 		return
@@ -345,7 +442,7 @@ func station() -> Dictionary:
 func to_data() -> Dictionary:
 	return {"x": pos.x, "y": pos.y, "vx": vel.x, "vy": vel.y, "angle": angle, "docked": docked,
 		"travel": {"to": travel.to, "t0": travel.t0, "t1": travel.t1, "fx": travel.from.x, "fy": travel.from.y} if not travel.is_empty() else {},
-		"autodock": autodock}
+		"autodock": autodock, "lock_id": undock_lock_id, "lock_until": undock_lock_until}
 
 func from_data(d: Dictionary) -> void:
 	pos = Vector2(d.x, d.y); vel = Vector2(d.vx, d.vy); angle = float(d.angle); docked = String(d.docked)
@@ -353,5 +450,7 @@ func from_data(d: Dictionary) -> void:
 	if not d.travel.is_empty():
 		travel = {"to": d.travel.to, "t0": float(d.travel.t0), "t1": float(d.travel.t1), "from": Vector2(d.travel.fx, d.travel.fy)}
 	autodock = d.autodock
+	undock_lock_id = String(d.get("lock_id", ""))
+	undock_lock_until = float(d.get("lock_until", 0.0))
 	crashed = false
 	match_target = ""
