@@ -23,6 +23,7 @@ godot --headless --path . --script res://tests/test_systems.gd
 godot --headless --path . --script res://tests/test_world.gd
 godot --headless --path . --script res://tests/test_stations.gd
 godot --headless --path . --script res://tests/test_undock.gd
+godot --headless --path . --script res://tests/test_removal.gd
 ```
 
 ## Steuerung
@@ -33,6 +34,8 @@ godot --headless --path . --script res://tests/test_undock.gd
 | Hinlaufen lassen | Werkzeug **Auswahl**, Klick auf Boden |
 | Bauen | Boden `B`, Wand `M`, Tür `T`, Kabel `K`, Geräte-Menü unten |
 | Abreißen / Plan löschen | `X` / `C`, Rechtsklick bricht ab |
+| Objekt entfernen | Rechtsklick auf Gerät oder Block (Werkzeug **Auswahl**): Abbauen, Zerlegen, Zerstören |
+| Abgebautes wieder einbauen | Rechtsklick auf ein freies Feld → „Einbauen“, oder in Kiste/Haufen „Einbauen“ |
 | Kiste durchsuchen | `E` (daneben stehen) oder draufklicken |
 | Auf der Station reden | Klick auf eine Figur oder einen Tresen: deine Figur läuft hin, dann beginnt das Gespräch |
 | Luft- / Strom- / Wärme-Ansicht | `L` / `P` / `O` |
@@ -41,6 +44,21 @@ godot --headless --path . --script res://tests/test_undock.gd
 | Charaktermenü (Fähigkeiten, Traits, Hobbys, Lebenslauf, Aufgaben) | `I` |
 | Navigation | `N`, fliegen mit `WASD`, `F` andocken, `U` abdocken |
 | Speichern | `Strg+S`, Autosave jede Minute |
+
+## Entfernen einstellen (`data/removal.json`)
+
+Pro Objekttyp (Geräte-ID wie `generator`, Blöcke als `tile:wall`, `tile:floor`, `tile:door`,
+`tile:window`, `tile:rock`). Fehlende Felder kommen aus `defaults`. Alle Werte sind vorläufiges Balancing.
+
+| Feld | Bedeutung |
+|---|---|
+| `actions` | erlaubte Aktionen: `uninstall` (Abbauen), `dismantle` (Zerlegen), `destroy` (Zerstören) |
+| `uninstall_time`, `dismantle_time` | Dauer in Spielminuten (bei normalem Arbeitstempo) |
+| `uninstall_tool`, `dismantle_tool`, `destroy_tool` | nötiges Werkzeug (Gegenstands-ID im Gepäck), leer = keins |
+| `dismantle` | Zerlege-Ergebnis, z. B. `{"plate": 2, "motor": 1}` |
+| `hp` | Trefferpunkte bei 100 % Zustand |
+| `debris` | Müll beim Zerstören, z. B. `{"scrap": 3}` |
+| `hit_interval`, `hit_damage`, `tool_damage` | (in `defaults`) Sekunden zwischen Schlägen, Grundschaden, Bonus je Werkzeug |
 
 ## Projektstruktur
 

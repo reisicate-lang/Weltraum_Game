@@ -187,7 +187,7 @@ func _initialize() -> void:
 		if dv.type == "crate" and g.zone[g.idx(dv.pos)] == 1 and dv.lock_level > 0:
 			locked += 1
 	_check("Außenposten: verschlossene Lager (%d)" % locked, locked > 0)
-	_check("Geräusche erzeugt", root.get_node("SoundSystem")._sounds.size() == 3)
+	_check("Geräusche erzeugt (Alarm, Meldung, Klick, Schlag)", root.get_node("SoundSystem")._sounds.size() == 4 and root.get_node("SoundSystem")._sounds.has("hit"))
 
 	print("\n%d OK, %d Fehler" % [_ok, _failed])
 	quit(1 if _failed > 0 else 0)

@@ -20,6 +20,10 @@ const COL_AMBER := Color(0.95, 0.64, 0.23)
 const COL_MUTED := Color(0.51, 0.57, 0.65)
 
 var layer: CanvasLayer
+## Rechtsklick-Menü für Objekte (Abbauen, Zerlegen, Zerstören, Einbauen)
+var object_menu: PopupMenu
+var menu_pos := Vector2i(-1, -1)
+var menu_actions: Array = []
 var clock_label: Label
 var money_label: Label
 var speed_buttons: Array[Button] = []
@@ -71,6 +75,9 @@ func _ready() -> void:
 	_build_window()
 	_build_nav()
 	_build_gameover()
+	object_menu = PopupMenu.new()
+	object_menu.id_pressed.connect(_on_object_menu)
+	add_child(object_menu)
 	char_ui = load("res://scripts/ui/character_ui.gd").new()
 	add_child(char_ui)
 	char_ui.setup(self)
@@ -284,7 +291,7 @@ WASD: deine Figur steuern (Umschalt: rennen)
 Auswahl + Klick auf Boden: hinlaufen lassen · Klick auf Kiste: Inhalt
 Werkzeuge unten: Boden B, Wand M, Tür T, Kabel K, Abreißen X, Plan löschen C
 Geräte-Menü: Generator, Sauerstoff, Betten, Kisten ...
-Rechtsklick: Bauplan oder Aufgabe abbrechen · Versetzen V · Reparieren R
+Rechtsklick auf ein Objekt: Menü (Abbauen, Zerlegen, Zerstören, Einbauen) · auf Figur: Aufgabe abbrechen
 Für Arbeiten im Vakuum holt Mira selbst einen Raumanzug. Die Luftschleuse links
 pumpt die Luft ab, bevor die Außentür aufgeht. Draußen auf dem Steg liegt Mondmüll.
 E: Kiste oder Haufen neben dir durchsuchen
@@ -629,7 +636,7 @@ func _refresh_window() -> void:
 					window_box.add_child(_row("%s ×%d" % [ItemSystem.item(it.type).display_name, it.qty], [btn]))
 		"buy":
 			window_box.add_child(_label("Gekauftes landet im Terminal. Preise ändern sich jeden Tag.", COL_MUTED, 12))
-			var ids := ItemSystem.items.keys()
+			var ids: Array = ItemSystem.items.keys().filter(func(x): return not RemovalSystem.is_packed(x))
 			ids.sort()
 			for id in ids:
 				var f: float = E.prices.get(id, 1.0)
@@ -749,6 +756,98 @@ func _put_terminal(type: String, qty: int) -> void:
 
 # ---------------- Aktionen ----------------
 
+# ---------------- Rechtsklick-Menü ----------------
+
+## Menü für das Objekt auf Feld p öffnen. false = hier gibt es nichts.
+func open_object_menu(p: Vector2i) -> bool:
+	var g := ShipSystem.grid
+	if not g.in_bounds(p):
+		return false
+	var R := RemovalSystem
+	var key := R.key_at(p)
+	var i := g.idx(p)
+	var job = ShipConstructionSystem.jobs.get(i)
+	# Abgebaute Stücke, die hier passen würden (aus Gepäck und Lager)
+	var installs := {}
+	var invs: Array = CrewSystem.crew.map(func(c): return c.inv)
+	for s in ShipConstructionSystem.sources():
+		invs.append(s.inv)
+	for inv in invs:
+		for it in inv.items:
+			if R.is_packed(it.type) and not installs.has(it.type) and R.can_install(it.type, p):
+				installs[it.type] = it.cond
+	if key == "" and installs.is_empty() and job == null:
+		return false
+	object_menu.clear()
+	menu_actions.clear()
+	menu_pos = p
+	if key != "":
+		var dev := g.device_at(p)
+		var cond: float = dev.cond if dev != null else g.cond[i]
+		object_menu.add_separator("%s · Zustand %d %%" % [R.name_of(key), int(cond)])
+		for kind in R.KINDS:
+			var why := R.reason(kind, p)
+			var text: String = R.NAMES[kind]
+			if why == "":
+				text += "  (" + _menu_detail(kind, key) + ")"
+			else:
+				text += "  – " + why
+			object_menu.add_item(text, menu_actions.size())
+			var idx := object_menu.item_count - 1
+			object_menu.set_item_disabled(idx, why != "")
+			object_menu.set_item_tooltip(idx, why)
+			menu_actions.append({"kind": kind})
+	if job != null:
+		object_menu.add_separator()
+		object_menu.add_item("Auftrag abbrechen: " + ShipConstructionSystem.label(job), menu_actions.size())
+		menu_actions.append({"kind": "cancel"})
+	for pk in installs:
+		object_menu.add_item("Einbauen: %s (%d %%)" % [ItemSystem.item(pk).display_name, int(installs[pk])], menu_actions.size())
+		menu_actions.append({"kind": "install", "item": pk})
+	object_menu.reset_size()
+	object_menu.position = Vector2i(get_viewport().get_mouse_position())
+	object_menu.popup()
+	return true
+
+func _menu_detail(kind: String, key: String) -> String:
+	var R := RemovalSystem
+	var tool := R.tool_for(kind, key)
+	var tool_txt := (", " + ItemSystem.item(tool).display_name) if tool != "" else ""
+	match kind:
+		"uninstall":
+			return "%.1f min%s → %s" % [R.time_for(kind, key), tool_txt, ItemSystem.item(R.packed_id(key)).display_name]
+		"dismantle":
+			return "%.1f min%s → %s" % [R.time_for(kind, key), tool_txt, _items_text(R.dismantle_yield(key))]
+	return "Schläge%s → %s" % [tool_txt, _items_text(R.debris(key))]
+
+func _items_text(d: Dictionary) -> String:
+	var parts: PackedStringArray = []
+	for t in d:
+		parts.append("%d× %s" % [int(d[t]), ItemSystem.item(t).display_name])
+	return ", ".join(parts)
+
+func _on_object_menu(id: int) -> void:
+	if id < 0 or id >= menu_actions.size():
+		return
+	var a: Dictionary = menu_actions[id]
+	var g := ShipSystem.grid
+	match a.kind:
+		"cancel":
+			var job = ShipConstructionSystem.jobs.get(g.idx(menu_pos))
+			if job != null:
+				ShipConstructionSystem.cancel(job)
+				GameState.toast("Auftrag abgebrochen.")
+		"install":
+			if ShipConstructionSystem.place("install:" + String(a.item), menu_pos):
+				GameState.toast("Auftrag: %s einbauen." % ItemSystem.item(a.item).display_name)
+			else:
+				GameState.toast(RemovalSystem.install_reason(String(a.item), menu_pos))
+		_:
+			var name := RemovalSystem.name_of(RemovalSystem.key_at(menu_pos))
+			var why := RemovalSystem.order(String(a.kind), menu_pos)
+			GameState.toast(why if why != "" else "Auftrag: %s – %s." % [RemovalSystem.NAMES[a.kind], name])
+	menu_actions.clear()
+
 func set_tool(tool: String) -> void:
 	GameState.tool = tool
 	for k in tool_buttons:
@@ -759,6 +858,8 @@ func set_tool(tool: String) -> void:
 		if t[0] == tool:
 			hint = t[3]
 	var c := {}
+	if tool.begins_with("install:"):
+		hint = "Klick auf ein passendes Feld: %s einbauen. Rechtsklick: zurück zur Auswahl." % ItemSystem.item(tool.substr(8)).display_name
 	if tool.begins_with("dev:"):
 		var d := ItemSystem.device(tool.substr(4))
 		hint = d.description
@@ -952,17 +1053,25 @@ func _refresh_container() -> void:
 		container_box.add_child(_label("Leer.", COL_MUTED, 12))
 	else:
 		for it in inv.items:
-			container_box.add_child(_item_row(it, "Nehmen", _transfer.bind(true, it.type, it.qty)))
+			container_box.add_child(_install_btn(_item_row(it, "Nehmen", _transfer.bind(true, it.type, it.qty)), it.type))
 	if c != null and dev != null and not c.inv.items.is_empty():
 		container_box.add_child(_label("Aus dem Gepäck von " + c.display_name, COL_MUTED, 11))
 		for it in c.inv.items:
-			container_box.add_child(_item_row(it, "Hineinlegen", _transfer.bind(false, it.type, it.qty)))
+			container_box.add_child(_install_btn(_item_row(it, "Hineinlegen", _transfer.bind(false, it.type, it.qty)), it.type))
 
 func _best_hack() -> float:
 	var best := 0.0
 	for c in CrewSystem.crew:
 		best = maxf(best, SkillSystem.hack_value(c))
 	return best
+
+## Abgebaute Stücke bekommen einen Knopf „Einbauen“ (Werkzeug: nächster Klick setzt den Auftrag)
+func _install_btn(row: HBoxContainer, type: String) -> HBoxContainer:
+	if RemovalSystem.is_packed(type):
+		row.add_child(_button("Einbauen", func():
+			set_tool("install:" + type)
+			close_container()))
+	return row
 
 func _item_row(it: Dictionary, action: String, cb: Callable) -> HBoxContainer:
 	var row := HBoxContainer.new()

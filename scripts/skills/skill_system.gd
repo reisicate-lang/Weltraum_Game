@@ -197,6 +197,18 @@ func job_profile(job: Dictionary) -> Dictionary:
 			return {"actions": ["deconstruct_structure"], "effects": ["work_demolish"]}
 		"craft":
 			return {"actions": [String(EconomySystem.recipe(job.recipe).get("action", "build_device"))], "effects": ["work_build"]}
+		"uninstall", "dismantle":
+			if dev != null:
+				return {"actions": ["deconstruct_furniture"], "effects": [_work_effect(tech), "work_demolish"], "fine": tech in ["electrical", "computer", "robotic"]}
+			return {"actions": ["deconstruct_structure"], "effects": ["work_demolish"]}
+		"destroy":
+			return {"actions": ["deconstruct_structure"], "effects": ["work_demolish"]}
+		"install":
+			var key: String = RemovalSystem.key_of_packed(String(job.item))
+			if key.begins_with("dev:"):
+				var t2 := ItemSystem.device(key.substr(4)).tech
+				return {"actions": [_install_action(t2), "build_device"], "effects": [_work_effect(t2), "work_build"]}
+			return {"actions": ["build_structure"], "effects": ["work_structure", "work_build"]}
 		"hack":
 			return {"actions": ["hack", "analyze_software"], "effects": ["hack_assist", "hack_power"], "fine": true}
 		"tend", "harvest":

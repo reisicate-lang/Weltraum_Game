@@ -1,4 +1,5 @@
-## Ein Inventar: Liste von Stapeln {type, qty, cond}.
+## Ein Inventar: Liste von Stapeln {type, qty, cond} – abgebaute Objekte
+## haben zusätzlich "data" (ihr gespeicherter Zustand) und werden nie zusammengelegt.
 ## Wird für Gepäck, Kisten und Haufen auf dem Boden benutzt.
 class_name Inventory
 extends RefCounted
@@ -42,11 +43,17 @@ func room(type: String) -> int:
 	return maxi(0, int(floor(r + 0.000001)))
 
 ## Legt einen Stapel hinein. Gibt zurück, wie viel hineingepasst hat.
-func add(type: String, qty: int, cond: float = 100.0) -> int:
+func add(type: String, qty: int, cond: float = 100.0, data = null) -> int:
 	var n := mini(qty, room(type))
 	if n <= 0:
 		return 0
+	# Einzelstücke mit eigenen Daten (abgebaute Geräte): je Stück ein Stapel
+	if data != null:
+		items.append({"type": type, "qty": 1, "cond": cond, "data": data.duplicate(true)})
+		return 1
 	for it in items:
+		if it.has("data"):
+			continue
 		if it.type == type and absf(it.cond - cond) < 15.0:
 			it.cond = (it.cond * it.qty + cond * n) / (it.qty + n)
 			it.qty += n
@@ -65,7 +72,10 @@ func take(type: String, qty: int) -> Array[Dictionary]:
 		var n := mini(qty, it.qty)
 		it.qty -= n
 		qty -= n
-		out.append({"type": type, "qty": n, "cond": it.cond})
+		var st := {"type": type, "qty": n, "cond": it.cond}
+		if it.has("data"):
+			st.data = it.data
+		out.append(st)
 	items.assign(items.filter(func(it): return it.qty > 0))
 	return out
 
@@ -75,7 +85,7 @@ func move_to(other: Inventory, type: String, qty: int) -> int:
 	if n <= 0:
 		return 0
 	for st in take(type, n):
-		other.add(st.type, st.qty, st.cond)
+		other.add(st.type, st.qty, st.cond, st.get("data"))
 	return n
 
 func to_data() -> Array:
@@ -84,4 +94,7 @@ func to_data() -> Array:
 func from_data(data: Array) -> void:
 	items.clear()
 	for it in data:
-		items.append({"type": String(it.type), "qty": int(it.qty), "cond": float(it.cond)})
+		var st := {"type": String(it.type), "qty": int(it.qty), "cond": float(it.cond)}
+		if it.has("data") and it.data != null:
+			st.data = it.data
+		items.append(st)

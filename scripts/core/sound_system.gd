@@ -10,6 +10,7 @@ func _ready() -> void:
 	_sounds.alarm = _tone([880.0, 660.0, 880.0, 660.0], 0.12, 0.35)
 	_sounds.info = _tone([660.0, 990.0], 0.07, 0.2)
 	_sounds.click = _tone([220.0], 0.04, 0.25)
+	_sounds.hit = _tone([140.0, 95.0], 0.05, 0.4)
 	for k in 4:
 		var p := AudioStreamPlayer.new()
 		add_child(p)

@@ -423,10 +423,23 @@ func update(dt: float) -> void:
 					# Meister der Montage sparen manchmal ein Teil
 					if type == keys[0] and n > 1 and SkillSystem.mastered(self, "construction") and randf() < 0.25:
 						n -= 1
-					inv.take(type, n)
+					var got := inv.take(type, n)
+					# Einbau: genau dieses abgebaute Stück merken (Zustand, Daten)
+					if job.kind == "install" and not got.is_empty():
+						job.packed = got[0]
 				job.paid = true
 			_turn_to((Vector2(jp) + Vector2(0.5, 0.5) - pos).angle(), 0.3)
 			task = ShipConstructionSystem.label(job)
+			# Objekt inzwischen weg? Dann Auftrag auflösen, ohne Ergebnis
+			if job.kind in RemovalSystem.KINDS and not RemovalSystem.target_ok(job):
+				RemovalSystem.drop_stale(job)
+				job = null
+				return
+			# Zerstören: einzelne Schläge statt gleichmäßigem Fortschritt
+			if job.kind == "destroy":
+				if RemovalSystem.work_destroy(job, self, dt):
+					_finish_job()
+				return
 			job.progress += dt * SkillSystem.work_speed(self, job)
 			SkillSystem.train_job(self, job, dt)
 			if job.progress >= job.need:
@@ -449,7 +462,7 @@ func update(dt: float) -> void:
 ## Gibt es einen offenen Auftrag, den dieser Charakter übernehmen würde?
 func _has_open_job() -> bool:
 	for j in ShipConstructionSystem.jobs.values():
-		if j.claimed_by == -1 and j.retry_at <= GameState.time and not j.get("missing", false) and work_prefs.get(_pref_of(j), true):
+		if j.claimed_by == -1 and j.retry_at <= GameState.time and not j.get("missing", false) and work_prefs.get(_pref_of(j), true) and RemovalSystem.worker_ok(self, j):
 			return true
 	return false
 
@@ -459,7 +472,8 @@ func _pref_of(j: Dictionary) -> String:
 		"tend", "harvest": return "refill"
 		"extinguish": return "repair"
 		"repair": return "repair"
-		"remove": return "remove"
+		"remove", "uninstall", "dismantle", "destroy": return "remove"
+		"install": return "build"
 		"haul", "move": return "haul"
 		"refill": return "refill"
 		"craft": return "craft"
@@ -626,6 +640,13 @@ func _assign_job() -> void:
 		if (j.kind == "move" or j.kind == "haul") and j.phase == "deliver":
 			continue
 		if not work_prefs.get(_pref_of(j), true):
+			continue
+		# Werkzeug nötig? Nur wer es im Gepäck hat
+		if not RemovalSystem.worker_ok(self, j):
+			continue
+		# Ziel schon verschwunden? Auftrag auflösen
+		if j.kind in RemovalSystem.KINDS and not RemovalSystem.target_ok(j):
+			RemovalSystem.drop_stale(j)
 			continue
 		var ok := true
 		var c := CS.cost(j)

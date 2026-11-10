@@ -1,0 +1,458 @@
+{
+ "_info": "Entfernen per Rechtsklick: Abbauen (uninstall), Zerlegen (dismantle), Zerstören (destroy). Zeiten in Spielminuten, hp = Trefferpunkte bei 100 % Zustand. Fehlende Felder kommen aus 'defaults'. VORLÄUFIGES BALANCING.",
+ "defaults": {
+  "actions": [
+   "uninstall",
+   "dismantle",
+   "destroy"
+  ],
+  "uninstall_time": 3.0,
+  "uninstall_tool": "",
+  "dismantle_time": 4.0,
+  "dismantle_tool": "",
+  "dismantle_factor": 0.5,
+  "destroy_tool": "",
+  "hp": 100,
+  "debris_factor": 0.4,
+  "hit_interval": 1.5,
+  "hit_damage": 6,
+  "tool_damage": {
+   "crowbar": 14,
+   "boltgun": 10
+  },
+  "packed_weight_factor": 0.6,
+  "packed_max_weight": 30
+ },
+ "tile:wall": {
+  "uninstall_time": 4.0,
+  "uninstall_tool": "crowbar",
+  "dismantle_time": 3.0,
+  "dismantle": {
+   "plate": 2
+  },
+  "hp": 160,
+  "debris": {
+   "scrap": 2
+  }
+ },
+ "tile:floor": {
+  "uninstall_time": 2.5,
+  "dismantle_time": 2.0,
+  "dismantle": {
+   "plate": 1
+  },
+  "hp": 120,
+  "debris": {
+   "scrap": 1
+  }
+ },
+ "tile:door": {
+  "uninstall_time": 4.0,
+  "uninstall_tool": "crowbar",
+  "dismantle_time": 4.0,
+  "dismantle": {
+   "plate": 1,
+   "circuit": 1
+  },
+  "hp": 120,
+  "debris": {
+   "scrap": 2
+  }
+ },
+ "tile:window": {
+  "uninstall_time": 4.0,
+  "dismantle_time": 3.0,
+  "dismantle": {
+   "glass": 1,
+   "plate": 1
+  },
+  "hp": 60,
+  "debris": {
+   "scrap": 1
+  }
+ },
+ "tile:rock": {
+  "actions": [
+   "dismantle",
+   "destroy"
+  ],
+  "dismantle_time": 3.0,
+  "dismantle_tool": "crowbar",
+  "dismantle": {
+   "ice": 1,
+   "ore": 1
+  },
+  "hp": 200,
+  "debris": {
+   "ore": 1
+  }
+ },
+ "airtank": {
+  "uninstall_time": 3.9,
+  "dismantle_time": 5.6,
+  "dismantle": {
+   "plate": 2,
+   "pipe": 1
+  },
+  "hp": 180,
+  "debris": {
+   "scrap": 2
+  }
+ },
+ "autodock": {
+  "uninstall_time": 3.9,
+  "dismantle_time": 5.6,
+  "dismantle": {
+   "circuit": 2,
+   "motor": 1,
+   "datachip": 1
+  },
+  "hp": 180,
+  "debris": {
+   "scrap": 2
+  },
+  "dismantle_tool": "crowbar"
+ },
+ "autofarm": {
+  "uninstall_time": 5.9,
+  "dismantle_time": 8.6,
+  "dismantle": {
+   "plate": 2,
+   "motor": 1,
+   "circuit": 1,
+   "glass": 1
+  },
+  "hp": 280,
+  "debris": {
+   "scrap": 4
+  },
+  "dismantle_tool": "crowbar"
+ },
+ "battery": {
+  "uninstall_time": 4.3,
+  "dismantle_time": 6.2,
+  "dismantle": {
+   "plate": 1,
+   "cell": 2,
+   "circuit": 1
+  },
+  "hp": 200,
+  "debris": {
+   "scrap": 3
+  },
+  "dismantle_tool": "crowbar"
+ },
+ "bed": {
+  "uninstall_time": 3.5,
+  "dismantle_time": 5.0,
+  "dismantle": {
+   "plate": 1,
+   "fabric": 1
+  },
+  "hp": 160,
+  "debris": {
+   "scrap": 2
+  }
+ },
+ "charger": {
+  "uninstall_time": 3.1,
+  "dismantle_time": 4.4,
+  "dismantle": {
+   "plate": 1,
+   "cell": 1,
+   "circuit": 1
+  },
+  "hp": 140,
+  "debris": {
+   "scrap": 2
+  },
+  "dismantle_tool": "crowbar"
+ },
+ "chemstation": {
+  "uninstall_time": 4.3,
+  "dismantle_time": 6.2,
+  "dismantle": {
+   "plate": 1,
+   "pipe": 1,
+   "glass": 1,
+   "circuit": 1
+  },
+  "hp": 200,
+  "debris": {
+   "scrap": 3
+  },
+  "dismantle_tool": "crowbar"
+ },
+ "crate": {
+  "uninstall_time": 2.7,
+  "dismantle_time": 3.8,
+  "dismantle": {
+   "plate": 1
+  },
+  "hp": 120,
+  "debris": {
+   "scrap": 1
+  }
+ },
+ "extinguisher": {
+  "uninstall_time": 2.3,
+  "dismantle_time": 3.2,
+  "dismantle": {
+   "plate": 1,
+   "pipe": 1
+  },
+  "hp": 100,
+  "debris": {
+   "scrap": 1
+  }
+ },
+ "food": {
+  "uninstall_time": 2.7,
+  "dismantle_time": 3.8,
+  "dismantle": {
+   "plate": 1
+  },
+  "hp": 120,
+  "debris": {
+   "scrap": 1
+  }
+ },
+ "fueltank": {
+  "uninstall_time": 3.9,
+  "dismantle_time": 5.6,
+  "dismantle": {
+   "plate": 2,
+   "pipe": 1
+  },
+  "hp": 180,
+  "debris": {
+   "scrap": 2
+  },
+  "dismantle_tool": "crowbar"
+ },
+ "generator": {
+  "uninstall_time": 4.3,
+  "dismantle_time": 6.2,
+  "dismantle": {
+   "plate": 2,
+   "motor": 1,
+   "circuit": 1
+  },
+  "hp": 200,
+  "debris": {
+   "scrap": 3
+  }
+ },
+ "heater": {
+  "uninstall_time": 3.5,
+  "dismantle_time": 5.0,
+  "dismantle": {
+   "plate": 1,
+   "copper": 1,
+   "circuit": 1
+  },
+  "hp": 160,
+  "debris": {
+   "scrap": 2
+  },
+  "dismantle_tool": "crowbar"
+ },
+ "helm": {
+  "uninstall_time": 3.9,
+  "dismantle_time": 5.6,
+  "dismantle": {
+   "plate": 1,
+   "circuit": 1,
+   "glass": 1
+  },
+  "hp": 180,
+  "debris": {
+   "scrap": 2
+  },
+  "dismantle_tool": "crowbar"
+ },
+ "hydro": {
+  "uninstall_time": 3.5,
+  "dismantle_time": 5.0,
+  "dismantle": {
+   "plate": 1,
+   "pipe": 1,
+   "glass": 1
+  },
+  "hp": 160,
+  "debris": {
+   "scrap": 2
+  }
+ },
+ "locker": {
+  "uninstall_time": 3.5,
+  "dismantle_time": 5.0,
+  "dismantle": {
+   "plate": 1,
+   "pipe": 1,
+   "circuit": 1
+  },
+  "hp": 160,
+  "debris": {
+   "scrap": 2
+  }
+ },
+ "meatvat": {
+  "uninstall_time": 3.9,
+  "dismantle_time": 5.6,
+  "dismantle": {
+   "plate": 1,
+   "pipe": 1,
+   "motor": 1
+  },
+  "hp": 180,
+  "debris": {
+   "scrap": 2
+  }
+ },
+ "o2gen": {
+  "uninstall_time": 4.3,
+  "dismantle_time": 6.2,
+  "dismantle": {
+   "plate": 1,
+   "pipe": 1,
+   "circuit": 1
+  },
+  "hp": 200,
+  "debris": {
+   "scrap": 3
+  },
+  "dismantle_tool": "crowbar"
+ },
+ "pump": {
+  "uninstall_time": 3.9,
+  "dismantle_time": 5.6,
+  "dismantle": {
+   "plate": 1,
+   "motor": 1,
+   "pipe": 1,
+   "circuit": 1
+  },
+  "hp": 180,
+  "debris": {
+   "scrap": 2
+  },
+  "dismantle_tool": "crowbar"
+ },
+ "scrubber": {
+  "uninstall_time": 3.5,
+  "dismantle_time": 5.0,
+  "dismantle": {
+   "plate": 1,
+   "motor": 1,
+   "filter": 1
+  },
+  "hp": 160,
+  "debris": {
+   "scrap": 2
+  }
+ },
+ "sink": {
+  "uninstall_time": 3.1,
+  "dismantle_time": 4.4,
+  "dismantle": {
+   "plate": 1,
+   "pipe": 1
+  },
+  "hp": 140,
+  "debris": {
+   "scrap": 2
+  }
+ },
+ "solar": {
+  "uninstall_time": 3.5,
+  "dismantle_time": 5.0,
+  "dismantle": {
+   "glass": 1,
+   "copper": 1,
+   "circuit": 1
+  },
+  "hp": 160,
+  "debris": {
+   "scrap": 2
+  },
+  "dismantle_tool": "crowbar"
+ },
+ "terminal": {
+  "uninstall_time": 3.9,
+  "dismantle_time": 5.6,
+  "dismantle": {
+   "plate": 1,
+   "circuit": 1,
+   "datachip": 1
+  },
+  "hp": 180,
+  "debris": {
+   "scrap": 2
+  },
+  "dismantle_tool": "crowbar"
+ },
+ "thruster": {
+  "uninstall_time": 4.7,
+  "dismantle_time": 6.8,
+  "dismantle": {
+   "plate": 2,
+   "motor": 1,
+   "pipe": 1
+  },
+  "hp": 220,
+  "debris": {
+   "scrap": 3
+  },
+  "dismantle_tool": "crowbar"
+ },
+ "trainer": {
+  "uninstall_time": 3.9,
+  "dismantle_time": 5.6,
+  "dismantle": {
+   "plate": 1,
+   "fabric": 2
+  },
+  "hp": 180,
+  "debris": {
+   "scrap": 2
+  }
+ },
+ "water": {
+  "uninstall_time": 3.1,
+  "dismantle_time": 4.4,
+  "dismantle": {
+   "plate": 1,
+   "pipe": 1
+  },
+  "hp": 140,
+  "debris": {
+   "scrap": 2
+  }
+ },
+ "waterfilter": {
+  "uninstall_time": 3.9,
+  "dismantle_time": 5.6,
+  "dismantle": {
+   "plate": 1,
+   "pipe": 1,
+   "filter": 1
+  },
+  "hp": 180,
+  "debris": {
+   "scrap": 2
+  }
+ },
+ "workbench": {
+  "uninstall_time": 3.1,
+  "dismantle_time": 4.4,
+  "dismantle": {
+   "plate": 1,
+   "motor": 1
+  },
+  "hp": 140,
+  "debris": {
+   "scrap": 2
+  }
+ }
+}

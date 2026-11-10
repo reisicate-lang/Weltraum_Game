@@ -60,6 +60,13 @@ func _draw_effects() -> void:
 	for e in DamageSystem.effects:
 		var f: float = (now - e.start) / 1500.0
 		var c := (Vector2(e.pos) + Vector2(0.5, 0.5)) * S
+		if e.get("small", false):
+			# Schlag beim Zerstören: kurzer, kleiner Funke
+			if f < 0.3:
+				var k := f / 0.3
+				draw_circle(c, S * (0.12 + k * 0.3), Color(1, 0.9, 0.6, 1.0 - k))
+				draw_arc(c, S * (0.2 + k * 0.45), 0, TAU, 16, Color(1, 0.6, 0.25, 1.0 - k), 1.5)
+			continue
 		draw_circle(c, S * (0.2 + f * 1.6), Color(1, 0.95, 0.77, 1.0 - f))
 		draw_arc(c, S * (0.4 + f * 2.5), 0, TAU, 32, Color(1, 0.7, 0.28, 1.0 - f), 2.5)
 
@@ -233,15 +240,24 @@ func _draw_jobs() -> void:
 		if job.kind == "haul":
 			draw_rect(_rect(p, 0.08), Color(0.44, 0.81, 0.56, pulse), false, 2.0)
 			continue
-		if job.kind == "remove":
+		if job.kind == "remove" or job.kind == "destroy":
 			var o := Vector2(p) * S
+			if job.kind == "destroy":
+				col = Color(COL_REMOVE, pulse)
 			draw_line(o + Vector2(0.2, 0.2) * S, o + Vector2(0.8, 0.8) * S, col, 2.5)
 			draw_line(o + Vector2(0.8, 0.2) * S, o + Vector2(0.2, 0.8) * S, col, 2.5)
+		elif job.kind == "uninstall" or job.kind == "dismantle":
+			# Abbauen: Pfeil nach oben, Zerlegen: Schraubenschlüssel-Symbol
+			draw_rect(_rect(p, 0.08), Color(0.95, 0.76, 0.31, pulse), false, 1.5)
+			draw_string(ThemeDB.fallback_font, Vector2(p) * S + Vector2(0.3, 0.65) * S, "⇧" if job.kind == "uninstall" else "⚒",
+				HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(0.95, 0.76, 0.31, pulse))
 		else:
 			draw_rect(_rect(p, 0.05), Color(COL_PLAN, 0.18))
 			draw_rect(_rect(p, 0.08), col, false, 1.5)
 			if job.kind == "device":
 				_draw_device(Device.new(job.dev, p), true)
+			elif job.kind == "install" and RemovalSystem.key_of_packed(String(job.item)).begins_with("dev:"):
+				_draw_device(Device.new(RemovalSystem.key_of_packed(String(job.item)).substr(4), p), true)
 		if job.progress > 0.0:
 			var o := Vector2(p) * S
 			draw_rect(Rect2(o + Vector2(0.1, 0.82) * S, Vector2(0.8, 0.1) * S), Color(0, 0, 0, 0.6))

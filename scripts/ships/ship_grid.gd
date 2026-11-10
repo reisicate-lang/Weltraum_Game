@@ -92,11 +92,11 @@ func place_device(type: String, p: Vector2i) -> Device:
 	devices[idx(p)] = dev
 	return dev
 
-func drop_items(p: Vector2i, type: String, qty: int, c: float) -> void:
+func drop_items(p: Vector2i, type: String, qty: int, c: float, data = null) -> void:
 	var i := idx(p)
 	if not piles.has(i):
 		piles[i] = Inventory.new()
-	piles[i].add(type, qty, c)
+	piles[i].add(type, qty, c, data)
 
 func clean_piles() -> void:
 	for i in piles.keys():

@@ -163,6 +163,9 @@ func _right_click(t: Vector2i) -> void:
 		c.cancel_all()
 		GameState.toast(c.display_name + ": Aufgabe abgebrochen.")
 		return
+	# Mit dem Auswahl-Werkzeug: Kontextmenü für das Objekt (Abbauen, Zerlegen, Zerstören ...)
+	if GameState.tool == "select" and UIManager.open_object_menu(t):
+		return
 	if g.in_bounds(t) and ShipConstructionSystem.jobs.has(g.idx(t)):
 		ShipConstructionSystem.cancel(ShipConstructionSystem.jobs[g.idx(t)])
 		GameState.toast("Bauplan abgebrochen.")

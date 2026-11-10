@@ -19,6 +19,10 @@ func can_place(tool: String, p: Vector2i) -> bool:
 		return false
 	if tool.begins_with("dev:"):
 		return t == ShipGrid.Tile.FLOOR and not has_dev
+	if tool.begins_with("install:"):
+		return RemovalSystem.can_install(tool.substr(8), p)
+	if tool in RemovalSystem.KINDS:
+		return RemovalSystem.reason(tool, p) == ""
 	match tool:
 		"repair": return DamageSystem.needs_repair(p)
 		"haul": return g.piles.has(i) and not jobs.has(i)
@@ -40,6 +44,8 @@ func place(tool: String, p: Vector2i) -> bool:
 	if tool == "cancel":
 		cancel(jobs[i])
 		return true
+	if tool in RemovalSystem.KINDS:
+		return RemovalSystem.order(tool, p) == ""
 	var job := {"x": p.x, "y": p.y, "progress": 0.0, "claimed_by": -1, "retry_at": 0.0, "paid": false}
 	if tool == "extinguish":
 		job.merge({"kind": "extinguish", "need": 1.0, "paid": true})
@@ -53,6 +59,9 @@ func place(tool: String, p: Vector2i) -> bool:
 		job.merge({"kind": "remove", "need": Config.REMOVE_TIME})
 	elif tool == "cable":
 		job.merge({"kind": "cable", "need": Config.CABLE_TIME})
+	elif tool.begins_with("install:"):
+		var pk := tool.substr(8)
+		job.merge({"kind": "install", "item": pk, "need": RemovalSystem.install_time(pk)})
 	elif tool.begins_with("dev:"):
 		var dev_id := tool.substr(4)
 		job.merge({"kind": "device", "dev": dev_id, "need": ItemSystem.device(dev_id).build_time})
@@ -94,6 +103,7 @@ func cost(job: Dictionary) -> Dictionary:
 		"device": return ItemSystem.device(job.dev).cost
 		"refill": return {job.item: int(job.qty)}
 		"craft": return EconomySystem.recipe(job.recipe)["in"]
+		"install": return {job.item: 1}
 	return {}
 
 ## Vorräte (Essen, Wasser, Brennstoff, Luft) automatisch aus dem Lager nachfüllen lassen
@@ -122,6 +132,11 @@ func pos_of(job: Dictionary) -> Vector2i:
 func cancel(job: Dictionary) -> void:
 	var g := ShipSystem.grid
 	jobs.erase(g.idx(pos_of(job)))
+	# Einbau abgebrochen: genau das abgebaute Stück (mit Zustand und Daten) zurücklegen
+	if job.has("packed"):
+		var st: Dictionary = job.packed
+		g.drop_items(drop_spot(pos_of(job)), st.type, 1, float(st.cond), st.get("data"))
+		return
 	if job.paid:
 		var spot := drop_spot(pos_of(job))
 		var c := cost(job)
@@ -159,7 +174,7 @@ func salvage(p: Vector2i, worker: CrewMember = null) -> Array:
 			out.append([["motor", "circuit", "cell", "boltgun"].pick_random(), 1, randf_range(40.0, 85.0)])
 		if dev.inv != null:
 			for it in dev.inv.items:
-				out.append([it.type, it.qty, it.cond])
+				out.append([it.type, it.qty, it.cond, it.get("data")])
 		return out
 	var t := g.tiles[i]
 	if g.cables[i] == 1 and t == ShipGrid.Tile.FLOOR:
@@ -228,7 +243,11 @@ func complete(job: Dictionary, worker_pos: Vector2i, worker: CrewMember = null) 
 				g.set_tile(p, ShipGrid.Tile.SPACE)
 			var spot := worker_pos if becomes_space else p
 			for l in loot:
-				g.drop_items(spot, l[0], l[1], l[2])
+				g.drop_items(spot, l[0], l[1], l[2], l[3] if l.size() > 3 else null)
+		"uninstall", "dismantle", "destroy":
+			RemovalSystem.finish(job, worker, worker_pos)
+		"install":
+			RemovalSystem.finish_install(job, worker_pos)
 	EventBus.ship_changed.emit()
 	for c in CrewSystem.crew:
 		c.push_out_if_stuck()
@@ -240,7 +259,7 @@ func _move_pile_away(i: int, to: Vector2i) -> void:
 	var pile: Inventory = g.piles[i]
 	g.piles.erase(i)
 	for it in pile.items:
-		g.drop_items(to, it.type, it.qty, it.cond)
+		g.drop_items(to, it.type, it.qty, it.cond, it.get("data"))
 
 ## Wie viel gibt es von einer Sorte in Kisten und Haufen?
 func available(type: String) -> int:
@@ -280,6 +299,10 @@ func label(job: Dictionary) -> String:
 		"haul": return "Bringt Sachen ins Lager" if job.phase == "deliver" else "Sammelt ein"
 		"move": return "Trägt Gerät" if job.phase == "deliver" else "Hebt Gerät auf"
 		"remove": return "Reißt ab"
+		"uninstall": return "Baut ab: " + RemovalSystem.name_of(String(job.target))
+		"dismantle": return "Zerlegt: " + RemovalSystem.name_of(String(job.target))
+		"destroy": return "Zerstört: " + RemovalSystem.name_of(String(job.target))
+		"install": return "Baut ein: " + RemovalSystem.name_of(RemovalSystem.key_of_packed(String(job.item)))
 		"cable": return "Verlegt Kabel"
 		"device": return "Baut " + ItemSystem.device(job.dev).display_name
 		_: return "Baut " + Config.TILE_NAMES[int(job.tile)]
