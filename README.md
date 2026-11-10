@@ -11,6 +11,9 @@ und dient als Vorlage für die Etappen, die noch nach Godot übertragen werden.
 2. Godot öffnen, **Importieren**, die Datei `project.godot` aus diesem Ordner wählen
 3. Mit **F5** (oder dem Play-Knopf oben rechts) starten
 
+**Aktualisieren:** Doppelklick auf `aktualisieren.bat` holt den neuesten Stand von GitHub
+(oder in GitHub Desktop: *Fetch origin*, dann *Pull origin*). Spielstände bleiben dabei erhalten.
+
 ## Tests (ohne Fenster)
 
 ```
