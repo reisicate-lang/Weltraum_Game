@@ -20,6 +20,8 @@ var zone := PackedByteArray()
 ## Temperatur in °C und Feuer (1 = brennt)
 var temp := PackedFloat32Array()
 var fire := PackedByteArray()
+## Türen: Lüftungsschlitz geschlossen (1) – dann ist die geschlossene Tür ganz dicht
+var vent_closed := PackedByteArray()
 var devices: Dictionary = {}  ## Feld-Index -> Device
 var piles: Dictionary = {}    ## Feld-Index -> Inventory (Haufen auf dem Boden)
 
@@ -35,6 +37,7 @@ func _init(w: int = Config.WORLD_W, h: int = Config.WORLD_H) -> void:
 	temp.resize(n)
 	temp.fill(Config.SPACE_TEMP)
 	fire.resize(n)
+	vent_closed.resize(n)
 
 func idx(p: Vector2i) -> int:
 	return p.y * width + p.x
@@ -111,7 +114,15 @@ func to_data() -> Dictionary:
 	for i in piles:
 		pl.append([i, piles[i].to_data()])
 	return {"w": width, "h": height, "tiles": Array(tiles), "cables": Array(cables),
-		"o2": Array(o2), "n2": Array(n2), "co2": Array(co2), "cond": Array(cond), "zone": Array(zone), "temp": Array(temp), "devices": devs, "piles": pl}
+		"o2": Array(o2), "n2": Array(n2), "co2": Array(co2), "cond": Array(cond), "zone": Array(zone), "temp": Array(temp), "devices": devs, "piles": pl,
+		"vents": _closed_vents()}
+
+func _closed_vents() -> Array:
+	var out: Array = []
+	for i in vent_closed.size():
+		if vent_closed[i] == 1:
+			out.append(i)
+	return out
 
 static func from_data(d: Dictionary) -> ShipGrid:
 	var g := ShipGrid.new(int(d.w), int(d.h))
@@ -127,4 +138,6 @@ static func from_data(d: Dictionary) -> ShipGrid:
 		var inv := Inventory.new()
 		inv.from_data(entry[1])
 		g.piles[int(entry[0])] = inv
+	for i in d.get("vents", []):
+		g.vent_closed[int(i)] = 1
 	return g

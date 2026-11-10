@@ -25,6 +25,7 @@ godot --headless --path . --script res://tests/test_stations.gd
 godot --headless --path . --script res://tests/test_undock.gd
 godot --headless --path . --script res://tests/test_removal.gd
 godot --headless --path . --script res://tests/test_auto.gd
+godot --headless --path . --script res://tests/test_atmosphere.gd
 ```
 
 ## Steuerung
@@ -37,6 +38,7 @@ godot --headless --path . --script res://tests/test_auto.gd
 | Abreißen / Plan löschen | `X` / `C`, Rechtsklick bricht ab |
 | Objekt entfernen | Rechtsklick auf Gerät oder Block (Werkzeug **Auswahl**): Abbauen, Zerlegen, Zerstören |
 | Abgebautes wieder einbauen | Rechtsklick auf ein freies Feld → „Einbauen“, oder in Kiste/Haufen „Einbauen“ |
+| Tür ganz dicht machen | Rechtsklick auf die Tür → „Lüftungsschlitz schließen“ |
 | Kiste durchsuchen | `E` (daneben stehen) oder draufklicken |
 | Auf der Station reden | Klick auf eine Figur oder einen Tresen: deine Figur läuft hin, dann beginnt das Gespräch |
 | Luft- / Strom- / Wärme-Ansicht | `L` / `P` / `O` |

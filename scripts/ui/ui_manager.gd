@@ -819,6 +819,13 @@ func open_object_menu(p: Vector2i) -> bool:
 			object_menu.set_item_disabled(idx, why != "")
 			object_menu.set_item_tooltip(idx, why)
 			menu_actions.append({"kind": kind})
+	# Türen: Lüftungsschlitz (geschlossene Tür lässt sonst etwas Luft durch)
+	if g.get_tile(p) == ShipGrid.Tile.DOOR and not StationSystem.reserved(p):
+		var lock := AirlockSystem.is_lock_door(i) or StationSystem.is_hatch(i)
+		var closed := g.vent_closed[i] == 1
+		object_menu.add_item("Schleusentür: immer dicht" if lock else ("Lüftungsschlitz öffnen" if closed else "Lüftungsschlitz schließen (Tür wird dicht)"), menu_actions.size())
+		object_menu.set_item_disabled(object_menu.item_count - 1, lock)
+		menu_actions.append({"kind": "vent", "closed": not closed})
 	if job != null:
 		object_menu.add_separator()
 		object_menu.add_item("Auftrag abbrechen: " + ShipConstructionSystem.label(job), menu_actions.size())
@@ -854,6 +861,9 @@ func _on_object_menu(id: int) -> void:
 	var a: Dictionary = menu_actions[id]
 	var g := ShipSystem.grid
 	match a.kind:
+		"vent":
+			AtmosphereSystem.set_vent(g.idx(menu_pos), bool(a.closed))
+			GameState.toast("Lüftungsschlitz geschlossen: die Tür ist jetzt dicht." if a.closed else "Lüftungsschlitz offen: etwas Luft strömt durch die geschlossene Tür.")
 		"cancel":
 			var job = ShipConstructionSystem.jobs.get(g.idx(menu_pos))
 			if job != null:
