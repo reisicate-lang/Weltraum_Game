@@ -90,7 +90,11 @@ func switch_to(id: int) -> void:
 	if not SalvageSystem.clearable():
 		GameState.toast("Erst alle Crewmitglieder vom Wrack holen.")
 		return
+	if not StationSystem.clearable():
+		GameState.toast("Erst alle Crewmitglieder von der Station zurück an Bord holen.")
+		return
 	var l := PhysicsSystem.loc(here())
+	StationSystem.clear()
 	leave(l)
 	for c in CrewSystem.crew:
 		c.release_job()
@@ -106,6 +110,7 @@ func switch_to(id: int) -> void:
 	ShipPowerSystem.step(0.0)
 	_place_crew()
 	arrive(l)
+	StationSystem.build(l.id)
 	GameState.toast("Du bist jetzt an Bord der " + current_name + ".")
 
 func _place_crew() -> void:
@@ -126,11 +131,11 @@ func _place_crew() -> void:
 func ship_value(g: ShipGrid) -> int:
 	var v := 0.0
 	for i in g.tiles.size():
-		if g.tiles[i] == 0 or g.zone[i] == 1:
+		if g.tiles[i] == 0 or g.foreign(i):
 			continue
 		v += 25.0 if g.tiles[i] == ShipGrid.Tile.FLOOR else 45.0
 	for i in g.devices:
-		if g.zone[i] != 1:
+		if not g.foreign(i):
 			v += SalvageSystem.device_value(g.devices[i]) * 1.5
 	return int(v)
 

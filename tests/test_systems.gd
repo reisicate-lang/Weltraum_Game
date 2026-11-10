@@ -83,7 +83,7 @@ func _initialize() -> void:
 	_check("Fenster ist planbar (Wand wird ersetzt? nein: nur auf Boden/All)", not build.can_place("window", Vector2i(x0 + 15, y0 + 2)) or true)
 	var win := Vector2i(x0 + 16, y0 + 2)
 	build.place("floor", win)
-	_check("Fenster kann im All geplant werden", build.can_place("window", Vector2i(x0 + 16, y0 + 3)))
+	_check("Fenster kann im All geplant werden (neben dem Andockschlauch)", build.can_place("window", Vector2i(x0 + 16, y0 + 7)))
 	build.jobs.clear()
 
 	# 4) Feuer: brennt, verbraucht Sauerstoff, Crew löscht

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "st_hiring"
+display_name = "Heuerbüro"
+description = "Hier suchen Raumfahrer eine Koje."
+power = 0.0
+build_time = 1.0
+cost = {}
+color = Color(0.27, 0.27, 0.38, 1)
+tech = "station"

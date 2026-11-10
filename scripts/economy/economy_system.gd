@@ -98,23 +98,28 @@ func inv_value(inv: Inventory) -> int:
 
 # ---------------- Handel ----------------
 
-func sell(type: String, qty: int) -> void:
+## Verkaufen aus dem Terminal oder (am Markttresen der Station) aus einem Gepäck
+func sell(type: String, qty: int, from: Inventory = null) -> void:
 	var t := terminal()
-	if t == null or not terminal_online():
+	if from == null and (t == null or not terminal_online()):
 		GameState.toast("Das Handelsterminal ist offline.", "bad")
 		return
+	if from != null and PhysicsSystem.station().is_empty():
+		GameState.toast("Verkaufen geht nur an einer Station.", "bad")
+		return
+	var src: Inventory = t.inv if from == null else from
 	var total := 0
 	var sold := 0
 	# Schmuggelware: Kontrolle möglich
 	if ItemSystem.item(type).contraband and not DialogueSystem.smuggle_check(trader()):
-		var n := t.inv.count(type)
-		t.inv.take(type, n)
+		var n := src.count(type)
+		src.take(type, n)
 		credits -= 300
 		book("Schmuggelware beschlagnahmt, Strafe", -300)
 		QuestSystem.change_rep("patrol", -10.0)
 		GameState.toast("Kontrolle! Die Schmuggelware wurde beschlagnahmt. 300 Cr Strafe.", "bad")
 		return
-	for st in t.inv.take(type, qty):
+	for st in src.take(type, qty):
 		total += sell_price(st)
 		sold += st.qty
 	if sold == 0:

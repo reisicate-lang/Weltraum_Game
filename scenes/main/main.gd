@@ -132,6 +132,8 @@ func _click(t: Vector2i) -> void:
 		EventBus.character_selected.emit(c)
 		return
 	var g := ShipSystem.grid
+	if StationSystem.click(t, world_pos):
+		return
 	if g.in_bounds(t):
 		var dev := g.device_at(t)
 		if dev != null and not dev.unknown and dev.type == "terminal":

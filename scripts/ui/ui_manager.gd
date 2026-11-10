@@ -43,6 +43,9 @@ var window_panel: PanelContainer
 var window_box: VBoxContainer
 var window_kind := ""
 var trade_tab := "sell"
+## Gespräch an einem Stationstresen: wer redet und an welchem Tresen
+var talk_line := ""
+var talk_role := ""
 var _last_window := ""
 var nav_root: HBoxContainer
 var nav_map: Control
@@ -209,6 +212,9 @@ func _build_bottom() -> void:
 	var keys := ItemSystem.devices.keys()
 	keys.sort()
 	for k in keys:
+		# Stationstresen kann man nicht bauen
+		if ItemSystem.device(k).tech == "station":
+			continue
 		device_ids.append(k)
 		device_menu.get_popup().add_item(ItemSystem.device(k).display_name)
 	device_menu.get_popup().index_pressed.connect(func(i): set_tool("dev:" + device_ids[i]))
@@ -507,7 +513,19 @@ func open_window(kind: String) -> void:
 	_refresh_nav()
 	char_ui.refresh()
 
+## Gespräch an der Station: Fenster mit passendem Reiter, Begrüßung oben
+func open_talk(tab: String, line: String, role: String) -> void:
+	trade_tab = tab
+	station_reply = ""
+	open_window("trade")
+	talk_line = line
+	talk_role = role
+	_last_window = ""
+	_refresh_window()
+
 func close_window() -> void:
+	talk_line = ""
+	talk_role = ""
 	window_kind = ""
 	if window_panel != null:
 		window_panel.visible = false
@@ -528,7 +546,7 @@ func _refresh_window() -> void:
 	var E := EconomySystem
 	var t := E.terminal()
 	var c: CrewMember = GameState.selected if GameState.selected != null else CrewSystem.player()
-	var key := JSON.stringify([station_reply, CrewSystem.crew.size(), window_kind, trade_tab, E.credits, E.debt, t.inv.to_data() if t != null else [], c.inv.to_data() if c != null else [], E.log_entries.size(), SalvageSystem.wreck_name, int(GameState.time / 60.0)])
+	var key := JSON.stringify([talk_line, station_reply, CrewSystem.crew.size(), window_kind, trade_tab, E.credits, E.debt, t.inv.to_data() if t != null else [], c.inv.to_data() if c != null else [], E.log_entries.size(), SalvageSystem.wreck_name, int(GameState.time / 60.0)])
 	if key == _last_window:
 		return
 	_last_window = key
@@ -541,6 +559,11 @@ func _refresh_window() -> void:
 	head.add_child(title)
 	head.add_child(_button("✕", close_window))
 	window_box.add_child(head)
+	if talk_line != "":
+		var tl := _label(talk_line, Color(0.95, 0.76, 0.31), 13)
+		tl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		tl.custom_minimum_size = Vector2(370, 0)
+		window_box.add_child(tl)
 	if window_kind in ["bench", "chem"]:
 		window_box.add_child(_label("Die Crew holt das Material selbst und legt das Ergebnis daneben.", COL_MUTED, 12))
 		for r in E.recipes:
@@ -580,10 +603,12 @@ func _refresh_window() -> void:
 			else:
 				window_box.add_child(_label("Das Terminal ist leer.", COL_MUTED, 12))
 			if c != null and not c.inv.items.is_empty():
-				window_box.add_child(_label("Gepäck von " + c.display_name, COL_MUTED, 11))
+				# Am Markttresen direkt aus dem Gepäck verkaufen
+				var at_market := talk_role == "market"
+				window_box.add_child(_label(("Gepäck von %s – direkt an den Händler" if at_market else "Gepäck von %s") % c.display_name, COL_MUTED, 11))
 				for it in c.inv.items:
-					window_box.add_child(_row("%s ×%d" % [ItemSystem.item(it.type).display_name, it.qty],
-						[_button("Hineinlegen", _put_terminal.bind(it.type, it.qty))]))
+					var btn: Button = _button("%d Cr" % E.sell_price(it), E.sell.bind(it.type, it.qty, c.inv)) if at_market else _button("Hineinlegen", _put_terminal.bind(it.type, it.qty))
+					window_box.add_child(_row("%s ×%d" % [ItemSystem.item(it.type).display_name, it.qty], [btn]))
 		"buy":
 			window_box.add_child(_label("Gekauftes landet im Terminal. Preise ändern sich jeden Tag.", COL_MUTED, 12))
 			var ids := ItemSystem.items.keys()

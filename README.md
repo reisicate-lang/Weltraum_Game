@@ -18,6 +18,7 @@ godot --headless --path . --script res://tests/run_tests.gd
 godot --headless --path . --script res://tests/test_skills.gd
 godot --headless --path . --script res://tests/test_systems.gd
 godot --headless --path . --script res://tests/test_world.gd
+godot --headless --path . --script res://tests/test_stations.gd
 ```
 
 ## Steuerung
@@ -29,6 +30,7 @@ godot --headless --path . --script res://tests/test_world.gd
 | Bauen | Boden `B`, Wand `M`, Tür `T`, Kabel `K`, Geräte-Menü unten |
 | Abreißen / Plan löschen | `X` / `C`, Rechtsklick bricht ab |
 | Kiste durchsuchen | `E` (daneben stehen) oder draufklicken |
+| Auf der Station reden | Klick auf eine Figur oder einen Tresen: deine Figur läuft hin, dann beginnt das Gespräch |
 | Luft- / Strom- / Wärme-Ansicht | `L` / `P` / `O` |
 | Fenster bauen | `Z` |
 | Zeit | `Leertaste` Pause, `1`–`4` (1× = Echtzeit) |
@@ -52,6 +54,7 @@ res://
   scripts/character/  CharacterSystem (Lebenslauf), CrewMember
   scripts/npcs/       NPCSystem (Bewerber, Plünderer)
   scripts/dialogue/   DialogueSystem (Gespräche auf Stationen)
+  scripts/stations/   StationSystem (begehbare Stationen mit Räumen und Figuren)
   scripts/economy/    EconomySystem
   scripts/salvage/    SalvageSystem (Wracks)
   scripts/physics/    PhysicsSystem (Raumflug)

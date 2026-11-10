@@ -34,7 +34,15 @@
    "radius": 3000,
    "phase": 0.5,
    "market": 1.0,
-   "desc": "Schrotthändler im Mondorbit. Hier fing alles an."
+   "desc": "Schrotthändler im Mondorbit. Hier fing alles an.",
+   "rooms": [
+    "market",
+    "bar",
+    "board",
+    "hiring",
+    "claims",
+    "bank"
+   ]
   },
   {
    "id": "karman",
@@ -45,7 +53,14 @@
    "phase": 2.0,
    "market": 1.1,
    "shipyard": true,
-   "desc": "Große Handelsstation im Erdorbit mit Werft."
+   "desc": "Große Handelsstation im Erdorbit mit Werft.",
+   "rooms": [
+    "market",
+    "bar",
+    "board",
+    "hiring",
+    "bank"
+   ]
   },
   {
    "id": "l4",
@@ -55,7 +70,13 @@
    "y": -51962,
    "market": 0.9,
    "black": true,
-   "desc": "Abgelegenes Habitat. Hier fragt keiner, woher die Ware stammt."
+   "desc": "Abgelegenes Habitat. Hier fragt keiner, woher die Ware stammt.",
+   "rooms": [
+    "market",
+    "bar",
+    "board",
+    "hiring"
+   ]
   },
   {
    "id": "debris",
@@ -94,7 +115,13 @@
     "scrap": 1.6,
     "ice": 1.4
    },
-   "desc": "Industrieanlage. Zahlt gut für Erz, Eis und Schrott."
+   "desc": "Industrieanlage. Zahlt gut für Erz, Eis und Schrott.",
+   "rooms": [
+    "market",
+    "bar",
+    "board",
+    "claims"
+   ]
   }
  ],
  "shipyard": [

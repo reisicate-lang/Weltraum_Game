@@ -19,7 +19,7 @@ func step(dt: float) -> void:
 	var h := dt / 60.0
 	for i in g.devices:
 		var dev: Device = g.devices[i]
-		if dev.broken or g.zone[i] == 1:
+		if dev.broken or g.foreign(i):
 			continue
 		match dev.type:
 			"waterfilter":

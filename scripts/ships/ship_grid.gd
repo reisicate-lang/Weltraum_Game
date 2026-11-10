@@ -70,6 +70,10 @@ func wall_like(p: Vector2i) -> bool:
 	var t := get_tile(p)
 	return t == Tile.WALL or t == Tile.DOOR or t == Tile.WINDOW
 
+## Gehört das Feld nicht zum eigenen Schiff? (1 = Wrack, 3 = Station)
+func foreign(i: int) -> bool:
+	return zone[i] == 1 or zone[i] == 3
+
 func holds_air(i: int) -> bool:
 	return tiles[i] == Tile.FLOOR or tiles[i] == Tile.DOOR
 

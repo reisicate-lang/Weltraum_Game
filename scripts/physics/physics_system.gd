@@ -74,7 +74,7 @@ func ship_devices(type: String) -> Array:
 	var g := ShipSystem.grid
 	var out: Array = []
 	for i in g.devices:
-		if g.devices[i].type == type and g.zone[i] != 1:
+		if g.devices[i].type == type and not g.foreign(i):
 			out.append(g.devices[i])
 	return out
 
@@ -83,10 +83,10 @@ func mass() -> float:
 	var g := ShipSystem.grid
 	var m := 0.0
 	for i in g.tiles.size():
-		if g.tiles[i] != 0 and g.zone[i] != 1:
+		if g.tiles[i] != 0 and not g.foreign(i):
 			m += 0.2
 	for i in g.devices:
-		if g.zone[i] == 1:
+		if g.foreign(i):
 			continue
 		m += 0.5
 		if g.devices[i].inv != null:
@@ -258,6 +258,7 @@ func dock(id: String, force: bool = false) -> bool:
 	thrust = 0.0
 	match_target = ""
 	FleetSystem.arrive(loc(id))
+	StationSystem.build(id)
 	NPCSystem.on_docked(id)
 	SkillSystem.train_all_at("helm", "dock", 0.3 if force else 8.0)
 	GameState.toast("Angedockt: " + loc(id).name)
@@ -272,6 +273,10 @@ func undock() -> bool:
 	if not SalvageSystem.clearable():
 		GameState.toast("Erst alle Crewmitglieder vom Wrack holen.")
 		return false
+	if not StationSystem.clearable():
+		GameState.toast("Erst alle Crewmitglieder von der Station zurück an Bord holen.")
+		return false
+	StationSystem.clear()
 	FleetSystem.leave(loc(docked))
 	GameState.toast("Abgedockt von " + loc(docked).name + ".")
 	docked = ""

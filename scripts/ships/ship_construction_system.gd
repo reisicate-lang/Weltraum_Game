@@ -14,6 +14,9 @@ func can_place(tool: String, p: Vector2i) -> bool:
 	var i := g.idx(p)
 	var t := g.tiles[i]
 	var has_dev := g.devices.has(i)
+	# Die Station gehört dir nicht (die Luke in der Schiffswand auch nicht)
+	if (StationSystem.reserved(p) or StationSystem.is_hatch(i)) and not tool in ["haul", "cancel"]:
+		return false
 	if tool.begins_with("dev:"):
 		return t == ShipGrid.Tile.FLOOR and not has_dev
 	match tool:
@@ -99,7 +102,7 @@ func scan_refills() -> void:
 	for i in g.devices:
 		var dev: Device = g.devices[i]
 		var d := dev.data()
-		if g.zone[i] == 1 or d.stock < 0.0 or dev.stock > d.stock * Config.REFILL_AT or jobs.has(i):
+		if g.foreign(i) or d.stock < 0.0 or dev.stock > d.stock * Config.REFILL_AT or jobs.has(i):
 			continue
 		for item_id in ItemSystem.items:
 			var it: ItemData = ItemSystem.item(item_id)

@@ -16,6 +16,7 @@ func _ready() -> void:
 
 func new_game() -> void:
 	time = 0.0
+	StationSystem.reset()
 	ShipSystem.create_start_ship()
 	ShipConstructionSystem.jobs.clear()
 	EconomySystem.reset()
@@ -29,6 +30,7 @@ func new_game() -> void:
 	QuestSystem.reset()
 	GoalSystem.reset()
 	DialogueSystem.reset()
+	StationSystem.build(PhysicsSystem.docked)
 	# Standard-Lebenslauf für Mira (im Startbildschirm änderbar)
 	var mira := CrewSystem.player()
 	CharacterSystem.begin(mira)
@@ -52,6 +54,7 @@ func step(dt: float) -> void:
 	WaterSystem.step(dt)
 	DamageSystem.step(dt)
 	CrewSystem.step(dt)
+	StationSystem.step(dt)
 	EconomySystem.step(dt)
 	QuestSystem.step(dt)
 	GoalSystem.step(dt)

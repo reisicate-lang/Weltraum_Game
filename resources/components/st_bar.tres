@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "st_bar"
+display_name = "Bartresen"
+description = "Die Bar der Station: Leute treffen, plaudern, auftreten, würfeln."
+power = 0.0
+build_time = 1.0
+cost = {}
+color = Color(0.4, 0.22, 0.25, 1)
+tech = "station"

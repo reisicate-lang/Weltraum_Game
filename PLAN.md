@@ -101,7 +101,7 @@ und werden Schritt für Schritt übertragen.
 - [x] Schwarzmarkt, Schmuggel mit Kontrollen, Versicherung, Schiffskredit, Liegegebühr
 - [x] Tägliche Weltereignisse verändern Preise
 - [x] Neue Orte: Eisbrocken KX-7 (Eis und Erz abbauen), Außenposten Kepler (verschlossene Beute), Raffinerie Hephaistos (zahlt gut für Erz)
-- [ ] Stationssystem wie die Ostranauts-Mod (begehbare Stationen)
+- [x] Begehbare Stationen: Druckschlauch vom Schiff, Gang mit Markt, Bar, Auftragsbrett, Heuerbüro, Bergungsamt, Kreditbüro und Werft; Figuren hinter den Tresen, Kontakte in der Bar, Bewerber im Heuerbüro; am Markt direkt aus dem Gepäck verkaufen
 
 ### Etappe 10 – Feinschliff (Godot)
 - [x] Einstellbare Simulationstiefe, Autosave-Intervall, Meteoriten an/aus
@@ -117,3 +117,4 @@ und werden Schritt für Schritt übertragen.
 - `tests/test_skills.gd` – Fähigkeiten, Traits, Hobbys, Lebenslauf, NPCs, Stationen (144)
 - `tests/test_systems.gd` – Temperatur, Feuer, Wasser, Anbau, Chemie (21)
 - `tests/test_world.gd` – Crew-Beziehungen, Aufträge, Fraktionen, Einstellungen, Mods, Speicherplätze, neue Orte, Ziele (32)
+- `tests/test_stations.gd` – begehbare Stationen: Aufbau, Luft, Gespräche, Verkauf, Speichern, Abdocken (36)

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "st_market"
+display_name = "Markttresen"
+description = "Händler der Station. Hier kaufst und verkaufst du direkt aus dem Gepäck."
+power = 0.0
+build_time = 1.0
+cost = {}
+color = Color(0.42, 0.33, 0.2, 1)
+tech = "station"

@@ -28,6 +28,12 @@ func _initialize() -> void:
 	if args.size() > 3 and args[3] == "char":
 		root.get_node("UIManager").char_ui.creation.visible = false
 		root.get_node("UIManager").char_ui.toggle()
+	if args.size() > 3 and args[3] == "station":
+		root.get_node("UIManager").char_ui.creation.visible = false
+		root.get_node("TimeSystem").set_speed(1)
+		var cam: Camera2D = current_scene.get_node("Camera2D")
+		cam.position = Vector2(44, 22) * Config.TILE_SIZE
+		cam.zoom = Vector2(1.05, 1.05)
 	for i in frames:
 		await process_frame
 	var img := root.get_texture().get_image()

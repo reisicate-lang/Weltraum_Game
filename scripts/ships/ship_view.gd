@@ -47,8 +47,10 @@ func _draw() -> void:
 		_draw_heat(g, x0, y0, x1, y1)
 	_draw_fire(g, x0, y0, x1, y1)
 	_draw_jobs()
+	_draw_station()
 	for c in CrewSystem.crew:
 		_draw_char(c)
+	_draw_bubbles()
 	_draw_effects()
 	_draw_preview(g)
 
@@ -74,6 +76,8 @@ func _draw_tile(g: ShipGrid, p: Vector2i) -> void:
 		floor_col = Color(0.2, 0.188, 0.172) if (p.x + p.y) % 2 == 0 else Color(0.184, 0.172, 0.157)
 	elif zone == 2:
 		floor_col = Color(0.17, 0.19, 0.21)
+	elif zone == StationSystem.ZONE:
+		floor_col = Color(0.2, 0.235, 0.27) if (p.x + p.y) % 2 == 0 else Color(0.19, 0.225, 0.26)
 	draw_rect(_rect(p), floor_col)
 	draw_rect(_rect(p, 0.02), Color(0.11, 0.145, 0.19), false, 1.0)
 	# Schleusenboden: Warnstreifen
@@ -389,5 +393,55 @@ func _draw_icon(dev: Device, r: Rect2, a: float) -> void:
 			draw_arc(c, u * 0.35, 0, TAU, 16, Color(0.9, 0.9, 0.9, a), 1.0)
 		"extinguisher":
 			draw_rect(Rect2(c - Vector2(u * 0.12, u * 0.3), Vector2(u * 0.24, u * 0.6)), Color(0.85, 0.15, 0.15, a))
+		"st_market", "st_bar", "st_board", "st_hiring", "st_claims", "st_bank", "st_shipyard":
+			# Tresen mit Zeichen
+			draw_rect(Rect2(c - Vector2(u * 0.42, u * 0.12), Vector2(u * 0.84, u * 0.24)), Color(0.75, 0.62, 0.4, a))
+			var glyph: String = {"st_market": "$", "st_bar": "♪", "st_board": "!", "st_hiring": "+", "st_claims": "§", "st_bank": "¢", "st_shipyard": "⚓"}[dev.type]
+			draw_string(ThemeDB.fallback_font, c + Vector2(-u * 0.18, -u * 0.18), glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(1, 0.9, 0.6, a))
 		_:
 			draw_string(ThemeDB.fallback_font, r.position + Vector2(3, S * 0.5), dev.data().display_name.substr(0, 2), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(1, 1, 1, 0.85 * a))
+
+# ---------------- Station: Raumnamen, Figuren, Sprechblasen ----------------
+
+func _draw_station() -> void:
+	if not StationSystem.active():
+		return
+	var font := ThemeDB.fallback_font
+	var a := StationSystem.area
+	var st := PhysicsSystem.loc(StationSystem.station_id)
+	draw_string(font, Vector2(a.position.x + 2, a.position.y) * S + Vector2(0, -4), String(st.get("name", "Station")).to_upper(),
+		HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(0.95, 0.76, 0.31, 0.9))
+	for r in StationSystem.rooms:
+		var inner: Rect2i = r.inner
+		draw_string(font, Vector2(inner.position) * S + Vector2(3, 11), StationSystem.ROOMS[r.kind].name,
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(0.75, 0.8, 0.86, 0.75))
+	for n in StationSystem.npcs:
+		var center: Vector2 = n.pos * S
+		draw_circle(center + Vector2(1, 2), S * 0.28, Color(0, 0, 0, 0.35))
+		draw_circle(center, S * 0.26, n.color)
+		match n.kind:
+			"staff":
+				draw_arc(center, S * 0.26, 0, TAU, 20, Color(0.95, 0.76, 0.31), 2.0)
+			"contact":
+				draw_arc(center, S * 0.26, 0, TAU, 20, Color(0.62, 0.85, 1.0), 2.0)
+			"candidate":
+				draw_string(font, center + Vector2(-3, -S * 0.32), "+", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.5, 0.9, 0.6))
+		var near: bool = hover.distance_to(Vector2i(n.pos)) <= 1.0
+		if near or n.kind != "visitor":
+			draw_string(font, center + Vector2(-S * 3, S * 0.75), String(n.name).split(" (")[0].split(",")[0], HORIZONTAL_ALIGNMENT_CENTER, S * 6, 10,
+				Color(0.91, 0.93, 0.96, 0.95 if near else 0.6))
+
+func _draw_bubbles() -> void:
+	if not StationSystem.active():
+		return
+	var font := ThemeDB.fallback_font
+	for n in StationSystem.npcs:
+		if String(n.line) == "" or GameState.time > float(n.line_until):
+			continue
+		var text := String(n.line)
+		var size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11)
+		var center: Vector2 = n.pos * S
+		var box := Rect2(center + Vector2(-size.x / 2.0 - 5, -S * 0.55 - size.y - 6), size + Vector2(10, 6))
+		draw_rect(box, Color(0.08, 0.1, 0.13, 0.92))
+		draw_rect(box, Color(0.95, 0.76, 0.31, 0.8), false, 1.0)
+		draw_string(font, box.position + Vector2(5, size.y), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.95, 0.93, 0.88))
