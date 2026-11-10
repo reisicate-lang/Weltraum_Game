@@ -26,7 +26,7 @@ var flight_hud: Control
 var pilot: CrewMember = null
 var _helm_walk := false
 ## Tatsächliche Tastenbelegung im Flugmodus (wird im Cockpit angezeigt)
-const FLIGHT_KEYS := [["W / S", "Schub vor / zurück (Lagedüsen, vor + Haupttriebwerk)"], ["A / D", "Schub links / rechts (Lagedüsen)"],
+const FLIGHT_KEYS := [["W / S", "Schub vor / zurück (Triebwerke in dieser Richtung + Lagedüsen)"], ["A / D", "Schub links / rechts (Triebwerke in dieser Richtung + Lagedüsen)"],
 	["Q / E", "drehen gegen / im Uhrzeigersinn"], ["R", "Drehung stoppen"], ["X", "Geschwindigkeit ans Ziel angleichen"],
 	["Tab", "nächstes Ziel"], ["F", "andocken"], ["U", "abdocken"], ["Mausrad", "Karte zoomen"], ["Esc / N", "Cockpit verlassen"]]
 ## Rechtsklick-Menü für Objekte (Abbauen, Zerlegen, Zerstören, Einbauen)
@@ -466,7 +466,8 @@ func _course(v: Vector2) -> String:
 ## Zahlen für die Fluganzeige (auch zum Erkennen, ob neu gezeichnet werden muss)
 func _flight_rows() -> Array:
 	var P := PhysicsSystem
-	var out: Array = [_course(Vector2.from_angle(P.angle)), int(rad_to_deg(P.ang_vel)), P.thrust, P.strafe, P.rot_input, P.match_target]
+	var out: Array = [_course(Vector2.from_angle(P.angle)), int(rad_to_deg(P.ang_vel)), P.thrust, P.strafe, P.rot_input, P.match_target,
+		snappedf(P.mass(), 0.1), P.thrust_dir(Vector2i(1, 0)), P.thrust_dir(Vector2i(-1, 0)), P.thrust_dir(Vector2i(0, 1)), P.thrust_dir(Vector2i(0, -1))]
 	if P.target != "" and P.docked == "":
 		var ap: Dictionary = P.approach(P.target)
 		out.append_array([_fmt_dist(ap.dist), snappedf(ap.speed * 1000.0, 0.1), snappedf(ap.closing * 1000.0, 0.1), int(P.dock_alignment(P.target).deg)])
@@ -489,7 +490,12 @@ func _build_flight_info() -> void:
 	if P.rot_stop: thr.append("Drehung stoppen")
 	if P.match_target != "": thr.append("angleichen")
 	nav_side.add_child(_row("Aktiver Schub", [_label(", ".join(thr) if not thr.is_empty() else "keiner – Schiff driftet", COL_AMBER, 12)]))
-	nav_side.add_child(_row("Beschleunigung", [_label("Haupt %.2f · Lagedüsen %.2f m/s²" % [P.main_accel() * 1000.0, P.rcs_accel() * 1000.0], COL_MUTED, 12)]))
+	var fl: Vector2 = P.thrust_vector_local()
+	var mass_t: float = P.mass()
+	nav_side.add_child(_row("Gesamtmasse", [_label("%.1f t" % mass_t, COL_AMBER, 12)]))
+	nav_side.add_child(_row("Wirksamer Schub jetzt", [_label("%d kN → %.2f m/s²" % [int(fl.length()), fl.length() / maxf(1.0, mass_t)], COL_AMBER if fl.length() > 0.0 else COL_MUTED, 12)]))
+	nav_side.add_child(_row("Triebwerke (kN)", [_label("vor %d · zurück %d · links %d · rechts %d · Lagedüsen je %d" % [
+		int(P.thrust_dir(Vector2i(1, 0))), int(P.thrust_dir(Vector2i(-1, 0))), int(P.thrust_dir(Vector2i(0, -1))), int(P.thrust_dir(Vector2i(0, 1))), int(P.rcs_thrust())], COL_MUTED, 12)]))
 	var tl := P.loc(P.target)
 	var tr := HBoxContainer.new()
 	tr.add_child(_label("ZIEL: " + (String(tl.name) if not tl.is_empty() else "keins"), COL_MUTED, 11))
@@ -1021,6 +1027,12 @@ func open_object_menu(p: Vector2i) -> bool:
 			object_menu.set_item_disabled(idx, why != "")
 			object_menu.set_item_tooltip(idx, why)
 			menu_actions.append({"kind": kind})
+	# Drehbare Geräte (Triebwerke): um 90° drehen lassen
+	var rdev := g.device_at(p)
+	if rdev != null and rdev.data().rotatable and not g.foreign(i):
+		object_menu.add_item("Drehen (90° im Uhrzeigersinn) – schiebt jetzt %s" % _push_name(rdev.push_dir()), menu_actions.size())
+		object_menu.set_item_disabled(object_menu.item_count - 1, not ShipConstructionSystem.can_place("rotate", p))
+		menu_actions.append({"kind": "rotate"})
 	# Türen: Lüftungsschlitz (geschlossene Tür lässt sonst etwas Luft durch)
 	if g.get_tile(p) == ShipGrid.Tile.DOOR and not StationSystem.reserved(p):
 		var lock := AirlockSystem.is_lock_door(i) or StationSystem.is_hatch(i)
@@ -1051,6 +1063,18 @@ func _menu_detail(kind: String, key: String) -> String:
 			return "%.1f min%s → %s" % [R.time_for(kind, key), tool_txt, _items_text(R.dismantle_yield(key))]
 	return "Schläge%s → %s" % [tool_txt, _items_text(R.debris(key))]
 
+## Richtung eines Triebwerks in Worten (Schiffskoordinaten)
+func _push_name(d: Vector2i) -> String:
+	return {Vector2i(1, 0): "nach vorn (zur Nase)", Vector2i(0, 1): "nach rechts", Vector2i(-1, 0): "nach hinten", Vector2i(0, -1): "nach links"}.get(d, "?")
+
+## Taste G: Bau-Drehung für drehbare Geräte weiterschalten
+func rotate_build() -> void:
+	if not GameState.tool.begins_with("dev:") or not ItemSystem.device(GameState.tool.substr(4)).rotatable:
+		GameState.toast("G dreht nur drehbare Geräte beim Bauen (z. B. Triebwerk).")
+		return
+	ShipConstructionSystem.build_rot = (ShipConstructionSystem.build_rot + 1) % 4
+	set_tool(GameState.tool)
+
 func _items_text(d: Dictionary) -> String:
 	var parts: PackedStringArray = []
 	for t in d:
@@ -1063,6 +1087,9 @@ func _on_object_menu(id: int) -> void:
 	var a: Dictionary = menu_actions[id]
 	var g := ShipSystem.grid
 	match a.kind:
+		"rotate":
+			if ShipConstructionSystem.place("rotate", menu_pos):
+				GameState.toast("Auftrag: Gerät um 90° drehen.")
 		"vent":
 			AtmosphereSystem.set_vent(g.idx(menu_pos), bool(a.closed))
 			GameState.toast("Lüftungsschlitz geschlossen: die Tür ist jetzt dicht." if a.closed else "Lüftungsschlitz offen: etwas Luft strömt durch die geschlossene Tür.")
@@ -1097,6 +1124,8 @@ func set_tool(tool: String) -> void:
 	if tool.begins_with("dev:"):
 		var d := ItemSystem.device(tool.substr(4))
 		hint = d.description
+		if d.rotatable:
+			hint = "Schiebt %s (G: drehen). %s" % [_push_name(Device.PUSH_DIRS[ShipConstructionSystem.build_rot]), hint]
 		c = d.cost
 	elif ShipConstructionSystem.TOOL_TILE.has(tool):
 		c = Config.TILE_COST[ShipConstructionSystem.TOOL_TILE[tool]]

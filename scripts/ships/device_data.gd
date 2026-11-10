@@ -27,5 +27,9 @@ extends Resource
 @export var tech: String = "furniture"
 ## Schub in kN (nur Triebwerke)
 @export var thrust: float = 0.0
+## Masse in Tonnen (für die Beschleunigung des Schiffs)
+@export var mass: float = 0.5
+## Lässt sich beim Bauen und danach in 90°-Schritten drehen (z. B. Triebwerke)
+@export var rotatable: bool = false
 ## Farbe für die einfache Darstellung
 @export var color: Color = Color(0.35, 0.4, 0.45)

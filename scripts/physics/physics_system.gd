@@ -102,19 +102,23 @@ func ship_devices(type: String) -> Array:
 			out.append(g.devices[i])
 	return out
 
-## Masse in Tonnen: Rumpf, Geräte, Ladung
+## Masse in Tonnen: Rumpffelder (Config.TILE_MASS), Geräte (DeviceData.mass,
+## z. B. Triebwerk 1,5 t), Ladung in Behältern und Haufen an Bord
 func mass() -> float:
 	var g := ShipSystem.grid
 	var m := 0.0
 	for i in g.tiles.size():
 		if g.tiles[i] != 0 and not g.foreign(i):
-			m += 0.2
+			m += float(Config.TILE_MASS.get(g.tiles[i], 0.2))
 	for i in g.devices:
 		if g.foreign(i):
 			continue
-		m += 0.5
+		m += g.devices[i].data().mass
 		if g.devices[i].inv != null:
 			m += g.devices[i].inv.weight() / 1000.0
+	for i in g.piles:
+		if not g.foreign(i):
+			m += g.piles[i].weight() / 1000.0
 	return m
 
 func fuel() -> float:
@@ -134,24 +138,58 @@ func use_fuel(amount: float) -> void:
 		t.stock -= n
 		amount -= n
 
-func working_thrusters() -> int:
-	var n := 0
-	for t in ship_devices("thruster"):
-		if t.powered and not t.broken:
-			n += 1
-	return n
+## Aktive Triebwerke: eingebaut, mit Strom, nicht kaputt
+func active_thrusters() -> Array:
+	return ship_devices("thruster").filter(func(t): return t.powered and not t.broken)
 
+func working_thrusters() -> int:
+	return active_thrusters().size()
+
+## Verfügbarer Schub der Triebwerke in eine Richtung (Schiffskoordinaten:
+## (1,0) nach vorn zur Nase, (0,1) nach rechts, (-1,0) nach hinten, (0,-1) nach links).
+## Gleich ausgerichtete Triebwerke addieren ihren Schub.
+func thrust_dir(d: Vector2i) -> float:
+	var s := 0.0
+	for t in active_thrusters():
+		if t.push_dir() == d:
+			s += t.data().thrust
+	return s
+
+## Schub nach vorn (Haupttriebwerke)
 func max_thrust() -> float:
-	return working_thrusters() * ItemSystem.device("thruster").thrust
+	return thrust_dir(Vector2i(1, 0))
+
+## Welche Triebwerksrichtungen die aktuellen Eingaben anfordern (Schiffskoordinaten)
+func _requested() -> Dictionary:
+	return {Vector2i(1, 0): maxf(0.0, thrust), Vector2i(-1, 0): maxf(0.0, -thrust),
+		Vector2i(0, 1): maxf(0.0, strafe), Vector2i(0, -1): maxf(0.0, -strafe)}
+
+## Schubvektor in Schiffskoordinaten (kN) aus Triebwerken und Lagedüsen für die aktuellen Eingaben
+func thrust_vector_local() -> Vector2:
+	var f := Vector2(thrust, strafe) * rcs_thrust()
+	var req := _requested()
+	for t in active_thrusters():
+		var d: Vector2i = t.push_dir()
+		if req[d] > 0.0:
+			f += Vector2(d) * t.data().thrust * req[d]
+	return f
+
+## Feuert gerade ein Triebwerk in diese Richtung? (für die Anzeige)
+func firing(d: Vector2i) -> bool:
+	return docked == "" and helm_ok() and _requested()[d] > 0.0
 
 ## Lagedüsen (RCS): jedes Schiff hat sie, solange das Steuerpult Strom hat
 ## (Ostranauts: alle Schiffe haben RCS, manche zusätzlich ein Haupttriebwerk).
 func rcs_thrust() -> float:
 	return float(space.rcs_thrust) if helm_ok() else 0.0
 
-## Beschleunigungen in km/s² (Haupttriebwerk, Lagedüsen)
+## Beschleunigungen in km/s² (Haupttriebwerk, Lagedüsen) = Schub (kN) ÷ Masse (t) ÷ 1000
 func main_accel() -> float:
 	return max_thrust() / maxf(1.0, mass()) / 1000.0
+
+## Beschleunigung, die die aktuellen Eingaben gerade erzeugen (km/s², Schiffskoordinaten)
+func accel_local() -> Vector2:
+	return thrust_vector_local() / maxf(1.0, mass()) / 1000.0
 
 func rcs_accel() -> float:
 	return rcs_thrust() / maxf(1.0, mass()) / 1000.0
@@ -230,7 +268,8 @@ func step(dt: float) -> void:
 			match_target = ""
 		else:
 			var a := minf(amax, dv.length() / s)
-			var need := working_thrusters() * float(space.burn) * (a / amax) * dt * fuel_factor()
+			var fwd_engines := active_thrusters().filter(func(t): return t.push_dir() == Vector2i(1, 0)).size()
+			var need := fwd_engines * float(space.burn) * (a / amax) * dt * fuel_factor()
 			if fuel() >= need:
 				use_fuel(need)
 				_vx += dv.normalized().x * a * s
@@ -251,25 +290,26 @@ func step(dt: float) -> void:
 	_v32 = vel
 	_check_hazards()
 
-## Schub relativ zur Ausrichtung. Vorwärts: Haupttriebwerk + Lagedüsen,
-## rückwärts und seitwärts: nur Lagedüsen. Verbraucht Treibstoff.
-func _thrust_accel(dt: float, amax: float) -> Vector2:
-	var arcs := rcs_accel()
-	var main_part := maxf(0.0, thrust) if amax > 0.0 else 0.0
+## Schub relativ zur Ausrichtung: Summe der Schubvektoren aller aktiven Triebwerke,
+## deren Richtung zur Eingabe passt (W vorn, S hinten, D rechts, A links), plus
+## Lagedüsen. Beschleunigung = Gesamtschub ÷ Schiffsmasse. Verbraucht Treibstoff.
+func _thrust_accel(dt: float, _amax: float) -> Vector2:
+	var req := _requested()
+	var engines := 0.0
+	for t in active_thrusters():
+		engines += req[t.push_dir()]
 	var rcs_part := absf(thrust) + absf(strafe)
-	var need := (working_thrusters() * float(space.burn) * main_part + float(space.rcs_burn) * rcs_part) * dt * fuel_factor()
-	if fuel() < need or (amax <= 0.0 and arcs <= 0.0):
+	var need := (float(space.burn) * engines + float(space.rcs_burn) * rcs_part) * dt * fuel_factor()
+	var f := thrust_vector_local()
+	if fuel() < need or f == Vector2.ZERO:
 		if not _no_fuel_warned:
 			_no_fuel_warned = true
-			GameState.toast("Kein Treibstoff!" if fuel() < need else "Keine Triebwerke mit Strom!", "bad")
+			GameState.toast("Kein Treibstoff!" if fuel() < need else "Kein Triebwerk für diese Richtung und keine Lagedüsen!", "bad")
 		return Vector2.ZERO
 	use_fuel(need)
 	_no_fuel_warned = false
 	SkillSystem.train_all_at("helm", "pilot", dt * 0.5)
-	var fwd := Vector2.from_angle(angle)
-	var right := Vector2.from_angle(angle + PI / 2.0)
-	var a_fwd := thrust * arcs + main_part * amax
-	return fwd * a_fwd + right * strafe * arcs
+	return (f / maxf(1.0, mass()) / 1000.0).rotated(angle)
 
 ## Drehung mit Schwung: Drehschub beschleunigt die Drehung, ohne Gegenschub dreht
 ## das Schiff weiter. R bremst die Drehung. Eine Drehung ändert die Flugrichtung nicht.
@@ -311,8 +351,8 @@ func approach(id: String) -> Dictionary:
 	var vrel: Vector2 = vel - r.vel
 	var dist := to_target.length()
 	var closing := vrel.dot(to_target / dist) if dist > 0.000001 else 0.0
-	var arcs := rcs_accel()
-	var amain := main_accel() + arcs
+	var arcs := (rcs_thrust() + thrust_dir(Vector2i(-1, 0))) / maxf(1.0, mass()) / 1000.0
+	var amain := main_accel() + rcs_accel()
 	return {"dist": dist, "vrel": vrel, "speed": vrel.length(), "closing": closing,
 		"brake_rcs": closing * closing / (2.0 * arcs) if closing > 0.0 and arcs > 0.0 else 0.0,
 		"brake_main": closing * closing / (2.0 * amain) if closing > 0.0 and amain > 0.0 else 0.0,

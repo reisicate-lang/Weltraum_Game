@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = "thruster"
 display_name = "Triebwerk"
-description = "Schub 40 kN. Verbraucht Treibstoff aus dem Treibstofftank."
+description = "Schub 40 kN in die Pfeilrichtung, Masse 1,5 t. Drehbar (beim Bauen G, danach Rechtsklick → Drehen). Mehrere gleich ausgerichtete Triebwerke addieren ihren Schub. Verbraucht Treibstoff."
 power = -0.2
 build_time = 8.0
 cost = {"plate": 4, "motor": 1, "pipe": 3}
@@ -14,5 +14,7 @@ stock = -1.0
 stock_unit = ""
 wears = true
 thrust = 40.0
+mass = 1.5
+rotatable = true
 color = Color(0.42, 0.3, 0.25, 1)
 tech = "propulsion"

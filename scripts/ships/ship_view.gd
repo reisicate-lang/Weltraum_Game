@@ -255,7 +255,9 @@ func _draw_jobs() -> void:
 			draw_rect(_rect(p, 0.05), Color(COL_PLAN, 0.18))
 			draw_rect(_rect(p, 0.08), col, false, 1.5)
 			if job.kind == "device":
-				_draw_device(Device.new(job.dev, p), true)
+				var ghost := Device.new(job.dev, p)
+				ghost.rot = int(job.get("rot", 0))
+				_draw_device(ghost, true)
 			elif job.kind == "install" and RemovalSystem.key_of_packed(String(job.item)).begins_with("dev:"):
 				_draw_device(Device.new(RemovalSystem.key_of_packed(String(job.item)).substr(4), p), true)
 		if job.progress > 0.0:
@@ -313,6 +315,11 @@ func _draw_preview(g: ShipGrid) -> void:
 		if ok:
 			col = Color(0.9, 0.33, 0.29, 0.35) if GameState.tool in ["remove", "cancel"] else Color(0.35, 0.78, 0.9, 0.35)
 		draw_rect(_rect(p), col)
+		# Drehbares Gerät: Vorschau mit der gewählten Richtung (Taste G)
+		if GameState.tool.begins_with("dev:") and ItemSystem.device(GameState.tool.substr(4)).rotatable:
+			var ghost := Device.new(GameState.tool.substr(4), p)
+			ghost.rot = ShipConstructionSystem.build_rot
+			_draw_device(ghost, true)
 
 ## Einfache Symbole pro Gerät (nur Formen, keine Grafikdateien)
 func _draw_icon(dev: Device, r: Rect2, a: float) -> void:
@@ -386,9 +393,15 @@ func _draw_icon(dev: Device, r: Rect2, a: float) -> void:
 			draw_arc(c, u * 0.28, PI, TAU, 12, Color(0.95, 0.64, 0.23, a), 3.0)
 			draw_circle(c, u * 0.08, Color(0.35, 0.78, 0.9, a))
 		"thruster":
-			draw_colored_polygon(PackedVector2Array([c + Vector2(-u * 0.25, -u * 0.3), c + Vector2(u * 0.25, -u * 0.3), c + Vector2(u * 0.35, u * 0.3), c + Vector2(-u * 0.35, u * 0.3)]), Color(0.45, 0.48, 0.52, a))
-			if PhysicsSystem.thrust > 0.0 and dev.powered:
-				draw_circle(c + Vector2(0, u * 0.45), u * (0.15 + randf() * 0.08), Color(1, 0.75, 0.3, a))
+			# Düse zeigt zum Abgas (entgegen der Schubrichtung), Pfeil zeigt die Schubrichtung
+			var push := Vector2(dev.push_dir())
+			var ex := -push
+			var side := ex.orthogonal()
+			draw_colored_polygon(PackedVector2Array([c - ex * u * 0.3 + side * u * 0.22, c - ex * u * 0.3 - side * u * 0.22,
+				c + ex * u * 0.3 - side * u * 0.35, c + ex * u * 0.3 + side * u * 0.35]), Color(0.45, 0.48, 0.52, a))
+			draw_colored_polygon(PackedVector2Array([c - ex * u * 0.42, c - ex * u * 0.22 + side * u * 0.12, c - ex * u * 0.22 - side * u * 0.12]), Color(0.95, 0.76, 0.31, a))
+			if dev.powered and not dev.broken and PhysicsSystem.firing(dev.push_dir()):
+				draw_circle(c + ex * u * 0.48, u * (0.15 + randf() * 0.08), Color(1, 0.75, 0.3, a))
 		"fueltank":
 			draw_circle(c, u * 0.36, Color(0.6, 0.22, 0.2, a))
 			draw_string(ThemeDB.fallback_font, c + Vector2(-u * 0.12, u * 0.12), "F", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(1, 0.9, 0.8, a))

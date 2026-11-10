@@ -4,6 +4,8 @@ extends Node
 
 ## Feld-Index -> Auftrag (Dictionary)
 var jobs: Dictionary = {}
+## Drehung für das nächste gebaute drehbare Gerät (0–3, je 90°; Taste G)
+var build_rot := 0
 
 const TOOL_TILE := {"floor": 1, "wall": 2, "door": 3, "window": 4}
 
@@ -38,6 +40,7 @@ func can_place(tool: String, p: Vector2i) -> bool:
 		"cable": return t != ShipGrid.Tile.SPACE and g.cables[i] == 0
 		"remove": return t != ShipGrid.Tile.SPACE
 		"cancel": return jobs.has(i)
+		"rotate": return has_dev and g.devices[i].data().rotatable and not jobs.has(i) and not g.foreign(i)
 	return false
 
 func place(tool: String, p: Vector2i) -> bool:
@@ -49,6 +52,10 @@ func place(tool: String, p: Vector2i) -> bool:
 		return true
 	if tool in RemovalSystem.KINDS:
 		return RemovalSystem.order(tool, p) == ""
+	if tool == "rotate":
+		jobs[ShipSystem.grid.idx(p)] = {"kind": "rotate", "x": p.x, "y": p.y, "progress": 0.0, "claimed_by": -1,
+			"retry_at": 0.0, "paid": true, "need": 1.0}
+		return true
 	var job := {"x": p.x, "y": p.y, "progress": 0.0, "claimed_by": -1, "retry_at": 0.0, "paid": false}
 	if tool == "extinguish":
 		job.merge({"kind": "extinguish", "need": 1.0, "paid": true})
@@ -68,6 +75,8 @@ func place(tool: String, p: Vector2i) -> bool:
 	elif tool.begins_with("dev:"):
 		var dev_id := tool.substr(4)
 		job.merge({"kind": "device", "dev": dev_id, "need": ItemSystem.device(dev_id).build_time})
+		if ItemSystem.device(dev_id).rotatable:
+			job.rot = build_rot
 	else:
 		var tile: int = TOOL_TILE[tool]
 		job.merge({"kind": "build", "tile": tile, "need": Config.TILE_BUILD_TIME[tile]})
@@ -109,6 +118,18 @@ func cost(job: Dictionary) -> Dictionary:
 		"install": return {job.item: 1}
 	return {}
 
+## Was für den Auftrag noch fehlt (Kosten minus schon am Bauplatz abgelegtes Material).
+## Schwere Bauteile (z. B. Triebwerk, 44 kg) holt die Crew so in mehreren Gängen.
+func remaining_cost(job: Dictionary) -> Dictionary:
+	var out := {}
+	var got: Dictionary = job.get("delivered", {})
+	var c := cost(job)
+	for type in c:
+		var n := int(c[type]) - int(got.get(type, 0))
+		if n > 0:
+			out[type] = n
+	return out
+
 ## Vorräte (Essen, Wasser, Brennstoff, Luft) automatisch aus dem Lager nachfüllen lassen
 func scan_refills() -> void:
 	var g := ShipSystem.grid
@@ -145,6 +166,11 @@ func cancel(job: Dictionary) -> void:
 		var c := cost(job)
 		for type in c:
 			g.drop_items(spot, type, int(c[type]), 80.0)
+	elif not job.get("delivered", {}).is_empty():
+		# Schon abgelegtes Material kommt zurück
+		var spot2 := drop_spot(pos_of(job))
+		for type in job.delivered:
+			g.drop_items(spot2, type, int(job.delivered[type]), 80.0)
 
 ## Ein Bodenfeld in der Nähe, auf dem man etwas ablegen kann
 func drop_spot(p: Vector2i) -> Vector2i:
@@ -231,7 +257,12 @@ func complete(job: Dictionary, worker_pos: Vector2i, worker: CrewMember = null) 
 			_move_pile_away(i, worker_pos)
 			if job.dev == "dockport":
 				g.set_tile(p, ShipGrid.Tile.DOOR)
-			g.place_device(job.dev, p)
+			var built := g.place_device(job.dev, p)
+			built.rot = int(job.get("rot", 0))
+		"rotate":
+			var rd := g.device_at(p)
+			if rd != null and rd.data().rotatable:
+				rd.rot = (rd.rot + 1) % 4
 		"remove":
 			var loot := salvage(p, worker)
 			var t := g.tiles[i]
@@ -310,6 +341,7 @@ func label(job: Dictionary) -> String:
 		"install": return "Baut ein: " + RemovalSystem.name_of(RemovalSystem.key_of_packed(String(job.item)))
 		"cable": return "Verlegt Kabel"
 		"device": return "Baut " + ItemSystem.device(job.dev).display_name
+		"rotate": return "Dreht Gerät"
 		_: return "Baut " + Config.TILE_NAMES[int(job.tile)]
 
 func to_data() -> Array:

@@ -447,22 +447,30 @@ func update(dt: float) -> void:
 			return
 		elif is_next_to(jp, _reach(job)):
 			if not job.paid:
-				var c := ShipConstructionSystem.cost(job)
-				if not ShipConstructionSystem.missing(c, inv).is_empty():
-					if not _start_fetch():
-						job.retry_at = GameState.time + 0.5
-						release_job()
-					return
-				var keys := c.keys()
+				# Mitgebrachtes Material am Bauplatz ablegen (schwere Teile in mehreren Gängen)
+				var CSy := ShipConstructionSystem
+				var rem := CSy.remaining_cost(job)
+				var keys := rem.keys()
 				for type in keys:
-					var n := int(c[type])
-					# Meister der Montage sparen manchmal ein Teil
-					if type == keys[0] and n > 1 and SkillSystem.mastered(self, "construction") and randf() < 0.25:
-						n -= 1
+					var n := mini(int(rem[type]), inv.count(type))
+					if n <= 0:
+						continue
 					var got := inv.take(type, n)
 					# Einbau: genau dieses abgebaute Stück merken (Zustand, Daten)
 					if job.kind == "install" and not got.is_empty():
 						job.packed = got[0]
+					if not job.has("delivered"):
+						job.delivered = {}
+					job.delivered[type] = int(job.delivered.get(type, 0)) + n
+				if not CSy.remaining_cost(job).is_empty():
+					if not _start_fetch():
+						job.retry_at = GameState.time + 0.5
+						release_job()
+					return
+				# Meister der Montage sparen manchmal ein Teil (kommt ins Gepäck zurück)
+				var all_keys := CSy.cost(job).keys()
+				if not all_keys.is_empty() and int(CSy.cost(job)[all_keys[0]]) > 1 and SkillSystem.mastered(self, "construction") and randf() < 0.25:
+					inv.add(all_keys[0], 1, 80.0)
 				job.paid = true
 			_turn_to((Vector2(jp) + Vector2(0.5, 0.5) - pos).angle(), 0.3)
 			task = ShipConstructionSystem.label(job)
@@ -509,7 +517,7 @@ func _pref_of(j: Dictionary) -> String:
 		"extinguish": return "repair"
 		"repair": return "repair"
 		"remove", "uninstall", "dismantle", "destroy": return "remove"
-		"install": return "build"
+		"install", "rotate": return "build"
 		"haul", "move": return "haul"
 		"refill": return "refill"
 		"craft": return "craft"
@@ -687,7 +695,7 @@ func _assign_job() -> void:
 			RemovalSystem.drop_stale(j)
 			continue
 		var ok := true
-		var c := CS.cost(j)
+		var c := CS.remaining_cost(j)
 		for type in c:
 			if inv.count(type) + CS.available(type) < int(c[type]):
 				ok = false
@@ -735,14 +743,14 @@ func _assign_job() -> void:
 	job = chosen
 	job.claimed_by = id
 	path = res.path
-	if not job.paid and not CS.missing(CS.cost(job), inv).is_empty():
+	if not job.paid and not CS.missing(CS.remaining_cost(job), inv).is_empty():
 		if not _start_fetch():
 			job.retry_at = GameState.time + 0.5
 			release_job()
 
 func _start_fetch() -> bool:
 	var CS := ShipConstructionSystem
-	var miss := CS.missing(CS.cost(job), inv)
+	var miss := CS.missing(CS.remaining_cost(job), inv)
 	var srcs: Array = []
 	var by_pos := {}
 	for s in CS.sources():
@@ -768,12 +776,16 @@ func _do_fetch(dt: float) -> void:
 	if not can_reach(fetch.pos):
 		release_job()
 		return
-	var miss := CS.missing(CS.cost(job), inv)
+	var miss := CS.missing(CS.remaining_cost(job), inv)
+	var moved := 0
 	for type in miss:
-		fetch.inv.move_to(inv, type, miss[type])
+		moved += fetch.inv.move_to(inv, type, miss[type])
 	grid().clean_piles()
 	fetch = null
-	if not CS.missing(CS.cost(job), inv).is_empty():
+	var still := CS.missing(CS.remaining_cost(job), inv)
+	# Gepäck voll, aber etwas dabei: erst zum Bauplatz und dort ablegen, dann weiterholen
+	var full := moved > 0 and still.keys().all(func(t): return inv.room(t) <= 0)
+	if not still.is_empty() and not full:
 		if not _start_fetch():
 			GameState.toast(display_name + ": Nicht genug Material (oder zu schwer).", "bad")
 			job.retry_at = GameState.time + 1.0
@@ -833,6 +845,11 @@ func _do_activity(dt: float) -> void:
 		return
 	if activity.has("flee"):
 		task = "Sucht Luft zum Atmen"
+		activity.timer = float(activity.get("timer", 0.0)) + dt
+		# Schon in atembarer Luft, oder zu lange (z. B. wartet an einer Schleuse, die nicht öffnet): Flucht beenden
+		if safe_air(grid().idx(tile())) and needs.air >= 50.0 or activity.timer > 3.0:
+			stop_activity()
+			return
 		if path.is_empty() or not follow_path(dt):
 			stop_activity()
 		return

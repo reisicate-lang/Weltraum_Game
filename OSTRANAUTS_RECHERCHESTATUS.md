@@ -68,3 +68,45 @@ Eigene Entscheidungen (nicht aus Ostranauts belegt):
   ×16 also 16-mal so stark pro echter Sekunde.
 - Alle Werte stehen in `data/space.json` (`rcs_thrust`, `rcs_burn`, `rot_accel`,
   `rot_max`, `dock_align_deg`).
+
+## Triebwerke, Schub und Masse (Stand: November 2026)
+
+Wiki-Auszug über eine Websuche (Seite „Halvorson RCS Thruster Assembly“), **sekundär**,
+nicht im Volltext geöffnet (Wiki in der Arbeitsumgebung gesperrt):
+
+| Befund | Stufe |
+|---|---|
+| Ein Halvorson-RCS-Thruster liefert etwa 59 kN (entspricht 6 G bei 1 t Masse) | sekundär |
+| Maximale Beschleunigung = Anzahl Thruster × 6000 kg·G ÷ Schiffsmasse; der Schub wächst linear mit der Anzahl | sekundär |
+| Beispiel: 20-t-Schiff mit 5 Thrustern ≈ 1,5 G; 40-t-Schiff braucht 20 Thruster für 3 G | sekundär |
+| Infobox-Masse des Thrusters „28.0“ ohne Einheit | sekundär, Einheit offen |
+| RCS ist rund um K-Leg der Hauptantrieb zum Bergen, das Fusionstriebwerk für Reisen zwischen Planeten | sekundär |
+
+**Offen:**
+- wie Ostranauts Thruster verschiedener Richtung bei einer Eingabe kombiniert
+- ob die Thruster-Masse 28 kg oder etwas anderes bedeutet
+- wie ihr Schub beim Drehen des Schiffs wirkt
+
+### Umsetzung in Godot und eigene Entscheidungen
+
+Übernommen (sekundär belegt):
+- Beschleunigung = Gesamtschub ÷ Schiffsmasse
+- Schub gleich ausgerichteter Triebwerke addiert sich linear
+
+Eigene Entscheidungen:
+- **Schub und Masse:** Triebwerk mit 40 kN (bisheriger Projektwert, nicht die 59 kN aus
+  dem Wiki) und Masse 1,5 t. Beides steht in `resources/components/thruster.tres`.
+- **Richtung:** Drehbar in 90°-Schritten. Ein Triebwerk schiebt in eine von vier
+  Richtungen relativ zur Schiffsnase: vor, rechts, zurück, links.
+- **Welche Triebwerke feuern:** Bei W feuern alle Triebwerke, die nach vorn schieben,
+  bei S die nach hinten, bei D die nach rechts, bei A die nach links. Die Lagedüsen
+  (12 kN) helfen in jeder Richtung mit.
+- **Treibstoff:** Jedes aktive Triebwerk verbraucht `burn` (4 pro Spielminute bei vollem Schub).
+- **Aktiv** heißt: eingebaut, mit Strom (Kabel), nicht kaputt. Ein kaputtes Triebwerk
+  bleibt Masse, liefert aber keinen Schub.
+- **Masse:** Rumpffeld 0,2 t (`Config.TILE_MASS`), jedes Gerät seine eigene Masse
+  (`DeviceData.mass`, Standard 0,5 t, Triebwerk 1,5 t), dazu Ladung in Behältern und
+  Haufen an Bord. Was die Crew im Gepäck trägt, zählt nicht mit.
+- **Drehen:** Rechtsklick → „Drehen“ ist ein kurzer Crew-Auftrag von etwa einer Spielminute.
+- **Bauen:** Schwere Bauteile (Triebwerk: 44 kg Material) holt die Crew in mehreren
+  Gängen und legt das Material am Bauplatz ab.

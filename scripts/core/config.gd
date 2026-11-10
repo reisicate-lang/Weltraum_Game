@@ -26,6 +26,8 @@ const SPRINT := 1.6
 ## Bauzeiten und Kosten der Kacheln
 const TILE_BUILD_TIME := {1: 2.0, 2: 3.0, 3: 4.0, 4: 4.0}
 const TILE_COST := {1: {"plate": 1}, 2: {"plate": 2}, 3: {"plate": 2, "circuit": 1}, 4: {"glass": 2, "plate": 1}}
+## Masse der Bauteile in Tonnen je Feld (Geräte: DeviceData.mass, Standard 0,5 t)
+const TILE_MASS := {1: 0.2, 2: 0.2, 3: 0.2, 4: 0.2}
 const TILE_NAMES := {0: "Weltraum", 1: "Boden", 2: "Wand", 3: "Tür", 4: "Fenster"}
 const REMOVE_TIME := 1.5
 const CABLE_TIME := 1.0

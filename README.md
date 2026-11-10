@@ -37,6 +37,7 @@ godot --headless --path . --script res://tests/boot.gd -- test_atmosphere
 godot --headless --path . --script res://tests/boot.gd -- test_docking
 godot --headless --path . --script res://tests/boot.gd -- test_core
 godot --headless --path . --script res://tests/boot.gd -- test_flight
+godot --headless --path . --script res://tests/boot.gd -- test_thrusters
 ```
 
 ## Steuerung
@@ -59,6 +60,7 @@ godot --headless --path . --script res://tests/boot.gd -- test_flight
 | Auto-Modus der ausgewählten Figur an/aus | Knopf „Auto: AN/AUS“ links oder `J` |
 | Cockpit (am Steuerpult) | `N` oder Klick aufs Steuerpult: die Figur geht hin und übernimmt das Steuer; `Esc`/`N` verlässt es |
 | Fliegen | `W`/`S` Schub vor/zurück, `A`/`D` seitwärts, `Q`/`E` drehen, `R` Drehung stoppen, `X` ans Ziel angleichen, `Tab` nächstes Ziel, `F` andocken, `U` abdocken |
+| Triebwerk einbauen | Geräte-Menü → „Triebwerk“, `G` dreht die Schubrichtung, Klick auf ein Feld mit Kabel. Später drehen: Rechtsklick → „Drehen“ |
 | Andockschleuse bauen | Geräte-Menü → „Andockschleuse“, Klick auf eine Außenwand (innen Raum, außen All). Stationen docken an jeder freien Schleuse an, Wracks an einer Schleuse in der unteren Außenwand |
 | Speichern | `Strg+S`, Autosave jede Minute |
 

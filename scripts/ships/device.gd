@@ -25,6 +25,15 @@ var lock_level := 0
 var growth := 0.0
 var tended_at := 0.0
 var genemod := false
+## Drehung in 90°-Schritten (0 = schiebt das Schiff nach vorn zur Nase, 1 = nach rechts,
+## 2 = nach hinten, 3 = nach links). Nur für drehbare Geräte wie Triebwerke.
+var rot := 0
+
+const PUSH_DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1)]
+
+## In welche Richtung schiebt das Gerät das Schiff (Schiffskoordinaten: x = Nase, y = rechts)
+func push_dir() -> Vector2i:
+	return PUSH_DIRS[rot % 4]
 
 func _init(t: String, p: Vector2i) -> void:
 	type = t
@@ -92,7 +101,7 @@ func status_text() -> String:
 func to_data() -> Dictionary:
 	return {"type": type, "x": pos.x, "y": pos.y, "cond": cond, "broken": broken, "stock": stock,
 		"charge": charge, "items": inv.to_data() if inv != null else [], "suit": suit, "store": store, "unknown": unknown, "lock": lock_level,
-		"growth": growth, "tended_at": tended_at, "genemod": genemod}
+		"growth": growth, "tended_at": tended_at, "genemod": genemod, "rot": rot}
 
 static func from_data(d: Dictionary) -> Device:
 	var dev := Device.new(String(d.type), Vector2i(int(d.x), int(d.y)))
@@ -109,4 +118,5 @@ static func from_data(d: Dictionary) -> Device:
 	dev.growth = float(d.get("growth", 0.0))
 	dev.tended_at = float(d.get("tended_at", 0.0))
 	dev.genemod = bool(d.get("genemod", false))
+	dev.rot = int(d.get("rot", 0))
 	return dev
