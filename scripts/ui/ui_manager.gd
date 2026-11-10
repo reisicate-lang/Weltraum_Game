@@ -37,6 +37,7 @@ var toast_box: VBoxContainer
 var container_panel: PanelContainer
 var container_box: VBoxContainer
 var help_panel: PanelContainer
+var help_scroll: ScrollContainer
 var open_pos := Vector2i(-1, -1)
 var _last_container := ""
 var window_panel: PanelContainer
@@ -261,9 +262,21 @@ func _build_help() -> void:
 	help_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	help_panel.grow_vertical = Control.GROW_DIRECTION_BOTH
 	layer.add_child(help_panel)
+	var outer := VBoxContainer.new()
+	help_panel.add_child(outer)
+	# Kopfzeile mit Schließen-Knopf
+	var head := HBoxContainer.new()
+	var title := _label("STEUERUNG", COL_AMBER, 18)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(title)
+	head.add_child(_button("✕", close_help))
+	outer.add_child(head)
+	# Auf kleinen Bildschirmen scrollbar
+	help_scroll = ScrollContainer.new()
+	help_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	outer.add_child(help_scroll)
 	var box := VBoxContainer.new()
-	help_panel.add_child(box)
-	box.add_child(_label("STEUERUNG", COL_AMBER, 18))
+	help_scroll.add_child(box)
 	var text := _label("""Dein kleines Schiff treibt im All. Mira lebt darin und baut, was du planst.
 Halte sie am Leben: Luft, Essen, Wasser, Schlaf.
 
@@ -286,7 +299,8 @@ und ins Trümmerfeld. Vorsicht: Die Erde zieht dich an.""", Color(0.87, 0.9, 0.9
 	text.custom_minimum_size = Vector2(560, 0)
 	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(text)
-	box.add_child(_button("Los geht's", func(): help_panel.visible = false))
+	outer.add_child(_button("Los geht's", close_help))
+	_fit_help.call_deferred()
 
 func _build_window() -> void:
 	window_panel = _panel()
@@ -755,7 +769,26 @@ func set_tool(tool: String) -> void:
 	EventBus.tool_changed.emit(tool)
 
 func toggle_help() -> void:
-	help_panel.visible = not help_panel.visible
+	if help_panel.visible:
+		close_help()
+	else:
+		show_help()
+
+func show_help() -> void:
+	_fit_help()
+	help_panel.visible = true
+
+func close_help() -> void:
+	help_panel.visible = false
+
+## Höhe an den Bildschirm anpassen (Knopf bleibt immer sichtbar)
+func _fit_help() -> void:
+	if help_scroll == null:
+		return
+	var avail := get_viewport().get_visible_rect().size.y - 170.0
+	help_scroll.custom_minimum_size = Vector2(580, clampf(avail, 160.0, 470.0))
+	help_panel.reset_size()
+	help_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 
 func interact() -> void:
 	var p := CrewSystem.player()

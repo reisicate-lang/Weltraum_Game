@@ -10,6 +10,9 @@ var detail := ""
 var _last := ""
 var creation: PanelContainer
 var creation_box: VBoxContainer
+var creation_scroll: ScrollContainer
+var creation_bottom: HBoxContainer
+var char_scroll: ScrollContainer
 var encounter_panel: PanelContainer
 var encounter_box: VBoxContainer
 
@@ -24,13 +27,19 @@ func setup(manager) -> void:
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(box)
 	creation = _big_panel()
-	var cs := ScrollContainer.new()
-	cs.custom_minimum_size = Vector2(760, 640)
-	cs.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	creation.add_child(cs)
+	# Liste scrollt, die Knöpfe darunter bleiben immer sichtbar
+	var outer := VBoxContainer.new()
+	creation.add_child(outer)
+	creation_scroll = ScrollContainer.new()
+	creation_scroll.custom_minimum_size = Vector2(760, 640)
+	creation_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	outer.add_child(creation_scroll)
 	creation_box = VBoxContainer.new()
 	creation_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	cs.add_child(creation_box)
+	creation_scroll.add_child(creation_box)
+	creation_bottom = HBoxContainer.new()
+	outer.add_child(creation_bottom)
+	char_scroll = scroll
 	encounter_panel = _big_panel()
 	encounter_box = VBoxContainer.new()
 	encounter_box.custom_minimum_size = Vector2(460, 0)
@@ -47,6 +56,18 @@ func _big_panel() -> PanelContainer:
 	ui.layer.add_child(p)
 	return p
 
+## Fensterhöhen an den Bildschirm anpassen (kleine Bildschirme, Laptops)
+func _fit() -> void:
+	var h: float = ui.get_viewport().get_visible_rect().size.y
+	if creation_scroll != null:
+		creation_scroll.custom_minimum_size.y = clampf(h - 160.0, 200.0, 640.0)
+		creation.reset_size()
+		creation.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	if char_scroll != null:
+		char_scroll.custom_minimum_size.y = clampf(h - 120.0, 200.0, 600.0)
+		panel.reset_size()
+		panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+
 func _clear(b: Container) -> void:
 	for ch in b.get_children():
 		ch.queue_free()
@@ -58,6 +79,7 @@ func _sel() -> CrewMember:
 
 func toggle() -> void:
 	panel.visible = not panel.visible
+	_fit()
 	_last = ""
 	refresh()
 
@@ -247,12 +269,16 @@ func _work(c: CrewMember) -> void:
 
 func open_creation() -> void:
 	creation.visible = true
+	# Die Steuerungshilfe kommt erst nach dem Lebenslauf (sonst liegt sie verdeckt darunter)
+	ui.close_help()
 	TimeSystem.set_speed(0)
 	refresh_creation()
 
 func refresh_creation() -> void:
 	var c := CrewSystem.player()
 	_clear(creation_box)
+	_clear(creation_bottom)
+	_fit()
 	creation_box.add_child(ui._label("LEBENSLAUF: %s" % c.display_name, ui.COL_AMBER, 18))
 	creation_box.add_child(_wrap("Du bestimmst Miras Vergangenheit. Jede Station kostet Lebensjahre und prägt Fähigkeiten, Eigenschaften, Kontakte und Geld. Mit mindestens 18 Jahren kann es losgehen."))
 	creation_box.add_child(ui._label("Alter: %d · Startgeld aus dem Lebenslauf: %+d Cr" % [c.age, CharacterSystem.start_credits(c)], Color(0.87, 0.9, 0.94), 14))
@@ -295,7 +321,7 @@ func refresh_creation() -> void:
 				CrewSocial.import_character(file)
 				refresh_creation()))
 		creation_box.add_child(irow)
-	var bottom := HBoxContainer.new()
+	var bottom := creation_bottom
 	bottom.add_child(ui._button("Von vorn", func():
 		CharacterSystem.begin(c)
 		refresh_creation()))
@@ -305,10 +331,10 @@ func refresh_creation() -> void:
 	var go: Button = ui._button("Los geht's", func():
 		EconomySystem.credits = Config.START_CREDITS + CharacterSystem.start_credits(c)
 		creation.visible = false
+		ui.show_help()
 		TimeSystem.set_speed(1))
 	go.disabled = c.age < 18
 	bottom.add_child(go)
-	creation_box.add_child(bottom)
 
 # ---------------- Begegnung mit Plünderern ----------------
 

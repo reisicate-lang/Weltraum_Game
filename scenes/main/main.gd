@@ -186,7 +186,7 @@ func _key(k: InputEventKey) -> void:
 				var n := PhysicsSystem.nearest()
 				if not PhysicsSystem.dock(n.id):
 					GameState.toast("Zu weit weg oder zu schnell zum Andocken.")
-		KEY_ESCAPE: UIManager.set_tool("select"); UIManager.close_container(); UIManager.close_window(); UIManager.toggle_nav(false)
+		KEY_ESCAPE: UIManager.close_help(); UIManager.set_tool("select"); UIManager.close_container(); UIManager.close_window(); UIManager.toggle_nav(false)
 		KEY_B: UIManager.set_tool("floor")
 		KEY_M: UIManager.set_tool("wall")
 		KEY_T: UIManager.set_tool("door")

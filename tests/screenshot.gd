@@ -9,7 +9,9 @@ func _initialize() -> void:
 	change_scene_to_file("res://scenes/main/main.tscn")
 	for i in 5:
 		await process_frame
-	root.get_node("UIManager").help_panel.visible = false
+	root.get_node("UIManager").help_panel.visible = args.size() > 3 and args[3] == "help"
+	if args.size() > 3 and args[3] == "help":
+		root.get_node("UIManager").char_ui.creation.visible = false
 	# Optional: Spielzeit vorspulen, damit etwas passiert
 	if args.size() > 2:
 		for k in int(args[2]) * 60:
