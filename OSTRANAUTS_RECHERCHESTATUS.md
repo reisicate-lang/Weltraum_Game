@@ -94,8 +94,16 @@ Tests: `tests/test_helm.gd`):
   - Fällt das bediente Pult im Flug aus, bleibt das Cockpit offen. Schub, Drehschub und
     Angleichen enden mit Meldung, und das Cockpit zeigt den Grund.
   - Geschwindigkeit und laufende Drehung bleiben erhalten.
-- Abdocken, Schnellreise und Auto-Dock prüfen wie bisher, ob irgendein Pult an Bord
-  Strom hat (nicht Teil dieser Änderung).
+- Abdocken, Schnellreise und Auto-Dock starten ebenfalls nur am bedienten Pult, das
+  intakt sein und Strom haben muss (`PhysicsSystem.pilot_block_reason()`). Ohne Pilot am
+  Pult kommt die Meldung „Das geht nur am Steuerpult: erst ins Cockpit (N).“
+- Die Knöpfe „Ausrichten“ und „Angleichen“ in der Zielliste sind ohne versorgtes,
+  bedientes Pult gesperrt.
+- **Nicht geändert (offen):**
+  - Andocken mit F oder „Andocken“ prüft das Pult nicht.
+  - Eine laufende Schnellreise oder ein laufendes Auto-Dock läuft weiter, wenn das Pult
+    danach ausfällt.
+  - „Ausrichten“ dreht das Schiff weiterhin sofort (ohne Drehschub).
 
 ## Triebwerke, Schub und Masse (Stand: November 2026)
 

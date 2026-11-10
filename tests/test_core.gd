@@ -73,17 +73,21 @@ func _initialize() -> void:
 
 	# 4) Ab- und wieder andocken, Reisen: keine Felder entstehen
 	gs.step(1.0 / 60.0)
+	seat_pilot()   # Pilot am Steuerpult (Flugbefehle nur dort)
 	_check("Abdocken klappt", P.request_undock())
 	for k in 20 * 60:
 		gs.step(1.0 / 60.0)
 	_check("Wieder andocken an Tycho", P.dock("tycho", true) and P.docked == "tycho")
 	_check("… ohne Station und Wrack", _zone(g, 3) == 0 and _zone(g, 1) == 0)
+	seat_pilot()   # Pilot am Steuerpult (Flugbefehle nur dort)
 	P.request_undock()
 	P.dock("debris", true)
 	_check("Trümmerfeld: kein Wrack", _zone(g, 1) == 0 and salv.wreck_name == "")
+	seat_pilot()   # Pilot am Steuerpult (Flugbefehle nur dort)
 	P.request_undock()
 	P.dock("kx7", true)
 	_check("Asteroid: kein Felsbrocken", _zone(g, 1) == 0)
+	seat_pilot()   # Pilot am Steuerpult (Flugbefehle nur dort)
 	P.request_undock()
 	P.dock("tycho", true)
 

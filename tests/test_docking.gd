@@ -101,6 +101,7 @@ func _initialize() -> void:
 	var ship_tiles: Dictionary = _zone_tiles(0)
 	var hatch: int = st.hatch
 	_run(1)
+	seat_pilot()   # Pilot am Steuerpult (Flugbefehle nur dort)
 	_check("Abdocken klappt", P.request_undock())
 	_check("Keine Stationsfelder mehr", _count_zone(3) == 0 and not st.active())
 	_check("Kein Wrack mehr an der Leine (am Ort abgelegt)", _count_zone(1) == 0 and not g.linked.has(salv.port if salv.port >= 0 else -1))
@@ -126,6 +127,7 @@ func _initialize() -> void:
 	mira = _fresh()
 	g = ship.grid
 	_run(1)
+	seat_pilot()   # Pilot am Steuerpult (Flugbefehle nur dort)
 	P.request_undock()
 	for p in ship.ports():
 		g.devices.erase(p.i)

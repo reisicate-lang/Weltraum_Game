@@ -98,6 +98,7 @@ func _initialize() -> void:
 	_check("Verkauf aus dem Gepäck (+%d Cr)" % (econ.credits - before), econ.credits > before and mira.inv.count("scrap") == 0)
 
 	# 5) Abdocken geht erst, wenn alle an Bord sind
+	seat_pilot()   # Pilot am Steuerpult (Flugbefehle nur dort)
 	_check("Abdocken verweigert, solange Mira auf der Station ist", not phys.undock() and phys.docked == "tycho")
 	ui.close_window()
 	mira.order_move(ship.spawn_point())
@@ -128,6 +129,7 @@ func _initialize() -> void:
 	for c in crew.crew:
 		c.pos = Vector2(ship.spawn_point()) + Vector2(0.5, 0.5)
 	_run(0.1)
+	seat_pilot()   # Pilot am Steuerpult (Flugbefehle nur dort)
 	_check("Abdocken klappt", phys.undock())
 	_check("Station weg", not st.active() and st.npcs.is_empty())
 	_check("Schleuse bleibt, nur gelöst", g.tiles[h] == ShipGrid.Tile.DOOR and g.devices.has(h) and g.devices[h].type == "dockport" and not g.linked.has(h))
@@ -166,6 +168,7 @@ func _initialize() -> void:
 	# 11) Kein Andockschlauch am Trümmerfeld
 	for c in crew.crew:
 		c.pos = Vector2(ship.spawn_point()) + Vector2(0.5, 0.5)
+	seat_pilot()   # Pilot am Steuerpult (Flugbefehle nur dort)
 	phys.undock()
 	phys.dock("debris", true)
 	_check("Am Trümmerfeld gibt es keine Station", not st.active())

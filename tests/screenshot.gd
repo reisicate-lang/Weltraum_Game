@@ -18,7 +18,10 @@ func _initialize() -> void:
 			root.get_node("GameState").step(1.0 / 60.0)
 	if args.size() > 3 and args[3] == "nav":
 		root.get_node("UIManager").toggle_nav(true)
-		root.get_node("PhysicsSystem").undock()
+		var P = root.get_node("PhysicsSystem")
+		if P.helm_at == P.NO_HELM:
+			P.helm_at = P.ship_devices("helm")[0].pos   # Pilot ans Pult (Abdocken nur dort)
+		P.undock()
 		for k in 600:
 			root.get_node("GameState").step(1.0 / 60.0)
 		root.get_node("UIManager").nav_map.follow = false

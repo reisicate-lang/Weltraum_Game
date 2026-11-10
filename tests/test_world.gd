@@ -171,6 +171,7 @@ func _initialize() -> void:
 		gs.step(1.0 / 60.0)
 	var salv = root.get_node("SalvageSystem")
 	_check("7 Orte im All", phys.locations.size() == 7)
+	seat_pilot()   # Pilot am Steuerpult (Flugbefehle nur dort)
 	phys.travel_to("kx7")
 	for k in int((phys.travel.t1 - phys.travel.t0) / 60.0 + 2.0) * 60:
 		gs.step(1.0 / 60.0)

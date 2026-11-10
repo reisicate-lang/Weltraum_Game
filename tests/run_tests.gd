@@ -198,6 +198,7 @@ func _initialize() -> void:
 	_check("Angedockt an Tycho, Steuerpult hat Strom", phys.docked == "tycho" and phys.helm_ok())
 	_check("Schub vorhanden (%d kN)" % int(phys.max_thrust()), phys.max_thrust() >= 80.0)
 	var wreck_before: String = salv.wreck_name
+	seat_pilot()   # Pilot am Steuerpult (Flugbefehle nur dort)
 	_check("Abdocken klappt", phys.undock())
 	_check("Wrack bleibt beim Abdocken an Tycho", salv.wreck_name == "")
 	var moon := Vector2(60000, 0)
@@ -229,6 +230,7 @@ func _initialize() -> void:
 	_check("Wrack wieder da: " + salv.wreck_name, salv.wreck_name == wreck_before)
 	# Schnellreise
 	var info: Dictionary = phys.travel_info("karman")
+	seat_pilot()   # Pilot am Steuerpult (Flugbefehle nur dort)
 	phys.travel_to("karman")
 	_run_coarse(info.secs / 60.0 + 1.0)
 	_check("Schnellreise zum Kármán-Ring", phys.docked == "karman")
@@ -246,6 +248,7 @@ func _initialize() -> void:
 	fleet.switch_to(int(fleet.ships[0].id))
 	_check("Zurück auf der Rostlaube", fleet.current_name == "Rostlaube")
 	_run(0.1)
+	seat_pilot()   # Pilot am Steuerpult (Flugbefehle nur dort)
 	phys.travel_to("debris")
 	_run(phys.travel_info("debris").secs / 60.0 + 30.0)
 	_check("Im Trümmerfeld gibt es ein Gratis-Wrack", phys.docked == "debris" and salv.wreck_name != "")

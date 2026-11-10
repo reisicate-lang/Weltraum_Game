@@ -92,6 +92,7 @@ func _initialize() -> void:
 	mira.pos = Vector2(ship.spawn_point()) + Vector2(0.5, 0.5)
 	mira.needs = {"food": 100.0, "water": 100.0, "sleep": 100.0, "hygiene": 100.0, "air": 100.0}
 	_secs(2)
+	seat_pilot()   # Pilot am Steuerpult (Flugbefehle nur dort)
 	P.request_undock()
 	_secs(2)
 	var t1: Vector2i = Vector2i(x0 + 11, y0 + 8)

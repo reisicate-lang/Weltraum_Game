@@ -39,6 +39,7 @@ func _fresh() -> void:
 		c.pos = Vector2(ship.spawn_point()) + Vector2(0.5, 0.5)
 		c.path.clear()
 	_run(2)
+	seat_pilot()   # Pilot am Steuerpult (Flugbefehle nur dort)
 
 func _initialize() -> void:
 	await process_frame

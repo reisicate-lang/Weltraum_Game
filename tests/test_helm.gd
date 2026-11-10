@@ -69,6 +69,18 @@ func _wire(h) -> void:
 	ship.grid.cables[ship.grid.idx(h.pos)] = 1
 	_power()
 
+## Knöpfe „Ausrichten“ und „Angleichen“ der aktuell angezeigten Zielliste
+## (alte Zeilen sind nach dem Neuaufbau nur zum Löschen vorgemerkt)
+func _nav_buttons() -> Array:
+	var out: Array = []
+	for row in ui.nav_side.get_children():
+		if row.is_queued_for_deletion():
+			continue
+		for b in row.find_children("*", "Button", true, false):
+			if b.text == "Ausrichten" or b.text == "Angleichen":
+				out.append(b)
+	return out
+
 func _initialize() -> void:
 	await process_frame
 	await process_frame
@@ -85,7 +97,9 @@ func _initialize() -> void:
 	mira = root.get_node("CrewSystem").player()
 	for k in 3:
 		gs.step(1.0 / 60.0)              # Strom verteilen
+	seat_pilot()
 	P.request_undock()
+	P.helm_at = P.NO_HELM                  # wieder niemand am Pult
 	for k in 60 * 20:
 		gs.step(1.0 / 60.0 / 60.0)
 	var g = ship.grid
@@ -206,12 +220,74 @@ func _initialize() -> void:
 	ui.leave_flight()
 	_check("2: Cockpit verlassen gibt das Pult frei", P.helm_at == P.NO_HELM)
 
+	# 4) Abdocken, Schnellreise und Auto-Dock nur am bedienten, intakten Pult mit Strom
+	P.dock("l4", true)
+	for k in 60 * 20:
+		gs.step(1.0 / 60.0 / 60.0)          # Sperre gegen Wieder-Andocken spielt hier keine Rolle
+	mira.pos = _beside(near)
+	mira.path.clear()
+	mira.order = null
+	_check("4: Angedockt an L4, beide Pulte in Ordnung, niemand am Pult", P.docked == "l4" and P.helm_at == P.NO_HELM and P.helm_ok())
+	toasts.clear()
+	_check("4: Ohne Pilot am Pult: Abdocken verweigert (%s)" % P.undock_block_reason(), not P.request_undock() and P.docked == "l4" and "Cockpit" in toasts[-1])
+	P.travel_to("karman")
+	_check("4: … Schnellreise verweigert", P.travel.is_empty() and P.docked == "l4" and "Cockpit" in toasts[-1])
+	P.start_autodock()
+	_check("4: … Auto-Dock verweigert", P.autodock.is_empty() and "Cockpit" in toasts[-1])
+	for mode in ["kaputt", "ohne Strom"]:
+		if mode == "kaputt":
+			near.broken = true
+		else:
+			_cut(near)
+		P.helm_at = near.pos                # Pilot steht am nahen Pult
+		toasts.clear()
+		_check("4 (%s): Abdocken verweigert, obwohl das andere Pult geht (%s)" % [mode, P.undock_block_reason()], P.helm_ok() and not P.request_undock() and P.docked == "l4" and ("kaputt" in toasts[-1] or "Strom" in toasts[-1]))
+		P.travel_to("karman")
+		_check("4 (%s): Schnellreise verweigert" % mode, P.travel.is_empty() and P.docked == "l4")
+		P.start_autodock()
+		_check("4 (%s): Auto-Dock verweigert (%s)" % [mode, toasts[-1]], P.autodock.is_empty() and ("kaputt" in toasts[-1] or "Strom" in toasts[-1]))
+		near.broken = false
+		_wire(near)
+	P.helm_at = P.NO_HELM
+	mira.pos = _beside(far)
+	ui.request_flight(far)
+	_check("4: Im Cockpit am funktionierenden Pult", ui.nav_open and P.helm_at == far.pos)
+	_check("4: Abdocken am bedienten Pult klappt", P.request_undock() and P.docked == "")
+	for k in 60 * 16:
+		gs.step(1.0 / 60.0 / 60.0)          # Sperre gegen sofortiges Wieder-Andocken abwarten
+	toasts.clear()
+	P.start_autodock()
+	_check("4: Auto-Dock am bedienten Pult startet (%s)" % toasts[-1], not P.autodock.is_empty())
+	P.autodock = {}
+	# Knöpfe „Ausrichten“ und „Angleichen“ in der Zielliste: nur mit versorgtem Pult
+	P.target = "l4"
+	_cut(far)
+	ui._last_nav = ""
+	ui._refresh_nav()
+	var btns: Array = _nav_buttons()
+	_check("4: Ohne Strom sind „Ausrichten“ und „Angleichen“ gesperrt (%d Knöpfe)" % btns.size(), not btns.is_empty() and btns.all(func(b): return b.disabled))
+	var ang: float = P.angle
+	for b in btns:
+		b.pressed.emit()
+	_check("4: … und bewirken nichts", P.angle == ang and P.match_target == "")
+	_wire(far)
+	ui._last_nav = ""
+	ui._refresh_nav()
+	btns = _nav_buttons()
+	_check("4: Mit Strom wieder bedienbar", not btns.is_empty() and btns.all(func(b): return not b.disabled))
+	P.travel_to("karman")
+	_check("4: Schnellreise am bedienten Pult startet", not P.travel.is_empty())
+	P.travel = {}
+	ui.leave_flight()
+
 	# 3) Spielstand mit einem intakten Pult laden: Klick und N gehen weiter
 	gs.new_game()
 	root.get_node("TimeSystem").set_speed(0)
 	for k in 3:
 		gs.step(1.0 / 60.0)              # Strom verteilen
+	seat_pilot()
 	P.request_undock()
+	P.helm_at = P.NO_HELM                  # wieder niemand am Pult
 	for k in 60 * 20:
 		gs.step(1.0 / 60.0 / 60.0)
 	mira = root.get_node("CrewSystem").player()

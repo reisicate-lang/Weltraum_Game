@@ -648,11 +648,17 @@ func _refresh_nav() -> void:
 				_refresh_nav()))
 		if not here and P.travel.is_empty():
 			if r.dist < 300.0:
-				btns.append(_button("Angleichen", func():
+				var mb := _button("Angleichen", func():
 					P.target = l.id
-					P.match_target = l.id
-					_last_nav = ""))
-			btns.append(_button("Ausrichten", func(): P.angle = (r.pos - P.pos).angle()))
+					P.match_target = ""
+					toggle_match())
+				mb.disabled = not P.manual_ok()
+				btns.append(mb)
+			var ab := _button("Ausrichten", func():
+				if P.manual_ok():
+					P.angle = (r.pos - P.pos).angle())
+			ab.disabled = not P.manual_ok()
+			btns.append(ab)
 			if P.can_dock(l.id):
 				btns.append(_button("Andocken", func(): P.dock(l.id)))
 			elif P.redock_locked(l.id) and r.dist < float(P.space.dock_dist) * 3.0:

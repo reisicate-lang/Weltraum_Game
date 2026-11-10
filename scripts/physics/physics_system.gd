@@ -253,6 +253,19 @@ func helm_block_reason(h: Device) -> String:
 		return "Dieses Steuerpult hat keinen Strom."
 	return ""
 
+## Grund, warum der Pilot gerade keine Flugbefehle geben kann (Abdocken, Schnellreise,
+## Auto-Dock): Es braucht das bediente Pult, intakt und mit Strom. "" = es geht.
+func pilot_block_reason() -> String:
+	if ship_devices("helm").is_empty():
+		return "Kein Steuerpult an Bord."
+	var h := operated_helm()
+	if h == null:
+		return "Das geht nur am Steuerpult: erst ins Cockpit (N)."
+	var why := helm_block_reason(h)
+	if why != "":
+		return why + (" Erst reparieren." if h.broken else "")
+	return ""
+
 ## Manueller Flug (Schub, Drehen, Angleichen) nur über das bediente Pult,
 ## und nur, wenn genau dieses Pult intakt ist und Strom hat.
 func manual_ok() -> bool:
@@ -540,13 +553,9 @@ func undock_block_reason() -> String:
 		return "Das Schiff ist nicht angedockt."
 	if crashed:
 		return "Das Schiff ist zerstört."
-	var helms := ship_devices("helm")
-	if helms.is_empty():
-		return "Kein Steuerpult an Bord."
-	if helms.all(func(h): return h.broken):
-		return "Das Steuerpult ist kaputt. Erst reparieren."
-	if not helm_ok():
-		return "Das Steuerpult braucht Strom."
+	var why := pilot_block_reason()
+	if why != "":
+		return why
 	var g := ShipSystem.grid
 	var on_wreck: PackedStringArray = []
 	var on_station: PackedStringArray = []
@@ -600,6 +609,10 @@ func undock() -> bool:
 	return true
 
 func start_autodock() -> void:
+	var why := pilot_block_reason()
+	if why != "":
+		GameState.toast(why, "bad")
+		return
 	if not autodock_ok():
 		GameState.toast("Kein funktionierendes Auto-Dock-Modul an Bord.", "bad")
 		return
@@ -625,8 +638,9 @@ func travel_info(id: String) -> Dictionary:
 	return {"dist": r.dist, "fuel": r.dist * float(space.travel_fuel_per_km) * fuel_factor() * tf, "secs": (r.dist / float(space.travel_speed) + 600.0) * tf}
 
 func travel_to(id: String) -> void:
-	if not helm_ok():
-		GameState.toast("Das Steuerpult braucht Strom.", "bad")
+	var why := pilot_block_reason()
+	if why != "":
+		GameState.toast(why, "bad")
 		return
 	if docked == id:
 		return
