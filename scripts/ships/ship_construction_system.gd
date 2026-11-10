@@ -15,7 +15,7 @@ func can_place(tool: String, p: Vector2i) -> bool:
 		return false
 	var i := g.idx(p)
 	var t := g.tiles[i]
-	var has_dev := g.devices.has(i)
+	var has_dev := g.occupied(p)
 	# Die Station gehört dir nicht (die Luke in der Schiffswand auch nicht)
 	if (StationSystem.reserved(p) or StationSystem.is_hatch(i)) and not tool in ["haul", "cancel"]:
 		return false
@@ -23,6 +23,9 @@ func can_place(tool: String, p: Vector2i) -> bool:
 		# Andockschleuse: nur in eine Außenwand (innen Raum, außen All)
 		return t == ShipGrid.Tile.WALL and not has_dev and g.zone[i] == 0 and ShipSystem.port_dir(p) != Vector2i.ZERO
 	if tool.begins_with("dev:"):
+		var dd := ItemSystem.device(tool.substr(4))
+		if dd.length > 1:
+			return place_reason(tool, p) == ""
 		return t == ShipGrid.Tile.FLOOR and not has_dev
 	if tool.begins_with("install:"):
 		return RemovalSystem.can_install(tool.substr(8), p)
@@ -31,17 +34,41 @@ func can_place(tool: String, p: Vector2i) -> bool:
 	match tool:
 		"repair": return DamageSystem.needs_repair(p)
 		"haul": return g.piles.has(i) and not jobs.has(i)
-		"hack": return has_dev and g.devices[i].lock_level > 0 and not jobs.has(i)
+		"hack": return has_dev and g.device_at(p).lock_level > 0 and not jobs.has(g.idx(g.device_at(p).pos))
 		"extinguish": return g.fire[i] == 1 and not jobs.has(i)
-		"move": return has_dev and not jobs.has(i) and g.devices[i].type != "dockport"
-		"floor": return t == ShipGrid.Tile.SPACE
+		"move": return has_dev and not jobs.has(i) and g.device_at(p).type != "dockport" and g.device_at(p).data().length == 1
+		"floor": return t == ShipGrid.Tile.SPACE and not has_dev
 		"wall", "window": return (t == ShipGrid.Tile.SPACE or t == ShipGrid.Tile.FLOOR) and not has_dev
 		"door": return t != ShipGrid.Tile.DOOR and not has_dev
 		"cable": return t != ShipGrid.Tile.SPACE and g.cables[i] == 0
 		"remove": return t != ShipGrid.Tile.SPACE
 		"cancel": return jobs.has(i)
-		"rotate": return has_dev and g.devices[i].data().rotatable and not jobs.has(i) and not g.foreign(i)
+		"rotate": return has_dev and g.device_at(p).data().rotatable and g.device_at(p).data().length == 1 and not jobs.has(i) and not g.foreign(i)
 	return false
+
+## Grund, warum ein Mehrfeld-Gerät (Triebwerk 1×3) hier nicht gebaut werden kann ("" = geht).
+## p = Innenfeld, Richtung = build_rot.
+func place_reason(tool: String, p: Vector2i) -> String:
+	var g := ShipSystem.grid
+	var type := tool.substr(4)
+	if not g.in_bounds(p):
+		return "Außerhalb."
+	var why := g.mount_reason(type, p, build_rot)
+	if why != "":
+		return why
+	for c in cells_of(type, p, build_rot):
+		if jobs.has(g.idx(c)):
+			return "Hier läuft schon ein Auftrag."
+		if StationSystem.reserved(c) or StationSystem.is_hatch(g.idx(c)):
+			return "Gehört der Station."
+	return ""
+
+## Felder eines Geräts dieser Art an p (Innenfeld) mit Drehung rot
+func cells_of(type: String, p: Vector2i, rot: int) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for k in maxi(1, ItemSystem.device(type).length):
+		out.append(p - Device.PUSH_DIRS[rot % 4] * k)
+	return out
 
 func place(tool: String, p: Vector2i) -> bool:
 	if not can_place(tool, p):
@@ -72,6 +99,9 @@ func place(tool: String, p: Vector2i) -> bool:
 	elif tool.begins_with("install:"):
 		var pk := tool.substr(8)
 		job.merge({"kind": "install", "item": pk, "need": RemovalSystem.install_time(pk)})
+		var pkey := RemovalSystem.key_of_packed(pk)
+		if pkey.begins_with("dev:") and ItemSystem.device(pkey.substr(4)).rotatable:
+			job.rot = build_rot
 	elif tool.begins_with("dev:"):
 		var dev_id := tool.substr(4)
 		job.merge({"kind": "device", "dev": dev_id, "need": ItemSystem.device(dev_id).build_time})
@@ -255,22 +285,31 @@ func complete(job: Dictionary, worker_pos: Vector2i, worker: CrewMember = null) 
 			g.cables[i] = 1
 		"device":
 			_move_pile_away(i, worker_pos)
-			if job.dev == "dockport":
-				g.set_tile(p, ShipGrid.Tile.DOOR)
-			var built := g.place_device(job.dev, p)
-			built.rot = int(job.get("rot", 0))
+			var rot := int(job.get("rot", 0))
+			# Mehrfeld-Gerät: Halterung inzwischen ungültig? Material kommt zurück
+			if ItemSystem.device(job.dev).length > 1 and g.mount_reason(job.dev, p, rot) != "":
+				GameState.toast("%s: Bau nicht möglich – %s Material liegt daneben." % [ItemSystem.device(job.dev).display_name, g.mount_reason(job.dev, p, rot)], "bad")
+				var back := drop_spot(worker_pos)
+				var c := cost(job)
+				for type in c:
+					g.drop_items(back, type, int(c[type]), 80.0)
+			else:
+				if job.dev == "dockport":
+					g.set_tile(p, ShipGrid.Tile.DOOR)
+				g.place_device(job.dev, p, rot)
 		"rotate":
 			var rd := g.device_at(p)
-			if rd != null and rd.data().rotatable:
+			if rd != null and rd.data().rotatable and rd.data().length == 1:
 				rd.rot = (rd.rot + 1) % 4
 		"remove":
 			var loot := salvage(p, worker)
 			var t := g.tiles[i]
-			var becomes_space := t == ShipGrid.Tile.FLOOR and g.cables[i] == 0 and not g.devices.has(i)
-			if g.devices.has(i):
+			var rdev := g.device_at(p)
+			var becomes_space := t == ShipGrid.Tile.FLOOR and g.cables[i] == 0 and rdev == null
+			if rdev != null:
 				if g.zone[i] == 1:
 					GoalSystem.stripped += 1
-				g.devices.erase(i)
+				g.remove_device(rdev)
 			elif g.cables[i] == 1 and t == ShipGrid.Tile.FLOOR:
 				g.cables[i] = 0
 			elif t == ShipGrid.Tile.WALL or t == ShipGrid.Tile.DOOR or t == ShipGrid.Tile.WINDOW:
@@ -309,7 +348,7 @@ func sources() -> Array:
 	var g := ShipSystem.grid
 	var out: Array = []
 	for i in g.devices:
-		if g.devices[i].inv != null and g.devices[i].lock_level == 0 and g.devices[i].type != "terminal":
+		if g.devices[i].inv != null and g.devices[i].lock_level == 0 and g.devices[i].type != "terminal" and g.devices[i].data().length == 1:
 			out.append({"pos": g.pos(i), "inv": g.devices[i].inv})
 	for i in g.piles:
 		out.append({"pos": g.pos(i), "inv": g.piles[i]})

@@ -58,6 +58,16 @@ func _hand_mass(g: ShipGrid) -> float:
 			m += g.piles[i].weight() / 1000.0
 	return m
 
+## Was die Crew an Bord trägt (zählt ebenfalls zur Schiffsmasse)
+func _crew_mass() -> float:
+	var g = ship.grid
+	var m := 0.0
+	for c in root.get_node("CrewSystem").crew:
+		var i: int = g.idx(c.tile())
+		if g.zone[i] == 0 and g.tiles[i] != ShipGrid.Tile.SPACE:
+			m += c.inv.weight() / 1000.0
+	return m
+
 func _initialize() -> void:
 	await process_frame
 	await process_frame
@@ -161,6 +171,7 @@ func _initialize() -> void:
 	fleet.switch_to(id2)
 	g = ship.grid
 	_check("Gewechselt aufs zweite Schiff", fleet.current_id == id2)
+	m2_expected += _crew_mass()
 	_check("Nur dessen eigene Ladung zählt (%.3f t, erwartet %.3f t)" % [P.mass(), m2_expected], _near(P.mass(), m2_expected, 0.00001))
 	var pile_w := 0.0
 	for i in g.piles:

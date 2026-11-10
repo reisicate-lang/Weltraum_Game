@@ -51,6 +51,7 @@ var _flee_cooldown := 0.0
 var _warned := {}
 
 func _init(i: int, n: String, c: Color, tile: Vector2i) -> void:
+	inv.hands = true   # zusätzlich genau ein abgebautes Gerät in den Händen
 	id = i
 	display_name = n
 	color = c
@@ -125,7 +126,7 @@ func drop_carried() -> void:
 		job = null
 	var spot := ShipConstructionSystem.drop_spot(tile())
 	dev.pos = spot
-	g.devices[g.idx(spot)] = dev
+	g.put_device(dev)
 	EventBus.ship_changed.emit()
 	push_out_if_stuck()
 
@@ -558,7 +559,7 @@ func _finish_job() -> void:
 				CS.jobs.erase(g.idx(CS.pos_of(job)))
 				job = null
 				return
-			g.devices.erase(g.idx(dev.pos))
+			g.remove_device(dev)
 			carrying = dev
 			job.phase = "deliver"
 			job.progress = 0.0
@@ -578,7 +579,7 @@ func _finish_job() -> void:
 		carrying = null
 		if g.get_tile(dst) == ShipGrid.Tile.FLOOR and g.device_at(dst) == null:
 			dev2.pos = dst
-			g.devices[g.idx(dst)] = dev2
+			g.put_device(dev2)
 			EventBus.ship_changed.emit()
 		else:
 			carrying = dev2

@@ -31,5 +31,9 @@ extends Resource
 @export var mass: float = 0.5
 ## Lässt sich beim Bauen und danach in 90°-Schritten drehen (z. B. Triebwerke)
 @export var rotatable: bool = false
+## Länge in Feldern (1 = ein Feld). Länger (z. B. Triebwerk 1×3) = gerade Linie von innen
+## nach außen durch eine Außenwand: Innenfeld (Schiffsboden), Wandfeld (Befestigung),
+## Außenfeld (Düse im All). Siehe ShipGrid.mount_reason().
+@export var length: int = 1
 ## Farbe für die einfache Darstellung
 @export var color: Color = Color(0.35, 0.4, 0.45)

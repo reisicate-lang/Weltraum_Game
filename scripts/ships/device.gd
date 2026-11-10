@@ -35,6 +35,17 @@ const PUSH_DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1,
 func push_dir() -> Vector2i:
 	return PUSH_DIRS[rot % 4]
 
+## Einbaurichtung von innen nach außen (zur Düse); entgegen der Schubrichtung
+func outward() -> Vector2i:
+	return -push_dir()
+
+## Alle Felder des Geräts: pos ist das Innenfeld, dann nach außen (1×3: innen, Wand, Düse)
+func cells() -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for k in maxi(1, data().length):
+		out.append(pos + outward() * k)
+	return out
+
 func _init(t: String, p: Vector2i) -> void:
 	type = t
 	pos = p
@@ -101,7 +112,7 @@ func status_text() -> String:
 func to_data() -> Dictionary:
 	return {"type": type, "x": pos.x, "y": pos.y, "cond": cond, "broken": broken, "stock": stock,
 		"charge": charge, "items": inv.to_data() if inv != null else [], "suit": suit, "store": store, "unknown": unknown, "lock": lock_level,
-		"growth": growth, "tended_at": tended_at, "genemod": genemod, "rot": rot}
+		"growth": growth, "tended_at": tended_at, "genemod": genemod, "rot": rot, "shape": data().length}
 
 static func from_data(d: Dictionary) -> Device:
 	var dev := Device.new(String(d.type), Vector2i(int(d.x), int(d.y)))

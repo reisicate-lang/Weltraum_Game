@@ -80,6 +80,16 @@ func _drag_tiles() -> Array[Vector2i]:
 			out.append(Vector2i(x, y))
 	return out
 
+## Tab: persönliches Inventar – überall, auch im Cockpit. Hier statt in _unhandled_input,
+## damit die Oberfläche Tab nicht für den Fokuswechsel verschluckt. Halten (Echo) wechselt nicht.
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.is_pressed() and not event.is_echo() and (event as InputEventKey).keycode == KEY_TAB:
+		var focus := get_viewport().gui_get_focus_owner()
+		if focus is LineEdit or focus is TextEdit:
+			return
+		UIManager.toggle_inventory()
+		get_viewport().set_input_as_handled()
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
@@ -113,7 +123,12 @@ func _unhandled_input(event: InputEvent) -> void:
 					if ShipConstructionSystem.place(GameState.tool, t):
 						count += 1
 				if count == 0 and tiles.size() == 1:
-					GameState.toast("Das geht hier nicht.")
+					var why := ""
+					if GameState.tool.begins_with("dev:") and ItemSystem.device(GameState.tool.substr(4)).length > 1:
+						why = ShipConstructionSystem.place_reason(GameState.tool, tiles[0])
+					elif GameState.tool.begins_with("install:"):
+						why = RemovalSystem.install_reason(GameState.tool.substr(8), tiles[0])
+					GameState.toast(why if why != "" else "Das geht hier nicht.")
 				_drag_start = Vector2i(-1, -1)
 		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
 			_right_click(_tile_at_mouse())
@@ -190,7 +205,7 @@ func _key(k: InputEventKey) -> void:
 		var P := PhysicsSystem
 		match k.keycode:
 			KEY_ESCAPE, KEY_N: UIManager.leave_flight()
-			KEY_TAB: UIManager.cycle_target()
+			KEY_T: UIManager.cycle_target()
 			KEY_X: UIManager.toggle_match()
 			KEY_U: P.request_undock()
 			KEY_F:
@@ -211,7 +226,7 @@ func _key(k: InputEventKey) -> void:
 		KEY_4: TimeSystem.set_speed(4)
 		KEY_5: TimeSystem.set_speed(5)
 		KEY_N: UIManager.request_flight()
-		KEY_ESCAPE: UIManager.close_help(); UIManager.set_tool("select"); UIManager.close_container(); UIManager.close_window()
+		KEY_ESCAPE: UIManager.close_help(); UIManager.set_tool("select"); UIManager.inv_open = false; UIManager.close_container(); UIManager.close_window()
 		KEY_B: UIManager.set_tool("floor")
 		KEY_M: UIManager.set_tool("wall")
 		KEY_T: UIManager.set_tool("door")

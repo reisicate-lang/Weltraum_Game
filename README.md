@@ -41,6 +41,7 @@ godot --headless --path . --script res://tests/boot.gd -- test_thrusters
 godot --headless --path . --script res://tests/boot.gd -- test_match
 godot --headless --path . --script res://tests/boot.gd -- test_cargo_mass
 godot --headless --path . --script res://tests/boot.gd -- test_helm
+godot --headless --path . --script res://tests/boot.gd -- test_parts
 ```
 
 ## Steuerung
@@ -52,7 +53,8 @@ godot --headless --path . --script res://tests/boot.gd -- test_helm
 | Bauen | Boden `B`, Wand `M`, Tür `T`, Kabel `K`, Geräte-Menü unten |
 | Abreißen / Plan löschen | `X` / `C`, Rechtsklick bricht ab |
 | Objekt entfernen | Rechtsklick auf Gerät oder Block (Werkzeug **Auswahl**): Abbauen, Zerlegen, Zerstören |
-| Abgebautes wieder einbauen | Rechtsklick auf ein freies Feld → „Einbauen“, oder in Kiste/Haufen „Einbauen“ |
+| Abgebautes wieder einbauen | Abgebaute Geräte liegen als ein Gegenstand am Boden (mit Zustand und Inhalt). Daneben stellen, `E` → „Nehmen“ (in die Hände). Dann Rechtsklick auf ein freies Feld → „Einbauen“, oder im Inventar/Haufen „Einbauen“ |
+| Persönliches Inventar | `Tab` öffnet/schließt (auch im Cockpit). Mit offener Kiste: „Nehmen“/„Hineinlegen“, sonst „Ablegen“ auf den Boden. Tragelimit 40 kg, dazu genau ein abgebautes Gerät in den Händen |
 | Tür ganz dicht machen | Rechtsklick auf die Tür → „Lüftungsschlitz schließen“ |
 | Kiste durchsuchen | `E` (daneben stehen) oder draufklicken |
 | Auf der Station reden | Klick auf eine Figur oder einen Tresen: deine Figur läuft hin, dann beginnt das Gespräch |
@@ -62,8 +64,8 @@ godot --headless --path . --script res://tests/boot.gd -- test_helm
 | Charaktermenü (Fähigkeiten, Traits, Hobbys, Lebenslauf, Aufgaben) | `I` |
 | Auto-Modus der ausgewählten Figur an/aus | Knopf „Auto: AN/AUS“ links oder `J` |
 | Cockpit (am Steuerpult) | `N` oder Klick aufs Steuerpult: die Figur geht hin und übernimmt das Steuer; `Esc`/`N` verlässt es |
-| Fliegen | `W`/`S` Schub vor/zurück, `A`/`D` seitwärts, `Q`/`E` drehen, `R` Drehung stoppen, `X` ans Ziel angleichen, `Tab` nächstes Ziel, `F` andocken, `U` abdocken |
-| Triebwerk einbauen | Geräte-Menü → „Triebwerk“, `G` dreht die Schubrichtung, Klick auf ein Feld mit Kabel. Später drehen: Rechtsklick → „Drehen“ |
+| Fliegen | `W`/`S` Schub vor/zurück, `A`/`D` seitwärts, `Q`/`E` drehen, `R` Drehung stoppen, `X` ans Ziel angleichen, `T` nächstes Ziel (oder „Ziel“ in der Liste), `F` andocken, `U` abdocken |
+| Triebwerk einbauen | Geräte-Menü → „Triebwerk“ (1×3 Felder). `G` dreht die Richtung. Klick auf ein Bodenfeld mit Kabel direkt an einer Außenwand: Mitte sitzt auf der Wand, die Düse ragt ins All, Schub vom All weg. Die Vorschau zeigt alle drei Felder. Umsetzen: abbauen und neu einbauen |
 | Andockschleuse bauen | Geräte-Menü → „Andockschleuse“, Klick auf eine Außenwand (innen Raum, außen All). Stationen docken an jeder freien Schleuse an, Wracks an einer Schleuse in der unteren Außenwand |
 | Speichern | `Strg+S`, Autosave jede Minute |
 

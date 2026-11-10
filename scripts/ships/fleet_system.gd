@@ -112,7 +112,7 @@ func _port_spot(g: ShipGrid, d: Vector2i) -> Vector2i:
 	center /= maxf(1.0, n)
 	for i in g.tiles.size():
 		var p := g.pos(i)
-		if g.tiles[i] != ShipGrid.Tile.WALL or g.zone[i] != 0 or g.devices.has(i):
+		if g.tiles[i] != ShipGrid.Tile.WALL or g.zone[i] != 0 or g.occupied(g.pos(i)):
 			continue
 		if ShipSystem.port_dir(p) != d or not g.walkable(p - d):
 			continue
@@ -349,10 +349,10 @@ func _build_template(g: ShipGrid, t: Dictionary) -> void:
 	g.set_tile(Vector2i(mid, y0 + h / 2), ShipGrid.Tile.DOOR)
 	var list := [["generator", x0 + 1, y0 + 1], ["battery", x0 + 2, y0 + 1], ["o2gen", x0 + 3, y0 + 1], ["scrubber", x0 + 1, y0 + h - 2],
 		["airtank", x0 + 2, y0 + h - 2], ["bed", x0 + 3, y0 + h - 2], ["locker", x0 + 4, y0 + 1], ["helm", x0 + w - 2, y0 + 1],
-		["fueltank", mid + 1, y0 + 1], ["thruster", x0 + w - 2, y0 + h - 2], ["crate", mid + 1, y0 + h - 2],
+		["fueltank", mid + 1, y0 + 1], ["thruster", x0 + 1, y0 + 2], ["crate", mid + 1, y0 + h - 2],
 		["terminal", mid + 2, y0 + 1], ["food", mid + 2, y0 + h - 2]]
 	if t.id == "bairn":
-		list.append_array([["thruster", x0 + w - 3, y0 + h - 2], ["thruster", x0 + w - 4, y0 + h - 2], ["crate", mid + 3, y0 + h - 2],
+		list.append_array([["thruster", x0 + 1, y0 + 3], ["thruster", x0 + 1, y0 + 4], ["crate", mid + 3, y0 + h - 2],
 			["crate", mid + 4, y0 + h - 2], ["bed", x0 + 5, y0 + h - 2], ["water", x0 + 5, y0 + 1]])
 	for e in list:
 		g.place_device(e[0], Vector2i(e[1], e[2]))

@@ -64,8 +64,75 @@ func set_tile(p: Vector2i, t: int) -> void:
 		cables[i] = 0
 		o2[i] = 0.0; n2[i] = 0.0; co2[i] = 0.0
 
+const MAX_DEVICE_LEN := 3
+
+## Gerät auf diesem Feld. Mehrfeldrige Geräte (Triebwerk 1×3) stehen nur einmal in
+## devices (am Innenfeld); ihre übrigen Felder werden hier auf dieselbe Instanz abgebildet.
 func device_at(p: Vector2i) -> Device:
-	return devices.get(idx(p)) if in_bounds(p) else null
+	if not in_bounds(p):
+		return null
+	var d = devices.get(idx(p))
+	if d != null:
+		return d
+	for k in range(1, MAX_DEVICE_LEN):
+		for dir in Device.PUSH_DIRS:
+			var q: Vector2i = p + dir * k
+			if not in_bounds(q):
+				continue
+			var a = devices.get(idx(q))
+			if a != null and a.data().length > k and q + a.outward() * k == p:
+				return a
+	return null
+
+## Ist das Feld von einem Gerät belegt (auch von einem Teil eines Mehrfeld-Geräts)?
+func occupied(p: Vector2i) -> bool:
+	return device_at(p) != null
+
+func put_device(dev: Device) -> void:
+	devices[idx(dev.pos)] = dev
+
+func remove_device(dev: Device) -> void:
+	if devices.get(idx(dev.pos)) == dev:
+		devices.erase(idx(dev.pos))
+
+## Kann ein Gerät dieser Art mit dieser Drehung an p (Innenfeld) sitzen? "" = ja.
+## 1×3: Innenfeld = freier Schiffsboden, Mitte = Außenwand (bleibt Wand und dicht),
+## Außenfeld = freies All. ignore: dieses Gerät beim Belegt-Test übergehen.
+func mount_reason(type: String, p: Vector2i, rot: int, ignore: Device = null) -> String:
+	var n: int = ItemSystem.device(type).length
+	var out: Vector2i = -Device.PUSH_DIRS[rot % 4]
+	for k in n:
+		if not in_bounds(p + out * k):
+			return "Außerhalb."
+	var busy := func(q: Vector2i) -> bool:
+		var d := device_at(q)
+		return d != null and d != ignore
+	if get_tile(p) != Tile.FLOOR or zone[idx(p)] != 0:
+		return "Das innere Feld muss freier Boden im eigenen Schiff sein."
+	if busy.call(p):
+		return "Das innere Feld ist belegt."
+	if n < 3:
+		return ""
+	var mid := p + out
+	var tip := p + out * 2
+	if get_tile(mid) != Tile.WALL or zone[idx(mid)] != 0:
+		return "Das mittlere Feld muss auf einer Wand des eigenen Schiffs sitzen (keine Tür, kein Fenster)."
+	if busy.call(mid):
+		return "Auf dieser Wand sitzt schon etwas."
+	if get_tile(tip) != Tile.SPACE:
+		return "Innenwand: Die Düse muss durch eine Außenwand ins freie All zeigen."
+	if busy.call(tip) or zone[idx(tip)] != 0:
+		return "Das Düsenfeld draußen ist belegt."
+	return ""
+
+func place_device(type: String, p: Vector2i, rot: int = 0) -> Device:
+	var dev := Device.new(type, p)
+	dev.rot = rot
+	put_device(dev)
+	return dev
+
+## Umstellung: Wie viele alte 1×1-Geräte beim Laden umgebaut bzw. als Gegenstand abgelegt wurden
+var migrated := {"converted": 0, "packed": 0}
 
 func walkable(p: Vector2i) -> bool:
 	var t := get_tile(p)
@@ -95,11 +162,6 @@ func pressure(i: int) -> float:
 func fill_air(i: int) -> void:
 	o2[i] = Config.AIR_O2; n2[i] = Config.AIR_N2; co2[i] = Config.AIR_CO2
 	temp[i] = Config.ROOM_TEMP
-
-func place_device(type: String, p: Vector2i) -> Device:
-	var dev := Device.new(type, p)
-	devices[idx(p)] = dev
-	return dev
 
 func drop_items(p: Vector2i, type: String, qty: int, c: float, data = null) -> void:
 	var i := idx(p)
@@ -137,15 +199,52 @@ static func from_data(d: Dictionary) -> ShipGrid:
 		g.o2[i] = float(d.o2[i]); g.n2[i] = float(d.n2[i]); g.co2[i] = float(d.co2[i]); g.cond[i] = float(d.cond[i])
 		g.zone[i] = int(d.zone[i]) if d.has("zone") else 0
 		g.temp[i] = float(d.temp[i]) if d.has("temp") else (Config.ROOM_TEMP if g.holds_air(i) else Config.SPACE_TEMP)
+	var legacy: Array[Device] = []
 	for dd in d.devices:
 		var dev := Device.from_data(dd)
+		# Alter Spielstand: Mehrfeld-Gerät (Triebwerk) war noch 1×1 → unten umstellen
+		if dev.data().length > 1 and int(dd.get("shape", 1)) != dev.data().length:
+			legacy.append(dev)
+			continue
 		g.devices[g.idx(dev.pos)] = dev
 	for entry in d.piles:
 		var inv := Inventory.new()
 		inv.from_data(entry[1])
 		g.piles[int(entry[0])] = inv
+	for dev in legacy:
+		g._migrate_legacy(dev)
 	for i in d.get("vents", []):
 		g.vent_closed[int(i)] = 1
 	for i in d.get("linked", []):
 		g.linked[int(i)] = true
 	return g
+
+## Altes 1×1-Triebwerk aus einem Spielstand: Passt die neue 1×3-Bauform genau hier
+## (gleiche Schubrichtung, alle drei Felder gültig und frei), wird es direkt umgestellt.
+## Sonst liegt es einmal als vollständiger Gegenstand (Zustand, Daten) auf seinem Feld
+## bzw. dem nächsten freien Boden. Gespeichert wird danach die neue Form ("shape"),
+## die Umstellung greift also nur einmal.
+func _migrate_legacy(dev: Device) -> void:
+	if mount_reason(dev.type, dev.pos, dev.rot) == "":
+		put_device(dev)
+		migrated.converted += 1
+		return
+	var dd := dev.to_data()
+	dd.unknown = false
+	dd.lock = 0
+	var spot := dev.pos
+	if get_tile(spot) != Tile.FLOOR or occupied(spot):
+		spot = _free_floor_near(dev.pos)
+	drop_items(spot, "pk_" + dev.type, 1, dev.cond, dd)
+	migrated.packed += 1
+
+func _free_floor_near(p: Vector2i) -> Vector2i:
+	for r in 12:
+		for dy in range(-r, r + 1):
+			for dx in range(-r, r + 1):
+				if maxi(absi(dx), absi(dy)) != r:
+					continue
+				var q := p + Vector2i(dx, dy)
+				if get_tile(q) == Tile.FLOOR and zone[idx(q)] == 0 and not occupied(q):
+					return q
+	return p

@@ -77,8 +77,9 @@ func needs_repair(p: Vector2i) -> bool:
 	var g := ShipSystem.grid
 	if not g.in_bounds(p):
 		return false
+	# Mehrfeld-Gerät: sein Zustand gilt am Innenfeld; Wand und Düsenfeld haben ihren eigenen
 	var dev := g.device_at(p)
-	if dev != null:
+	if dev != null and dev.pos == p:
 		return dev.cond < 100.0
 	var t := g.get_tile(p)
 	return (t == ShipGrid.Tile.WALL or t == ShipGrid.Tile.DOOR) and g.cond[g.idx(p)] < 100.0
@@ -86,7 +87,7 @@ func needs_repair(p: Vector2i) -> bool:
 func repair(p: Vector2i) -> void:
 	var g := ShipSystem.grid
 	var dev := g.device_at(p)
-	if dev != null:
+	if dev != null and dev.pos == p:
 		dev.cond = 100.0
 		dev.broken = false
 	else:

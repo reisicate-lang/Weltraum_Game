@@ -169,6 +169,36 @@ Umsetzung (`PhysicsSystem.mass()`, Tests: `tests/test_cargo_mass.gd`):
 - **Bauen:** Schwere Bauteile (Triebwerk: 44 kg Material) holt die Crew in mehreren
   Gängen und legt das Material am Bauplatz ab.
 
+### Inventar, Abbau und 1×3-Triebwerke (Stand: November 2026)
+
+Keine Ostranauts-Quelle in diesem Auftrag. Alles hier sind **Projektvorgaben bzw. eigene
+Entscheidungen**:
+- **Tab** öffnet das persönliche Inventar, auch im Cockpit. Der Zielwechsel liegt jetzt auf **T**;
+  die Ziel-Knöpfe in der Liste gehen weiter.
+- **Abbauen** legt genau einen vollständigen Gegenstand auf ein erreichbares Bodenfeld.
+  Zustand, Drehung und Inhalt (z. B. Kisteninhalt) bleiben im Gegenstand.
+  **Zerlegen** und **Zerstören** bleiben eigene Aktionen.
+- **Gewicht** (Entscheidung des Nutzers: „schwer, in den Händen“):
+  - Ein abgebautes Gerät wiegt so viel wie seine Masse im Schiff (Standard 500 kg,
+    Triebwerk 1500 kg), ein abgebauter Block 200 kg.
+  - Eine Figur trägt genau ein solches Stück in den Händen, unabhängig vom Tragelimit
+    von 40 kg.
+  - Alles, was eine Figur an Bord trägt, zählt zur Schiffsmasse.
+- **Triebwerk 1×3:** Innenfeld auf dem Schiffsboden, Mitte auf einer Außenwand (bleibt Wand
+  und dicht), Düse im freien All. Schub zeigt von der Düse weg.
+  - Abgewiesen werden: Innenwand, vertauschte Seiten, belegtes Düsenfeld und
+    Überschneidungen.
+  - Nachträgliches Drehen und Versetzen gibt es für 1×3-Geräte nicht mehr (abbauen und
+    neu einbauen).
+- **Alte Spielstände:**
+  - Ein altes 1×1-Triebwerk wird nur umgestellt, wenn an seinem Platz alle drei Felder
+    gültig und frei sind.
+  - Sonst liegt es einmal als vollständiger Gegenstand an seinem Platz.
+  - Gespeichert wird danach die neue Form, die Umstellung greift also nur einmal.
+  - Alte Gepäckstücke bleiben vollständig erhalten. Wer mehrere abgebaute Teile im
+    Gepäck hatte, behält sie, kann aber erst wieder eines aufnehmen, wenn die Hände frei
+    sind.
+
 ## Geschwindigkeitsangleichung im Cockpit (Stand: November 2026)
 
 **Quelle:** offizieller Ostranauts-Startguide auf Steam, Abschnitte „Flight Metrics“ und

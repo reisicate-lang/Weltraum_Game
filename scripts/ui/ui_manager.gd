@@ -29,7 +29,10 @@ var _walk_helm := Vector2i(-1, -1)   ## Pult, zu dem die Spielfigur gerade läuf
 ## Tatsächliche Tastenbelegung im Flugmodus (wird im Cockpit angezeigt)
 const FLIGHT_KEYS := [["W / S", "Schub vor / zurück (Triebwerke in dieser Richtung + Lagedüsen)"], ["A / D", "Schub links / rechts (Triebwerke in dieser Richtung + Lagedüsen)"],
 	["Q / E", "drehen gegen / im Uhrzeigersinn"], ["R", "Drehung stoppen"], ["X", "Geschwindigkeit ans Ziel angleichen"],
-	["Tab", "nächstes Ziel"], ["F", "andocken"], ["U", "abdocken"], ["Mausrad", "Karte zoomen"], ["Esc / N", "Cockpit verlassen"]]
+	["T", "nächstes Ziel (oder „Ziel“ in der Liste anklicken)"], ["F", "andocken"], ["U", "abdocken"], ["Tab", "Inventar öffnen / schließen"],
+	["Mausrad", "Karte zoomen"], ["Esc / N", "Cockpit verlassen"]]
+## Persönliches Inventar offen (Tab)
+var inv_open := false
 ## Rechtsklick-Menü für Objekte (Abbauen, Zerlegen, Zerstören, Einbauen)
 var object_menu: PopupMenu
 var menu_pos := Vector2i(-1, -1)
@@ -308,7 +311,8 @@ Geräte-Menü: Generator, Sauerstoff, Betten, Kisten ...
 Rechtsklick auf ein Objekt: Menü (Abbauen, Zerlegen, Zerstören, Einbauen) · auf Figur: Aufgabe abbrechen
 Für Arbeiten im Vakuum holt Mira selbst einen Raumanzug. Die Luftschleuse links
 pumpt die Luft ab, bevor die Außentür aufgeht. Angedockt wird über Andockschleusen in der Außenwand.
-E: Kiste oder Haufen neben dir durchsuchen · J: Auto-Modus der ausgewählten Figur an/aus
+E: Kiste oder Haufen neben dir durchsuchen · Tab: eigenes Inventar · J: Auto-Modus an/aus
+Abgebaute Geräte liegen am Boden; eine Figur trägt eines davon in den Händen (E → Nehmen).
 L / P / O: Luft-, Strom- und Wärme-Ansicht · Mausrad: zoomen · Pfeiltasten: Ansicht
 Leertaste: Pause · 1–5: Zeit ×1, ×2, ×4, ×8, ×16 · Strg+S: speichern
 
@@ -522,7 +526,7 @@ func _build_flight_info() -> void:
 	var tl := P.loc(P.target)
 	var tr := HBoxContainer.new()
 	tr.add_child(_label("ZIEL: " + (String(tl.name) if not tl.is_empty() else "keins"), COL_MUTED, 11))
-	var nb := _button("nächstes [Tab]", cycle_target)
+	var nb := _button("nächstes [T]", cycle_target)
 	nb.add_theme_font_size_override("font_size", 11)
 	tr.add_child(nb)
 	nav_side.add_child(tr)
@@ -1110,7 +1114,14 @@ func _push_name(d: Vector2i) -> String:
 
 ## Taste G: Bau-Drehung für drehbare Geräte weiterschalten
 func rotate_build() -> void:
-	if not GameState.tool.begins_with("dev:") or not ItemSystem.device(GameState.tool.substr(4)).rotatable:
+	var dev_id := ""
+	if GameState.tool.begins_with("dev:"):
+		dev_id = GameState.tool.substr(4)
+	elif GameState.tool.begins_with("install:"):
+		var key := RemovalSystem.key_of_packed(GameState.tool.substr(8))
+		if key.begins_with("dev:"):
+			dev_id = key.substr(4)
+	if dev_id == "" or not ItemSystem.device(dev_id).rotatable:
 		GameState.toast("G dreht nur drehbare Geräte beim Bauen (z. B. Triebwerk).")
 		return
 	ShipConstructionSystem.build_rot = (ShipConstructionSystem.build_rot + 1) % 4
@@ -1203,10 +1214,14 @@ func interact() -> void:
 	var p := CrewSystem.player()
 	if p == null:
 		return
+	# Nächstgelegener Behälter oder Haufen (ein Haufen unter den Füßen zuerst)
+	var best := Vector2i(-1, -1)
 	for src in ShipConstructionSystem.sources():
-		if p.can_reach(src.pos):
-			open_container(src.pos)
-			return
+		if p.can_reach(src.pos) and (best.x < 0 or p.pos.distance_to(Vector2(src.pos) + Vector2(0.5, 0.5)) < p.pos.distance_to(Vector2(best) + Vector2(0.5, 0.5))):
+			best = src.pos
+	if best.x >= 0:
+		open_container(best)
+		return
 	GameState.toast("Hier ist nichts zum Durchsuchen. Stell dich neben eine Kiste oder einen Haufen.")
 
 func open_container(p: Vector2i) -> void:
@@ -1215,10 +1230,38 @@ func open_container(p: Vector2i) -> void:
 	_last_container = ""
 	_refresh_container()
 
+## Behälter schließen (das persönliche Inventar bleibt offen, wenn es mit Tab geöffnet ist)
 func close_container() -> void:
 	open_pos = Vector2i(-1, -1)
 	if container_panel != null:
-		container_panel.visible = false
+		container_panel.visible = inv_open
+		_last_container = ""
+
+## Tab: persönliches Inventar der gesteuerten Figur öffnen bzw. schließen.
+## Ein offener Behälter bleibt beim Öffnen daneben sichtbar (Austausch wie bisher);
+## beim Schließen geht das ganze Fenster zu.
+func toggle_inventory() -> void:
+	inv_open = not inv_open
+	if not inv_open:
+		close_container()
+		return
+	container_panel.visible = true
+	_last_container = ""
+	_refresh_container()
+
+## Aus dem eigenen Gepäck auf den Boden legen (unter der Figur bzw. daneben)
+func _drop_own(type: String, qty: int) -> void:
+	var c: CrewMember = GameState.selected if GameState.selected != null else CrewSystem.player()
+	if c == null:
+		return
+	var g := ShipSystem.grid
+	var spot := c.tile()
+	if g.get_tile(spot) != ShipGrid.Tile.FLOOR or g.occupied(spot):
+		spot = ShipConstructionSystem.drop_spot(spot)
+	for st in c.inv.take(type, qty):
+		g.drop_items(spot, st.type, st.qty, st.cond, st.get("data"))
+	_last_container = ""
+	_refresh_container()
 
 func _container_inv() -> Inventory:
 	var g := ShipSystem.grid
@@ -1287,8 +1330,8 @@ func _refresh() -> void:
 			sb.bg_color = Color(0.9, 0.33, 0.29) if v < 25.0 else (COL_AMBER if v < 50.0 else Color(0.44, 0.81, 0.56))
 		var lines: PackedStringArray = []
 		for it in c.inv.items:
-			lines.append("%s ×%d (%d %%)" % [ItemSystem.item(it.type).display_name, it.qty, int(it.cond)])
-		inv_label.text = ("%.1f / %d kg\n" % [c.inv.weight(), int(Config.CARRY_WEIGHT)]) + ("\n".join(lines) if not lines.is_empty() else "leer")
+			lines.append("%s ×%d (%d %%)%s" % [ItemSystem.item(it.type).display_name, it.qty, int(it.cond), " · in den Händen" if c.inv._in_hand(it) else ""])
+		inv_label.text = ("%.1f / %d kg · Tab: Inventar\n" % [c.inv.load_weight(), int(Config.CARRY_WEIGHT)]) + ("\n".join(lines) if not lines.is_empty() else "leer")
 	var goal := GoalSystem.current()
 	var goal_count: int = GoalSystem.GOALS.filter(func(x): return GoalSystem._available(x)).size()
 	goal_label.text = ("%s (%d/%d)" % [goal.text, mini(GoalSystem.done.size() + 1, goal_count), goal_count]) if not goal.is_empty() else "Alle Ziele erreicht. Mach, was du willst."
@@ -1337,12 +1380,17 @@ func _refresh_container() -> void:
 		return
 	var inv := _container_inv()
 	var c: CrewMember = GameState.selected if GameState.selected != null else CrewSystem.player()
-	var key := JSON.stringify([inv.to_data() if inv != null else [], c.inv.to_data() if c != null else []])
+	var key := JSON.stringify([open_pos, inv_open, inv.to_data() if inv != null else [], c.inv.to_data() if c != null else []])
 	if key == _last_container:
 		return
 	_last_container = key
 	for child in container_box.get_children():
 		child.queue_free()
+	var box_open := ShipSystem.grid.in_bounds(open_pos)
+	if not box_open:
+		# Nur das persönliche Inventar (Tab)
+		_own_section(c, false)
+		return
 	var head := HBoxContainer.new()
 	var dev := ShipSystem.grid.device_at(open_pos)
 	var title := _label(dev.data().display_name if dev != null else "Haufen auf dem Boden", COL_AMBER, 15)
@@ -1362,10 +1410,29 @@ func _refresh_container() -> void:
 	else:
 		for it in inv.items:
 			container_box.add_child(_install_btn(_item_row(it, "Nehmen", _transfer.bind(true, it.type, it.qty)), it.type))
-	if c != null and dev != null and not c.inv.items.is_empty():
-		container_box.add_child(_label("Aus dem Gepäck von " + c.display_name, COL_MUTED, 11))
-		for it in c.inv.items:
-			container_box.add_child(_install_btn(_item_row(it, "Hineinlegen", _transfer.bind(false, it.type, it.qty)), it.type))
+	if c != null:
+		_own_section(c, true)
+
+## Persönliches Inventar: Gewicht, Hände, Gegenstände. Mit offenem Behälter „Hineinlegen“,
+## sonst „Ablegen“ (auf den Boden).
+func _own_section(c: CrewMember, box_open: bool) -> void:
+	if c == null:
+		return
+	var head := HBoxContainer.new()
+	var title := _label("Inventar von %s · %.1f / %d kg" % [c.display_name, c.inv.load_weight(), int(Config.CARRY_WEIGHT)], COL_AMBER if not box_open else COL_MUTED, 15 if not box_open else 11)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(title)
+	if not box_open:
+		head.add_child(_button("✕", toggle_inventory))
+	container_box.add_child(head)
+	var hand := c.inv.in_hands()
+	container_box.add_child(_label("In den Händen: " + (ItemSystem.item(hand.type).display_name if not hand.is_empty() else "nichts"), COL_MUTED, 11))
+	if c.inv.items.is_empty():
+		container_box.add_child(_label("Leer.", COL_MUTED, 12))
+		return
+	for it in c.inv.items:
+		var row := _item_row(it, "Hineinlegen" if box_open else "Ablegen", _transfer.bind(false, it.type, it.qty) if box_open else _drop_own.bind(it.type, it.qty), c.inv._in_hand(it))
+		container_box.add_child(_install_btn(row, it.type))
 
 func _best_hack() -> float:
 	var best := 0.0
@@ -1381,10 +1448,10 @@ func _install_btn(row: HBoxContainer, type: String) -> HBoxContainer:
 			close_container()))
 	return row
 
-func _item_row(it: Dictionary, action: String, cb: Callable) -> HBoxContainer:
+func _item_row(it: Dictionary, action: String, cb: Callable, hand: bool = false) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	var d := ItemSystem.item(it.type)
-	var l := _label("%s ×%d · %d %% · %.1f kg" % [d.display_name, it.qty, int(it.cond), d.weight * it.qty], Color(0.87, 0.9, 0.94), 12)
+	var l := _label("%s ×%d · %d %% · %.1f kg%s" % [d.display_name, it.qty, int(it.cond), Inventory.stack_weight(it), " · in den Händen" if hand else ""], Color(0.87, 0.9, 0.94), 12)
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	l.tooltip_text = d.description
 	row.add_child(l)

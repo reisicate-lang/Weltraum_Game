@@ -77,6 +77,10 @@ und werden Schritt für Schritt übertragen.
 - [x] Manueller Flug nur am bedienten Steuerpult (intakt, mit Strom, Pilot steht dort)
 - [x] Abdocken, Schnellreise und Auto-Dock ebenfalls nur am bedienten Steuerpult
 - [x] Andocken nur am bedienten Pult; Schnellreise/Auto-Dock brechen bei Pultausfall ab; „Ausrichten“ mit Drehschub
+- [x] Persönliches Inventar per Tab (auch im Cockpit; Zielwechsel jetzt T)
+- [x] Abbauen legt genau einen vollständigen Gegenstand (Zustand, Inhalt) auf den Boden; eine Figur trägt ein Gerät in den Händen
+- [x] Einheitliches Gewicht: Gegenstand = Gerätemasse; Getragenes an Bord zählt zur Schiffsmasse
+- [x] Triebwerke als 1×3-Geräte durch die Außenwand; alte 1×1-Triebwerke werden beim Laden umgestellt
 - [x] Navigationskarte mit vorausberechneter Flugbahn, manuelles Fliegen (WASD), Geschwindigkeit angleichen
 - [x] Manuelles Andocken, Auto-Dock-Modul, Schnellreise, Zusammenstöße
 - [x] Erde als Schwerkraft-Falle (Absturz), Mond-Absturz
@@ -126,7 +130,8 @@ und werden Schritt für Schritt übertragen.
 - `tests/test_docking.gd` – Andockschleusen: ohne Schleuse kein Andocken, Tür an Tür, keine Extra-Felder, Abdocken ohne Rest, Wrack, Bau, alte Spielstände (40)
 - `tests/test_core.gd` – Kernspiel mit abgeschalteter Station und abgeschaltetem Wrack (21)
 - `tests/test_flight.gd` – manuelle Schiffssteuerung: Cockpit, Drift, Drehung, Gegenschub, Anflug und Andocken, Zeitstufen, Speichern (36)
-- `tests/test_thrusters.gd` – Triebwerke: Schub addiert sich, Masse bremst, Drehen, Aus- und Einbau, Speichern, Zeitstufen, Drift (27)
+- `tests/test_thrusters.gd` – Triebwerke (1×3): Schub addiert sich, Masse bremst, Richtungen, Aus- und Einbau, Speichern, Zeitstufen, Drift (32)
+- `tests/test_parts.gd` – Tab-Inventar (auch Cockpit), Abbau als Gegenstand am Boden, Gewicht beim Umlagern und von Bord, 1×3-Einbau und Abweisungen, alte Spielstände (60)
 - `tests/test_match.gd` – Angleichen (X): manueller Puls, Lagedüsen allein, kein Treibstoff, Ausstieg, Laden (22)
 - `tests/test_cargo_mass.gd` – Masse loser Ladung: Behälter ↔ Boden, fremder Bereich, Haufen im All, Laden, Schiffswechsel (24)
 - `tests/test_helm.gd` – Flug am bedienten Pult: kaputtes/stromloses Pult weist ab, Pultwechsel, Stromausfall unter Schub, Angleichen, Abdocken/Reise/Auto-Dock, Andocken, Abbruch bei Pultausfall, Ausrichten, Laden (70)

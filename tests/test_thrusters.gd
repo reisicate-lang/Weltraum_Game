@@ -65,6 +65,14 @@ func _burn_vec(fwd: float, right: float, secs: float) -> Vector2:
 	P.stop_inputs()
 	return _rel() - v0 - coast
 
+func _count_type(type: String) -> int:
+	var n := 0
+	for c in root.get_node("CrewSystem").crew:
+		n += c.inv.count(type)
+	for i in ship.grid.piles:
+		n += ship.grid.piles[i].count(type)
+	return n
+
 func _until_done(p: Vector2i, max_s: int = 1200) -> bool:
 	var g = ship.grid
 	for k in max_s:
@@ -95,12 +103,15 @@ func _initialize() -> void:
 	seat_pilot()   # Pilot am Steuerpult (Flugbefehle nur dort)
 	P.request_undock()
 	_secs(2)
-	var t1: Vector2i = Vector2i(x0 + 11, y0 + 8)
-	var t2: Vector2i = Vector2i(x0 + 12, y0 + 8)
+	# Startschiff: zwei 1×3-Triebwerke durch die hintere Außenwand (Düse nach hinten, Schub nach vorn)
+	var t1: Vector2i = Vector2i(x0 + 1, y0 + 2)
+	var t2: Vector2i = Vector2i(x0 + 1, y0 + 3)
 	var thr: float = root.get_node("ItemSystem").device("thruster").thrust
 	var rcs: float = P.rcs_thrust()
 	_check("Startschiff: zwei Triebwerke nach vorn (%d kN)" % int(P.thrust_dir(Vector2i(1, 0))), P.thrust_dir(Vector2i(1, 0)) == 2.0 * thr)
 	_check("Triebwerk hat Masse 1,5 t", root.get_node("ItemSystem").device("thruster").mass == 1.5)
+	_check("… und belegt 3 Felder: innen, Außenwand, Düse im All", g.device_at(t1) == g.device_at(t1 + Vector2i(-1, 0)) and g.device_at(t1) == g.device_at(t1 + Vector2i(-2, 0))
+		and g.get_tile(t1 + Vector2i(-1, 0)) == ShipGrid.Tile.WALL and g.get_tile(t1 + Vector2i(-2, 0)) == ShipGrid.Tile.SPACE)
 
 	# 1) Gleiche Masse: ein aktives gegen zwei aktive Triebwerke
 	g.device_at(t2).broken = true          # bleibt eingebaut (gleiche Masse), liefert keinen Schub
@@ -135,61 +146,68 @@ func _initialize() -> void:
 	_check("Leichtes Schiff schneller (%.2f > %.2f m/s)" % [dv_light, dv_heavy], dv_light > dv_heavy)
 	_check("… genau im Verhältnis der Massen", absf(dv_light / dv_heavy - heavy_m / light_m) < 0.01)
 
-	# 3a) Triebwerk drehen (Crew-Auftrag): Schub verteilt sich neu
-	_check("Drehen ist planbar", CS.place("rotate", t2))
-	_check("Crew dreht das Triebwerk", _until_done(t2) and g.device_at(t2).rot == 1)
+	# 3a) Ein Triebwerk, das nach rechts schiebt: oben in die Außenwand bauen (Düse nach oben)
+	for dv in g.devices.values():
+		if dv.type == "crate" and g.zone[g.idx(dv.pos)] == 0:
+			dv.inv.add("motor", 2, 90.0)
+			dv.inv.add("pipe", 6, 90.0)
+			dv.inv.add("plate", 8, 90.0)
+			break
+	var tr: Vector2i = Vector2i(x0 + 12, y0 + 1)   # Cockpit, oben an der Außenwand
+	g.cables[g.idx(tr)] = 1                       # Kabel ans Netz (Heizung daneben)
+	CS.build_rot = 1
+	_check("Rechts-Triebwerk oben planbar (%s)" % CS.place_reason("dev:thruster", tr), CS.place("dev:thruster", tr))
+	_check("Crew baut es", _until_done(tr, 3600) and g.device_at(tr) != null and g.device_at(tr).rot == 1)
 	_secs(1)
 	_check("Danach: vorn %d kN, rechts %d kN" % [int(P.thrust_dir(Vector2i(1, 0))), int(P.thrust_dir(Vector2i(0, 1)))],
-		P.thrust_dir(Vector2i(1, 0)) == thr and P.thrust_dir(Vector2i(0, 1)) == thr)
+		P.thrust_dir(Vector2i(1, 0)) == 2.0 * thr and P.thrust_dir(Vector2i(0, 1)) == thr)
 	var m_rot: float = P.mass()
 	var dv_fwd := _burn(1.0, 0.0, 10)
 	var dv_right := _burn(0.0, 1.0, 10)
-	_check("W wirkt nur noch mit einem Triebwerk (%.2f m/s)" % dv_fwd, absf(dv_fwd - (thr + rcs) / m_rot * 10.0) < 0.05)
-	_check("D (rechts) nutzt das gedrehte Triebwerk (%.2f m/s)" % dv_right, absf(dv_right - (thr + rcs) / m_rot * 10.0) < 0.05)
+	_check("W wirkt mit beiden hinteren Triebwerken (%.2f m/s)" % dv_fwd, absf(dv_fwd - (2.0 * thr + rcs) / m_rot * 10.0) < 0.05)
+	_check("D (rechts) nutzt das obere Triebwerk (%.2f m/s)" % dv_right, absf(dv_right - (thr + rcs) / m_rot * 10.0) < 0.05)
 	var side_dv := _burn_vec(0.0, 1.0, 5)
 	_check("… und schiebt wirklich nach rechts (quer zur Nase)", rad_to_deg(absf(side_dv.angle_to(Vector2.from_angle(P.angle + PI / 2.0)))) < 1.0)
 
-	# 3b) Speichern und Laden: Drehung und Schub bleiben
+	# 3b) Speichern und Laden: Richtung, Felder und Schub bleiben
 	root.get_node("SaveSystem").save_game(true)
 	gs.new_game()
 	root.get_node("SaveSystem").load_game(true)
 	g = ship.grid
 	_secs(1)
-	_check("Nach dem Laden: Drehung erhalten", g.device_at(t2) != null and g.device_at(t2).rot == 1)
-	_check("… und dieselben Schubwerte", P.thrust_dir(Vector2i(1, 0)) == thr and P.thrust_dir(Vector2i(0, 1)) == thr and absf(P.mass() - m_rot) < 0.001)
+	_check("Nach dem Laden: Richtung und alle 3 Felder erhalten", g.device_at(tr) != null and g.device_at(tr).rot == 1 and g.device_at(tr + Vector2i(0, -2)) == g.device_at(tr)
+		and g.migrated.packed == 0 and g.migrated.converted == 0)
+	_check("… und dieselben Schubwerte", P.thrust_dir(Vector2i(1, 0)) == 2.0 * thr and P.thrust_dir(Vector2i(0, 1)) == thr and absf(P.mass() - m_rot) < 0.001)
 
-	# 3c) Triebwerk ausbauen: Masse und Schub sinken
+	# 3c) Triebwerk abbauen (über das Düsenfeld): Schub weg, Teil liegt innen am Boden
 	mira = root.get_node("CrewSystem").player()
 	var m_before: float = P.mass()
-	_check("Abbau beauftragt", R.order("uninstall", t2) == "")
-	_until_done(t2)
+	_check("Abbau über das Düsenfeld beauftragt", R.order("uninstall", tr + Vector2i(0, -2)) == "" and CS.jobs.has(g.idx(tr)))
+	_until_done(tr)
 	_secs(1)
-	var pk_mass: float = mira.inv.weight() / 1000.0
-	_check("Ausgebaut: Schub rechts weg", P.thrust_dir(Vector2i(0, 1)) == 0.0 and g.device_at(t2) == null)
-	_check("… Masse um 1,5 t kleiner, Gegenstand trägt Mira (%.2f t)" % (m_before - P.mass()), absf(m_before - P.mass() - 1.5) < 0.001)
-	# 3d) Das ausgebaute Triebwerk wieder einbauen: Masse wieder an Bord, Drehung bleibt
-	var m_i: float = P.mass()
-	CS.place("install:pk_thruster", t2)
-	var installed := _until_done(t2, 3600)
+	var pile = g.piles.get(g.idx(tr))
+	_check("Ausgebaut: Schub rechts weg, alle 3 Felder frei", P.thrust_dir(Vector2i(0, 1)) == 0.0 and g.device_at(tr) == null and g.device_at(tr + Vector2i(0, -1)) == null and g.device_at(tr + Vector2i(0, -2)) == null)
+	_check("… Wand bleibt", g.get_tile(tr + Vector2i(0, -1)) == ShipGrid.Tile.WALL)
+	_check("… ein Triebwerk-Gegenstand liegt innen (%.0f kg)" % (pile.weight() if pile != null else -1.0), pile != null and pile.count("pk_thruster") == 1 and absf(pile.weight() - 1500.0) < 0.001)
+	_check("… Masse unverändert: das Teil ist ja noch an Bord (%.3f t)" % (m_before - P.mass()), absf(m_before - P.mass()) < 0.000001)
+	# 3d) Wieder einbauen: Crew trägt es in den Händen, Masse bleibt, Schub kommt zurück
+	CS.build_rot = 1
+	_check("Einbau planbar", CS.place("install:pk_thruster", tr))
+	var installed := _until_done(tr, 3600)
 	_secs(1)
-	_check("Wieder eingebaut (mit Drehung nach rechts)", installed and g.device_at(t2) != null and g.device_at(t2).rot == 1 and P.thrust_dir(Vector2i(0, 1)) == thr)
-	# Regel: Was die Crew im Gepäck trägt, zählt nicht zur Schiffsmasse – der Einbau bringt die 1,5 t zurück
-	_check("… Einbau bringt 1,5 t zurück (%.2f → %.2f t)" % [m_i, P.mass()], absf(P.mass() - m_i - 1.5) < 0.001)
-	# 3e) Ein neues Triebwerk bauen (nach vorn): Material aus dem Lager, Schub und Masse steigen
-	for dv in g.devices.values():
-		if dv.type == "crate" and g.zone[g.idx(dv.pos)] == 0:
-			dv.inv.add("motor", 1, 90.0)
-			break
-	var spot := Vector2i(x0 + 11, y0 + 7)   # Feld mit Kabel: Triebwerke brauchen Strom
-	CS.build_rot = 0
+	_check("Wieder eingebaut (nach rechts)", installed and g.device_at(tr) != null and g.device_at(tr).rot == 1 and P.thrust_dir(Vector2i(0, 1)) == thr)
+	_check("… Masse unverändert (%.3f t)" % (P.mass() - m_before), absf(P.mass() - m_before) < 0.000001 and _count_type("pk_thruster") == 0)
+	# 3e) Ein neues Triebwerk bauen (vorn rechts, Düse nach vorn = Schub zurück)
+	var spot := Vector2i(x0 + 14, y0 + 2)   # Kabel liegt hier schon (Steuerpult-Leitung)
+	CS.build_rot = 2
 	var m_b: float = P.mass()
-	CS.place("dev:thruster", spot)
+	_check("Vorderes Triebwerk planbar (%s)" % CS.place_reason("dev:thruster", spot), CS.place("dev:thruster", spot))
 	var built := _until_done(spot, 3600)
 	_secs(1)
 	var used: float = (4 * 8.0 + 6.0 + 3 * 2.0) / 1000.0   # 4 Platten, 1 Motor, 3 Rohre aus dem Lager
 	_check("Crew baut ein neues Triebwerk", built and g.device_at(spot) != null and g.device_at(spot).type == "thruster")
 	_check("Einbau: +1,5 t Triebwerk, abzüglich verbautem Material (%.3f t mehr)" % (P.mass() - m_b), absf(P.mass() - m_b - (1.5 - used)) < 0.001)
-	_check("… und vorn wieder %d kN" % int(P.thrust_dir(Vector2i(1, 0))), P.thrust_dir(Vector2i(1, 0)) == 2.0 * thr)
+	_check("… und zurück %d kN" % int(P.thrust_dir(Vector2i(-1, 0))), P.thrust_dir(Vector2i(-1, 0)) == thr and P.thrust_dir(Vector2i(1, 0)) == 2.0 * thr)
 
 	# 4) Gleiche Flugsequenz bei ×1 und ×16 über dieselbe Spielzeit, danach Drift
 	var res: Array = []

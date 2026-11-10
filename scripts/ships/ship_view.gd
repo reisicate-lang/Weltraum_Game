@@ -156,6 +156,9 @@ func _draw_cable(g: ShipGrid, p: Vector2i) -> void:
 
 func _draw_device(dev: Device, ghost: bool = false) -> void:
 	var d := dev.data()
+	if d.length > 1 and not (dev.unknown and not ghost):
+		_draw_long_device(dev, ghost)
+		return
 	var r := _rect(dev.pos, 0.1)
 	if dev.unknown and not ghost:
 		draw_rect(r, Color(0.23, 0.24, 0.26))
@@ -189,6 +192,40 @@ func _draw_device(dev: Device, ghost: bool = false) -> void:
 	var problem := (dev.needs_power() and not dev.powered) or (d.stock >= 0.0 and dev.stock <= 0.0) or dev.broken or (dev.type == "solar" and not dev.producing)
 	if problem and int(Time.get_ticks_msec() / 400) % 2 == 0:
 		draw_circle(Vector2(dev.pos) * S + Vector2(0.82, 0.18) * S, S * 0.09, COL_REMOVE)
+
+## Mehrfeld-Gerät (Triebwerk 1×3): Gehäuse innen, Halterung auf der Wand, Düse im All
+func _draw_long_device(dev: Device, ghost: bool) -> void:
+	var d := dev.data()
+	var a := 0.45 if ghost else 1.0
+	var cells := dev.cells()
+	var ex := Vector2(dev.outward())
+	var side := ex.orthogonal()
+	var col := d.color
+	col.a = a
+	# Gehäuse auf dem Innenfeld
+	var r0 := _rect(cells[0], 0.1)
+	draw_rect(r0, col)
+	draw_rect(r0, Color(0, 0, 0, 0.5 * a), false, 1.0)
+	# Halterung durch die Wand (schmaler Steg)
+	var c1 := (Vector2(cells[1]) + Vector2(0.5, 0.5)) * S
+	draw_line(c1 - ex * S * 0.5, c1 + ex * S * 0.5, Color(0.55, 0.58, 0.62, a), S * 0.32)
+	# Düse draußen: öffnet sich zum All
+	var c2 := (Vector2(cells[2]) + Vector2(0.5, 0.5)) * S
+	draw_colored_polygon(PackedVector2Array([c2 - ex * S * 0.5 + side * S * 0.16, c2 - ex * S * 0.5 - side * S * 0.16,
+		c2 + ex * S * 0.35 - side * S * 0.36, c2 + ex * S * 0.35 + side * S * 0.36]), Color(0.45, 0.48, 0.52, a))
+	# Pfeil: Schubrichtung (vom All weg)
+	var c0 := r0.get_center()
+	draw_colored_polygon(PackedVector2Array([c0 - ex * S * 0.32, c0 + side * S * 0.16, c0 - side * S * 0.16]), Color(0.95, 0.76, 0.31, a))
+	if ghost:
+		return
+	if dev.powered and not dev.broken and PhysicsSystem.firing(dev.push_dir()):
+		draw_circle(c2 + ex * S * 0.6, S * (0.2 + randf() * 0.1), Color(1, 0.75, 0.3))
+	_draw_cracks(cells[0], dev.cond)
+	if dev.broken:
+		draw_line(r0.position, r0.end, COL_REMOVE, 2.0)
+		draw_line(Vector2(r0.end.x, r0.position.y), Vector2(r0.position.x, r0.end.y), COL_REMOVE, 2.0)
+	if ((dev.needs_power() and not dev.powered) or dev.broken) and int(Time.get_ticks_msec() / 400) % 2 == 0:
+		draw_circle(Vector2(cells[0]) * S + Vector2(0.82, 0.18) * S, S * 0.09, COL_REMOVE)
 
 func _draw_pile(p: Vector2i) -> void:
 	var o := Vector2(p) * S
@@ -305,6 +342,23 @@ func _draw_preview(g: ShipGrid) -> void:
 		draw_rect(_rect(hover), Color(1, 1, 1, 0.15))
 		return
 	var tiles: Array[Vector2i] = []
+	# Mehrfeld-Gerät (Triebwerk 1×3): alle Felder zeigen, grün nur wenn alles passt
+	var long_type := ""
+	if GameState.tool.begins_with("dev:") and ItemSystem.device(GameState.tool.substr(4)).length > 1:
+		long_type = GameState.tool.substr(4)
+	elif GameState.tool.begins_with("install:"):
+		var key := RemovalSystem.key_of_packed(GameState.tool.substr(8))
+		if key.begins_with("dev:") and ItemSystem.device(key.substr(4)).length > 1:
+			long_type = key.substr(4)
+	if long_type != "":
+		var ok_all := ShipConstructionSystem.can_place(GameState.tool, hover)
+		for c in ShipConstructionSystem.cells_of(long_type, hover, ShipConstructionSystem.build_rot):
+			if g.in_bounds(c):
+				draw_rect(_rect(c), Color(0.35, 0.78, 0.9, 0.35) if ok_all else Color(0.9, 0.33, 0.29, 0.3))
+		var gh := Device.new(long_type, hover)
+		gh.rot = ShipConstructionSystem.build_rot
+		_draw_device(gh, true)
+		return
 	if preview.is_empty():
 		tiles.append(hover)
 	else:

@@ -54,8 +54,12 @@ func create_start_ship() -> void:
 	grid.place_device("helm", Vector2i(x0 + 14, y0 + 1))
 	grid.place_device("fueltank", Vector2i(x0 + 11, y0 + 1))
 	grid.place_device("autodock", Vector2i(x0 + 14, y0 + 3))
-	grid.place_device("thruster", Vector2i(x0 + 11, y0 + 8))
-	grid.place_device("thruster", Vector2i(x0 + 12, y0 + 8))
+	# Zwei Triebwerke (1×3) durch die hintere Außenwand: innen in der Wohnkabine,
+	# Düse hinten ins All, Schub nach vorn
+	grid.place_device("thruster", Vector2i(x0 + 1, y0 + 2), 0)
+	grid.place_device("thruster", Vector2i(x0 + 1, y0 + 3), 0)
+	for y in range(y0 + 2, y0 + 5):
+		grid.cables[grid.idx(Vector2i(x0 + 1, y))] = 1
 	for y in range(y0 + 1, y0 + 5):
 		grid.cables[grid.idx(Vector2i(x0 + 14, y))] = 1
 	for y in range(y0 + 6, y0 + 9):

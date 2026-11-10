@@ -7,9 +7,13 @@
 ## Die Arbeit selbst erledigt die Crew über die normalen Aufträge (ShipConstructionSystem).
 ##
 ## Regeln:
-## - Ergebnisse kommen ins Gepäck der arbeitenden Figur; was nicht passt, landet
-##   als Haufen zu ihren Füßen (volles Inventar).
-## - Kisteninhalt wird bei allen drei Arten unversehrt neben das Objekt gelegt.
+## - Abbauen: genau ein vollständiger Gegenstand „… (abgebaut)“ landet auf einem
+##   erreichbaren Bodenfeld (dort, wo das Gerät stand, bzw. innen daneben). Zustand,
+##   Drehung und Inhalt (z. B. Kisteninhalt) bleiben im Gegenstand erhalten.
+##   Sein Einzelgewicht = Masse des eingebauten Geräts (DeviceData.mass) bzw. des Blocks
+##   (Config.TILE_MASS) – Schiffsmasse und Tragen rechnen mit demselben Wert.
+## - Zerlegen und Zerstören: Ergebnisse ins Gepäck der arbeitenden Figur, Rest als
+##   Haufen zu ihren Füßen; Kisteninhalt wird unversehrt neben das Objekt gelegt.
 ## - Verschlossene Behälter muss man erst knacken; ein Spind mit Raumanzug kann
 ##   nur abgebaut werden (der Anzug bleibt im abgebauten Spind).
 ## - Werkzeug muss eine Figur im Gepäck tragen; nur solche Figuren übernehmen den Auftrag.
@@ -86,24 +90,31 @@ func _register_packed() -> void:
 		if not "uninstall" in config(key).actions:
 			continue
 		var cost := _build_cost(key)
-		var w := 0.0
 		var v := 0.0
 		var val := 0
 		for type in cost:
 			var it := ItemSystem.item(type)
 			if it == null:
 				continue
-			w += it.weight * cost[type]
 			v += it.volume * cost[type]
 			val += it.value * cost[type]
 		var item := ItemData.new()
 		item.id = packed_id(key)
 		item.display_name = name_of(key) + " (abgebaut)"
-		item.weight = clampf(w * float(d.packed_weight_factor), 1.0, float(d.packed_max_weight))
+		item.weight = mass_kg(key)
 		item.volume = clampf(v * float(d.packed_weight_factor), 1.0, float(d.packed_max_weight))
 		item.value = int(val * 0.9)
 		item.description = "Abgebaut, kann wieder eingebaut werden (Rechtsklick auf ein freies Feld oder „Einbauen“). Zustand und Inhalt bleiben erhalten."
 		ItemSystem.items[item.id] = item
+
+## Einzelgewicht in kg: genau die Masse, mit der das eingebaute Objekt zur Schiffsmasse zählt
+func mass_kg(key: String) -> float:
+	if key.begins_with("dev:"):
+		return ItemSystem.device(key.substr(4)).mass * 1000.0
+	for t in TILE_KEYS:
+		if TILE_KEYS[t] == key:
+			return float(Config.TILE_MASS.get(t, 0.2)) * 1000.0
+	return 1.0
 
 func _build_cost(key: String) -> Dictionary:
 	if key.begins_with("dev:"):
@@ -155,6 +166,7 @@ func reason(kind: String, p: Vector2i) -> String:
 	var g := ShipSystem.grid
 	if not g.in_bounds(p):
 		return "Außerhalb des Schiffs."
+	p = anchor(p)
 	var i := g.idx(p)
 	var key := key_at(p)
 	if key == "":
@@ -191,7 +203,14 @@ func reason(kind: String, p: Vector2i) -> String:
 	return "Niemand kommt an %s heran." % nm
 
 ## Auftrag anlegen. Gibt "" bei Erfolg zurück, sonst den Grund.
+## Mehrfeld-Gerät (Triebwerk 1×3): jedes seiner Felder steht für das ganze Gerät,
+## der Auftrag sitzt am Innenfeld
+func anchor(p: Vector2i) -> Vector2i:
+	var dev := ShipSystem.grid.device_at(p)
+	return dev.pos if dev != null else p
+
 func order(kind: String, p: Vector2i) -> String:
+	p = anchor(p)
 	var why := reason(kind, p)
 	if why != "":
 		return why
@@ -284,15 +303,15 @@ func finish(job: Dictionary, worker: CrewMember, worker_pos: Vector2i) -> void:
 	var dev := g.device_at(p)
 	var cond := _cond(p)
 	var results: Array = []   # [type, qty, cond, data]
+	var packed: Array = []    # Abbauen: genau ein Gegenstand mit Inhalt, auf den Boden
 	match kind:
 		"uninstall":
 			var d = null
 			if dev != null:
-				d = dev.to_data()
-				d.items = []          # Inhalt kommt auf den Boden (siehe unten)
+				d = dev.to_data()     # mit Inhalt (Kiste) – bleibt im Gegenstand erhalten
 				d.unknown = false
 				d.lock = 0
-			results.append([packed_id(key), 1, cond, d])
+			packed = [packed_id(key), 1, cond, d]
 		"dismantle":
 			var y := dismantle_yield(key)
 			for type in y:
@@ -301,9 +320,9 @@ func finish(job: Dictionary, worker: CrewMember, worker_pos: Vector2i) -> void:
 			var y := debris(key)
 			for type in y:
 				results.append([type, int(y[type]), 30.0, null])
-	# Kisteninhalt unversehrt neben das Objekt legen
+	# Zerlegen/Zerstören: Kisteninhalt unversehrt neben das Objekt legen
 	var spill: Array = []
-	if dev != null and dev.inv != null:
+	if dev != null and dev.inv != null and kind != "uninstall":
 		for it in dev.inv.items:
 			spill.append([it.type, it.qty, it.cond, it.get("data")])
 	# Wer das Gerät gerade benutzt, hört damit auf
@@ -313,7 +332,7 @@ func finish(job: Dictionary, worker: CrewMember, worker_pos: Vector2i) -> void:
 				c.stop_activity()
 		if g.zone[i] == 1:
 			GoalSystem.stripped += 1
-		g.devices.erase(i)
+		g.remove_device(dev)
 		# Andockschleuse: das Loch in der Außenwand wird wieder Wand
 		if dev.type == "dockport":
 			g.set_tile(p, ShipGrid.Tile.WALL)
@@ -327,6 +346,13 @@ func finish(job: Dictionary, worker: CrewMember, worker_pos: Vector2i) -> void:
 	var spot := p if g.walkable(p) else ShipConstructionSystem.drop_spot(worker_pos)
 	for s in spill:
 		g.drop_items(spot, s[0], s[1], s[2], s[3])
+	if not packed.is_empty():
+		# Ein vollständiger Gegenstand auf einem erreichbaren Bodenfeld (innen)
+		var at := p if g.walkable(p) else ShipConstructionSystem.drop_spot(worker_pos)
+		g.drop_items(at, packed[0], 1, packed[2], packed[3])
+		GameState.toast("%s: Abbauen fertig – %s liegt am Boden (%.0f kg)." % [worker.display_name if worker != null else "Crew",
+			ItemSystem.item(packed[0]).display_name, Inventory.stack_weight({"type": packed[0], "qty": 1, "data": packed[3]})])
+		return
 	_give(worker, worker_pos, results)
 	var parts: PackedStringArray = []
 	for r in results:
@@ -368,19 +394,40 @@ func install_reason(pk: String, p: Vector2i) -> String:
 		return "Hier läuft schon ein Auftrag."
 	var key := key_of_packed(pk)
 	var t := g.get_tile(p)
-	var has_dev := g.devices.has(i)
+	var has_dev := g.occupied(p)
 	var ok := false
-	match key:
-		"dev:dockport": ok = t == ShipGrid.Tile.WALL and not has_dev and ShipSystem.port_dir(p) != Vector2i.ZERO
-		"tile:floor": ok = t == ShipGrid.Tile.SPACE
-		"tile:wall", "tile:window": ok = (t == ShipGrid.Tile.SPACE or t == ShipGrid.Tile.FLOOR) and not has_dev
-		"tile:door": ok = t != ShipGrid.Tile.DOOR and t != ShipGrid.Tile.SPACE and not has_dev
-		_: ok = t == ShipGrid.Tile.FLOOR and not has_dev
+	if key.begins_with("dev:") and ItemSystem.device(key.substr(4)).length > 1:
+		var why := g.mount_reason(key.substr(4), p, ShipConstructionSystem.build_rot)
+		if why != "":
+			return why
+		for c in _cells(key.substr(4), p, ShipConstructionSystem.build_rot):
+			if ShipConstructionSystem.jobs.has(g.idx(c)):
+				return "Hier läuft schon ein Auftrag."
+		ok = true
+	else:
+		ok = _fits(key, t, has_dev, p)
 	if not ok:
 		return "Passt hier nicht hin."
 	if ShipConstructionSystem.available(pk) <= 0 and not CrewSystem.crew.any(func(c): return c.inv.count(pk) > 0):
 		return "Kein „%s“ vorhanden." % ItemSystem.item(pk).display_name
 	return ""
+
+## Felder eines Geräts dieser Art an p mit Drehung rot (Innenfeld zuerst)
+func _cells(type: String, p: Vector2i, rot: int) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for k in maxi(1, ItemSystem.device(type).length):
+		out.append(p - Device.PUSH_DIRS[rot % 4] * k)
+	return out
+
+func _fits(key: String, t: int, has_dev: bool, p: Vector2i) -> bool:
+	var ok := false
+	match key:
+		"dev:dockport": ok = t == ShipGrid.Tile.WALL and not has_dev and ShipSystem.grid.zone[ShipSystem.grid.idx(p)] == 0 and ShipSystem.port_dir(p) != Vector2i.ZERO
+		"tile:floor": ok = t == ShipGrid.Tile.SPACE
+		"tile:wall", "tile:window": ok = (t == ShipGrid.Tile.SPACE or t == ShipGrid.Tile.FLOOR) and not has_dev
+		"tile:door": ok = t != ShipGrid.Tile.DOOR and t != ShipGrid.Tile.SPACE and not has_dev
+		_: ok = t == ShipGrid.Tile.FLOOR and not has_dev
+	return ok
 
 func install_time(pk: String) -> float:
 	var key := key_of_packed(pk)
@@ -409,9 +456,16 @@ func finish_install(job: Dictionary, worker_pos: Vector2i) -> void:
 		else:
 			dev = Device.new(key.substr(4), p)
 			dev.cond = float(st.cond)
+		if dev.data().rotatable:
+			dev.rot = int(job.get("rot", dev.rot))
+		# Mehrfeld-Gerät: Halterung inzwischen ungültig? Dann bleibt das Stück erhalten
+		if dev.data().length > 1 and g.mount_reason(dev.type, p, dev.rot) != "":
+			GameState.toast("%s: Einbau nicht möglich – %s Das Stück liegt daneben." % [name_of(key), g.mount_reason(dev.type, p, dev.rot)], "bad")
+			g.drop_items(ShipConstructionSystem.drop_spot(worker_pos), String(job.item), 1, float(st.cond), st.get("data"))
+			return
 		if dev.type == "dockport":
 			g.set_tile(p, ShipGrid.Tile.DOOR)
-		g.devices[i] = dev
+		g.put_device(dev)
 	else:
 		var tile: int = TILE_KEYS.find_key(key)
 		g.set_tile(p, tile)

@@ -45,6 +45,39 @@ func _count(type: String) -> int:
 			n += d.inv.count(type)
 	return n
 
+## Abgebauter Gegenstand dieser Sorte – egal ob am Boden, im Gepäck oder in einem Behälter
+func _find_packed(type: String) -> Dictionary:
+	var invs: Array = []
+	for c in crew.crew:
+		invs.append(c.inv)
+	for i in ship.grid.piles:
+		invs.append(ship.grid.piles[i])
+	for d in ship.grid.devices.values():
+		if d.inv != null:
+			invs.append(d.inv)
+	for inv in invs:
+		for it in inv.items:
+			if it.type == type:
+				return it
+	return {}
+
+## Wie _count, aber auch im erhaltenen Inhalt abgebauter Geräte
+func _count_deep(type: String) -> int:
+	var n := _count(type)
+	var invs: Array = []
+	for c in crew.crew:
+		invs.append(c.inv)
+	for i in ship.grid.piles:
+		invs.append(ship.grid.piles[i])
+	for inv in invs:
+		for it in inv.items:
+			var d = it.get("data")
+			if d is Dictionary and d.get("items") is Array:
+				for sub in d.items:
+					if sub.type == type:
+						n += int(sub.qty)
+	return n
+
 ## Menüeintrag für eine Aktion wählen (wie ein Klick im Rechtsklick-Menü)
 func _menu(p: Vector2i, kind: String) -> int:
 	if not ui.open_object_menu(p):
@@ -112,24 +145,25 @@ func _initialize() -> void:
 	_check("Abbau-Auftrag angelegt", CS.jobs.has(g.idx(wall)) and CS.jobs[g.idx(wall)].kind == "uninstall")
 	_check("Abbau fertig", _until_done(wall))
 	_check("Wand ist weg, Boden bleibt", g.get_tile(wall) == ShipGrid.Tile.FLOOR)
-	_check("Wand als Gegenstand im Gepäck", mira.inv.count("pk_tile_wall") == 1)
+	var wall_pile := -1
+	for i in g.piles:
+		if g.piles[i].count("pk_tile_wall") > 0:
+			wall_pile = i
+	_check("Wand als ein vollständiger Gegenstand am Boden (nicht im Gepäck)", _count("pk_tile_wall") == 1 and wall_pile >= 0 and mira.inv.count("pk_tile_wall") == 0 and g.walkable(g.pos(wall_pile)))
 	_check("Laufweg durch die frühere Wand", not ship.find_path(wall + Vector2i(-1, 0), wall + Vector2i(1, 0)).is_empty())
 	_check("Menü bietet Einbauen an", _menu(wall + Vector2i(0, 0), "install") >= 0)
 	ui.object_menu.hide()
 	_click(wall, "install")
 	_check("Einbau fertig", _until_done(wall))
-	_check("Wand wieder da (100 %%)", g.get_tile(wall) == ShipGrid.Tile.WALL and g.cond[g.idx(wall)] == 100.0 and mira.inv.count("pk_tile_wall") == 0)
+	_check("Wand wieder da (100 %%), Gegenstand verbraucht", g.get_tile(wall) == ShipGrid.Tile.WALL and g.cond[g.idx(wall)] == 100.0 and _count("pk_tile_wall") == 0)
 
 	# 2) Beschädigt abbauen und mit gleichem Zustand einbauen (Wand und Batterie)
 	var wall2 := Vector2i(x0 + 10, y0 + 7)
 	g.cond[g.idx(wall2)] = 63.0
 	_click(wall2, "uninstall")
 	_until_done(wall2)
-	var st: Dictionary = {}
-	for it in mira.inv.items:
-		if it.type == "pk_tile_wall":
-			st = it
-	_check("Beschädigte Wand behält Zustand im Gepäck (%d %%)" % int(st.get("cond", -1)), int(st.get("cond", -1)) == 63)
+	var st: Dictionary = _find_packed("pk_tile_wall")
+	_check("Beschädigte Wand behält Zustand als Gegenstand (%d %%)" % int(st.get("cond", -1)), int(st.get("cond", -1)) == 63)
 	_click(wall2, "install")
 	_until_done(wall2)
 	_check("Wieder eingebaut mit 63 %%", g.get_tile(wall2) == ShipGrid.Tile.WALL and int(g.cond[g.idx(wall2)]) == 63)
@@ -143,10 +177,7 @@ func _initialize() -> void:
 	_until_done(bat_p)
 	power.step(0.0)
 	_check("Batterie ausgebaut: nicht mehr im Stromnetz", g.device_at(bat_p) == null and PhysicsSystem_ok(root))
-	var pk: Dictionary = {}
-	for it in mira.inv.items:
-		if it.type == "pk_battery":
-			pk = it
+	var pk: Dictionary = _find_packed("pk_battery")
 	var packed_charge: float = float(pk.get("data", {}).get("charge", -1))
 	_check("Abgebaute Batterie trägt Ladung und Zustand (%.2f kWh, %d %%)" % [packed_charge, int(pk.get("cond", -1))], absf(packed_charge - 12.5) < 1.0 and int(pk.cond) == 71)
 	_run(30)
@@ -155,11 +186,8 @@ func _initialize() -> void:
 	save.load_game(true)
 	mira = crew.player()
 	g = ship.grid
-	var pk2: Dictionary = {}
-	for it in mira.inv.items:
-		if it.type == "pk_battery":
-			pk2 = it
-	_check("Nach Speichern/Laden: Daten im Gepäck erhalten", absf(float(pk2.get("data", {}).get("charge", -1)) - packed_charge) < 0.000001)
+	var pk2: Dictionary = _find_packed("pk_battery")
+	_check("Nach Speichern/Laden: Daten im Gegenstand erhalten", absf(float(pk2.get("data", {}).get("charge", -1)) - packed_charge) < 0.000001)
 	_click(bat_p, "install")
 	_until_done(bat_p)
 	var bat2 = g.device_at(bat_p)
@@ -287,15 +315,14 @@ func _initialize() -> void:
 	var rations := _count("ration")
 	_click(crate_p, "uninstall")
 	_until_done(crate_p)
-	_check("Kiste abgebaut, Inhalt liegt am Boden, nichts verloren", g.device_at(crate_p) == null and _count("ration") == rations and g.piles.has(g.idx(crate_p)))
+	var pkc: Dictionary = _find_packed("pk_crate")
+	_check("Kiste abgebaut: ein Gegenstand am Boden, Inhalt darin erhalten, nichts verloren", g.device_at(crate_p) == null and _count_deep("ration") == rations and _count("ration") == 0
+		and g.piles.has(g.idx(crate_p)) and g.piles[g.idx(crate_p)].count("pk_crate") == 1 and not pkc.get("data", {}).get("items", []).is_empty())
 	var locker_p := Vector2i(x0 + 1, y0 + 8)
 	_check("Spind mit Anzug: Zerlegen gesperrt (%s)" % R.reason("dismantle", locker_p), "Raumanzug" in R.reason("dismantle", locker_p))
 	_click(locker_p, "uninstall")
 	_until_done(locker_p)
-	var lk: Dictionary = {}
-	for it in mira.inv.items:
-		if it.type == "pk_locker":
-			lk = it
+	var lk: Dictionary = _find_packed("pk_locker")
 	_check("Abgebauter Spind behält den Anzug", lk.get("data", {}).get("suit") != null)
 	var gen_p := Vector2i(x0 + 1, y0 + 5)
 	power.step(0.0)

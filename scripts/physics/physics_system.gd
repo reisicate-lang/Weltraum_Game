@@ -117,7 +117,10 @@ func ship_devices(type: String) -> Array:
 ## z. B. Triebwerk 1,5 t), Ladung in Behältern und lose Ladung auf dem eigenen
 ## Schiffsboden. Jede Ladung zählt genau einmal: Umlagern zwischen eigenem Behälter
 ## und eigenem Boden ändert die Masse nicht. Fremde Bereiche (Wrack, Station) und
-## Haufen im All neben dem Rumpf zählen nicht. Crew-Gepäck ist nicht enthalten.
+## Haufen im All neben dem Rumpf zählen nicht. Was eine Figur an Bord trägt (Gepäck,
+## Hände, ein getragenes Gerät), zählt ebenfalls genau einmal mit – mit demselben
+## Einzelgewicht wie im Inventar (ItemData.weight, abgebaute Geräte = Gerätemasse).
+## Verlässt es das Schiff (Station, Wrack), fällt sein Beitrag weg.
 func mass() -> float:
 	var g := ShipSystem.grid
 	var m := 0.0
@@ -133,6 +136,12 @@ func mass() -> float:
 	for i in g.piles:
 		if _own_floor(g, i):
 			m += g.piles[i].weight() / 1000.0
+	for c in CrewSystem.crew:
+		if c.away_until > GameState.time or not g.in_bounds(c.tile()) or not _own_floor(g, g.idx(c.tile())):
+			continue
+		m += c.inv.weight() / 1000.0
+		if c.carrying != null:
+			m += c.carrying.data().mass + (c.carrying.inv.weight() / 1000.0 if c.carrying.inv != null else 0.0)
 	return m
 
 ## Liegt ein Haufen auf dem eigenen Schiffsboden? (eigenes Feld, kein Weltraum)
