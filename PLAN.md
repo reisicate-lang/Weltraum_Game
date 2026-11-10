@@ -120,3 +120,4 @@ und werden Schritt für Schritt übertragen.
 - `tests/test_stations.gd` – begehbare Stationen: Aufbau, Luft, Gespräche, Verkauf, Speichern, Abdocken (36)
 - `tests/test_undock.gd` – manuelles Abdocken: Gründe, Sperre gegen Wieder-Andocken, alle Zeitstufen, Speichern (49)
 - `tests/test_removal.gd` – Rechtsklick-Menü: Abbauen, Zerlegen, Zerstören, Einbauen, Gründe, Inhalt, Zeitstufen, Speichern (52)
+- `tests/test_auto.gd` – Auto-Modus: Aufgaben wählen, sofort anhalten, neu bewerten, Tragen, Notfall, Speichern (24)

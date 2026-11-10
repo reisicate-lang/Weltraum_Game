@@ -24,6 +24,7 @@ godot --headless --path . --script res://tests/test_world.gd
 godot --headless --path . --script res://tests/test_stations.gd
 godot --headless --path . --script res://tests/test_undock.gd
 godot --headless --path . --script res://tests/test_removal.gd
+godot --headless --path . --script res://tests/test_auto.gd
 ```
 
 ## Steuerung
@@ -42,6 +43,7 @@ godot --headless --path . --script res://tests/test_removal.gd
 | Fenster bauen | `Z` |
 | Zeit | `Leertaste` Pause, `1`–`4` (1× = Echtzeit) |
 | Charaktermenü (Fähigkeiten, Traits, Hobbys, Lebenslauf, Aufgaben) | `I` |
+| Auto-Modus der ausgewählten Figur an/aus | Knopf „Auto: AN/AUS“ links oder `J` |
 | Navigation | `N`, fliegen mit `WASD`, `F` andocken, `U` abdocken |
 | Speichern | `Strg+S`, Autosave jede Minute |
 

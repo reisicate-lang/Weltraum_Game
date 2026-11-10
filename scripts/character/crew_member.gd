@@ -43,6 +43,8 @@ var enemies: Array[String] = []
 var salary := 0                     ## Credits pro Tag (Crew)
 var away_until := 0.0               ## auf der Station unterwegs bis (Spielzeit)
 ## Aufgabenverteilung: welche Arbeiten dieser Charakter übernimmt
+## Auto-Modus: wählt die Figur selbst Aufträge, Bedürfnisse und Freizeit? (Standard: an)
+var auto_mode := true
 var work_prefs := {"build": true, "repair": true, "remove": true, "haul": true, "refill": true, "craft": true, "hack": true, "eva": true}
 var _search_cooldown := 0.0
 var _flee_cooldown := 0.0
@@ -126,6 +128,29 @@ func drop_carried() -> void:
 	g.devices[g.idx(spot)] = dev
 	EventBus.ship_changed.emit()
 	push_out_if_stuck()
+
+## Auto-Modus ein- oder ausschalten.
+## Aus: sofort anhalten. Laufender Auftrag wird über die vorhandene Abbruchlogik
+## freigegeben (bleibt offen, Fortschritt und bezahltes Material bleiben beim Auftrag,
+## getragene Geräte werden abgestellt), Freizeit/Bedürfnis-Gang und Laufweg verworfen.
+## Ein: sofort alle verfügbaren Aufträge neu bewerten.
+func set_auto(on: bool) -> void:
+	if auto_mode == on:
+		return
+	auto_mode = on
+	if not on:
+		release_job()
+		if activity != null and not activity.has("flee"):
+			stop_activity()
+		order = null
+		path.clear()
+		waiting = false
+		task = "Steht – Auto-Modus aus"
+	else:
+		_search_cooldown = 0.0
+		for j in ShipConstructionSystem.jobs.values():
+			if j.claimed_by == -1:
+				j.retry_at = 0.0
 
 func cancel_all() -> void:
 	if job != null:
@@ -376,6 +401,17 @@ func update(dt: float) -> void:
 		stop_activity()
 		if _start_flee():
 			return
+	# Auto-Modus aus: nur noch Notfall-Flucht, sonst stehen bleiben und bei Bedarf warnen
+	if not auto_mode:
+		if activity != null and activity.has("flee"):
+			_do_activity(dt)
+			return
+		if activity != null:
+			stop_activity()
+		task = "Steht – Auto-Modus aus"
+		for k in ["food", "water", "sleep", "hygiene"]:
+			_warn("auto-" + k, needs[k] < Config.NEEDS[k].at, "%s: %s – der Auto-Modus ist aus." % [display_name, Config.NEEDS[k].name], needs[k] >= Config.NEEDS[k].at)
+		return
 	# 3) Tätigkeit (Freizeit wird für Arbeit unterbrochen)
 	if activity != null and activity.get("kind", "") in ["study", "hobby", "trainer"] and _has_open_job():
 		stop_activity()
@@ -910,7 +946,7 @@ func to_data() -> Dictionary:
 		"is_player": is_player, "items": inv.to_data(), "suit": suit,
 		"skills": skills, "traits": traits, "hobbies": hobbies, "stress": stress, "age": age, "history": history,
 		"contacts": contacts, "enemies": enemies, "salary": salary, "work_prefs": work_prefs, "last_trained": last_trained,
-		"careers": get_meta("careers", []), "body_temp": body_temp, "relations": relations}
+		"careers": get_meta("careers", []), "body_temp": body_temp, "relations": relations, "auto": auto_mode}
 
 static func from_data(d: Dictionary) -> CrewMember:
 	var c := CrewMember.new(int(d.id), String(d.name), Color.html(String(d.color)), Vector2i.ZERO)
@@ -937,4 +973,5 @@ static func from_data(d: Dictionary) -> CrewMember:
 	c.set_meta("careers", d.get("careers", []))
 	c.body_temp = float(d.get("body_temp", 37.0))
 	c.relations = d.get("relations", {})
+	c.auto_mode = bool(d.get("auto", true))
 	return c

@@ -209,3 +209,4 @@ func _key(k: InputEventKey) -> void:
 		KEY_E: UIManager.interact()
 		KEY_H: UIManager.toggle_help()
 		KEY_I: UIManager.char_ui.toggle()
+		KEY_J: UIManager.toggle_auto()

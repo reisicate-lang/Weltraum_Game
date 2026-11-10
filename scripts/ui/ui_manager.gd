@@ -20,6 +20,7 @@ const COL_AMBER := Color(0.95, 0.64, 0.23)
 const COL_MUTED := Color(0.51, 0.57, 0.65)
 
 var layer: CanvasLayer
+var auto_button: Button
 ## Rechtsklick-Menü für Objekte (Abbauen, Zerlegen, Zerstören, Einbauen)
 var object_menu: PopupMenu
 var menu_pos := Vector2i(-1, -1)
@@ -165,6 +166,10 @@ func _build_left() -> void:
 	box.add_child(name_label)
 	task_label = _label("", COL_MUTED, 12)
 	box.add_child(task_label)
+	# Auto-Modus der ausgewählten Figur (Taste J)
+	auto_button = _button("Auto: AN", toggle_auto)
+	auto_button.tooltip_text = "AN: Die Figur wählt selbst Aufträge, isst, schläft und hat Freizeit.\nAUS: Sie bleibt sofort stehen und tut nur, was du befiehlst (Klick, WASD). Taste J."
+	box.add_child(auto_button)
 	for key in [["health", "Gesundheit"], ["warmth", "Körperwärme"], ["stress", "Ruhe"], ["air", "Atmung"], ["food", "Hunger"], ["water", "Durst"], ["sleep", "Energie"], ["hygiene", "Hygiene"], ["suit_o2", "Anzug O₂"], ["suit_bat", "Anzug-Akku"]]:
 		var row := HBoxContainer.new()
 		var l := _label(key[1], COL_MUTED, 12)
@@ -294,7 +299,7 @@ Geräte-Menü: Generator, Sauerstoff, Betten, Kisten ...
 Rechtsklick auf ein Objekt: Menü (Abbauen, Zerlegen, Zerstören, Einbauen) · auf Figur: Aufgabe abbrechen
 Für Arbeiten im Vakuum holt Mira selbst einen Raumanzug. Die Luftschleuse links
 pumpt die Luft ab, bevor die Außentür aufgeht. Draußen auf dem Steg liegt Mondmüll.
-E: Kiste oder Haufen neben dir durchsuchen
+E: Kiste oder Haufen neben dir durchsuchen · J: Auto-Modus der ausgewählten Figur an/aus
 L / P / O: Luft-, Strom- und Wärme-Ansicht · Mausrad: zoomen · Pfeiltasten: Ansicht
 Leertaste: Pause · 1–4: Geschwindigkeit · Strg+S: speichern
 
@@ -756,6 +761,23 @@ func _put_terminal(type: String, qty: int) -> void:
 
 # ---------------- Aktionen ----------------
 
+# ---------------- Auto-Modus ----------------
+
+## Auto-Modus der ausgewählten Figur umschalten
+func toggle_auto() -> void:
+	var c: CrewMember = GameState.selected if GameState.selected != null else CrewSystem.player()
+	if c == null:
+		return
+	c.set_auto(not c.auto_mode)
+	GameState.toast("%s: Auto-Modus %s." % [c.display_name, "AN – sucht sich selbst Aufgaben" if c.auto_mode else "AUS – bleibt stehen"])
+	_refresh_auto(c)
+
+func _refresh_auto(c: CrewMember) -> void:
+	if auto_button == null or c == null:
+		return
+	auto_button.text = "Auto: AN" if c.auto_mode else "Auto: AUS"
+	auto_button.add_theme_color_override("font_color", Color(0.44, 0.81, 0.56) if c.auto_mode else Color(0.9, 0.33, 0.29))
+
 # ---------------- Rechtsklick-Menü ----------------
 
 ## Menü für das Objekt auf Feld p öffnen. false = hier gibt es nichts.
@@ -966,6 +988,7 @@ func _refresh() -> void:
 	if c != null:
 		name_label.text = ("▸ " if c.is_player else "") + c.display_name
 		task_label.text = c.task + (" · trägt " + c.carrying.data().display_name if c.carrying != null else "")
+		_refresh_auto(c)
 		need_bars.health.value = c.health
 		need_bars.warmth.value = clampf((c.body_temp - 33.0) / 4.0 * 100.0, 0.0, 100.0)
 		need_bars.stress.value = 100.0 - c.stress
