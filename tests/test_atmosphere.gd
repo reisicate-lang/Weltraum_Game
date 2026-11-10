@@ -77,6 +77,8 @@ func _complete(kind: String, p: Vector2i, target: String, worker: Vector2i) -> v
 func _initialize() -> void:
 	await process_frame
 	await process_frame
+	# Eigener Speicherplatz: Tests überschreiben keine echten Spielstände und laufen parallel
+	root.get_node("SaveSystem").slot = 902
 	atm = root.get_node("AtmosphereSystem")
 	root.get_node("Settings").meteors = false
 	var CS = root.get_node("ShipConstructionSystem")

@@ -15,6 +15,11 @@ func _check(name: String, ok: bool) -> void:
 func _initialize() -> void:
 	await process_frame
 	await process_frame
+	# Eigener Speicherplatz: Tests überschreiben keine echten Spielstände und laufen parallel
+	root.get_node("SaveSystem").slot = 911
+	# Diese Tests prüfen auch die (vorübergehend abgeschaltete) Station und das Wrack
+	Config.ENABLE_STATION = true
+	Config.ENABLE_WRECK = true
 	var gs = root.get_node("GameState")
 	var crew = root.get_node("CrewSystem")
 	var Q = root.get_node("QuestSystem")
@@ -126,15 +131,15 @@ func _initialize() -> void:
 	DirAccess.remove_absolute("user://mods/items/modtest.tres")
 	# Speicherplätze
 	econ.credits = 1111
-	save.slot = 2
+	save.slot = 912
 	save.save_game(true)
 	econ.credits = 2222
-	save.slot = 3
+	save.slot = 913
 	save.save_game(true)
-	save.slot = 2
+	save.slot = 912
 	save.load_game(true)
 	_check("Speicherplatz 2 geladen (%d Cr)" % econ.credits, econ.credits == 1111)
-	_check("Speicherplatz-Info", save.slot_info(3).find("2222") >= 0)
+	_check("Speicherplatz-Info", save.slot_info(913).find("2222") >= 0)
 
 	# --- Ziele wie ein Spieler durchspielen ---
 	gs.new_game()

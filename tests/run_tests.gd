@@ -15,10 +15,22 @@ func _run(minutes: float) -> void:
 	for i in int(minutes * 60.0):
 		gs.step(1.0 / 60.0)
 
+## Lange Phasen schneller: 5 Spielsekunden pro Schritt (statt 1). Nur für
+## Ruhe- und Arbeitsphasen, nicht für Flugbahn-Prüfungen.
+func _run_coarse(minutes: float, step_s: float = 5.0) -> void:
+	var gs = root.get_node("GameState")
+	for i in int(minutes * 60.0 / step_s):
+		gs.step(step_s / 60.0)
+
 func _initialize() -> void:
 	# Autoloads sind nach dem ersten Bild bereit
 	await process_frame
 	await process_frame
+	# Eigener Speicherplatz: Tests überschreiben keine echten Spielstände und laufen parallel
+	root.get_node("SaveSystem").slot = 901
+	# Diese Tests prüfen auch die (vorübergehend abgeschaltete) Station und das Wrack
+	Config.ENABLE_STATION = true
+	Config.ENABLE_WRECK = true
 	var gs = root.get_node("GameState")
 	var ship = root.get_node("ShipSystem")
 	var crew = root.get_node("CrewSystem")
@@ -34,14 +46,14 @@ func _initialize() -> void:
 	_check("Startschiff hat Geräte", ship.grid.devices.size() >= 10)
 
 	# 1) Zwei Spieltage: Luft und Bedürfnisse bleiben stabil
-	_run(48 * 60)
+	_run_coarse(48 * 60, 15.0)   # zwei Tage Stabilität: grobe Schritte reichen
 	var mira = crew.player()
 	_check("Mira lebt nach 2 Tagen (Gesundheit %d)" % int(mira.health), mira.health > 50.0)
 	_check("Strom läuft", not power.main_net().is_empty() and power.main_net().ok)
 	var o2_ok := true
 	for i in ship.grid.tiles.size():
-		# Nur Räume mit Druck zählen (der Außensteg ist absichtlich Vakuum)
-		if ship.grid.holds_air(i) and ship.grid.pressure(i) > 50.0 and ship.grid.o2[i] < 17.0:
+		# Nur das eigene Schiff mit Druck zählen (Wrack und Station haben eigene Luft)
+		if ship.grid.zone[i] == 0 and ship.grid.holds_air(i) and ship.grid.pressure(i) > 50.0 and ship.grid.o2[i] < 17.0:
 			o2_ok = false
 	_check("Überall genug Sauerstoff", o2_ok)
 
@@ -111,7 +123,7 @@ func _initialize() -> void:
 		if ship.grid.cond[i] < 100.0 and ship.grid.zone[i] == 0 and ship.grid.tiles[i] >= 2:
 			damaged += 1
 	_check("Einschläge beschädigen die Hülle (%d Felder)" % damaged, damaged > 0)
-	_run(120)
+	_run_coarse(120)
 	var still := 0
 	for i in ship.grid.tiles.size():
 		if ship.grid.cond[i] < Config.AUTO_REPAIR_AT and ship.grid.tiles[i] >= 2 and ship.grid.zone[i] == 0:
@@ -130,7 +142,7 @@ func _initialize() -> void:
 	_check("Wrack hat Geräte (%d)" % wreck_devs.size(), wreck_devs.size() >= 3)
 	for p in wreck_devs.slice(0, 3):
 		build.place("remove", p)
-	_run(60)
+	_run_coarse(60)
 	var wreck_piles: Array = []
 	for i in ship.grid.piles:
 		if ship.grid.zone[i] == 1:
@@ -176,7 +188,7 @@ func _initialize() -> void:
 	var crafted := [false]
 	root.get_node("EventBus").toast.connect(func(t, _k): if t.begins_with("Werkbank"): crafted[0] = true)
 	econ.craft("plate")
-	_run(60)
+	_run_coarse(60)
 	_check("Werkbank hat eine Platte hergestellt", crafted[0])
 
 	# 10) Raumflug: abdocken, Umlaufbahn, Schub, andocken, reisen, Flotte, Absturz
@@ -190,7 +202,7 @@ func _initialize() -> void:
 	_check("Wrack bleibt beim Abdocken an Tycho", salv.wreck_name == "")
 	var moon := Vector2(60000, 0)
 	var d0: float = phys.pos.distance_to(moon)
-	_run(120)
+	_run_coarse(120)
 	_check("Schiff bleibt im Mondorbit (%d km statt %d km)" % [int(phys.pos.distance_to(moon)), int(d0)], absf(phys.pos.distance_to(moon) - d0) < 400.0)
 	var f0: float = phys.fuel()
 	var v0: Vector2 = phys.vel
@@ -213,7 +225,7 @@ func _initialize() -> void:
 	# Schnellreise
 	var info: Dictionary = phys.travel_info("karman")
 	phys.travel_to("karman")
-	_run(info.secs / 60.0 + 1.0)
+	_run_coarse(info.secs / 60.0 + 1.0)
 	_check("Schnellreise zum Kármán-Ring", phys.docked == "karman")
 	_check("Handel am Kármán-Ring möglich", econ.terminal_online())
 	_check("Crew lebt nach der Reise (%d)" % int(crew.player().health), crew.player().health > 50.0)

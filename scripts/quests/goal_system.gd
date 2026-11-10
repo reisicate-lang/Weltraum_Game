@@ -4,10 +4,10 @@ extends Node
 
 ## Ziel-Prüfungen. "check" ist der Name einer Funktion unten.
 const GOALS := [
-	{"id": "suit", "text": "Lass Mira einen Raumanzug anziehen (plane etwas im Wrack unter der Andockschleuse, z. B. Abreißen X)", "check": "_g_suit", "reward": 50},
-	{"id": "junk", "text": "Sammle Schrott aus dem Wrack ein (Werkzeug Einsammeln, Q)", "check": "_g_junk", "reward": 80},
-	{"id": "strip", "text": "Reiß ein Gerät im Wrack ab (Werkzeug Abreißen, X)", "check": "_g_strip", "reward": 80},
-	{"id": "sell", "text": "Verkaufe Bergungsgut am Handelsterminal im Cockpit", "check": "_g_sell", "reward": 100},
+	{"id": "suit", "text": "Lass Mira einen Raumanzug anziehen (plane etwas draußen im All, z. B. Boden vor der Luftschleuse)", "check": "_g_suit", "reward": 50},
+	{"id": "junk", "text": "Sammle Schrott aus dem Wrack ein (Werkzeug Einsammeln, Q)", "check": "_g_junk", "reward": 80, "needs": "wreck"},
+	{"id": "strip", "text": "Reiß ein Gerät im Wrack ab (Werkzeug Abreißen, X)", "check": "_g_strip", "reward": 80, "needs": "wreck"},
+	{"id": "sell", "text": "Verkaufe etwas am Handelsterminal im Cockpit", "check": "_g_sell", "reward": 100},
 	{"id": "solar", "text": "Baue ein Solarpanel draußen im Vakuum, z. B. auf einem Boden vor der Luftschleuse (spart Brennstoff)", "check": "_g_solar", "reward": 150},
 	{"id": "book", "text": "Lass jemanden ein Lehrbuch lesen (im Terminal kaufen, in eine Kiste legen)", "check": "_g_book", "reward": 100},
 	{"id": "fly", "text": "Fliege zum Kármán-Ring (Taste N, Reisen)", "check": "_g_fly", "reward": 200},
@@ -31,9 +31,16 @@ func reset() -> void:
 
 func current() -> Dictionary:
 	for g in GOALS:
-		if not g.id in done:
+		if not g.id in done and _available(g):
 			return g
 	return {}
+
+## Ziele, die einen abgeschalteten Spielteil brauchen, werden übersprungen
+func _available(g: Dictionary) -> bool:
+	match String(g.get("needs", "")):
+		"wreck": return Config.ENABLE_WRECK
+		"station": return Config.ENABLE_STATION
+	return true
 
 func step(dt: float) -> void:
 	_timer -= dt

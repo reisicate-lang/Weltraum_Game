@@ -6,6 +6,9 @@ extends SceneTree
 func _initialize() -> void:
 	await process_frame
 	await process_frame
+	# Diese Tests prüfen auch die (vorübergehend abgeschaltete) Station und das Wrack
+	Config.ENABLE_STATION = true
+	Config.ENABLE_WRECK = true
 	var gs = root.get_node("GameState")
 	var build = root.get_node("ShipConstructionSystem")
 	var econ = root.get_node("EconomySystem")

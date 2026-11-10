@@ -79,6 +79,8 @@ const DOCK_DIRS := {"west": Vector2i(1, 0), "east": Vector2i(-1, 0), "north": Ve
 ## Gibt false zurück (mit Meldung), wenn keine Schleuse passt.
 func build(id: String) -> bool:
 	clear()
+	if not Config.ENABLE_STATION:
+		return false
 	var l := PhysicsSystem.loc(id)
 	if l.is_empty() or String(l.get("kind", "")) != "station":
 		return false
@@ -290,7 +292,7 @@ func _sync_candidates() -> void:
 			_add_npc(c.display_name, "candidate", hiring, _front(hiring), ["Ich suche Arbeit. %d Cr am Tag, und ich bin dabei." % c.salary], c)
 
 func step(dt: float) -> void:
-	if not active():
+	if not Config.ENABLE_STATION or not active():
 		return
 	var g := ShipSystem.grid
 	# Die Station hält ihre Luft selbst
@@ -364,7 +366,7 @@ func npc_for_desk(p: Vector2i) -> Dictionary:
 
 ## Klick auf eine Figur oder einen Tresen der Station. true = erledigt.
 func click(t: Vector2i, world: Vector2) -> bool:
-	if not active():
+	if not Config.ENABLE_STATION or not active():
 		return false
 	var npc := npc_at(world)
 	if npc.is_empty():

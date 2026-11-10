@@ -17,9 +17,21 @@ func _run(minutes: float) -> void:
 	for i in int(minutes * 60.0):
 		gs.step(1.0 / 60.0)
 
+## Lange Phasen schneller: 5 Spielsekunden pro Schritt (statt 1). Nur für
+## Ruhe- und Arbeitsphasen, nicht für Flugbahn-Prüfungen.
+func _run_coarse(minutes: float, step_s: float = 5.0) -> void:
+	var gs = root.get_node("GameState")
+	for i in int(minutes * 60.0 / step_s):
+		gs.step(step_s / 60.0)
+
 func _initialize() -> void:
 	await process_frame
 	await process_frame
+	# Eigener Speicherplatz: Tests überschreiben keine echten Spielstände und laufen parallel
+	root.get_node("SaveSystem").slot = 910
+	# Diese Tests prüfen auch die (vorübergehend abgeschaltete) Station und das Wrack
+	Config.ENABLE_STATION = true
+	Config.ENABLE_WRECK = true
 	var gs = root.get_node("GameState")
 	var ship = root.get_node("ShipSystem")
 	var build = root.get_node("ShipConstructionSystem")
@@ -44,7 +56,7 @@ func _initialize() -> void:
 	var mira = crew.player()
 
 	# 1) Temperatur bleibt im Schiff angenehm
-	_run(24 * 60)
+	_run_coarse(24 * 60, 15.0)   # Wärmegleichgewicht: grobe Schritte reichen
 	var cabin: int = g.idx(Vector2i(x0 + 4, y0 + 2))
 	var cockpit: int = g.idx(Vector2i(x0 + 12, y0 + 3))
 	_check("Wohnkabine warm nach 1 Tag (%.1f °C)" % g.temp[cabin], g.temp[cabin] > 17.0)
@@ -114,7 +126,7 @@ func _initialize() -> void:
 			dispenser = dv
 	dispenser.stock = 20.0
 	water.wastewater = 30.0
-	_run(240)
+	_run_coarse(240)
 	_check("Wasserfilter macht Abwasser zu Trinkwasser (Abwasser %.1f L, Spender %.1f L)" % [water.wastewater, dispenser.stock], water.wastewater < 30.0 and dispenser.stock > 20.0)
 	_check("Filter verbraucht Filterleistung", wf.stock < 20.0)
 
@@ -123,7 +135,7 @@ func _initialize() -> void:
 	g.cables[g.idx(Vector2i(x0 + 2, y0 + 3))] = 1
 	root.get_node("EventBus").ship_changed.emit()
 	var rations_before: int = build.available("ration")
-	_run(60)
+	_run_coarse(60)
 	_check("Pflanzen werden gepflegt", gs.time - hydro.tended_at < 1440.0)
 	hydro.growth = 0.97
 	_run(180)
@@ -144,7 +156,7 @@ func _initialize() -> void:
 	econ.credits = 99999
 	vat.growth = 0.9
 	farm.growth = 0.5
-	_run(4 * 60)
+	_run_coarse(4 * 60)
 	_check("Auto-Farm hat den Gen-Mod eingesetzt", farm.genemod)
 	_check("Fleischtank hat Fleisch geliefert (Futter %.0f)" % vat.stock, vat.stock < 10.0)
 

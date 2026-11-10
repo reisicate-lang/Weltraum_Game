@@ -16,6 +16,14 @@ und dient als Vorlage für die Etappen, die noch nach Godot übertragen werden.
 
 ## Tests (ohne Fenster)
 
+Alle Testreihen parallel (etwa 100 Sekunden):
+
+```
+GODOT=/pfad/zu/godot tests/run_all.sh
+```
+
+Einzeln:
+
 ```
 godot --headless --path . --script res://tests/run_tests.gd
 godot --headless --path . --script res://tests/test_skills.gd
@@ -27,6 +35,7 @@ godot --headless --path . --script res://tests/test_removal.gd
 godot --headless --path . --script res://tests/test_auto.gd
 godot --headless --path . --script res://tests/test_atmosphere.gd
 godot --headless --path . --script res://tests/test_docking.gd
+godot --headless --path . --script res://tests/test_core.gd
 ```
 
 ## Steuerung
@@ -65,6 +74,19 @@ Pro Objekttyp (Geräte-ID wie `generator`, Blöcke als `tile:wall`, `tile:floor`
 | `hp` | Trefferpunkte bei 100 % Zustand |
 | `debris` | Müll beim Zerstören, z. B. `{"scrap": 3}` |
 | `hit_interval`, `hit_damage`, `tool_damage` | (in `defaults`) Sekunden zwischen Schlägen, Grundschaden, Bonus je Werkzeug |
+
+## Vorübergehend abgeschaltet: Station und Wrack
+
+In `scripts/core/config.gd` stehen zwei Schalter:
+
+```
+static var ENABLE_STATION := false   # begehbare Station beim Andocken
+static var ENABLE_WRECK := false     # Wrack/Asteroid an der unteren Schleuse, Bergung
+```
+
+Auf `true` setzen, um sie wieder einzuschalten. Der Code bleibt vollständig erhalten.
+Ein Wrack aus einem alten Spielstand wird bei abgeschaltetem Wrack nicht gelöscht,
+sondern am Ort abgelegt und kommt beim Wiedereinschalten zurück.
 
 ## Projektstruktur
 

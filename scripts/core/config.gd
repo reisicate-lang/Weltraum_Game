@@ -3,6 +3,13 @@
 class_name Config
 extends RefCounted
 
+## ---- Vorübergehend abgeschaltete Spielteile (Code bleibt erhalten) ----
+## Zum Wiedereinschalten auf true setzen.
+## Station: begehbare Station mit Räumen und Figuren beim Andocken an Stationen.
+static var ENABLE_STATION := false
+## Wrack: Wrack/Asteroid an der unteren Andockschleuse, Bergungsrecht, Verschrotten.
+static var ENABLE_WRECK := false
+
 const TILE_SIZE := 32
 const WORLD_W := 64
 const WORLD_H := 44

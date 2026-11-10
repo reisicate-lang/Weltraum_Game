@@ -38,6 +38,11 @@ func _fresh():
 func _initialize() -> void:
 	await process_frame
 	await process_frame
+	# Eigener Speicherplatz: Tests überschreiben keine echten Spielstände und laufen parallel
+	root.get_node("SaveSystem").slot = 903
+	# Diese Tests prüfen auch die (vorübergehend abgeschaltete) Station und das Wrack
+	Config.ENABLE_STATION = true
+	Config.ENABLE_WRECK = true
 	gs = root.get_node("GameState")
 	ship = root.get_node("ShipSystem")
 	crew = root.get_node("CrewSystem")
@@ -59,7 +64,10 @@ func _initialize() -> void:
 	var sink := Vector2i(x0 + 3, y0 + 1)
 	R.order("dismantle", bed)
 	R.order("dismantle", sink)
-	_run(3)
+	for k in 10:
+		_run(1)
+		if mira.job != null:
+			break
 	var first = mira.job
 	_check("Wählt selbst eine Aufgabe (%s)" % (CS.label(first) if first != null else "-"), first != null and first.claimed_by == mira.id)
 	var start_pos: Vector2 = mira.pos

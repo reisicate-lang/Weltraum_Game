@@ -43,6 +43,11 @@ func _fresh() -> void:
 func _initialize() -> void:
 	await process_frame
 	await process_frame
+	# Eigener Speicherplatz: Tests überschreiben keine echten Spielstände und laufen parallel
+	root.get_node("SaveSystem").slot = 909
+	# Diese Tests prüfen auch die (vorübergehend abgeschaltete) Station und das Wrack
+	Config.ENABLE_STATION = true
+	Config.ENABLE_WRECK = true
 	root.get_node("Settings").meteors = false
 	root.get_node("EventBus").toast.connect(func(t, _k): toasts.append(String(t)))
 	var P = root.get_node("PhysicsSystem")

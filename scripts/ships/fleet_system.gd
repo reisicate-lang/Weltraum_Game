@@ -84,7 +84,14 @@ func migrate_docking() -> void:
 				changed = true
 		if changed:
 			GameState.toast("Alter Spielstand: Steg entfernt, Andockschleusen nachgerüstet.")
-	if SalvageSystem.port < 0:
+	# Wrack abgeschaltet: vorhandenes Wrack am Ort ablegen (nicht löschen), Felder entfernen
+	if not Config.ENABLE_WRECK:
+		var parked = capture()
+		if parked != null:
+			places[PhysicsSystem.docked if PhysicsSystem.docked != "" else "tycho"] = {"wreck": parked}
+			SalvageSystem.clear()
+			changed = true
+	elif SalvageSystem.port < 0:
 		var w = capture()
 		if w != null:
 			SalvageSystem.clear()
@@ -161,6 +168,8 @@ func _attach_stored(w: Dictionary) -> bool:
 	return true
 
 func arrive(l: Dictionary) -> void:
+	if not Config.ENABLE_WRECK:
+		return
 	var place: Dictionary = places.get(l.id, {})
 	var w = place.get("wreck")
 	if w != null:

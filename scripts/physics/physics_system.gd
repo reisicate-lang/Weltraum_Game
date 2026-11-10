@@ -308,7 +308,7 @@ func dock(id: String, force: bool = false) -> bool:
 	if ShipSystem.ports().is_empty():
 		GameState.toast("Keine Andockschleuse vorhanden. Bau eine in eine Außenwand (Geräte-Menü: Andockschleuse).", "bad")
 		return false
-	if String(loc(id).get("kind", "")) == "station" and not StationSystem.build(id):
+	if String(loc(id).get("kind", "")) == "station" and Config.ENABLE_STATION and not StationSystem.build(id):
 		return false
 	docked = id
 	thrust = 0.0

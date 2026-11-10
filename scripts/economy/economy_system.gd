@@ -170,6 +170,9 @@ func pay_debt(amount: int) -> void:
 		GameState.toast("Der Kredit ist abbezahlt! Das Schiff gehört jetzt dir.")
 
 func buy_claim() -> void:
+	if not Config.ENABLE_WRECK:
+		GameState.toast("Bergung ist vorübergehend abgeschaltet.")
+		return
 	if not terminal_online():
 		GameState.toast("Das Handelsterminal ist offline.", "bad")
 		return
@@ -192,6 +195,8 @@ func buy_claim() -> void:
 	GameState.toast("Ein neues Wrack wurde an die Bergungsleine geschleppt: " + SalvageSystem.wreck_name)
 
 func scrap_hull() -> void:
+	if not Config.ENABLE_WRECK:
+		return
 	if not terminal_online() or not SalvageSystem.clearable():
 		GameState.toast("Geht gerade nicht (Terminal offline oder Crew auf dem Wrack).")
 		return

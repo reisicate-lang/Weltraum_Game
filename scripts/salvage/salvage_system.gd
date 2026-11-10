@@ -25,6 +25,8 @@ func free_port() -> Dictionary:
 ## Wrack mit seiner Tür direkt unter die Schleuse hängen (Tür an Tür).
 ## Gibt false zurück, wenn keine freie Schleuse nach unten da ist oder kein Platz ist.
 func generate() -> bool:
+	if not Config.ENABLE_WRECK:
+		return false
 	var g := ShipSystem.grid
 	var pt := free_port()
 	if pt.is_empty():
@@ -172,6 +174,8 @@ func is_wreck(i: int) -> bool:
 ## Asteroid: ein Brocken aus Fels (Wände), der beim Abreißen Eis und Erz gibt.
 ## Hängt unter einer freien Schleuse nach unten; direkt darunter ein Landeplatz.
 func generate_asteroid() -> bool:
+	if not Config.ENABLE_WRECK:
+		return false
 	var g := ShipSystem.grid
 	var pt := free_port()
 	if pt.is_empty():

@@ -304,8 +304,7 @@ L / P / O: Luft-, Strom- und Wärme-Ansicht · Mausrad: zoomen · Pfeiltasten: A
 Leertaste: Pause · 1–4: Geschwindigkeit · Strg+S: speichern
 
 Du schuldest der Bank 24 000 Cr, alle 7 Tage ist eine Rate fällig.
-An der unteren Andockschleuse hängt ein Wrack: ausschlachten (X), einsammeln (Q), im
-Handelsterminal im Cockpit verkaufen (anklicken).
+Verkaufen und kaufen: Handelsterminal im Cockpit anklicken (nur angedockt).
 N: Navigation am Steuerpult · Fliegen mit WASD · Schnellreise zu Stationen
 und ins Trümmerfeld. Vorsicht: Die Erde zieht dich an.""", Color(0.87, 0.9, 0.94), 14)
 	text.custom_minimum_size = Vector2(560, 0)
@@ -618,6 +617,8 @@ func _refresh_window() -> void:
 		window_box.add_child(_label("Schwarzmarkt: Datenchips bringen hier das Doppelte.", COL_MUTED, 12))
 	var tabs := HBoxContainer.new()
 	for tb in [["sell", "Verkaufen"], ["buy", "Kaufen"], ["bank", "Konto"], ["salvage", "Bergung"], ["ships", "Schiffe"], ["station", "Station"], ["crew", "Crew"], ["jobs", "Aufträge"]]:
+		if tb[0] == "salvage" and not Config.ENABLE_WRECK:
+			continue
 		var b := _button(tb[1], func():
 			trade_tab = tb[0]
 			_last_window = ""
@@ -1025,7 +1026,8 @@ func _refresh() -> void:
 			lines.append("%s ×%d (%d %%)" % [ItemSystem.item(it.type).display_name, it.qty, int(it.cond)])
 		inv_label.text = ("%.1f / %d kg\n" % [c.inv.weight(), int(Config.CARRY_WEIGHT)]) + ("\n".join(lines) if not lines.is_empty() else "leer")
 	var goal := GoalSystem.current()
-	goal_label.text = ("%s (%d/%d)" % [goal.text, GoalSystem.done.size() + 1, GoalSystem.GOALS.size()]) if not goal.is_empty() else "Alle Ziele erreicht. Mach, was du willst."
+	var goal_count: int = GoalSystem.GOALS.filter(func(x): return GoalSystem._available(x)).size()
+	goal_label.text = ("%s (%d/%d)" % [goal.text, mini(GoalSystem.done.size() + 1, goal_count), goal_count]) if not goal.is_empty() else "Alle Ziele erreicht. Mach, was du willst."
 	var net := ShipPowerSystem.main_net()
 	if net.is_empty():
 		power_label.text = "⚡ Kein Stromnetz"

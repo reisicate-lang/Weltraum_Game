@@ -49,6 +49,11 @@ func _fresh():
 func _initialize() -> void:
 	await process_frame
 	await process_frame
+	# Eigener Speicherplatz: Tests überschreiben keine echten Spielstände und laufen parallel
+	root.get_node("SaveSystem").slot = 905
+	# Diese Tests prüfen auch die (vorübergehend abgeschaltete) Station und das Wrack
+	Config.ENABLE_STATION = true
+	Config.ENABLE_WRECK = true
 	gs = root.get_node("GameState")
 	ship = root.get_node("ShipSystem")
 	st = root.get_node("StationSystem")
