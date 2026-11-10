@@ -1,2 +1,5 @@
 .godot/
 *.import
+
+# Von neueren Godot-Versionen (ab 4.4) automatisch angelegt
+*.uid

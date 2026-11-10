@@ -16,6 +16,9 @@ if not exist ".git" (
   pause
   exit /b 1
 )
+rem Godot schreibt project.godot beim Oeffnen um. Diese automatische Aenderung verwerfen,
+rem sonst blockiert sie das Holen. Die echte Fassung kommt danach von GitHub.
+git checkout -- project.godot
 echo Hole den neuesten Stand von GitHub ...
 git pull
 if errorlevel 1 (
