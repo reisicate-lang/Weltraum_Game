@@ -1,6 +1,6 @@
 ## Tests für begehbare Stationen
-##   godot --headless --path . --script res://tests/test_stations.gd
-extends SceneTree
+##   godot --headless --path . --script res://tests/boot.gd -- test_stations
+extends "res://tests/test_base.gd"
 
 var ok_count := 0
 var fail_count := 0

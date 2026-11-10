@@ -1,7 +1,7 @@
 ## Balance-Simulation: Eine Woche Bergung durch Mira allein.
 ## Jeden Tag: Wrack-Geräte abreißen, alles einsammeln, verkaufen, bei Bedarf neues Wrack.
-##   godot --headless --path . --script res://tests/balance_week.gd
-extends SceneTree
+##   godot --headless --path . --script res://tests/boot.gd -- balance_week
+extends "res://tests/test_base.gd"
 
 func _initialize() -> void:
 	await process_frame

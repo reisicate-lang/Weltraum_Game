@@ -1,8 +1,8 @@
 ## Abnahmetests Atmosphäre und Raumdruck (Bauplan „Atmosphäre und Raumdruck“)
 ## Fester Simulationsschritt (1 Spielsekunde), Crew/Feuer/Gasgeräte aus
 ## (außer beim Wiederbefüllen). Geprüft werden kPa, Vakuumweg und Gasmengen.
-##   godot --headless --path . --script res://tests/test_atmosphere.gd
-extends SceneTree
+##   godot --headless --path . --script res://tests/boot.gd -- test_atmosphere
+extends "res://tests/test_base.gd"
 
 const T := ShipGrid.Tile
 var ok_count := 0

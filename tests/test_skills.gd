@@ -1,6 +1,6 @@
 ## Tests für Fähigkeiten, Traits, Hobbys, Lebenslauf, NPCs und Stationen:
-##   godot --headless --path . --script res://tests/test_skills.gd
-extends SceneTree
+##   godot --headless --path . --script res://tests/boot.gd -- test_skills
+extends "res://tests/test_base.gd"
 
 var _failed := 0
 var _ok := 0

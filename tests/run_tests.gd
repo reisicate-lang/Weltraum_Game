@@ -1,7 +1,7 @@
 ## Automatische Tests ohne Fenster:
-##   godot --headless --path . --script res://tests/run_tests.gd
+##   godot --headless --path . --script res://tests/boot.gd -- run_tests
 ## Prüft Luft, Strom, Bedürfnisse, Bauen mit Material, Speichern/Laden.
-extends SceneTree
+extends "res://tests/test_base.gd"
 
 var _failed := 0
 

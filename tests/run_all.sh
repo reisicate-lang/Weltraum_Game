@@ -5,7 +5,7 @@ cd "$(dirname "$0")/.."
 GODOT="${GODOT:-godot}"
 OUT="$(mktemp -d)"
 START=$(date +%s)
-ls tests/*.gd | xargs -n1 basename | sed 's/\.gd$//' | grep -vE '^(screenshot|balance_week|_)' | \
-  xargs -P4 -I{} bash -c "s=\$(date +%s); timeout 900 \"$GODOT\" --headless --path . --script res://tests/{}.gd > \"$OUT/{}.log\" 2>&1; \
+ls tests/*.gd | xargs -n1 basename | sed 's/\.gd$//' | grep -vE "^(screenshot|balance_week|boot|test_base|_)" | \
+  xargs -P4 -I{} bash -c "s=\$(date +%s); timeout 900 \"$GODOT\" --headless --path . --script res://tests/boot.gd -- {} > \"$OUT/{}.log\" 2>&1; \
     printf '%-16s %4ss  %s\n' {} \$((\$(date +%s)-s)) \"\$(grep -E 'Fehler\$' \"$OUT/{}.log\")\"; grep -h '^FEHLER' \"$OUT/{}.log\" | sed 's/^/    /'"
 echo "Gesamt: $(( $(date +%s) - START ))s  (Protokolle: $OUT)"

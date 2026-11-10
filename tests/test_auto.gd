@@ -1,6 +1,6 @@
 ## Tests für den Auto-Modus einer Figur
-##   godot --headless --path . --script res://tests/test_auto.gd
-extends SceneTree
+##   godot --headless --path . --script res://tests/boot.gd -- test_auto
+extends "res://tests/test_base.gd"
 
 var ok_count := 0
 var fail_count := 0

@@ -1,6 +1,6 @@
 ## Tests für Etappe 8–10 (Crew, Welt, Feinschliff):
-##   godot --headless --path . --script res://tests/test_world.gd
-extends SceneTree
+##   godot --headless --path . --script res://tests/boot.gd -- test_world
+extends "res://tests/test_base.gd"
 
 var _failed := 0
 var _ok := 0

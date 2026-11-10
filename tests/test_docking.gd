@@ -1,7 +1,7 @@
 ## Tests für Andockschleusen: Andocken nur mit Schleuse, Tür an Tür, keine
 ## zusätzlichen Felder, Abdocken ohne Rest, Wrack an der Schleuse, alte Spielstände.
-##   godot --headless --path . --script res://tests/test_docking.gd
-extends SceneTree
+##   godot --headless --path . --script res://tests/boot.gd -- test_docking
+extends "res://tests/test_base.gd"
 
 var ok_count := 0
 var fail_count := 0

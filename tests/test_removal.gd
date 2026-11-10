@@ -1,6 +1,6 @@
 ## Tests für das Rechtsklick-Menü: Abbauen, Zerlegen, Zerstören, Einbauen
-##   godot --headless --path . --script res://tests/test_removal.gd
-extends SceneTree
+##   godot --headless --path . --script res://tests/boot.gd -- test_removal
+extends "res://tests/test_base.gd"
 
 var ok_count := 0
 var fail_count := 0

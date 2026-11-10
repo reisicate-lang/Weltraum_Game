@@ -8,7 +8,7 @@ Jede Etappe endet mit einer spielbaren, getesteten Version.
 
 ## Umstieg auf Godot 4
 
-Ab jetzt wird das Spiel in Godot 4.3 mit GDScript gebaut. Die Etappen 1–6 existieren als Browser-Version in `web/`
+Ab jetzt wird das Spiel in Godot 4.7 mit GDScript gebaut. Die Etappen 1–6 existieren als Browser-Version in `web/`
 und werden Schritt für Schritt übertragen.
 
 - [x] Godot-Projekt mit Ordnerstruktur, Autoloads, Resources (Gegenstände, Geräte), Signals (EventBus)

@@ -1,6 +1,6 @@
 ## Tests für Etappe 7 (Temperatur, Feuer, Wasser, Anbau, Chemie):
-##   godot --headless --path . --script res://tests/test_systems.gd
-extends SceneTree
+##   godot --headless --path . --script res://tests/boot.gd -- test_systems
+extends "res://tests/test_base.gd"
 
 var _failed := 0
 var _ok := 0

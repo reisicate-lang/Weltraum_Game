@@ -1,6 +1,6 @@
 ## Tests für manuelles Abdocken (von Stationen und anderen Orten)
-##   godot --headless --path . --script res://tests/test_undock.gd
-extends SceneTree
+##   godot --headless --path . --script res://tests/boot.gd -- test_undock
+extends "res://tests/test_base.gd"
 
 var ok_count := 0
 var fail_count := 0

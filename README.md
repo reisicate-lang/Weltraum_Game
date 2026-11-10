@@ -2,12 +2,12 @@
 
 Düstere Weltraum-Survival- und Raumschiff-Simulation von oben, spielmechanisch an Ostranauts angelehnt.
 
-Das Spiel wird mit **Godot 4.3** (GDScript) entwickelt. Die frühere Browser-Version liegt im Ordner `web/`
+Das Spiel wird mit **Godot 4.7** (GDScript) entwickelt. Die frühere Browser-Version liegt im Ordner `web/`
 und dient als Vorlage für die Etappen, die noch nach Godot übertragen werden.
 
 ## Starten (Godot)
 
-1. Godot 4.3 herunterladen: https://godotengine.org/download (Standard-Version, nicht .NET)
+1. Godot 4.7 herunterladen: https://godotengine.org/download (Standard-Version, nicht .NET)
 2. Godot öffnen, **Importieren**, die Datei `project.godot` aus diesem Ordner wählen
 3. Mit **F5** (oder dem Play-Knopf oben rechts) starten
 
@@ -25,17 +25,17 @@ GODOT=/pfad/zu/godot tests/run_all.sh
 Einzeln:
 
 ```
-godot --headless --path . --script res://tests/run_tests.gd
-godot --headless --path . --script res://tests/test_skills.gd
-godot --headless --path . --script res://tests/test_systems.gd
-godot --headless --path . --script res://tests/test_world.gd
-godot --headless --path . --script res://tests/test_stations.gd
-godot --headless --path . --script res://tests/test_undock.gd
-godot --headless --path . --script res://tests/test_removal.gd
-godot --headless --path . --script res://tests/test_auto.gd
-godot --headless --path . --script res://tests/test_atmosphere.gd
-godot --headless --path . --script res://tests/test_docking.gd
-godot --headless --path . --script res://tests/test_core.gd
+godot --headless --path . --script res://tests/boot.gd -- run_tests
+godot --headless --path . --script res://tests/boot.gd -- test_skills
+godot --headless --path . --script res://tests/boot.gd -- test_systems
+godot --headless --path . --script res://tests/boot.gd -- test_world
+godot --headless --path . --script res://tests/boot.gd -- test_stations
+godot --headless --path . --script res://tests/boot.gd -- test_undock
+godot --headless --path . --script res://tests/boot.gd -- test_removal
+godot --headless --path . --script res://tests/boot.gd -- test_auto
+godot --headless --path . --script res://tests/boot.gd -- test_atmosphere
+godot --headless --path . --script res://tests/boot.gd -- test_docking
+godot --headless --path . --script res://tests/boot.gd -- test_core
 ```
 
 ## Steuerung
