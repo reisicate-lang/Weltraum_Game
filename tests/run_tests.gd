@@ -215,6 +215,9 @@ func _initialize() -> void:
 	var tp: Dictionary = phys.rel_to("tycho")
 	phys.pos = tp.pos + Vector2(0.1, 0)
 	phys.vel = tp.vel + Vector2(0.03, 0)
+	# Nase gegen die Flugrichtung (wie ein Pilot mit Q/E), dann angleichen: Haupttriebwerk bremst mit
+	phys.angle = PI
+	phys.ang_vel = 0.0
 	phys.match_target = "tycho"
 	_run(0.5)
 	_check("Geschwindigkeit angeglichen (%.4f km/s)" % phys.rel_to("tycho").speed, phys.rel_to("tycho").speed < 0.006)

@@ -123,6 +123,7 @@ und werden Schritt für Schritt übertragen.
 - `tests/test_core.gd` – Kernspiel mit abgeschalteter Station und abgeschaltetem Wrack (21)
 - `tests/test_flight.gd` – manuelle Schiffssteuerung: Cockpit, Drift, Drehung, Gegenschub, Anflug und Andocken, Zeitstufen, Speichern (36)
 - `tests/test_thrusters.gd` – Triebwerke: Schub addiert sich, Masse bremst, Drehen, Aus- und Einbau, Speichern, Zeitstufen, Drift (27)
+- `tests/test_match.gd` – Angleichen (X): manueller Puls, Lagedüsen allein, kein Treibstoff, Ausstieg, Laden (22)
 - Alle Reihen parallel: `tests/run_all.sh` (etwa 100 s)
 - `tests/test_removal.gd` – Rechtsklick-Menü: Abbauen, Zerlegen, Zerstören, Einbauen, Gründe, Inhalt, Zeitstufen, Speichern (52)
 - `tests/test_auto.gd` – Auto-Modus: Aufgaben wählen, sofort anhalten, neu bewerten, Tragen, Notfall, Speichern (24)

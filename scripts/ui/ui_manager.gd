@@ -466,7 +466,7 @@ func _course(v: Vector2) -> String:
 ## Zahlen für die Fluganzeige (auch zum Erkennen, ob neu gezeichnet werden muss)
 func _flight_rows() -> Array:
 	var P := PhysicsSystem
-	var out: Array = [_course(Vector2.from_angle(P.angle)), int(rad_to_deg(P.ang_vel)), P.thrust, P.strafe, P.rot_input, P.match_target,
+	var out: Array = [_course(Vector2.from_angle(P.angle)), int(rad_to_deg(P.ang_vel)), P.thrust, P.strafe, P.rot_input, P.match_target, P.match_input != Vector2.ZERO,
 		snappedf(P.mass(), 0.1), P.thrust_dir(Vector2i(1, 0)), P.thrust_dir(Vector2i(-1, 0)), P.thrust_dir(Vector2i(0, 1)), P.thrust_dir(Vector2i(0, -1))]
 	if P.target != "" and P.docked == "":
 		var ap: Dictionary = P.approach(P.target)
@@ -488,7 +488,8 @@ func _build_flight_info() -> void:
 	if P.strafe > 0.0: thr.append("rechts")
 	if P.rot_input != 0.0: thr.append("drehen")
 	if P.rot_stop: thr.append("Drehung stoppen")
-	if P.match_target != "": thr.append("angleichen")
+	if P.match_target != "":
+		thr.append("angleichen" + (" (feuert)" if P.match_input != Vector2.ZERO else " (Ziel erreicht)"))
 	nav_side.add_child(_row("Aktiver Schub", [_label(", ".join(thr) if not thr.is_empty() else "keiner – Schiff driftet", COL_AMBER, 12)]))
 	var fl: Vector2 = P.thrust_vector_local()
 	var mass_t: float = P.mass()
@@ -536,7 +537,11 @@ func _build_flight_info() -> void:
 		var db := _button("Andocken [F]", func(): if not P.dock(P.target): GameState.toast(P.dock_block_reason(P.target)))
 		db.disabled = not P.can_dock(P.target)
 		row.add_child(db)
-		row.add_child(_button("Angleichen [X]", toggle_match))
+		var on: bool = P.match_target == P.target
+		var mb := _button("Angleichen [X]: AN" if on else "Angleichen [X]", toggle_match)
+		if on:
+			mb.add_theme_color_override("font_color", good)
+		row.add_child(mb)
 		nav_side.add_child(row)
 	nav_side.add_child(_label("TASTEN IM COCKPIT", COL_MUTED, 11))
 	for k in FLIGHT_KEYS:
@@ -548,6 +553,9 @@ func cycle_target() -> void:
 	var ids: Array = P.locations.map(func(l): return l.id)
 	var i := ids.find(P.target)
 	P.target = ids[(i + 1) % ids.size()]
+	# Läuft das Angleichen, gilt es ab jetzt dem neuen Ziel
+	if P.match_target != "":
+		P.match_target = P.target
 	_last_nav = ""
 	_refresh_nav()
 
@@ -615,7 +623,10 @@ func _refresh_nav() -> void:
 				_refresh_nav()))
 		if not here and P.travel.is_empty():
 			if r.dist < 300.0:
-				btns.append(_button("Angleichen", func(): P.match_target = l.id))
+				btns.append(_button("Angleichen", func():
+					P.target = l.id
+					P.match_target = l.id
+					_last_nav = ""))
 			btns.append(_button("Ausrichten", func(): P.angle = (r.pos - P.pos).angle()))
 			if P.can_dock(l.id):
 				btns.append(_button("Andocken", func(): P.dock(l.id)))

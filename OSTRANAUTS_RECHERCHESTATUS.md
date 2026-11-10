@@ -110,3 +110,35 @@ Eigene Entscheidungen:
 - **Drehen:** Rechtsklick → „Drehen“ ist ein kurzer Crew-Auftrag von etwa einer Spielminute.
 - **Bauen:** Schwere Bauteile (Triebwerk: 44 kg Material) holt die Crew in mehreren
   Gängen und legt das Material am Bauplatz ab.
+
+## Geschwindigkeitsangleichung im Cockpit (Stand: November 2026)
+
+**Quelle:** offizieller Ostranauts-Startguide auf Steam, Abschnitte „Flight Metrics“ und
+„Clamping“: https://steamcommunity.com/sharedfiles/filedetails/?id=3347080066
+
+Vom Nutzer als Quelle für die beobachtbare Funktion genannt. In der Arbeitsumgebung war
+`steamcommunity.com` gesperrt, der Text konnte deshalb **nicht gelesen** werden.
+Bekannt (sekundär, Wiki-Auszug): „Station keeping“ richtet das Schiff aufs Ziel aus und
+bringt die Relativgeschwindigkeit (VREL) auf 0.
+
+**Offen:**
+- genaue Regelung (Stärke, Kurve)
+- ob das Original dabei das Schiff dreht
+- Totzone
+- Zusammenspiel mit manuellem Schub im Original
+
+### Umsetzung in Godot (eigene Entscheidungen)
+- **Ein- und Ausschalten:** X oder der Knopf „Angleichen“ schaltet ein und aus. Die
+  Angleichung bleibt aktiv, bis sie mit X ausgeschaltet wird, das Cockpit verlassen oder
+  angedockt wird. Nach dem Laden eines Spielstands ist sie immer aus.
+- **Schub:** Die Angleichung rechnet den Geschwindigkeitsunterschied zum Ziel in
+  Schiffsrichtungen um (vor, zurück, rechts, links). Sie gibt pro Achse so viel Schub,
+  wie in diesem Schritt nötig ist, höchstens den vollen Schub. Genutzt werden die
+  Triebwerke dieser Richtung plus die Lagedüsen, mit demselben Treibstoffverbrauch wie
+  bei den Tasten. **Das Schiff wird dabei nicht gedreht.** Lagedüsen allein genügen.
+- **Totzone:** Unter 0,05 m/s Relativgeschwindigkeit feuert die Angleichung nicht.
+- **Manueller Schub** (W, A, S, D) hat Vorrang. Solange eine Taste gehalten wird, pausiert
+  die Angleichung, danach arbeitet sie wieder auf die Zielgeschwindigkeit hin.
+- **Abbruch:** Ohne Strom am Pult endet die Angleichung (mit Meldung). Ohne Treibstoff
+  feuert sie nicht.
+- Das automatische Andocken (Auto-Dock-Modul) ist ein eigener Ablauf und bleibt unberührt.

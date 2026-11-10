@@ -21,6 +21,9 @@ var rot_input := 0.0            ## Drehschub: im Uhrzeigersinn (+1) / gegen (-1)
 var rot_stop := false           ## Drehung abbremsen (Gegenschub der Lagedüsen)
 var ang_vel := 0.0              ## Drehgeschwindigkeit in rad/s (bleibt ohne Gegenschub erhalten)
 var target := ""                ## ausgewähltes Ziel (Ort) für Anzeige und Andocken
+## Angleichen: aktuelle Schub-Eingabe der Angleichung (für Anzeige und Flammen)
+var match_input := Vector2.ZERO
+const MATCH_DEADBAND := 0.00005  ## 0,05 m/s: darunter feuert die Angleichung nicht
 var crashed := false
 var _warned := false
 ## Sperre gegen sofortiges Wieder-Andocken am selben Ort (technische Entscheidung):
@@ -159,15 +162,24 @@ func thrust_dir(d: Vector2i) -> float:
 func max_thrust() -> float:
 	return thrust_dir(Vector2i(1, 0))
 
-## Welche Triebwerksrichtungen die aktuellen Eingaben anfordern (Schiffskoordinaten)
-func _requested() -> Dictionary:
-	return {Vector2i(1, 0): maxf(0.0, thrust), Vector2i(-1, 0): maxf(0.0, -thrust),
-		Vector2i(0, 1): maxf(0.0, strafe), Vector2i(0, -1): maxf(0.0, -strafe)}
+## Welche Triebwerksrichtungen eine Eingabe anfordert (Schiffskoordinaten).
+## Ohne Angabe: die aktuellen Eingaben (Tasten oder Angleichung).
+func _requested(inp = null) -> Dictionary:
+	var v: Vector2 = inp if inp != null else _input_now()
+	return {Vector2i(1, 0): maxf(0.0, v.x), Vector2i(-1, 0): maxf(0.0, -v.x),
+		Vector2i(0, 1): maxf(0.0, v.y), Vector2i(0, -1): maxf(0.0, -v.y)}
 
-## Schubvektor in Schiffskoordinaten (kN) aus Triebwerken und Lagedüsen für die aktuellen Eingaben
-func thrust_vector_local() -> Vector2:
-	var f := Vector2(thrust, strafe) * rcs_thrust()
-	var req := _requested()
+## Wirksame Translationseingabe: Tasten haben Vorrang, sonst die Angleichung
+func _input_now() -> Vector2:
+	if thrust != 0.0 or strafe != 0.0:
+		return Vector2(thrust, strafe)
+	return match_input
+
+## Schubvektor in Schiffskoordinaten (kN) aus Triebwerken und Lagedüsen für eine Eingabe
+func thrust_vector_local(inp = null) -> Vector2:
+	var v: Vector2 = inp if inp != null else _input_now()
+	var f := v * rcs_thrust()
+	var req := _requested(v)
 	for t in active_thrusters():
 		var d: Vector2i = t.push_dir()
 		if req[d] > 0.0:
@@ -258,27 +270,19 @@ func step(dt: float) -> void:
 		_vx = vel.x
 		_vy = vel.y
 	var acc := gravity(pos)
-	var amax := main_accel()
 	_rotate(s, dt)
-	# Angleichen: Geschwindigkeit relativ zum Ziel abbauen
-	if match_target != "":
-		var r := rel_to(match_target)
-		var dv: Vector2 = r.vel - Vector2(_vx, _vy)
-		if dv.length() < 0.0005 or amax <= 0.0 or not helm_ok():
-			match_target = ""
-		else:
-			var a := minf(amax, dv.length() / s)
-			var fwd_engines := active_thrusters().filter(func(t): return t.push_dir() == Vector2i(1, 0)).size()
-			var need := fwd_engines * float(space.burn) * (a / amax) * dt * fuel_factor()
-			if fuel() >= need:
-				use_fuel(need)
-				_vx += dv.normalized().x * a * s
-				_vy += dv.normalized().y * a * s
-				angle = dv.angle()
-			else:
-				match_target = ""
-	elif (thrust != 0.0 or strafe != 0.0) and helm_ok():
-		acc += _thrust_accel(dt, amax)
+	# Manueller Schub hat Vorrang. Ohne Tasten arbeitet eine aktive Angleichung mit
+	# denselben Triebwerken und Lagedüsen auf die Zielgeschwindigkeit hin.
+	match_input = Vector2.ZERO
+	if match_target != "" and not helm_ok():
+		match_target = ""
+		GameState.toast("Angleichen beendet: Das Steuerpult hat keinen Strom.", "bad")
+	if (thrust != 0.0 or strafe != 0.0) and helm_ok():
+		acc += _thrust_accel(dt, Vector2(thrust, strafe))
+	elif match_target != "":
+		match_input = _match_input(s)
+		if match_input != Vector2.ZERO:
+			acc += _thrust_accel(dt, match_input)
 	# Halb-implizites Euler-Verfahren: stabil für Umlaufbahnen
 	_vx += acc.x * s
 	_vy += acc.y * s
@@ -293,14 +297,14 @@ func step(dt: float) -> void:
 ## Schub relativ zur Ausrichtung: Summe der Schubvektoren aller aktiven Triebwerke,
 ## deren Richtung zur Eingabe passt (W vorn, S hinten, D rechts, A links), plus
 ## Lagedüsen. Beschleunigung = Gesamtschub ÷ Schiffsmasse. Verbraucht Treibstoff.
-func _thrust_accel(dt: float, _amax: float) -> Vector2:
-	var req := _requested()
+func _thrust_accel(dt: float, inp: Vector2) -> Vector2:
+	var req := _requested(inp)
 	var engines := 0.0
 	for t in active_thrusters():
 		engines += req[t.push_dir()]
-	var rcs_part := absf(thrust) + absf(strafe)
+	var rcs_part := absf(inp.x) + absf(inp.y)
 	var need := (float(space.burn) * engines + float(space.rcs_burn) * rcs_part) * dt * fuel_factor()
-	var f := thrust_vector_local()
+	var f := thrust_vector_local(inp)
 	if fuel() < need or f == Vector2.ZERO:
 		if not _no_fuel_warned:
 			_no_fuel_warned = true
@@ -310,6 +314,28 @@ func _thrust_accel(dt: float, _amax: float) -> Vector2:
 	_no_fuel_warned = false
 	SkillSystem.train_all_at("helm", "pilot", dt * 0.5)
 	return (f / maxf(1.0, mass()) / 1000.0).rotated(angle)
+
+## Angleichen: Eingabe (vor/zurück, rechts/links, je -1..1), die die Relativgeschwindigkeit
+## zum Ziel in diesem Schritt so weit wie möglich abbaut – ohne das Schiff zu drehen.
+## Nutzt pro Achse die Triebwerke dieser Richtung plus Lagedüsen. Unterhalb der
+## Totzone MATCH_DEADBAND wird nicht gefeuert (eigene Festlegung).
+func _match_input(s: float) -> Vector2:
+	var dv: Vector2 = rel_to(match_target).vel - Vector2(_vx, _vy)
+	if dv.length() < MATCH_DEADBAND:
+		return Vector2.ZERO
+	var local := dv.rotated(-angle)
+	var m := maxf(1.0, mass()) * 1000.0
+	var out := Vector2.ZERO
+	for axis in 2:
+		var want: float = local[axis]
+		if absf(want) < MATCH_DEADBAND * 0.5:
+			continue
+		var d := Vector2i(int(signf(want)), 0) if axis == 0 else Vector2i(0, int(signf(want)))
+		var a_max := (thrust_dir(d) + rcs_thrust()) / m
+		if a_max <= 0.0:
+			continue
+		out[axis] = signf(want) * minf(1.0, absf(want) / s / a_max)
+	return out
 
 ## Drehung mit Schwung: Drehschub beschleunigt die Drehung, ohne Gegenschub dreht
 ## das Schiff weiter. R bremst die Drehung. Eine Drehung ändert die Flugrichtung nicht.
@@ -603,3 +629,4 @@ func from_data(d: Dictionary) -> void:
 	stop_inputs()
 	crashed = false
 	match_target = ""
+	match_input = Vector2.ZERO
