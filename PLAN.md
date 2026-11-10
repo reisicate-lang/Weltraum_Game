@@ -73,6 +73,7 @@ und werden Schritt für Schritt übertragen.
 - [x] Verkleinertes Erde-Mond-System: Tycho-Schrottplatz, Kármán-Ring (Werft), Habitat L4 (Schwarzmarkt), Trümmerfeld Achilles
 - [x] Schwerkraft von Erde und Mond, Trägheit, Umlaufbahnen, Stationen kreisen
 - [x] Triebwerke, Treibstofftank, Masse aus Rumpf/Geräten/Ladung, Treibstoffverbrauch
+- [x] Lose Ladung auf dem eigenen Schiffsboden zählt genau einmal zur Masse (fremde Bereiche nicht)
 - [x] Navigationskarte mit vorausberechneter Flugbahn, manuelles Fliegen (WASD), Geschwindigkeit angleichen
 - [x] Manuelles Andocken, Auto-Dock-Modul, Schnellreise, Zusammenstöße
 - [x] Erde als Schwerkraft-Falle (Absturz), Mond-Absturz
@@ -124,6 +125,7 @@ und werden Schritt für Schritt übertragen.
 - `tests/test_flight.gd` – manuelle Schiffssteuerung: Cockpit, Drift, Drehung, Gegenschub, Anflug und Andocken, Zeitstufen, Speichern (36)
 - `tests/test_thrusters.gd` – Triebwerke: Schub addiert sich, Masse bremst, Drehen, Aus- und Einbau, Speichern, Zeitstufen, Drift (27)
 - `tests/test_match.gd` – Angleichen (X): manueller Puls, Lagedüsen allein, kein Treibstoff, Ausstieg, Laden (22)
+- `tests/test_cargo_mass.gd` – Masse loser Ladung: Behälter ↔ Boden, fremder Bereich, Haufen im All, Laden, Schiffswechsel (24)
 - Alle Reihen parallel: `tests/run_all.sh` (etwa 100 s)
 - `tests/test_removal.gd` – Rechtsklick-Menü: Abbauen, Zerlegen, Zerstören, Einbauen, Gründe, Inhalt, Zeitstufen, Speichern (52)
 - `tests/test_auto.gd` – Auto-Modus: Aufgaben wählen, sofort anhalten, neu bewerten, Tragen, Notfall, Speichern (24)

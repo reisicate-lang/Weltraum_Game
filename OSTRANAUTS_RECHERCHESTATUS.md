@@ -107,6 +107,23 @@ Eigene Entscheidungen:
 - **Masse:** Rumpffeld 0,2 t (`Config.TILE_MASS`), jedes Gerät seine eigene Masse
   (`DeviceData.mass`, Standard 0,5 t, Triebwerk 1,5 t), dazu Ladung in Behältern und
   Haufen an Bord. Was die Crew im Gepäck trägt, zählt nicht mit.
+
+### Masse loser Ladung (Stand: November 2026)
+
+**Quelle:** Ostranauts-Wiki „Getting started“, Abschnitt 40:
+https://ostranauts.wiki.gg/wiki/Getting_started?section=40
+
+Vom Nutzer als Quelle genannt. Das Wiki war in der Arbeitsumgebung gesperrt, der Text
+konnte deshalb **nicht gelesen** werden.
+
+Umsetzung (`PhysicsSystem.mass()`, Tests: `tests/test_cargo_mass.gd`):
+- Ladung zählt genau einmal, egal ob sie in einem eigenen Behälter oder als Haufen auf
+  dem eigenen Schiffsboden liegt. Umlagern ändert Masse und Beschleunigung nicht.
+- Haufen auf fremden Bereichen (Wrack, Station) zählen nicht zur eigenen Masse.
+- Haufen auf Weltraumfeldern neben dem Rumpf zählen ebenfalls nicht (eigene Entscheidung).
+- Gespeicherte Bodenhaufen werden mitgeladen. Beim Schiffswechsel zählt nur die Ladung
+  des Schiffs, auf dem man gerade ist.
+- Nicht Teil dieser Änderung: Crew-Gepäck, Gas und Tankinhalt.
 - **Drehen:** Rechtsklick → „Drehen“ ist ein kurzer Crew-Auftrag von etwa einer Spielminute.
 - **Bauen:** Schwere Bauteile (Triebwerk: 44 kg Material) holt die Crew in mehreren
   Gängen und legt das Material am Bauplatz ab.

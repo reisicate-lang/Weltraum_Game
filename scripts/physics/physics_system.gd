@@ -106,7 +106,10 @@ func ship_devices(type: String) -> Array:
 	return out
 
 ## Masse in Tonnen: Rumpffelder (Config.TILE_MASS), Geräte (DeviceData.mass,
-## z. B. Triebwerk 1,5 t), Ladung in Behältern und Haufen an Bord
+## z. B. Triebwerk 1,5 t), Ladung in Behältern und lose Ladung auf dem eigenen
+## Schiffsboden. Jede Ladung zählt genau einmal: Umlagern zwischen eigenem Behälter
+## und eigenem Boden ändert die Masse nicht. Fremde Bereiche (Wrack, Station) und
+## Haufen im All neben dem Rumpf zählen nicht. Crew-Gepäck ist nicht enthalten.
 func mass() -> float:
 	var g := ShipSystem.grid
 	var m := 0.0
@@ -120,9 +123,13 @@ func mass() -> float:
 		if g.devices[i].inv != null:
 			m += g.devices[i].inv.weight() / 1000.0
 	for i in g.piles:
-		if not g.foreign(i):
+		if _own_floor(g, i):
 			m += g.piles[i].weight() / 1000.0
 	return m
+
+## Liegt ein Haufen auf dem eigenen Schiffsboden? (eigenes Feld, kein Weltraum)
+func _own_floor(g: ShipGrid, i: int) -> bool:
+	return not g.foreign(i) and g.tiles[i] != ShipGrid.Tile.SPACE
 
 func fuel() -> float:
 	var s := 0.0

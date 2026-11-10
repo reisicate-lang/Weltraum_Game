@@ -39,6 +39,7 @@ godot --headless --path . --script res://tests/boot.gd -- test_core
 godot --headless --path . --script res://tests/boot.gd -- test_flight
 godot --headless --path . --script res://tests/boot.gd -- test_thrusters
 godot --headless --path . --script res://tests/boot.gd -- test_match
+godot --headless --path . --script res://tests/boot.gd -- test_cargo_mass
 ```
 
 ## Steuerung
