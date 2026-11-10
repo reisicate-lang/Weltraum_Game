@@ -347,7 +347,7 @@ func _initialize() -> void:
 		_check("Zeitstufe %d: zerstört nach %d Schlägen in %.0f Spielsekunden (%d Bilder)" % [si, hits + 1, dur, frames], g.device_at(p) == null)
 	var h1: int = results[0][1]
 	_check("Gleich viele Schläge auf allen Stufen (%s)" % str(results.map(func(r): return r[1])), results.all(func(r): return absi(r[1] - h1) <= 1))
-	# Messgenauigkeit: ein Bild = SPEEDS/60 Spielsekunden (bei 1000× etwa 17 s)
+	# Messgenauigkeit: ein Bild = SPEEDS/60 Spielsekunden (bei ×16 etwa 0,3 s)
 	_check("Schlagabstand passt zur Spielzeit (Dauer ≈ Schläge × 1,5 s, ± ein Bild)", results.all(func(r): return absf(r[2] - (r[1] - 1) * 1.5) <= 3.0 + r[3]))
 	_fresh()
 	g = ship.grid

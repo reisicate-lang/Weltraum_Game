@@ -16,7 +16,7 @@ const WORLD_H := 44
 
 ## Bei 1x ist eine Sekunde im Spiel eine echte Sekunde.
 const MINUTES_PER_SECOND := 1.0 / 60.0
-const SPEEDS: Array[float] = [0.0, 1.0, 10.0, 60.0, 300.0, 1000.0]
+const SPEEDS: Array[float] = [0.0, 1.0, 2.0, 4.0, 8.0, 16.0]   ## Pause, ×1 (Echtzeit), ×2, ×4, ×8, ×16
 const START_MINUTES := 8 * 60
 
 ## Laufgeschwindigkeit: 2,5 Kacheln pro Sekunde (in Kacheln pro Spielminute)

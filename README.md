@@ -54,7 +54,7 @@ godot --headless --path . --script res://tests/boot.gd -- test_flight
 | Auf der Station reden | Klick auf eine Figur oder einen Tresen: deine Figur läuft hin, dann beginnt das Gespräch |
 | Luft- / Strom- / Wärme-Ansicht | `L` / `P` / `O` |
 | Fenster bauen | `Z` |
-| Zeit | `Leertaste` Pause, `1`–`4` (1× = Echtzeit) |
+| Zeit | `Leertaste` Pause, `1`–`5`: ×1 (Echtzeit), ×2, ×4, ×8, ×16 |
 | Charaktermenü (Fähigkeiten, Traits, Hobbys, Lebenslauf, Aufgaben) | `I` |
 | Auto-Modus der ausgewählten Figur an/aus | Knopf „Auto: AN/AUS“ links oder `J` |
 | Cockpit (am Steuerpult) | `N` oder Klick aufs Steuerpult: die Figur geht hin und übernimmt das Steuer; `Esc`/`N` verlässt es |

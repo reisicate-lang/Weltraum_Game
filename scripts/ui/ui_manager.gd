@@ -139,7 +139,7 @@ func _build_top() -> void:
 	row.add_child(_label("WELTRAUM_GAME", COL_AMBER, 16))
 	clock_label = _label("Tag 1  08:00:00")
 	row.add_child(clock_label)
-	var names := ["❚❚", "1×", "10×", "60×", "300×", "1000×"]
+	var names := ["❚❚", "×1", "×2", "×4", "×8", "×16"]
 	for i in names.size():
 		var b := _button(names[i], TimeSystem.set_speed.bind(i))
 		b.toggle_mode = true
@@ -309,7 +309,7 @@ Für Arbeiten im Vakuum holt Mira selbst einen Raumanzug. Die Luftschleuse links
 pumpt die Luft ab, bevor die Außentür aufgeht. Angedockt wird über Andockschleusen in der Außenwand.
 E: Kiste oder Haufen neben dir durchsuchen · J: Auto-Modus der ausgewählten Figur an/aus
 L / P / O: Luft-, Strom- und Wärme-Ansicht · Mausrad: zoomen · Pfeiltasten: Ansicht
-Leertaste: Pause · 1–4: Geschwindigkeit · Strg+S: speichern
+Leertaste: Pause · 1–5: Zeit ×1, ×2, ×4, ×8, ×16 · Strg+S: speichern
 
 Du schuldest der Bank 24 000 Cr, alle 7 Tage ist eine Rate fällig.
 Verkaufen und kaufen: Handelsterminal im Cockpit anklicken (nur angedockt).

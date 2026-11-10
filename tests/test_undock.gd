@@ -154,7 +154,7 @@ func _initialize() -> void:
 	P.angle = P.dock_alignment("tycho").angle   # Schleuse zum Ziel drehen
 	_check("Nach Sperrzeit und Annäherung wieder andockbar", P.can_dock("tycho") and P.dock("tycho") and P.docked == "tycho" and st.active())
 
-	# 7) Alle Zeitstufen über den echten TimeSystem-Ablauf (1×, 10×, 60×, 300×, 1000×)
+	# 7) Alle Zeitstufen über den echten TimeSystem-Ablauf (×1, ×2, ×4, ×8, ×16)
 	for si in range(1, 6):
 		_fresh()
 		var hb := _hull(ship.grid)

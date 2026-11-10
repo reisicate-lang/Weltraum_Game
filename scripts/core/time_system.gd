@@ -1,4 +1,4 @@
-## Spielzeit: Pause, 1x (Echtzeit) bis 300x.
+## Spielzeit: Pause, ×1 (Echtzeit), ×2, ×4, ×8, ×16.
 ## Jedes Bild wird die vergangene Spielzeit in Schritte von höchstens
 ## einer Spielsekunde aufgeteilt, damit die Simulation stabil bleibt.
 extends Node
