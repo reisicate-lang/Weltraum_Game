@@ -42,6 +42,12 @@
     "hiring",
     "claims",
     "bank"
+   ],
+   "docks": [
+    "west",
+    "north",
+    "south",
+    "east"
    ]
   },
   {
@@ -60,6 +66,12 @@
     "board",
     "hiring",
     "bank"
+   ],
+   "docks": [
+    "west",
+    "east",
+    "north",
+    "south"
    ]
   },
   {
@@ -76,6 +88,10 @@
     "bar",
     "board",
     "hiring"
+   ],
+   "docks": [
+    "west",
+    "east"
    ]
   },
   {
@@ -121,6 +137,10 @@
     "bar",
     "board",
     "claims"
+   ],
+   "docks": [
+    "west",
+    "north"
    ]
   }
  ],

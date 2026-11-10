@@ -65,7 +65,13 @@ func _initialize() -> void:
 	_check("Tresen kann man nicht abreißen", not build.can_place("remove", market.desk))
 	_check("Luke kann man nicht abreißen", not build.can_place("remove", g.pos(st.hatch)))
 	_check("Keine Wand auf dem Stationsboden", not build.can_place("wall", market.desk + Vector2i(-1, 0)))
-	_check("Neben der Station darf man bauen", build.can_place("floor", Vector2i(st.area.position.x, st.area.position.y)))
+	var beside := Vector2i(-1, -1)
+	for i in st.tiles:
+		for dd in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var q: Vector2i = g.pos(i) + dd
+			if g.in_bounds(q) and g.get_tile(q) == ShipGrid.Tile.SPACE and g.zone[g.idx(q)] == 0:
+				beside = q
+	_check("Neben der Station darf man bauen", beside.x >= 0 and build.can_place("floor", beside))
 
 	# 3) Hingehen und reden
 	var npc: Dictionary = st.npc_for_desk(market.desk)
@@ -119,7 +125,7 @@ func _initialize() -> void:
 	_run(0.1)
 	_check("Abdocken klappt", phys.undock())
 	_check("Station weg", not st.active() and st.npcs.is_empty())
-	_check("Luke ist wieder Wand", g.tiles[h] == ShipGrid.Tile.WALL)
+	_check("Schleuse bleibt, nur gelöst", g.tiles[h] == ShipGrid.Tile.DOOR and g.devices.has(h) and g.devices[h].type == "dockport" and not g.linked.has(h))
 	var left := 0
 	for i in g.tiles.size():
 		if g.zone[i] == 3:

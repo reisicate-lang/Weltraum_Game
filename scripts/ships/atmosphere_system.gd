@@ -76,7 +76,8 @@ func _closed_door(g: ShipGrid, i: int) -> bool:
 
 ## Geschlossene Tür ganz dicht? (Schlitz zu, Schleusentür, Stationsluke)
 func sealed(g: ShipGrid, d: int) -> bool:
-	return g.vent_closed[d] == 1 or AirlockSystem.is_lock_door(d) or StationSystem.is_hatch(d)
+	return g.vent_closed[d] == 1 or AirlockSystem.is_lock_door(d) or StationSystem.is_hatch(d) \
+		or (g.devices.has(d) and g.devices[d].type == "dockport")
 
 ## Nachbarn eines Feldes (rechts, links, unten, oben); -1 = Rasterrand
 func _neighbors(g: ShipGrid, i: int) -> Array[int]:
@@ -170,7 +171,7 @@ func topology() -> void:
 	for d in _doors:
 		sig.append(1 if g.door_open(d) else 0)
 		sig.append(g.vent_closed[d])
-	var key := "%s|%d|%d|%d" % [_cells_key, hash(sig), StationSystem.hatch, AirlockSystem.locks.size()]
+	var key := "%s|%d|%d|%d|%d" % [_cells_key, hash(sig), StationSystem.hatch, AirlockSystem.locks.size(), hash(g.linked.keys())]
 	if key == _topo_key:
 		return
 	_topo_key = key

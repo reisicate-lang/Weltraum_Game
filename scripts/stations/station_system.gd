@@ -38,11 +38,11 @@ const COLORS := [Color(0.55, 0.7, 0.85), Color(0.85, 0.6, 0.45), Color(0.6, 0.8,
 var station_id := ""
 var rooms: Array[Dictionary] = []   ## {kind, inner: Rect2i, desk: Vector2i, door: Vector2i}
 var npcs: Array[Dictionary] = []    ## {name, kind, room, pos, home, path, wait, line, line_until, color, ref}
-var tiles: Array[int] = []          ## alle Felder der Station und des Schlauchs
+var tiles: Array[int] = []          ## alle Felder der Station
 var _own: Dictionary = {}           ## dieselben Felder zum schnellen Nachschlagen
-var area := Rect2i()                ## gesperrt für Bauen (Station und Schlauch)
-var hatch := -1                     ## Tür in der Schiffswand
-var corridor_x := 0
+var area := Rect2i()                ## Umriss der Station
+var hatch := -1                     ## verbundene Andockschleuse des Schiffs (Feld-Index)
+var corridor := Rect2i()
 var pending: Dictionary = {}        ## {crew, npc} – Figur läuft gerade zu einem Gespräch
 var _sync := 0.0
 var _rng := RandomNumberGenerator.new()
@@ -70,93 +70,106 @@ func reserved(p: Vector2i) -> bool:
 
 # ---------------- Aufbauen und Abbauen ----------------
 
-## Baut die Station zum Ort id. Gibt false zurück, wenn kein Platz ist.
+## Andockpunkte der Station: in welche Richtung ihre Andocktür zeigt.
+## "west" heißt: die Station liegt östlich, das Schiff dockt mit einer Schleuse nach Osten an.
+const DOCK_DIRS := {"west": Vector2i(1, 0), "east": Vector2i(-1, 0), "north": Vector2i(0, 1), "south": Vector2i(0, -1)}
+
+## Baut die Station zum Ort id an eine freie Andockschleuse des Schiffs:
+## Andocktür der Station direkt vor der Schleuse (Tür an Tür), keine Gänge dazwischen.
+## Gibt false zurück (mit Meldung), wenn keine Schleuse passt.
 func build(id: String) -> bool:
 	clear()
 	var l := PhysicsSystem.loc(id)
 	if l.is_empty() or String(l.get("kind", "")) != "station":
 		return false
 	var g := ShipSystem.grid
-	# Wie weit reicht das Schiff (samt Wrack) nach rechts?
-	var max_x := -1
-	var ys: Array[int] = []
-	for i in g.tiles.size():
-		if g.tiles[i] != ShipGrid.Tile.SPACE and g.zone[i] != ZONE:
-			max_x = maxi(max_x, g.pos(i).x)
-			if g.zone[i] == 0:
-				ys.append(g.pos(i).y)
-	if ys.is_empty():
+	var ports: Array = ShipSystem.free_ports()
+	if ShipSystem.ports().is_empty():
+		GameState.toast("Keine Andockschleuse vorhanden. Bau eine in eine Außenwand (Geräte-Menü: Andockschleuse).", "bad")
 		return false
-	var mid_y: float = (ys.min() + ys.max()) / 2.0
-	# Luke: eine Außenwand des Schiffs mit Innenraum links und freiem All rechts
-	var best := Vector2i(-1, -1)
-	for i in g.tiles.size():
-		var p := g.pos(i)
-		if g.tiles[i] != ShipGrid.Tile.WALL or g.zone[i] != 0:
-			continue
-		var inner := p + Vector2i(-1, 0)
-		if not g.in_bounds(inner) or not g.walkable(inner) or g.zone[g.idx(inner)] != 0 or g.pressure(g.idx(inner)) < 50.0:
-			continue
-		if AirlockSystem.is_lock_tile(g.idx(inner)):
-			continue
-		var free := true
-		for x in range(p.x + 1, g.width):
-			if g.get_tile(Vector2i(x, p.y)) != ShipGrid.Tile.SPACE:
-				free = false
-				break
-		if not free:
-			continue
-		if best.x < 0 or p.x > best.x or (p.x == best.x and absf(p.y - mid_y) < absf(best.y - mid_y)):
-			best = p
-	var sx := max_x + 3
-	if best.x < 0 or sx + ROOM_W + 4 > g.width - 1:
-		GameState.toast("Kein Platz für den Andockschlauch. Handel geht nur über das Terminal.")
-		return false
+	# Schleusen nach unten bleiben möglichst für Wracks frei
+	ports.sort_custom(func(a, b): return int(a.dir == Vector2i(0, 1)) < int(b.dir == Vector2i(0, 1)))
+	var allowed: Array = []
+	for name in l.get("docks", DOCK_DIRS.keys()):
+		allowed.append(DOCK_DIRS[name])
 	var kinds: Array = l.get("rooms", DEFAULT_ROOMS).duplicate()
 	if l.get("shipyard", false) and not "shipyard" in kinds:
 		kinds.append("shipyard")
-	var h := kinds.size() * PITCH + 1
-	var top := clampi(best.y - h / 2, 1, g.height - 1 - h)
-	if best.y <= top or best.y >= top + h - 1:
-		GameState.toast("Kein Platz für den Andockschlauch. Handel geht nur über das Terminal.")
-		return false
+	var length := kinds.size() * PITCH + 1
+	for port in ports:
+		if not port.dir in allowed:
+			continue
+		var ud := _fit(g, port, length)
+		if ud >= 0:
+			_build_at(g, id, port, ud, kinds)
+			return true
+	GameState.toast("Keine freie Andockschleuse passt an %s (Platz oder Richtung). Handel geht nur über das Terminal." % l.name, "bad")
+	return false
+
+## Station im eigenen Raster: u entlang des Gangs, v weg vom Schiff.
+## v=0 Außenwand mit Andocktür, v=1..2 Gang, v=3 Raumwand mit Türen, v=4..12 Räume, v=13 Rückwand.
+const DEPTH := 4 + ROOM_W + 1
+
+## Lage im Schiffsraster: Andocktür D liegt direkt vor der Schleuse
+func _map(port: Dictionary, ud: int, u: int, v: int) -> Vector2i:
+	var d: Vector2i = port.dir
+	var along := Vector2i(-d.y, d.x)
+	return port.pos + d + along * (u - ud) + d * v
+
+## Passende Stelle für die Andocktür entlang des Gangs (möglichst mittig), -1 = passt nicht
+func _fit(g: ShipGrid, port: Dictionary, length: int) -> int:
+	var order: Array = range(1, length - 1)
+	order.sort_custom(func(a, b): return absi(a - length / 2) < absi(b - length / 2))
+	for ud in order:
+		var ok := true
+		for u in length:
+			for v in DEPTH:
+				var q := _map(port, ud, u, v)
+				if q.x < 1 or q.y < 1 or q.x > g.width - 2 or q.y > g.height - 2 or g.get_tile(q) != ShipGrid.Tile.SPACE or g.zone[g.idx(q)] != 0:
+					ok = false
+					break
+			if not ok:
+				break
+		if ok:
+			return ud
+	return -1
+
+func _rect(port: Dictionary, ud: int, u0: int, v0: int, u1: int, v1: int) -> Rect2i:
+	var a := _map(port, ud, u0, v0)
+	var b := _map(port, ud, u1, v1)
+	var lo := Vector2i(mini(a.x, b.x), mini(a.y, b.y))
+	var hi := Vector2i(maxi(a.x, b.x), maxi(a.y, b.y))
+	return Rect2i(lo, hi - lo + Vector2i.ONE)
+
+func _build_at(g: ShipGrid, id: String, port: Dictionary, ud: int, kinds: Array) -> void:
 	station_id = id
 	_rng.seed = hash(id)
-	var right := sx + 3 + ROOM_W + 1
-	area = Rect2i(best.x + 1, top, right - best.x, h)
-	corridor_x = sx + 1
-	# Hülle, Gang (2 breit) und Raumwände
-	for y in range(top, top + h):
-		for x in range(sx, right + 1):
-			var edge := x == sx or x == right or y == top or y == top + h - 1 or x == sx + 3
-			_put(g, Vector2i(x, y), ShipGrid.Tile.WALL if edge else ShipGrid.Tile.FLOOR)
+	var length := kinds.size() * PITCH + 1
+	for u in length:
+		for v in DEPTH:
+			var edge := u == 0 or u == length - 1 or v == 0 or v == DEPTH - 1 or v == 3 or (v > 3 and u % PITCH == 0)
+			_put(g, _map(port, ud, u, v), ShipGrid.Tile.WALL if edge else ShipGrid.Tile.FLOOR)
 	for k in kinds.size():
-		var r := top + k * PITCH
-		for x in range(sx + 3, right + 1):
-			_put(g, Vector2i(x, r), ShipGrid.Tile.WALL)
-		var door := Vector2i(sx + 3, r + 2)
+		var r := k * PITCH
+		var door := _map(port, ud, r + 2, 3)
 		_put(g, door, ShipGrid.Tile.DOOR)
-		var inner := Rect2i(sx + 4, r + 1, ROOM_W, PITCH - 1)
-		var desk := Vector2i(sx + 4 + ROOM_W - 3, r + 2)
+		var desk := _map(port, ud, r + 2, 4 + ROOM_W - 3)
 		var info: Dictionary = ROOMS[kinds[k]]
 		g.place_device(info.desk, desk)
-		rooms.append({"kind": kinds[k], "inner": inner, "desk": desk, "door": door})
-	# Druckschlauch von der Schiffswand zum Gang
-	for x in range(best.x + 1, sx):
-		_put(g, Vector2i(x, best.y), ShipGrid.Tile.FLOOR)
-		for dy in [-1, 1]:
-			var q := Vector2i(x, best.y + dy)
-			if g.get_tile(q) == ShipGrid.Tile.SPACE:
-				_put(g, q, ShipGrid.Tile.WALL)
-	_put(g, Vector2i(sx, best.y), ShipGrid.Tile.DOOR)
-	hatch = g.idx(best)
-	g.set_tile(best, ShipGrid.Tile.DOOR)
+		rooms.append({"kind": kinds[k], "inner": _rect(port, ud, r + 1, 4, r + PITCH - 1, 4 + ROOM_W - 1), "desk": desk, "door": door,
+			"behind": _rect(port, ud, r + 1, 4 + ROOM_W - 2, r + PITCH - 1, 4 + ROOM_W - 1),
+			"front": _rect(port, ud, r + 1, 4, r + PITCH - 1, 4 + ROOM_W - 4)})
+	# Andocktür der Station direkt vor der Schleuse
+	_put(g, _map(port, ud, ud, 0), ShipGrid.Tile.DOOR)
+	corridor = _rect(port, ud, 1, 1, length - 2, 2)
+	area = _rect(port, ud, 0, 0, length - 1, DEPTH - 1)
+	hatch = int(port.i)
+	g.linked[hatch] = true
 	for i in tiles:
 		if g.holds_air(i):
 			g.fill_air(i)
 	_spawn_npcs()
 	EventBus.ship_changed.emit()
-	return true
 
 func _put(g: ShipGrid, p: Vector2i, t: int) -> void:
 	var i := g.idx(p)
@@ -167,7 +180,7 @@ func _put(g: ShipGrid, p: Vector2i, t: int) -> void:
 		tiles.append(i)
 		_own[i] = true
 
-## Station entfernen, Luke wieder zur Wand machen
+## Station entfernen und die Schleuse lösen
 func clear() -> void:
 	var g := ShipSystem.grid
 	if g != null:
@@ -190,7 +203,10 @@ func clear() -> void:
 				g.tiles[i] = ShipGrid.Tile.SPACE
 				g.o2[i] = 0.0; g.n2[i] = 0.0; g.co2[i] = 0.0
 				g.zone[i] = 0
-		if hatch >= 0 and hatch < g.tiles.size():
+		# Nur die Verbindung lösen: die Schleuse bleibt, es bleiben keine Felder zurück
+		g.linked.erase(hatch)
+		# Alter Spielstand: frühere Luke (Tür ohne Schleuse) wieder zur Wand machen
+		if hatch >= 0 and hatch < g.tiles.size() and g.tiles[hatch] == ShipGrid.Tile.DOOR and not g.devices.has(hatch):
 			g.tiles[hatch] = ShipGrid.Tile.WALL
 		EventBus.ship_changed.emit()
 	tiles.clear()
@@ -219,21 +235,17 @@ func _spawn_npcs() -> void:
 	var used: Array = []
 	for r in rooms:
 		var info: Dictionary = ROOMS[r.kind]
-		var inner: Rect2i = r.inner
-		var behind := Rect2i(r.desk.x + 1, inner.position.y, inner.end.x - r.desk.x - 1, inner.size.y)
-		_add_npc(_name(used) + " (" + info.role + ")", "staff", r, behind, info.lines)
+		_add_npc(_name(used) + " (" + info.role + ")", "staff", r, r.behind, info.lines)
 		if r.kind == "bar":
 			var con: Dictionary = DialogueSystem.CONTACTS.get(station_id, {})
 			if not con.is_empty():
 				_add_npc(String(con.name), "contact", r, _front(r), [])
 	for k in 2:
-		var top := area.position.y + 1
-		_add_npc(_name(used), "visitor", {}, Rect2i(corridor_x, top, 2, area.size.y - 2), VISITOR_LINES)
+		_add_npc(_name(used), "visitor", {}, corridor, VISITOR_LINES)
 	_sync_candidates()
 
 func _front(r: Dictionary) -> Rect2i:
-	var inner: Rect2i = r.inner
-	return Rect2i(inner.position.x, inner.position.y, r.desk.x - inner.position.x, inner.size.y)
+	return r.front
 
 func _name(used: Array) -> String:
 	for k in 30:

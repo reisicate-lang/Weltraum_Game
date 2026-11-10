@@ -9,6 +9,8 @@ const DEPTHS := {"einfach": 3.0, "normal": 1.0, "genau": 0.5}
 var depth := "normal"
 var autosave_seconds := 60.0
 var meteors := true
+## Schulden pausiert: keine Raten, keine Strafzinsen, keine Pfändung (zum Testen; im Menü ⚙ abschaltbar)
+var debt_paused := true
 
 func _ready() -> void:
 	if FileAccess.file_exists(PATH):
@@ -17,10 +19,11 @@ func _ready() -> void:
 			depth = String(d.get("depth", depth))
 			autosave_seconds = float(d.get("autosave", autosave_seconds))
 			meteors = bool(d.get("meteors", meteors))
+			debt_paused = bool(d.get("debt_paused", debt_paused))
 
 func save() -> void:
 	var f := FileAccess.open(PATH, FileAccess.WRITE)
-	f.store_string(JSON.stringify({"depth": depth, "autosave": autosave_seconds, "meteors": meteors}))
+	f.store_string(JSON.stringify({"depth": depth, "autosave": autosave_seconds, "meteors": meteors, "debt_paused": debt_paused}))
 	f.close()
 
 ## Faktor für die Bündelung der Hintergrund-Simulation

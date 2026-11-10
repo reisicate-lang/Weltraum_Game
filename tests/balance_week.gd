@@ -11,6 +11,7 @@ func _initialize() -> void:
 	var econ = root.get_node("EconomySystem")
 	var salv = root.get_node("SalvageSystem")
 	root.get_node("Settings").meteors = false
+	root.get_node("Settings").debt_paused = false
 	gs.new_game()
 	var start: int = econ.credits
 	var income := 0

@@ -454,5 +454,18 @@
   "debris": {
    "scrap": 2
   }
+ },
+ "dockport": {
+  "uninstall_time": 4.0,
+  "uninstall_tool": "crowbar",
+  "dismantle_time": 4.0,
+  "dismantle": {
+   "plate": 1,
+   "circuit": 1
+  },
+  "hp": 140,
+  "debris": {
+   "scrap": 2
+  }
  }
 }

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "dockport"
+display_name = "Andockschleuse"
+description = "Wird in eine Außenwand gebaut (innen Raum, außen All). Nur damit kann das Schiff an Stationen und Wracks andocken: Tür an Tür, ohne Gang dazwischen. Zu ist sie immer dicht."
+power = 0.0
+build_time = 4.0
+cost = {"plate": 2, "circuit": 1}
+storage = 0.0
+color = Color(0.36, 0.33, 0.24, 1)
+tech = "mechanical"

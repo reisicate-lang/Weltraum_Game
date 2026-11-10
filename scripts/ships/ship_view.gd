@@ -409,6 +409,14 @@ func _draw_icon(dev: Device, r: Rect2, a: float) -> void:
 			draw_arc(c, u * 0.35, 0, TAU, 16, Color(0.9, 0.9, 0.9, a), 1.0)
 		"extinguisher":
 			draw_rect(Rect2(c - Vector2(u * 0.12, u * 0.3), Vector2(u * 0.24, u * 0.6)), Color(0.85, 0.15, 0.15, a))
+		"dockport":
+			# Andockschleuse: Rahmen mit Warnstreifen, Licht grün = angedockt
+			var linked := ShipSystem.grid.linked.has(ShipSystem.grid.idx(dev.pos))
+			draw_rect(Rect2(c - Vector2(u * 0.42, u * 0.42), Vector2(u * 0.84, u * 0.84)), Color(0.95, 0.76, 0.31, a), false, 2.0)
+			for k in 3:
+				var o := c + Vector2(-u * 0.3 + k * u * 0.25, u * 0.3)
+				draw_line(o, o + Vector2(u * 0.15, -u * 0.15), Color(0.1, 0.1, 0.1, a), 2.0)
+			draw_circle(c - Vector2(0, u * 0.08), u * 0.17, Color(0.44, 0.81, 0.56, a) if linked else Color(0.9, 0.33, 0.29, a))
 		"st_market", "st_bar", "st_board", "st_hiring", "st_claims", "st_bank", "st_shipyard":
 			# Tresen mit Zeichen
 			draw_rect(Rect2(c - Vector2(u * 0.42, u * 0.12), Vector2(u * 0.84, u * 0.24)), Color(0.75, 0.62, 0.4, a))

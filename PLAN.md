@@ -60,7 +60,7 @@ und werden Schritt für Schritt übertragen.
 - [x] Items mit Schrott verbessern: siehe Werkbank in Etappe 5
 
 ### Etappe 5 – Bergung & Wirtschaft (erste vollständige Spielschleife)
-- [x] Start am Tycho-Schrottplatz im Mondorbit, Wrack an der Bergungsleine
+- [x] Start am Tycho-Schrottplatz im Mondorbit, Wrack an der unteren Andockschleuse (früher Bergungsleine und Außensteg)
 - [x] Zufällige Wracks: Räume, Lecks, abgestandene Luft, beschädigte Geräte, Kisten, Schrott, alte Kabel
 - [x] Geräte und Kisten erst erkennbar, wenn jemand nahe herangeht; geschätzter Bergungswert
 - [x] Einsammeln-Werkzeug: Crew bringt Haufen in die Frachtkisten
@@ -119,6 +119,7 @@ und werden Schritt für Schritt übertragen.
 - `tests/test_world.gd` – Crew-Beziehungen, Aufträge, Fraktionen, Einstellungen, Mods, Speicherplätze, neue Orte, Ziele (32)
 - `tests/test_stations.gd` – begehbare Stationen: Aufbau, Luft, Gespräche, Verkauf, Speichern, Abdocken (36)
 - `tests/test_undock.gd` – manuelles Abdocken: Gründe, Sperre gegen Wieder-Andocken, alle Zeitstufen, Speichern (49)
+- `tests/test_docking.gd` – Andockschleusen: ohne Schleuse kein Andocken, Tür an Tür, keine Extra-Felder, Abdocken ohne Rest, Wrack, Bau, alte Spielstände (40)
 - `tests/test_removal.gd` – Rechtsklick-Menü: Abbauen, Zerlegen, Zerstören, Einbauen, Gründe, Inhalt, Zeitstufen, Speichern (52)
 - `tests/test_auto.gd` – Auto-Modus: Aufgaben wählen, sofort anhalten, neu bewerten, Tragen, Notfall, Speichern (24)
 - `tests/test_atmosphere.gd` – Atmosphäre und Raumdruck: dichte Kabine, Tür, Innen-/Außenwand, Bodenloch, Abdichten/Wiederbefüllen, zwei Lecks und Laden (38)

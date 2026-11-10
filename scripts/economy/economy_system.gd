@@ -180,6 +180,10 @@ func buy_claim() -> void:
 	if not SalvageSystem.clearable():
 		GameState.toast("Erst alle Crewmitglieder vom Wrack holen.")
 		return
+	# Das neue Wrack braucht eine Andockschleuse nach unten (die alte wird beim Verschrotten frei)
+	if ShipSystem.ports().filter(func(p): return p.dir == Vector2i(0, 1) and (not ShipSystem.grid.linked.has(p.i) or p.i == SalvageSystem.port)).is_empty():
+		GameState.toast("Für ein neues Wrack fehlt eine freie Andockschleuse nach unten (untere Außenwand).", "bad")
+		return
 	credits -= fee
 	DialogueSystem.claim_discount = false
 	book("Bergungsrecht für neues Wrack", -fee)
@@ -225,6 +229,9 @@ func recipe(id: String) -> Dictionary:
 func step(_dt: float) -> void:
 	if over:
 		return
+	# Schulden pausiert: die Frist bis zur nächsten Rate bleibt stehen
+	if Settings.debt_paused and debt > 0:
+		next_payment += _dt
 	while GameState.time >= next_day:
 		next_day += 1440.0
 		for id in prices:
@@ -236,7 +243,7 @@ func step(_dt: float) -> void:
 		if credits >= Config.DOCK_FEE:
 			credits -= Config.DOCK_FEE
 			book("Liegegebühr", -Config.DOCK_FEE)
-		else:
+		elif not Settings.debt_paused:
 			debt += Config.DOCK_FEE
 			book("Liegegebühr: kein Geld, %d Cr auf die Schulden" % Config.DOCK_FEE, 0)
 	if debt > 0 and GameState.time >= next_payment:

@@ -592,6 +592,8 @@ func _finish_haul() -> void:
 			job = null
 			return
 		var carry: Array = []
+		if g.zone[g.idx(src)] == 1:
+			GoalSystem.junk += 1
 		for it in pile.items.duplicate():
 			if pile.move_to(inv, it.type, it.qty) > 0:
 				carry.append(it.type)
@@ -718,6 +720,9 @@ func _assign_job() -> void:
 			var tq := Vector2i(int(chosen.tx), int(chosen.ty))
 			if not safe_air(grid().idx(tq)):
 				hostile = true
+		# Arbeit draußen im All (z. B. Boden vor der Luftschleuse bauen): Anzug nötig
+		if grid().get_tile(ShipConstructionSystem.target_of(chosen)) == ShipGrid.Tile.SPACE:
+			hostile = true
 		if hostile and not work_prefs.get("eva", true):
 			chosen.retry_at = GameState.time + 0.5
 			return

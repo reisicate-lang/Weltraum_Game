@@ -23,6 +23,8 @@ var fire := PackedByteArray()
 ## Türen: Lüftungsschlitz geschlossen (1) – dann ist die geschlossene Tür ganz dicht
 var vent_closed := PackedByteArray()
 var devices: Dictionary = {}  ## Feld-Index -> Device
+## Andockschleusen, die gerade mit einer Station oder einem Wrack verbunden sind (Feld-Index -> true)
+var linked: Dictionary = {}
 var piles: Dictionary = {}    ## Feld-Index -> Inventory (Haufen auf dem Boden)
 
 func _init(w: int = Config.WORLD_W, h: int = Config.WORLD_H) -> void:
@@ -67,7 +69,11 @@ func device_at(p: Vector2i) -> Device:
 
 func walkable(p: Vector2i) -> bool:
 	var t := get_tile(p)
-	return (t == Tile.FLOOR or t == Tile.DOOR) and not devices.has(idx(p))
+	if t != Tile.FLOOR and t != Tile.DOOR:
+		return false
+	var i := idx(p)
+	# Eine Andockschleuse ist nur begehbar, solange sie angedockt ist
+	return not devices.has(i) or (devices[i].type == "dockport" and linked.has(i))
 
 func wall_like(p: Vector2i) -> bool:
 	var t := get_tile(p)
@@ -115,7 +121,7 @@ func to_data() -> Dictionary:
 		pl.append([i, piles[i].to_data()])
 	return {"w": width, "h": height, "tiles": Array(tiles), "cables": Array(cables),
 		"o2": Array(o2), "n2": Array(n2), "co2": Array(co2), "cond": Array(cond), "zone": Array(zone), "temp": Array(temp), "devices": devs, "piles": pl,
-		"vents": _closed_vents()}
+		"vents": _closed_vents(), "linked": linked.keys()}
 
 func _closed_vents() -> Array:
 	var out: Array = []
@@ -140,4 +146,6 @@ static func from_data(d: Dictionary) -> ShipGrid:
 		g.piles[int(entry[0])] = inv
 	for i in d.get("vents", []):
 		g.vent_closed[int(i)] = 1
+	for i in d.get("linked", []):
+		g.linked[int(i)] = true
 	return g

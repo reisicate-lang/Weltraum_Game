@@ -298,13 +298,13 @@ Werkzeuge unten: Boden B, Wand M, Tür T, Kabel K, Abreißen X, Plan löschen C
 Geräte-Menü: Generator, Sauerstoff, Betten, Kisten ...
 Rechtsklick auf ein Objekt: Menü (Abbauen, Zerlegen, Zerstören, Einbauen) · auf Figur: Aufgabe abbrechen
 Für Arbeiten im Vakuum holt Mira selbst einen Raumanzug. Die Luftschleuse links
-pumpt die Luft ab, bevor die Außentür aufgeht. Draußen auf dem Steg liegt Mondmüll.
+pumpt die Luft ab, bevor die Außentür aufgeht. Angedockt wird über Andockschleusen in der Außenwand.
 E: Kiste oder Haufen neben dir durchsuchen · J: Auto-Modus der ausgewählten Figur an/aus
 L / P / O: Luft-, Strom- und Wärme-Ansicht · Mausrad: zoomen · Pfeiltasten: Ansicht
 Leertaste: Pause · 1–4: Geschwindigkeit · Strg+S: speichern
 
 Du schuldest der Bank 24 000 Cr, alle 7 Tage ist eine Rate fällig.
-Unten hängt ein Wrack: ausschlachten (Abreißen X), einsammeln (Q), im
+An der unteren Andockschleuse hängt ein Wrack: ausschlachten (X), einsammeln (Q), im
 Handelsterminal im Cockpit verkaufen (anklicken).
 N: Navigation am Steuerpult · Fliegen mit WASD · Schnellreise zu Stationen
 und ins Trümmerfeld. Vorsicht: Die Erde zieht dich an.""", Color(0.87, 0.9, 0.94), 14)
@@ -529,6 +529,13 @@ func open_settings() -> void:
 			Settings.meteors = on
 			Settings.save())
 		box.add_child(met)
+		var dp := CheckBox.new()
+		dp.text = "Schulden pausieren (keine Raten, keine Strafzinsen)"
+		dp.button_pressed = Settings.debt_paused
+		dp.toggled.connect(func(on):
+			Settings.debt_paused = on
+			Settings.save())
+		box.add_child(dp)
 		var mods := _label("Mods: eigene .tres-Dateien nach %s legen (Unterordner items, components, skills, traits, hobbies)." % ProjectSettings.globalize_path("user://mods"), COL_MUTED, 11)
 		mods.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		mods.custom_minimum_size = Vector2(400, 0)
@@ -651,7 +658,7 @@ func _refresh_window() -> void:
 		"bank":
 			var days := maxf(0.0, (E.next_payment - GameState.time) / 1440.0)
 			window_box.add_child(_row("Restschuld", [_label("%d Cr" % E.debt, COL_AMBER, 13)]))
-			window_box.add_child(_row("Nächste Rate", [_label("%d Cr in %.1f Tagen" % [mini(Config.PAYMENT, E.debt), days], COL_AMBER, 13)]))
+			window_box.add_child(_row("Nächste Rate", [_label("pausiert (Einstellungen ⚙)" if Settings.debt_paused else "%d Cr in %.1f Tagen" % [mini(Config.PAYMENT, E.debt), days], COL_AMBER, 13)]))
 			window_box.add_child(_row("Liegegebühr", [_label("%d Cr pro Tag" % Config.DOCK_FEE, COL_MUTED, 13)]))
 			window_box.add_child(_row("Verpasste Raten", [_label("%d von %d" % [E.strikes, Config.MAX_STRIKES], COL_MUTED, 13)]))
 			window_box.add_child(_row("Tilgen", [_button("500 Cr", E.pay_debt.bind(500)), _button("Alles", E.pay_debt.bind(999999))]))
@@ -1025,8 +1032,9 @@ func _refresh() -> void:
 	else:
 		power_label.text = "⚡ %.1f kW erzeugt · %.1f kW verbraucht · Batterie %.1f/%.0f kWh%s" % [
 			net.production, net.demand, net.charge, net.capacity, "" if net.ok else " · STROMAUSFALL"]
-	money_label.text = "%d Cr · Schulden %d · Rate in %.1f T · %d Baupläne" % [EconomySystem.credits, EconomySystem.debt,
-		maxf(0.0, (EconomySystem.next_payment - GameState.time) / 1440.0), ShipConstructionSystem.jobs.size()]
+	money_label.text = "%d Cr · Schulden %d · %s · %d Baupläne" % [EconomySystem.credits, EconomySystem.debt,
+		"Raten pausiert" if Settings.debt_paused else "Rate in %.1f T" % maxf(0.0, (EconomySystem.next_payment - GameState.time) / 1440.0),
+		ShipConstructionSystem.jobs.size()]
 	money_label.add_theme_color_override("font_color", COL_AMBER)
 	_refresh_window()
 	_refresh_nav()

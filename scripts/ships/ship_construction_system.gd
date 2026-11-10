@@ -17,6 +17,9 @@ func can_place(tool: String, p: Vector2i) -> bool:
 	# Die Station gehört dir nicht (die Luke in der Schiffswand auch nicht)
 	if (StationSystem.reserved(p) or StationSystem.is_hatch(i)) and not tool in ["haul", "cancel"]:
 		return false
+	if tool == "dev:dockport":
+		# Andockschleuse: nur in eine Außenwand (innen Raum, außen All)
+		return t == ShipGrid.Tile.WALL and not has_dev and g.zone[i] == 0 and ShipSystem.port_dir(p) != Vector2i.ZERO
 	if tool.begins_with("dev:"):
 		return t == ShipGrid.Tile.FLOOR and not has_dev
 	if tool.begins_with("install:"):
@@ -28,7 +31,7 @@ func can_place(tool: String, p: Vector2i) -> bool:
 		"haul": return g.piles.has(i) and not jobs.has(i)
 		"hack": return has_dev and g.devices[i].lock_level > 0 and not jobs.has(i)
 		"extinguish": return g.fire[i] == 1 and not jobs.has(i)
-		"move": return has_dev and not jobs.has(i)
+		"move": return has_dev and not jobs.has(i) and g.devices[i].type != "dockport"
 		"floor": return t == ShipGrid.Tile.SPACE
 		"wall", "window": return (t == ShipGrid.Tile.SPACE or t == ShipGrid.Tile.FLOOR) and not has_dev
 		"door": return t != ShipGrid.Tile.DOOR and not has_dev
@@ -226,6 +229,8 @@ func complete(job: Dictionary, worker_pos: Vector2i, worker: CrewMember = null) 
 			g.cables[i] = 1
 		"device":
 			_move_pile_away(i, worker_pos)
+			if job.dev == "dockport":
+				g.set_tile(p, ShipGrid.Tile.DOOR)
 			g.place_device(job.dev, p)
 		"remove":
 			var loot := salvage(p, worker)

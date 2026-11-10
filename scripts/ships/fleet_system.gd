@@ -21,46 +21,161 @@ func reset() -> void:
 
 # ---------------- Wrack am Ort ablegen / anhängen ----------------
 
+## Wrack am Ort ablegen. Gespeichert relativ zur Wracktür, damit es beim
+## Wiederkommen an jede freie Schleuse nach unten passt.
 func leave(l: Dictionary) -> void:
+	places[l.id] = {"wreck": capture()}
+	SalvageSystem.clear()
+
+## Das aktuelle Wrack als Daten (relativ zur Wracktür), oder null
+func capture():
 	var g := ShipSystem.grid
+	var e := SalvageSystem.entry
+	if e.x < 0:
+		e = LEGACY_ENTRY
 	var tiles: Array = []
 	var devs: Array = []
 	var piles: Array = []
 	for i in g.tiles.size():
 		if g.zone[i] != 1:
 			continue
-		tiles.append([i, g.tiles[i], g.cables[i], g.cond[i], g.o2[i], g.n2[i], g.co2[i]])
+		var r := g.pos(i) - e
+		tiles.append([r.x, r.y, g.tiles[i], g.cables[i], g.cond[i], g.o2[i], g.n2[i], g.co2[i]])
 		if g.devices.has(i):
-			devs.append(g.devices[i].to_data())
+			var dd: Dictionary = g.devices[i].to_data()
+			dd.x = r.x
+			dd.y = r.y
+			devs.append(dd)
 		if g.piles.has(i):
-			piles.append([i, g.piles[i].to_data()])
-	places[l.id] = {"wreck": {"name": SalvageSystem.wreck_name, "tiles": tiles, "devices": devs, "piles": piles} if not tiles.is_empty() else null}
-	SalvageSystem.clear()
+			piles.append([r.x, r.y, g.piles[i].to_data()])
+	if tiles.is_empty():
+		return null
+	return {"name": SalvageSystem.wreck_name if SalvageSystem.wreck_name != "" else "Altes Wrack", "rel": true, "tiles": tiles,
+		"devices": devs, "piles": piles, "investigated": SalvageSystem.investigated, "cause": SalvageSystem.cause}
+
+## Alte Spielstände (vor den Andockschleusen) bereinigen:
+## 1) Außensteg und Bergungsleine (Zone 2) entfernen, Haufen darauf ins Schiff legen
+## 2) Schiff ohne Andockschleuse: rechts und unten je eine nachrüsten
+## 3) Wrack ohne Verbindung an die Schleuse nach unten hängen (sonst am Ort ablegen)
+func migrate_docking() -> void:
+	var g := ShipSystem.grid
+	var changed := false
+	var spot := ShipConstructionSystem.drop_spot(ShipSystem.spawn_point())
+	for i in g.tiles.size():
+		if g.zone[i] != 2:
+			continue
+		if g.piles.has(i):
+			for it in g.piles[i].items:
+				g.drop_items(spot, it.type, it.qty, it.cond, it.get("data"))
+			g.piles.erase(i)
+		g.devices.erase(i)
+		ShipConstructionSystem.jobs.erase(i)
+		g.tiles[i] = ShipGrid.Tile.SPACE
+		g.cables[i] = 0
+		g.o2[i] = 0.0; g.n2[i] = 0.0; g.co2[i] = 0.0
+		g.zone[i] = 0
+		changed = true
+	if ShipSystem.ports().is_empty():
+		for d in [Vector2i(1, 0), Vector2i(0, 1)]:
+			var p := _port_spot(g, d)
+			if p.x >= 0:
+				g.set_tile(p, ShipGrid.Tile.DOOR)
+				g.place_device("dockport", p)
+				changed = true
+		if changed:
+			GameState.toast("Alter Spielstand: Steg entfernt, Andockschleusen nachgerüstet.")
+	if SalvageSystem.port < 0:
+		var w = capture()
+		if w != null:
+			SalvageSystem.clear()
+			if not _attach_stored(w):
+				places[PhysicsSystem.docked if PhysicsSystem.docked != "" else "tycho"] = {"wreck": w}
+	if changed:
+		EventBus.ship_changed.emit()
+
+## Bester Platz für eine Schleuse in Richtung d: gültige Außenwand, Innenfeld frei, möglichst mittig
+func _port_spot(g: ShipGrid, d: Vector2i) -> Vector2i:
+	var best := Vector2i(-1, -1)
+	var center := Vector2.ZERO
+	var n := 0
+	for i in g.tiles.size():
+		if g.zone[i] == 0 and g.tiles[i] != ShipGrid.Tile.SPACE:
+			center += Vector2(g.pos(i))
+			n += 1
+	center /= maxf(1.0, n)
+	for i in g.tiles.size():
+		var p := g.pos(i)
+		if g.tiles[i] != ShipGrid.Tile.WALL or g.zone[i] != 0 or g.devices.has(i):
+			continue
+		if ShipSystem.port_dir(p) != d or not g.walkable(p - d):
+			continue
+		if best.x < 0 or Vector2(p).distance_to(center) < Vector2(best).distance_to(center):
+			best = p
+	return best
+
+## Frühere Spielstände: Wracktür lag fest bei (20, 30)
+const LEGACY_ENTRY := Vector2i(20, 30)
+
+## Gespeichertes Wrack an eine freie Schleuse nach unten hängen. false = passt nicht.
+func _attach_stored(w: Dictionary) -> bool:
+	var g := ShipSystem.grid
+	var pt := SalvageSystem.free_port()
+	if pt.is_empty():
+		return false
+	var e: Vector2i = pt.pos + Vector2i(0, 1)
+	var rel: bool = w.get("rel", false)
+	# Alte Daten: absolute Feld-Indizes, Tür bei LEGACY_ENTRY
+	var cells: Array = []
+	for t in w.tiles:
+		var q: Vector2i = (Vector2i(int(t[0]), int(t[1])) if rel else g.pos(int(t[0])) - LEGACY_ENTRY) + e
+		if not g.in_bounds(q) or g.get_tile(q) != ShipGrid.Tile.SPACE or g.zone[g.idx(q)] != 0:
+			return false
+		cells.append([q, t])
+	for c in cells:
+		var i := g.idx(c[0])
+		var t: Array = c[1]
+		var o := 1 if rel else 0
+		g.tiles[i] = int(t[o + 1]); g.cables[i] = int(t[o + 2]); g.cond[i] = float(t[o + 3])
+		g.o2[i] = float(t[o + 4]); g.n2[i] = float(t[o + 5]); g.co2[i] = float(t[o + 6]); g.zone[i] = 1
+	for dd in w.devices:
+		var d2: Dictionary = dd.duplicate()
+		var q: Vector2i = (Vector2i(int(dd.x), int(dd.y)) if rel else Vector2i(int(dd.x), int(dd.y)) - LEGACY_ENTRY) + e
+		d2.x = q.x
+		d2.y = q.y
+		var dev := Device.from_data(d2)
+		g.devices[g.idx(dev.pos)] = dev
+	for entry in w.piles:
+		var inv := Inventory.new()
+		var q: Vector2i
+		if rel:
+			q = Vector2i(int(entry[0]), int(entry[1])) + e
+			inv.from_data(entry[2])
+		else:
+			q = g.pos(int(entry[0])) - LEGACY_ENTRY + e
+			inv.from_data(entry[1])
+		g.piles[g.idx(q)] = inv
+	SalvageSystem._link(g, pt, e)
+	SalvageSystem.wreck_name = String(w.name)
+	SalvageSystem.investigated = bool(w.get("investigated", false))
+	SalvageSystem.cause = String(w.get("cause", ""))
+	return true
 
 func arrive(l: Dictionary) -> void:
-	var g := ShipSystem.grid
 	var place: Dictionary = places.get(l.id, {})
 	var w = place.get("wreck")
 	if w != null:
-		for t in w.tiles:
-			var i := int(t[0])
-			g.tiles[i] = int(t[1]); g.cables[i] = int(t[2]); g.cond[i] = float(t[3])
-			g.o2[i] = float(t[4]); g.n2[i] = float(t[5]); g.co2[i] = float(t[6]); g.zone[i] = 1
-		for dd in w.devices:
-			var dev := Device.from_data(dd)
-			g.devices[g.idx(dev.pos)] = dev
-		for entry in w.piles:
-			var inv := Inventory.new()
-			inv.from_data(entry[1])
-			g.piles[int(entry[0])] = inv
-		SalvageSystem.wreck_name = String(w.name)
-		place.wreck = null
-		EventBus.ship_changed.emit()
+		# Das Wrack wartet am Ort, bis eine freie Schleuse nach unten da ist
+		if _attach_stored(w):
+			place.wreck = null
+			EventBus.ship_changed.emit()
+		else:
+			GameState.toast("Das Wrack „%s“ liegt hier. Zum Andocken fehlt eine freie Andockschleuse nach unten." % String(w.name))
 	elif l.kind == "asteroid":
-		SalvageSystem.generate_asteroid()
-		GameState.toast("Ein Felsbrocken liegt an der Leine. Abreißen bringt Eis und Erz.")
+		if SalvageSystem.generate_asteroid():
+			GameState.toast("Ein Felsbrocken hängt an der Schleuse. Abreißen bringt Eis und Erz.")
 	elif l.kind == "outpost":
-		SalvageSystem.generate()
+		if not SalvageSystem.generate():
+			return
 		# Außenposten: mehr Schlösser, mehr Beute
 		for dev in ShipSystem.grid.devices.values():
 			if dev.type == "crate" and ShipSystem.grid.zone[ShipSystem.grid.idx(dev.pos)] == 1:
@@ -68,8 +183,8 @@ func arrive(l: Dictionary) -> void:
 				dev.inv.add(["datachip", "cell", "motor", "boltgun", "genemod"].pick_random(), 1, randf_range(60.0, 95.0))
 		GameState.toast("Der Außenposten ist verlassen. Die Lagerräume sind verschlossen.")
 	elif l.kind == "debris":
-		SalvageSystem.generate()
-		GameState.toast("Ein Wrack aus dem Trümmerfeld treibt heran: " + SalvageSystem.wreck_name)
+		if SalvageSystem.generate():
+			GameState.toast("Ein Wrack aus dem Trümmerfeld dockt an der Schleuse an: " + SalvageSystem.wreck_name)
 
 # ---------------- Schiffe ----------------
 
@@ -237,14 +352,10 @@ func _build_template(g: ShipGrid, t: Dictionary) -> void:
 		g.cables[g.idx(Vector2i(x, y0 + h - 2))] = 1
 	for y in range(y0 + 1, y0 + h - 1):
 		g.cables[g.idx(Vector2i(x0 + 1, y))] = 1
-	# Außentür und Steg zur Bergungsleine
-	g.set_tile(Vector2i(x0, y0 + h / 2), ShipGrid.Tile.DOOR)
-	for y in range(y0 + h / 2, Config.WRECK_TOP):
-		g.set_tile(Vector2i(x0 - 1, y), ShipGrid.Tile.FLOOR)
-		g.zone[g.idx(Vector2i(x0 - 1, y))] = 2
-	for x in range(mini(x0 - 1, Config.WRECK_ENTRY_X), maxi(x0 - 1, Config.WRECK_ENTRY_X) + 1):
-		g.set_tile(Vector2i(x, Config.WRECK_TOP - 1), ShipGrid.Tile.FLOOR)
-		g.zone[g.idx(Vector2i(x, Config.WRECK_TOP - 1))] = 2
+	# Zwei Andockschleusen: rechts für Stationen, unten für Wracks
+	for p in [Vector2i(x0 + w - 1, y0 + h / 2), Vector2i(mid - 1, y0 + h - 1)]:
+		g.set_tile(p, ShipGrid.Tile.DOOR)
+		g.place_device("dockport", p)
 	for i in g.tiles.size():
 		if g.holds_air(i) and g.zone[i] == 0:
 			g.fill_air(i)

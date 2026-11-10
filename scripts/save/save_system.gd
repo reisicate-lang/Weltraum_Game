@@ -38,6 +38,7 @@ func save_game(silent: bool = false) -> bool:
 		"quests": QuestSystem.to_data(),
 		"goals": GoalSystem.to_data(),
 		"station": StationSystem.to_data(),
+		"salvage": SalvageSystem.to_data(),
 	}
 	var f := FileAccess.open(path(), FileAccess.WRITE)
 	if f == null:
@@ -76,6 +77,8 @@ func load_game(silent: bool = false) -> bool:
 		QuestSystem.from_data(data.quests)
 	if data.has("goals"):
 		GoalSystem.from_data(data.goals)
+	SalvageSystem.from_data(data.get("salvage", {}))
+	FleetSystem.migrate_docking()
 	StationSystem.from_data(data.get("station", {}))
 	GameState.selected = CrewSystem.player()
 	EventBus.game_loaded.emit()

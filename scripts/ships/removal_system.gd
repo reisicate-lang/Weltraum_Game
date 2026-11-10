@@ -160,7 +160,9 @@ func reason(kind: String, p: Vector2i) -> String:
 	if key == "":
 		return "Hier ist nichts."
 	var nm := name_of(key)
-	if StationSystem.reserved(p) or StationSystem.is_hatch(i):
+	if g.linked.has(i):
+		return "Die Schleuse ist gerade angedockt. Erst abdocken."
+	if StationSystem.reserved(p):
 		return "Gehört der Station."
 	if ShipConstructionSystem.jobs.has(i):
 		return "Hier läuft schon: " + ShipConstructionSystem.label(ShipConstructionSystem.jobs[i]) + "."
@@ -173,6 +175,8 @@ func reason(kind: String, p: Vector2i) -> String:
 			return "Verschlossen – erst knacken (Hacken)."
 		if dev.suit != null and kind != "uninstall":
 			return "Im Spind hängt ein Raumanzug. Nur Abbauen ist möglich."
+		if g.linked.has(i):
+			return "Die Schleuse ist gerade angedockt. Erst abdocken."
 	elif key == "tile:floor":
 		if g.cables[i] == 1:
 			return "Auf dem Boden liegt ein Kabel. Erst das Kabel entfernen (Abreißen X)."
@@ -310,6 +314,9 @@ func finish(job: Dictionary, worker: CrewMember, worker_pos: Vector2i) -> void:
 		if g.zone[i] == 1:
 			GoalSystem.stripped += 1
 		g.devices.erase(i)
+		# Andockschleuse: das Loch in der Außenwand wird wieder Wand
+		if dev.type == "dockport":
+			g.set_tile(p, ShipGrid.Tile.WALL)
 	else:
 		var t := g.tiles[i]
 		if t == ShipGrid.Tile.FLOOR:
@@ -364,6 +371,7 @@ func install_reason(pk: String, p: Vector2i) -> String:
 	var has_dev := g.devices.has(i)
 	var ok := false
 	match key:
+		"dev:dockport": ok = t == ShipGrid.Tile.WALL and not has_dev and ShipSystem.port_dir(p) != Vector2i.ZERO
 		"tile:floor": ok = t == ShipGrid.Tile.SPACE
 		"tile:wall", "tile:window": ok = (t == ShipGrid.Tile.SPACE or t == ShipGrid.Tile.FLOOR) and not has_dev
 		"tile:door": ok = t != ShipGrid.Tile.DOOR and t != ShipGrid.Tile.SPACE and not has_dev
@@ -401,6 +409,8 @@ func finish_install(job: Dictionary, worker_pos: Vector2i) -> void:
 		else:
 			dev = Device.new(key.substr(4), p)
 			dev.cond = float(st.cond)
+		if dev.type == "dockport":
+			g.set_tile(p, ShipGrid.Tile.DOOR)
 		g.devices[i] = dev
 	else:
 		var tile: int = TILE_KEYS.find_key(key)

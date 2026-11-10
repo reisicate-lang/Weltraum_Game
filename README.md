@@ -26,6 +26,7 @@ godot --headless --path . --script res://tests/test_undock.gd
 godot --headless --path . --script res://tests/test_removal.gd
 godot --headless --path . --script res://tests/test_auto.gd
 godot --headless --path . --script res://tests/test_atmosphere.gd
+godot --headless --path . --script res://tests/test_docking.gd
 ```
 
 ## Steuerung
@@ -47,6 +48,7 @@ godot --headless --path . --script res://tests/test_atmosphere.gd
 | Charaktermenü (Fähigkeiten, Traits, Hobbys, Lebenslauf, Aufgaben) | `I` |
 | Auto-Modus der ausgewählten Figur an/aus | Knopf „Auto: AN/AUS“ links oder `J` |
 | Navigation | `N`, fliegen mit `WASD`, `F` andocken, `U` abdocken |
+| Andockschleuse bauen | Geräte-Menü → „Andockschleuse“, Klick auf eine Außenwand (innen Raum, außen All). Stationen docken an jeder freien Schleuse an, Wracks an einer Schleuse in der unteren Außenwand |
 | Speichern | `Strg+S`, Autosave jede Minute |
 
 ## Entfernen einstellen (`data/removal.json`)

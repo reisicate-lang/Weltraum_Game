@@ -92,8 +92,6 @@ const PRICE_DRIFT := 0.06
 const REFILL_AT := 0.3
 
 ## Wrack an der Bergungsleine
-const WRECK_TOP := 30
-const WRECK_ENTRY_X := 20
 
 ## Temperatur (°C)
 const ROOM_TEMP := 21.0

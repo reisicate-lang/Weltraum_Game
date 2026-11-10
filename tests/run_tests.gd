@@ -64,17 +64,18 @@ func _initialize() -> void:
 	_check("Kiste abgerissen", ship.grid.device_at(target) == null)
 	_check("Teile liegen herum", not ship.grid.piles.is_empty())
 
-	# 4) Leck: Wand entfernen -> Luft entweicht
-	var hole := Vector2i(x0 + 15, y0 + 2)
+	# 4) Leck: Außenwand oben im Cockpit entfernen -> Luft entweicht
+	# (rechts liegt die angedockte Station direkt an der Wand)
+	var hole := Vector2i(x0 + 14, y0)
 	ship.grid.set_tile(hole, 1)
 	_run(20)
-	var near: int = ship.grid.idx(Vector2i(x0 + 14, y0 + 2))
+	var near: int = ship.grid.idx(Vector2i(x0 + 14, y0 + 1))
 	_check("Luft entweicht durch das Loch (%.1f kPa)" % ship.grid.pressure(near), ship.grid.pressure(near) < 80.0)
 
-	# 5) Außeneinsatz: Boden draußen neben dem Steg bauen -> Raumanzug, Schleuse
+	# 5) Außeneinsatz: Boden draußen vor der Luftschleuse bauen -> Raumanzug, Schleuse
 	gs.new_game()
 	root.get_node("DamageSystem").effects.clear()
-	var steg := Vector2i(x0 - 5, y0 + 4)
+	var steg := Vector2i(x0 - 4, y0 + 7)
 	build.place("floor", steg)
 	mira = crew.player()
 	var saw_suit := false
@@ -160,6 +161,7 @@ func _initialize() -> void:
 	econ.buy_claim()
 	_check("Neues Bergungsrecht: neues Wrack", salv.wreck_name != "" and econ.credits == 5000 - Config.CLAIM_FEE)
 	econ.credits = 0
+	root.get_node("Settings").debt_paused = false
 	gs.time = econ.next_payment + 0.01
 	econ.step(0.0)
 	_check("Verpasste Rate wird gezählt", econ.strikes == 1)

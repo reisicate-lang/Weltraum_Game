@@ -81,9 +81,9 @@ func _initialize() -> void:
 	# 3) Fenster
 	build.place("window", Vector2i(x0 + 15, y0 + 2))
 	_check("Fenster ist planbar (Wand wird ersetzt? nein: nur auf Boden/All)", not build.can_place("window", Vector2i(x0 + 15, y0 + 2)) or true)
-	var win := Vector2i(x0 + 16, y0 + 2)
+	var win := Vector2i(x0 - 2, y0 + 2)
 	build.place("floor", win)
-	_check("Fenster kann im All geplant werden (neben dem Andockschlauch)", build.can_place("window", Vector2i(x0 + 16, y0 + 7)))
+	_check("Fenster kann im All geplant werden", build.can_place("window", Vector2i(x0 - 2, y0 + 3)))
 	build.jobs.clear()
 
 	# 4) Feuer: brennt, verbraucht Sauerstoff, Crew löscht
@@ -159,7 +159,8 @@ func _initialize() -> void:
 	root.get_node("EventBus").toast.connect(func(t, _k): if t.begins_with("Werkbank"): made[0] = true)
 	econ.craft("chemfuel")
 	_run(40)
-	_check("Chemiestation stellt Brennstoff her", made[0])
+	var who = root.get_node("CrewSystem").player()
+	_check("Chemiestation stellt Brennstoff her (Mira: %s, Hunger %d, Energie %d)" % [who.task, int(who.needs.food), int(who.needs.sleep)], made[0])
 
 	print("\n%d OK, %d Fehler" % [_ok, _failed])
 	quit(1 if _failed > 0 else 0)

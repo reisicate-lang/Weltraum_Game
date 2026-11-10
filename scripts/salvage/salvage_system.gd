@@ -13,20 +13,41 @@ var wreck_name := ""
 var investigated := false
 var cause := ""
 
-## Steg vom Außensteg des Schiffs hinunter zum Wrack
-func build_gangway() -> void:
-	var g := ShipSystem.grid
-	for y in range(27, Config.WRECK_TOP):
-		var p := Vector2i(Config.WRECK_ENTRY_X, y)
-		g.set_tile(p, ShipGrid.Tile.FLOOR)
-		g.zone[g.idx(p)] = 2
+## Mit welcher Andockschleuse das Wrack verbunden ist (Feld-Index) und wo seine Tür liegt
+var port := -1
+var entry := Vector2i(-1, -1)
 
-func generate() -> void:
+## Freie Andockschleuse nach unten für ein Wrack (oder leer)
+func free_port() -> Dictionary:
+	var ports: Array = ShipSystem.free_ports(Vector2i(0, 1))
+	return ports[0] if not ports.is_empty() else {}
+
+## Wrack mit seiner Tür direkt unter die Schleuse hängen (Tür an Tür).
+## Gibt false zurück, wenn keine freie Schleuse nach unten da ist oder kein Platz ist.
+func generate() -> bool:
 	var g := ShipSystem.grid
-	var w := randi_range(15, 22)
-	var h := randi_range(7, 10)
-	var top := Config.WRECK_TOP
-	var left := clampi(Config.WRECK_ENTRY_X - randi_range(3, w - 4), 2, g.width - w - 2)
+	var pt := free_port()
+	if pt.is_empty():
+		GameState.toast("Für ein Wrack fehlt eine freie Andockschleuse nach unten (in der unteren Außenwand).", "bad")
+		return false
+	var e: Vector2i = pt.pos + Vector2i(0, 1)
+	var top := e.y
+	var w := 0
+	var h := 0
+	var left := 0
+	var found := false
+	for attempt in 40:
+		w = randi_range(15, 22) - attempt / 5
+		h = randi_range(7, 10) - attempt / 10
+		left = clampi(e.x - randi_range(3, w - 4), 1, g.width - w - 1)
+		if e.x <= left or e.x >= left + w - 1 or top + h > g.height - 1:
+			continue
+		if _free_rect(g, left, top, w, h):
+			found = true
+			break
+	if not found:
+		GameState.toast("Kein Platz für das Wrack unter der Andockschleuse.", "bad")
+		return false
 	var inner: Array[Vector2i] = []
 	for y in range(top, top + h):
 		for x in range(left, left + w):
@@ -34,13 +55,14 @@ func generate() -> void:
 			_put(g, Vector2i(x, y), ShipGrid.Tile.WALL if edge else ShipGrid.Tile.FLOOR)
 			if not edge:
 				inner.append(Vector2i(x, y))
-	_put(g, Vector2i(Config.WRECK_ENTRY_X, top), ShipGrid.Tile.DOOR)
-	var doors: Array[Vector2i] = [Vector2i(Config.WRECK_ENTRY_X, top)]
+	_put(g, e, ShipGrid.Tile.DOOR)
+	var doors: Array[Vector2i] = [e]
+	_link(g, pt, e)
 	# Innenwände
 	var x := left + randi_range(4, 6)
 	var splits := 0
 	while x < left + w - 4 and splits < 2:
-		if x != Config.WRECK_ENTRY_X:
+		if x != e.x:
 			for y in range(top, top + h):
 				_put(g, Vector2i(x, y), ShipGrid.Tile.WALL)
 			var dy := randi_range(top + 2, top + h - 3)
@@ -54,7 +76,7 @@ func generate() -> void:
 		for xx in range(left, left + w):
 			var corner := (xx == left or xx == left + w - 1) and (y == top or y == top + h - 1)
 			var edge := xx == left or y == top or xx == left + w - 1 or y == top + h - 1
-			if edge and not corner and g.get_tile(Vector2i(xx, y)) == ShipGrid.Tile.WALL and xx != Config.WRECK_ENTRY_X:
+			if edge and not corner and g.get_tile(Vector2i(xx, y)) == ShipGrid.Tile.WALL and absi(xx - e.x) > 1:
 				hull.append(Vector2i(xx, y))
 	for k in randi_range(1, 3):
 		_put(g, hull.pick_random(), ShipGrid.Tile.FLOOR)
@@ -121,6 +143,22 @@ func generate() -> void:
 	investigated = false
 	cause = ["ein Reaktorbrand", "ein Treffer im Krieg", "eine Kollision mit Trümmern", "ein Hüllenbruch durch Materialermüdung", "Meuterei an Bord"].pick_random()
 	EventBus.ship_changed.emit()
+	return true
+
+## Ist die Fläche frei (nur Weltraum, im Raster)?
+func _free_rect(g: ShipGrid, left: int, top: int, w: int, h: int) -> bool:
+	for y in range(top, top + h):
+		for x in range(left, left + w):
+			var q := Vector2i(x, y)
+			if x < 1 or y < 1 or x > g.width - 2 or y > g.height - 2 or g.get_tile(q) != ShipGrid.Tile.SPACE or g.zone[g.idx(q)] != 0:
+				return false
+	return true
+
+## Schleuse und Wracktür verbinden
+func _link(g: ShipGrid, pt: Dictionary, e: Vector2i) -> void:
+	port = int(pt.i)
+	entry = e
+	g.linked[port] = true
 
 func _put(g: ShipGrid, p: Vector2i, t: int) -> void:
 	g.set_tile(p, t)
@@ -131,25 +169,33 @@ func _put(g: ShipGrid, p: Vector2i, t: int) -> void:
 func is_wreck(i: int) -> bool:
 	return ShipSystem.grid.zone[i] == 1
 
-## Asteroid: ein Brocken aus Fels (Wände), der beim Abreißen Eis und Erz gibt
-func generate_asteroid() -> void:
+## Asteroid: ein Brocken aus Fels (Wände), der beim Abreißen Eis und Erz gibt.
+## Hängt unter einer freien Schleuse nach unten; direkt darunter ein Landeplatz.
+func generate_asteroid() -> bool:
 	var g := ShipSystem.grid
-	var c := Vector2(Config.WRECK_ENTRY_X + randi_range(-2, 4), Config.WRECK_TOP + 5)
+	var pt := free_port()
+	if pt.is_empty():
+		GameState.toast("Für den Asteroiden fehlt eine freie Andockschleuse nach unten.", "bad")
+		return false
+	var e: Vector2i = pt.pos + Vector2i(0, 1)
+	var c := Vector2(e.x + randi_range(-2, 4), e.y + 5)
 	var rx := randf_range(6.0, 10.0)
 	var ry := randf_range(3.5, 5.0)
-	for y in range(Config.WRECK_TOP, Config.WRECK_TOP + 11):
+	for y in range(e.y, e.y + 11):
 		for x in range(int(c.x - rx) - 1, int(c.x + rx) + 2):
 			var p := Vector2i(x, y)
-			if not g.in_bounds(p):
+			if not g.in_bounds(p) or g.get_tile(p) != ShipGrid.Tile.SPACE or g.zone[g.idx(p)] != 0:
 				continue
 			var d := Vector2((x - c.x) / rx, (y - c.y) / ry).length() + randf_range(-0.12, 0.12)
 			if d < 1.0:
 				_put(g, p, ShipGrid.Tile.WALL)
-	# Ein Landeplatz oben, damit man hinkommt
-	_put(g, Vector2i(Config.WRECK_ENTRY_X, Config.WRECK_TOP), ShipGrid.Tile.FLOOR)
+	# Landeplatz direkt unter der Schleuse
+	_put(g, e, ShipGrid.Tile.FLOOR)
+	_link(g, pt, e)
 	wreck_name = "Asteroid " + ["KX-7a", "KX-7b", "Brocken 12", "Splitter 4"].pick_random()
 	investigated = true
 	EventBus.ship_changed.emit()
+	return true
 
 func is_asteroid() -> bool:
 	return wreck_name.begins_with("Asteroid")
@@ -174,8 +220,21 @@ func clear() -> void:
 		g.cables[i] = 0
 		g.o2[i] = 0.0; g.n2[i] = 0.0; g.co2[i] = 0.0
 		g.zone[i] = 0
+	g.linked.erase(port)
+	port = -1
+	entry = Vector2i(-1, -1)
 	wreck_name = ""
 	EventBus.ship_changed.emit()
+
+func to_data() -> Dictionary:
+	return {"name": wreck_name, "investigated": investigated, "cause": cause, "port": port, "ex": entry.x, "ey": entry.y}
+
+func from_data(d: Dictionary) -> void:
+	wreck_name = String(d.get("name", ""))
+	investigated = bool(d.get("investigated", false))
+	cause = String(d.get("cause", ""))
+	port = int(d.get("port", -1))
+	entry = Vector2i(int(d.get("ex", -1)), int(d.get("ey", -1)))
 
 func device_value(dev: Device) -> int:
 	var base := 0.0

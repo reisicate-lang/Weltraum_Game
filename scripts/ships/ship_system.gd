@@ -35,9 +35,10 @@ func create_start_ship() -> void:
 			var edge := x == x0 - 3 or y == y0 + 5 or y == y0 + 8
 			grid.set_tile(Vector2i(x, y), T.WALL if edge else T.FLOOR)
 	grid.set_tile(Vector2i(x0 - 3, y0 + 7), T.DOOR)
-	# Außensteg im Vakuum
-	for y in range(y0 + 1, y0 + 10):
-		grid.set_tile(Vector2i(x0 - 4, y), T.FLOOR)
+	# Andockschleusen: rechts im Cockpit für Stationen, unten für Wracks
+	for p in [Vector2i(x0 + 15, y0 + 5), Vector2i(x0 + 6, y0 + 9)]:
+		grid.set_tile(p, T.DOOR)
+		grid.place_device("dockport", p)
 
 	# Einrichtung
 	grid.place_device("bed", Vector2i(x0 + 1, y0 + 1))
@@ -85,17 +86,52 @@ func create_start_ship() -> void:
 	grid.cables[grid.idx(Vector2i(x0 - 1, y0 + 5))] = 1
 	grid.cables[grid.idx(Vector2i(x0, y0 + 5))] = 1
 	grid.cables[grid.idx(Vector2i(x0 - 1, y0 + 6))] = 1
-	# Mondmüll draußen am Steg
-	grid.drop_items(Vector2i(x0 - 4, y0 + 1), "scrap", 4, 30.0)
-	grid.drop_items(Vector2i(x0 - 4, y0 + 1), "copper", 2, 40.0)
-	grid.drop_items(Vector2i(x0 - 4, y0 + 9), "plate", 3, 45.0)
-	grid.drop_items(Vector2i(x0 - 4, y0 + 9), "datachip", 1, 60.0)
-	grid.drop_items(Vector2i(x0 - 4, y0 + 4), "glass", 2, 55.0)
-
 	for i in grid.tiles.size():
-		if grid.holds_air(i) and grid.pos(i).x != x0 - 4:
+		if grid.holds_air(i):
 			grid.fill_air(i)
 	EventBus.ship_changed.emit()
+
+# ---------------- Andockschleusen ----------------
+
+const DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
+
+## Feld gehört zum Innenraum des eigenen Schiffs (Boden mit Luftverbindung)
+func _interior(p: Vector2i) -> bool:
+	if not grid.in_bounds(p):
+		return false
+	var i := grid.idx(p)
+	return grid.tiles[i] == ShipGrid.Tile.FLOOR and grid.zone[i] == 0
+
+## Richtung nach außen für eine Schleuse auf Feld p, sonst Vector2i.ZERO.
+## Gültig: auf der einen Seite Innenraum, gegenüber All (oder Station/Wrack),
+## links und rechts Wand – also mitten in einer Außenwand.
+func port_dir(p: Vector2i) -> Vector2i:
+	for d in DIRS:
+		var outside: Vector2i = p + d
+		if not _interior(p - d) or not grid.in_bounds(outside):
+			continue
+		var oi := grid.idx(outside)
+		if grid.tiles[oi] != ShipGrid.Tile.SPACE and not grid.foreign(oi):
+			continue
+		var side := Vector2i(d.y, d.x)
+		if grid.wall_like(p + side) and grid.wall_like(p - side):
+			return d
+	return Vector2i.ZERO
+
+## Andockschleusen des eigenen Schiffs: [{pos, dir, i}]
+func ports() -> Array:
+	var out: Array = []
+	for i in grid.devices:
+		var dev: Device = grid.devices[i]
+		if dev.type == "dockport" and grid.zone[i] == 0:
+			var d := port_dir(dev.pos)
+			if d != Vector2i.ZERO:
+				out.append({"pos": dev.pos, "dir": d, "i": i})
+	return out
+
+## Freie (nicht verbundene) Schleusen, optional nur in eine Richtung
+func free_ports(dir := Vector2i.ZERO) -> Array:
+	return ports().filter(func(p): return not grid.linked.has(p.i) and (dir == Vector2i.ZERO or p.dir == dir))
 
 func spawn_point() -> Vector2i:
 	return Vector2i((grid.width - 16) / 2 + 4, (grid.height - 10) / 2 + 7)

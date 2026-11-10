@@ -4,11 +4,11 @@ extends Node
 
 ## Ziel-Prüfungen. "check" ist der Name einer Funktion unten.
 const GOALS := [
-	{"id": "suit", "text": "Lass Mira einen Raumanzug anziehen (plane etwas draußen, z. B. Boden am Außensteg)", "check": "_g_suit", "reward": 50},
-	{"id": "junk", "text": "Sammle den Mondmüll am Außensteg ein (Werkzeug Einsammeln, Q)", "check": "_g_junk", "reward": 80},
+	{"id": "suit", "text": "Lass Mira einen Raumanzug anziehen (plane etwas im Wrack unter der Andockschleuse, z. B. Abreißen X)", "check": "_g_suit", "reward": 50},
+	{"id": "junk", "text": "Sammle Schrott aus dem Wrack ein (Werkzeug Einsammeln, Q)", "check": "_g_junk", "reward": 80},
 	{"id": "strip", "text": "Reiß ein Gerät im Wrack ab (Werkzeug Abreißen, X)", "check": "_g_strip", "reward": 80},
 	{"id": "sell", "text": "Verkaufe Bergungsgut am Handelsterminal im Cockpit", "check": "_g_sell", "reward": 100},
-	{"id": "solar", "text": "Baue ein Solarpanel draußen auf dem Steg (spart Brennstoff)", "check": "_g_solar", "reward": 150},
+	{"id": "solar", "text": "Baue ein Solarpanel draußen im Vakuum, z. B. auf einem Boden vor der Luftschleuse (spart Brennstoff)", "check": "_g_solar", "reward": 150},
 	{"id": "book", "text": "Lass jemanden ein Lehrbuch lesen (im Terminal kaufen, in eine Kiste legen)", "check": "_g_book", "reward": 100},
 	{"id": "fly", "text": "Fliege zum Kármán-Ring (Taste N, Reisen)", "check": "_g_fly", "reward": 200},
 	{"id": "hire", "text": "Heuere ein Crewmitglied an (Terminal, Reiter Crew)", "check": "_g_hire", "reward": 150},
@@ -20,12 +20,14 @@ const GOALS := [
 var done: Array[String] = []
 var _contracts_done := 0
 var stripped := 0              ## im Wrack abgerissene Geräte
+var junk := 0                  ## aus dem Wrack eingesammelte Haufen
 var _timer := 0.0
 
 func reset() -> void:
 	done.clear()
 	_contracts_done = 0
 	stripped = 0
+	junk = 0
 
 func current() -> Dictionary:
 	for g in GOALS:
@@ -61,12 +63,7 @@ func _g_suit() -> bool:
 	return false
 
 func _g_junk() -> bool:
-	var g := ShipSystem.grid
-	var x := (g.width - 16) / 2 - 4
-	for i in g.piles:
-		if g.pos(i).x == x and g.zone[i] == 0:
-			return false
-	return true
+	return junk > 0
 
 func _g_strip() -> bool:
 	for e in EconomySystem.log_entries:
@@ -108,9 +105,10 @@ func _g_debt() -> bool:
 	return EconomySystem.debt <= 0
 
 func to_data() -> Dictionary:
-	return {"done": done, "contracts": _contracts_done, "stripped": stripped}
+	return {"done": done, "contracts": _contracts_done, "stripped": stripped, "junk": junk}
 
 func from_data(d: Dictionary) -> void:
 	done.assign(d.get("done", []))
 	_contracts_done = int(d.get("contracts", 0))
 	stripped = int(d.get("stripped", 0))
+	junk = int(d.get("junk", 0))

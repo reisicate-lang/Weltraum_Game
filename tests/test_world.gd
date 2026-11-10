@@ -144,16 +144,18 @@ func _initialize() -> void:
 	var x0: int = (gg.width - 16) / 2
 	var y0: int = (gg.height - 10) / 2
 	_check("Erstes Ziel: Raumanzug", G.current().id == "suit")
-	build.place("floor", Vector2i(x0 - 5, y0 + 4))
+	build.place("floor", Vector2i(x0 - 4, y0 + 7))   # vor der Luftschleuse im All
 	for k in 60 * 3:
 		gs.step(1.0 / 60.0)
 	_check("Ziel Raumanzug erreicht", "suit" in G.done)
 	for i in gg.piles.keys():
-		if gg.zone[i] == 0:
+		if gg.zone[i] == 1:
 			build.place("haul", gg.pos(i))
 	for k in 60 * 60:
 		gs.step(1.0 / 60.0)
-	_check("Ziel Mondmüll erreicht", "junk" in G.done)
+		if "junk" in G.done:
+			break
+	_check("Ziel Schrott aus dem Wrack erreicht", "junk" in G.done)
 	var cr_goal: int = econ.credits
 	_check("Ziele geben Belohnung", G.done.size() >= 2 and cr_goal > 0)
 	_check("Ziel-Anzeige zeigt das nächste Ziel (%s)" % G.current().get("id", ""), G.current().id == "strip")

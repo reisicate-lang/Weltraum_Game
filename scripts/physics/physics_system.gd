@@ -302,11 +302,18 @@ func can_dock(id: String) -> bool:
 func dock(id: String, force: bool = false) -> bool:
 	if not force and not can_dock(id):
 		return false
+	if docked == id:
+		return true
+	# Andocken nur mit Andockschleuse (Tür an Tür, keine Gänge)
+	if ShipSystem.ports().is_empty():
+		GameState.toast("Keine Andockschleuse vorhanden. Bau eine in eine Außenwand (Geräte-Menü: Andockschleuse).", "bad")
+		return false
+	if String(loc(id).get("kind", "")) == "station" and not StationSystem.build(id):
+		return false
 	docked = id
 	thrust = 0.0
 	match_target = ""
 	FleetSystem.arrive(loc(id))
-	StationSystem.build(id)
 	NPCSystem.on_docked(id)
 	SkillSystem.train_all_at("helm", "dock", 0.3 if force else 8.0)
 	GameState.toast("Angedockt: " + loc(id).name)
