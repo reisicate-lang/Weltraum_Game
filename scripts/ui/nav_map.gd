@@ -4,6 +4,8 @@ extends Control
 
 var zoom := 0.005         ## Pixel pro km
 var follow := true
+## Im Cockpit: automatisch so zoomen, dass Schiff und Ziel zu sehen sind (Mausrad schaltet ab)
+var auto_zoom := false
 var center := Vector2(30000, 0)
 var _drag := false
 
@@ -16,8 +18,10 @@ func _gui_input(event: InputEvent) -> void:
 		var mb := event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:
 			zoom = minf(4000.0, zoom * 1.25)
+			auto_zoom = false
 		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN and mb.pressed:
 			zoom = maxf(0.002, zoom * 0.8)
+			auto_zoom = false
 		elif mb.button_index == MOUSE_BUTTON_LEFT:
 			_drag = mb.pressed
 	elif event is InputEventMouseMotion and _drag:
@@ -31,6 +35,9 @@ func _draw() -> void:
 	var P := PhysicsSystem
 	if follow:
 		center = P.pos
+	if auto_zoom and P.target != "" and P.docked == "":
+		var d: float = P.rel_to(P.target).dist
+		zoom = clampf(0.35 * minf(size.x, size.y) / maxf(d, 0.05), 0.002, 4000.0)
 	draw_rect(Rect2(Vector2.ZERO, size), Color(0.016, 0.024, 0.043))
 	var font := ThemeDB.fallback_font
 	for n in ["earth", "moon"]:
@@ -66,6 +73,14 @@ func _draw() -> void:
 		draw_polyline(pts, Color(0.95, 0.64, 0.23, 0.6), 1.2)
 	if not P.travel.is_empty():
 		draw_line(to_screen(P.pos), to_screen(P.loc_state(P.loc(P.travel.to), P.secs()).pos), Color(0.44, 0.81, 0.56, 0.7), 1.0)
+	# Ausgewähltes Ziel: Ring und Linie
+	if P.target != "" and not P.loc(P.target).is_empty():
+		var tp := to_screen(P.loc_state(P.loc(P.target), P.secs()).pos)
+		draw_arc(tp, 12.0, 0, TAU, 32, Color(0.35, 0.78, 0.9), 2.0)
+		draw_line(to_screen(P.pos), tp, Color(0.35, 0.78, 0.9, 0.35), 1.0)
+		if zoom > 50.0:
+			# Andockbereich (250 m)
+			draw_arc(tp, float(P.space.dock_dist) * zoom, 0, TAU, 48, Color(0.44, 0.81, 0.56, 0.5), 1.0)
 	# Schiff
 	var s := to_screen(P.pos)
 	var dir := Vector2.from_angle(P.angle)

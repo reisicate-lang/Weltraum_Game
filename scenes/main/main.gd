@@ -34,17 +34,19 @@ func _process(delta: float) -> void:
 	if Input.is_physical_key_pressed(KEY_UP): pan.y -= 1
 	if Input.is_physical_key_pressed(KEY_DOWN): pan.y += 1
 	cam.position += pan * 600.0 * delta / cam.zoom.x
-	# Navigationskarte offen: WASD steuert das Schiff
+	# Cockpit (Flugmodus): die Flugtasten steuern das Schiff, die Figur bleibt am Pult.
+	# Die Tasten setzen nur Eingaben; Schub und Drehung rechnet PhysicsSystem in Spielzeit.
 	if UIManager.nav_open:
+		if not UIManager.keep_pilot():
+			return
 		var P := PhysicsSystem
-		if P.docked == "" and P.travel.is_empty() and P.autodock.is_empty() and TimeSystem.speed_index > 0:
-			var turn := 0.0
-			if Input.is_physical_key_pressed(KEY_A): turn -= 1.0
-			if Input.is_physical_key_pressed(KEY_D): turn += 1.0
-			P.angle += turn * float(P.space.rot_speed) * delta
-			P.thrust = 1.0 if Input.is_physical_key_pressed(KEY_W) else (-0.5 if Input.is_physical_key_pressed(KEY_S) else 0.0)
+		if P.docked == "" and P.travel.is_empty() and P.autodock.is_empty():
+			P.thrust = _axis(KEY_W, KEY_S)
+			P.strafe = _axis(KEY_D, KEY_A)
+			P.rot_input = _axis(KEY_E, KEY_Q)
+			P.rot_stop = Input.is_physical_key_pressed(KEY_R)
 		else:
-			P.thrust = 0.0
+			P.stop_inputs()
 		return
 	# Deine Figur mit WASD (echte Geschwindigkeit, nicht in der Pause)
 	var p := CrewSystem.player()
@@ -58,6 +60,10 @@ func _process(delta: float) -> void:
 			var sprint := Config.SPRINT if Input.is_physical_key_pressed(KEY_SHIFT) else 1.0
 			p.manual_move(dir, Config.WALK_SPEED / 60.0 * delta * sprint)
 			cam.position = cam.position.lerp(p.pos * Config.TILE_SIZE, minf(1.0, delta * 4.0))
+
+## Achse aus zwei Tasten: +1, -1 oder 0
+func _axis(plus: Key, minus: Key) -> float:
+	return (1.0 if Input.is_physical_key_pressed(plus) else 0.0) - (1.0 if Input.is_physical_key_pressed(minus) else 0.0)
 
 func _drag_tiles() -> Array[Vector2i]:
 	var a := _drag_start
@@ -136,6 +142,9 @@ func _click(t: Vector2i) -> void:
 		return
 	if g.in_bounds(t):
 		var dev := g.device_at(t)
+		if dev != null and not dev.unknown and dev.type == "helm" and g.zone[g.idx(t)] == 0:
+			UIManager.request_flight()
+			return
 		if dev != null and not dev.unknown and dev.type == "terminal":
 			UIManager.open_window("trade")
 			return
@@ -176,6 +185,24 @@ func _key(k: InputEventKey) -> void:
 	if k.ctrl_pressed and k.keycode == KEY_S:
 		SaveSystem.save_game()
 		return
+	# Im Cockpit gehören die Tasten dem Schiff (keine Werkzeuge, keine Figur)
+	if UIManager.nav_open:
+		var P := PhysicsSystem
+		match k.keycode:
+			KEY_ESCAPE, KEY_N: UIManager.leave_flight()
+			KEY_TAB: UIManager.cycle_target()
+			KEY_X: UIManager.toggle_match()
+			KEY_U: P.request_undock()
+			KEY_F:
+				if P.docked == "" and not P.dock(P.target):
+					GameState.toast(P.dock_block_reason(P.target))
+			KEY_SPACE: TimeSystem.toggle_pause()
+			KEY_1: TimeSystem.set_speed(1)
+			KEY_2: TimeSystem.set_speed(2)
+			KEY_3: TimeSystem.set_speed(3)
+			KEY_4: TimeSystem.set_speed(4)
+			KEY_5: TimeSystem.set_speed(5)
+		return
 	match k.keycode:
 		KEY_SPACE: TimeSystem.toggle_pause()
 		KEY_1: TimeSystem.set_speed(1)
@@ -183,16 +210,8 @@ func _key(k: InputEventKey) -> void:
 		KEY_3: TimeSystem.set_speed(3)
 		KEY_4: TimeSystem.set_speed(4)
 		KEY_5: TimeSystem.set_speed(5)
-		KEY_N: UIManager.toggle_nav()
-		KEY_F:
-			if UIManager.nav_open:
-				var n := PhysicsSystem.nearest()
-				if PhysicsSystem.docked == "" and not PhysicsSystem.dock(n.id):
-					GameState.toast(PhysicsSystem.dock_block_reason(n.id))
-		KEY_U:
-			if UIManager.nav_open:
-				PhysicsSystem.request_undock()
-		KEY_ESCAPE: UIManager.close_help(); UIManager.set_tool("select"); UIManager.close_container(); UIManager.close_window(); UIManager.toggle_nav(false)
+		KEY_N: UIManager.request_flight()
+		KEY_ESCAPE: UIManager.close_help(); UIManager.set_tool("select"); UIManager.close_container(); UIManager.close_window()
 		KEY_B: UIManager.set_tool("floor")
 		KEY_M: UIManager.set_tool("wall")
 		KEY_T: UIManager.set_tool("door")

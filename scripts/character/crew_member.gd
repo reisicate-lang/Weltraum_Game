@@ -378,7 +378,7 @@ func update(dt: float) -> void:
 		task = "Auf der Station unterwegs"
 		return
 	if is_manual():
-		task = "Wird von dir gesteuert"
+		task = "Steuert das Schiff" if UIManager.pilot == self else "Wird von dir gesteuert"
 		return
 	# 1) Laufbefehl
 	if order != null:

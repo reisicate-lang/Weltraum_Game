@@ -161,5 +161,10 @@
    "h": 11,
    "desc": "Viel Frachtraum, drei Triebwerke, Platz für Crew."
   }
- ]
+ ],
+ "rcs_thrust": 12,
+ "rcs_burn": 0.6,
+ "rot_accel": 0.5,
+ "rot_max": 1.0,
+ "dock_align_deg": 25
 }

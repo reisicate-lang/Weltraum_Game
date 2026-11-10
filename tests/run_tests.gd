@@ -220,6 +220,7 @@ func _initialize() -> void:
 	_check("Geschwindigkeit angeglichen (%.4f km/s)" % phys.rel_to("tycho").speed, phys.rel_to("tycho").speed < 0.006)
 	# nach dem Angleichen langsam heranschweben (wie mit kurzem Schub)
 	phys.pos = phys.rel_to("tycho").pos + Vector2(0.1, 0)
+	phys.angle = phys.dock_alignment("tycho").angle   # Schleuse zum Ziel drehen
 	_check("Manuell angedockt", phys.dock("tycho"))
 	_check("Wrack wieder da: " + salv.wreck_name, salv.wreck_name == wreck_before)
 	# Schnellreise

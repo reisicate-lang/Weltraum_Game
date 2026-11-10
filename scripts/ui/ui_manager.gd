@@ -21,6 +21,14 @@ const COL_MUTED := Color(0.51, 0.57, 0.65)
 
 var layer: CanvasLayer
 var auto_button: Button
+## Cockpit: Flugmodus am Steuerpult
+var flight_hud: Control
+var pilot: CrewMember = null
+var _helm_walk := false
+## Tatsächliche Tastenbelegung im Flugmodus (wird im Cockpit angezeigt)
+const FLIGHT_KEYS := [["W / S", "Schub vor / zurück (Lagedüsen, vor + Haupttriebwerk)"], ["A / D", "Schub links / rechts (Lagedüsen)"],
+	["Q / E", "drehen gegen / im Uhrzeigersinn"], ["R", "Drehung stoppen"], ["X", "Geschwindigkeit ans Ziel angleichen"],
+	["Tab", "nächstes Ziel"], ["F", "andocken"], ["U", "abdocken"], ["Mausrad", "Karte zoomen"], ["Esc / N", "Cockpit verlassen"]]
 ## Rechtsklick-Menü für Objekte (Abbauen, Zerlegen, Zerstören, Einbauen)
 var object_menu: PopupMenu
 var menu_pos := Vector2i(-1, -1)
@@ -305,7 +313,7 @@ Leertaste: Pause · 1–4: Geschwindigkeit · Strg+S: speichern
 
 Du schuldest der Bank 24 000 Cr, alle 7 Tage ist eine Rate fällig.
 Verkaufen und kaufen: Handelsterminal im Cockpit anklicken (nur angedockt).
-N: Navigation am Steuerpult · Fliegen mit WASD · Schnellreise zu Stationen
+N: ans Steuerpult (Cockpit) · Fliegen: W/S vor/zurück, A/D seitwärts, Q/E drehen · Schnellreise
 und ins Trümmerfeld. Vorsicht: Die Erde zieht dich an.""", Color(0.87, 0.9, 0.94), 14)
 	text.custom_minimum_size = Vector2(560, 0)
 	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -347,23 +355,203 @@ func _build_nav() -> void:
 	var scroll := ScrollContainer.new()
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	side.add_child(scroll)
+	var outer := VBoxContainer.new()
+	outer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(outer)
+	# Fluglage-Instrument (fest, wird nicht bei jeder Aktualisierung neu gebaut)
+	flight_hud = Control.new()
+	flight_hud.set_script(load("res://scripts/ui/flight_hud.gd"))
+	flight_hud.custom_minimum_size = Vector2(360, 230)
+	outer.add_child(flight_hud)
 	nav_side = VBoxContainer.new()
 	nav_side.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(nav_side)
+	outer.add_child(nav_side)
 
+## N / Klick aufs Steuerpult: ins Cockpit (Figur geht hin) oder es verlassen
 func toggle_nav(show = null) -> void:
 	var want: bool = (not nav_open) if show == null else bool(show)
-	if want and PhysicsSystem.ship_devices("helm").is_empty():
+	if want:
+		request_flight()
+	else:
+		leave_flight()
+
+## Das Steuerpult, an dem geflogen wird (das nächste zur Spielfigur)
+func helm_device() -> Device:
+	var p := CrewSystem.player()
+	var best: Device = null
+	for h in PhysicsSystem.ship_devices("helm"):
+		if best == null or (p != null and p.pos.distance_to(Vector2(h.pos)) < p.pos.distance_to(Vector2(best.pos))):
+			best = h
+	return best
+
+## Ins Cockpit: steht die Spielfigur am Steuerpult, sofort; sonst läuft sie hin
+func request_flight() -> void:
+	var helm := helm_device()
+	var p := CrewSystem.player()
+	if helm == null:
 		GameState.toast("Dein Schiff hat kein Steuerpult.")
 		return
-	nav_open = want
-	nav_root.visible = want
-	if not want:
-		PhysicsSystem.thrust = 0.0
+	if p == null or p.unconscious:
+		GameState.toast("Niemand kann das Steuerpult bedienen.")
+		return
+	if p.can_reach(helm.pos):
+		enter_flight()
+		return
+	var res := ShipSystem.nearest_adjacent(p.tile(), [helm.pos], 1)
+	if not res.ok or not p.order_move(res.path[-1] if not res.path.is_empty() else p.tile()):
+		GameState.toast(p.display_name + " kommt nicht ans Steuerpult.")
+		return
+	_helm_walk = true
+	GameState.toast(p.display_name + " geht zum Steuerpult.")
+
+## Flugmodus an: Flugeingaben steuern das Schiff, die Figur bleibt am Pult
+func enter_flight() -> void:
+	_helm_walk = false
+	pilot = CrewSystem.player()
+	nav_open = true
+	nav_root.visible = true
+	close_container()
+	close_window()
+	var P := PhysicsSystem
+	P.stop_inputs()
+	if P.target == "" or P.loc(P.target).is_empty():
+		P.target = P.docked if P.docked != "" else String(P.nearest().id)
+	nav_map.follow = true
+	nav_map.auto_zoom = true
+	_last_nav = ""
+	_refresh_nav()
+	GameState.toast("%s übernimmt das Steuer. Esc oder N: Cockpit verlassen." % pilot.display_name)
+
+## Flugmodus aus: Schub endet, die Figur wird wieder normal gesteuert
+func leave_flight() -> void:
+	_helm_walk = false
+	var was := nav_open
+	nav_open = false
+	if nav_root != null:
+		nav_root.visible = false
+	PhysicsSystem.stop_inputs()
+	PhysicsSystem.match_target = ""
+	if pilot != null:
+		pilot.manual_until = 0.0
+	pilot = null
+	if was:
+		GameState.toast("Cockpit verlassen – Charaktersteuerung.")
+
+## Läuft die Figur zum Pult? Angekommen: Flugmodus. Unterbrochen: abbrechen.
+func _check_helm_walk() -> void:
+	if not _helm_walk:
+		return
+	var p := CrewSystem.player()
+	var helm := helm_device()
+	if p == null or helm == null:
+		_helm_walk = false
+	elif p.can_reach(helm.pos):
+		enter_flight()
+	elif p.order == null and p.path.is_empty():
+		_helm_walk = false
+
+## Jeden Frame im Flugmodus: Pilot bleibt am Pult. Fällt er aus oder geht weg, endet der Flugmodus.
+func keep_pilot() -> bool:
+	var helm := helm_device()
+	if pilot == null or pilot.unconscious or not pilot in CrewSystem.crew or helm == null or not pilot.can_reach(helm.pos):
+		leave_flight()
+		return false
+	pilot.manual_until = Time.get_ticks_msec() + 500.0
+	pilot.task = "Steuert das Schiff"
+	return true
+
+func _course(v: Vector2) -> String:
+	return "%03d°" % int(fposmod(rad_to_deg(v.angle()) + 90.0, 360.0))
+
+## Zahlen für die Fluganzeige (auch zum Erkennen, ob neu gezeichnet werden muss)
+func _flight_rows() -> Array:
+	var P := PhysicsSystem
+	var out: Array = [_course(Vector2.from_angle(P.angle)), int(rad_to_deg(P.ang_vel)), P.thrust, P.strafe, P.rot_input, P.match_target]
+	if P.target != "" and P.docked == "":
+		var ap: Dictionary = P.approach(P.target)
+		out.append_array([_fmt_dist(ap.dist), snappedf(ap.speed * 1000.0, 0.1), snappedf(ap.closing * 1000.0, 0.1), int(P.dock_alignment(P.target).deg)])
+	return out
+
+## Cockpit-Anzeige: Fluglage, Ziel, Annäherung, Andock-Ampel, Tasten
+func _build_flight_info() -> void:
+	var P := PhysicsSystem
+	var bad := Color(0.9, 0.33, 0.29)
+	var good := Color(0.44, 0.81, 0.56)
+	nav_side.add_child(_label("FLUGLAGE", COL_MUTED, 11))
+	nav_side.add_child(_row("Ausrichtung (Nase)", [_label(_course(Vector2.from_angle(P.angle)), COL_AMBER, 12)]))
+	nav_side.add_child(_row("Drehrate", [_label("%+d °/s" % int(rad_to_deg(P.ang_vel)), COL_AMBER if absf(P.ang_vel) < 0.01 else bad, 12)]))
+	var thr: PackedStringArray = []
+	if P.thrust > 0.0: thr.append("vor")
+	if P.thrust < 0.0: thr.append("zurück")
+	if P.strafe < 0.0: thr.append("links")
+	if P.strafe > 0.0: thr.append("rechts")
+	if P.rot_input != 0.0: thr.append("drehen")
+	if P.rot_stop: thr.append("Drehung stoppen")
+	if P.match_target != "": thr.append("angleichen")
+	nav_side.add_child(_row("Aktiver Schub", [_label(", ".join(thr) if not thr.is_empty() else "keiner – Schiff driftet", COL_AMBER, 12)]))
+	nav_side.add_child(_row("Beschleunigung", [_label("Haupt %.2f · Lagedüsen %.2f m/s²" % [P.main_accel() * 1000.0, P.rcs_accel() * 1000.0], COL_MUTED, 12)]))
+	var tl := P.loc(P.target)
+	var tr := HBoxContainer.new()
+	tr.add_child(_label("ZIEL: " + (String(tl.name) if not tl.is_empty() else "keins"), COL_MUTED, 11))
+	var nb := _button("nächstes [Tab]", cycle_target)
+	nb.add_theme_font_size_override("font_size", 11)
+	tr.add_child(nb)
+	nav_side.add_child(tr)
+	if P.docked != "" or tl.is_empty():
+		pass
 	else:
-		nav_map.follow = true
-		_last_nav = ""
-		_refresh_nav()
+		var ap: Dictionary = P.approach(P.target)
+		var vrel: Vector2 = ap.vrel
+		nav_side.add_child(_row("Entfernung", [_label(_fmt_dist(ap.dist), COL_AMBER, 12)]))
+		nav_side.add_child(_row("Relativgeschwindigkeit", [_label("%s · Richtung %s" % [_fmt_speed(ap.speed), _course(vrel) if vrel.length() > 0.0000005 else "–"], COL_AMBER, 12)]))
+		var closing: float = ap.closing
+		var ctext := ("nähert sich mit %s" % _fmt_speed(closing)) if closing > 0.0000005 else (("entfernt sich mit %s" % _fmt_speed(-closing)) if closing < -0.0000005 else "Abstand bleibt gleich")
+		nav_side.add_child(_row("Annäherung", [_label(ctext, good if closing > 0.0 else COL_MUTED, 12)]))
+		if ap.eta > 0.0:
+			nav_side.add_child(_row("Ankunft bei diesem Tempo", [_label("%d s" % int(ap.eta) if ap.eta < 3600.0 else "%.1f h" % (ap.eta / 3600.0), COL_MUTED, 12)]))
+		if closing > 0.0:
+			nav_side.add_child(_row("Bremsweg", [_label("S (Lagedüsen): %s · gewendet mit W: %s" % [_fmt_dist(ap.brake_rcs), _fmt_dist(ap.brake_main)], COL_MUTED, 12)]))
+			if ap.brake_main >= ap.dist * 0.9:
+				nav_side.add_child(_label("ZU SCHNELL – sofort bremsen!", bad, 13))
+			elif ap.brake_rcs >= ap.dist * 0.9:
+				nav_side.add_child(_label("Jetzt bremsen (wenden und W, oder S halten).", COL_AMBER, 13))
+		# Andock-Ampel
+		var m := 2.5 if SkillSystem.any_mastered("pilot") else 1.0
+		var al: Dictionary = P.dock_alignment(P.target)
+		var lights := HBoxContainer.new()
+		lights.add_child(_label("ANDOCKEN ", COL_MUTED, 11))
+		var ok_dist: bool = ap.dist < float(P.space.dock_dist) * m
+		var ok_speed: bool = ap.speed < float(P.space.dock_speed) * m
+		lights.add_child(_label("● Abstand < %d m  " % int(float(P.space.dock_dist) * m * 1000.0), good if ok_dist else bad, 11))
+		lights.add_child(_label("● Tempo < %d m/s  " % int(float(P.space.dock_speed) * m * 1000.0), good if ok_speed else bad, 11))
+		lights.add_child(_label("● Schleuse %d°" % int(al.deg) if al.port else "● keine Schleuse", good if al.ok else bad, 11))
+		nav_side.add_child(lights)
+		var row := HBoxContainer.new()
+		var db := _button("Andocken [F]", func(): if not P.dock(P.target): GameState.toast(P.dock_block_reason(P.target)))
+		db.disabled = not P.can_dock(P.target)
+		row.add_child(db)
+		row.add_child(_button("Angleichen [X]", toggle_match))
+		nav_side.add_child(row)
+	nav_side.add_child(_label("TASTEN IM COCKPIT", COL_MUTED, 11))
+	for k in FLIGHT_KEYS:
+		nav_side.add_child(_row(k[1], [_label(k[0], COL_AMBER, 12)], COL_MUTED))
+
+## Nächstes Ziel auswählen
+func cycle_target() -> void:
+	var P := PhysicsSystem
+	var ids: Array = P.locations.map(func(l): return l.id)
+	var i := ids.find(P.target)
+	P.target = ids[(i + 1) % ids.size()]
+	_last_nav = ""
+	_refresh_nav()
+
+## Geschwindigkeit ans Ziel angleichen (ein/aus)
+func toggle_match() -> void:
+	var P := PhysicsSystem
+	if P.docked != "" or P.target == "":
+		return
+	P.match_target = "" if P.match_target == P.target else P.target
+	_last_nav = ""
 
 func _fmt_dist(km: float) -> String:
 	if km < 1.0:
@@ -379,7 +567,7 @@ func _refresh_nav() -> void:
 	var P := PhysicsSystem
 	var e: Dictionary = P.space.earth
 	var alt := P.pos.distance_to(Vector2(e.x, e.y)) - float(e.r)
-	var rows: Array = [int(ceil(P.redock_wait(P.undock_lock_id))), P.status(), _fmt_speed(P.vel.length()), _fmt_dist(alt), int(P.fuel()), P.max_thrust(), snappedf(P.mass(), 0.1)]
+	var rows: Array = [P.target, _flight_rows(), int(ceil(P.redock_wait(P.undock_lock_id))), P.status(), _fmt_speed(P.vel.length()), _fmt_dist(alt), int(P.fuel()), P.max_thrust(), snappedf(P.mass(), 0.1)]
 	for l in P.locations:
 		var r := P.rel_to(l.id)
 		rows.append([_fmt_dist(r.dist), _fmt_speed(r.speed), P.can_dock(l.id)])
@@ -390,12 +578,13 @@ func _refresh_nav() -> void:
 	for c in nav_side.get_children():
 		c.queue_free()
 	var head := HBoxContainer.new()
-	var title := _label("NAVIGATION", COL_AMBER, 15)
+	var title := _label("COCKPIT · %s am Steuer" % (pilot.display_name if pilot != null else "?"), COL_AMBER, 15)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
-	head.add_child(_button("✕", toggle_nav.bind(false)))
+	head.add_child(_button("Verlassen [Esc]", toggle_nav.bind(false)))
 	nav_side.add_child(head)
 	nav_side.add_child(_label(P.status(), COL_AMBER, 14))
+	_build_flight_info()
 	nav_side.add_child(_row("Geschwindigkeit", [_label(_fmt_speed(P.vel.length()), COL_AMBER, 12)]))
 	nav_side.add_child(_row("Höhe über der Erde", [_label(_fmt_dist(alt), Color(0.9, 0.33, 0.29) if alt < float(P.space.warn_alt) else COL_AMBER, 12)]))
 	nav_side.add_child(_row("Treibstoff", [_label("%d" % int(P.fuel()), COL_AMBER, 12)]))
@@ -413,6 +602,11 @@ func _refresh_nav() -> void:
 		var r := P.rel_to(l.id)
 		var here: bool = P.docked == l.id
 		var btns: Array = []
+		if l.id != P.target:
+			btns.append(_button("Ziel", func():
+				PhysicsSystem.target = l.id
+				_last_nav = ""
+				_refresh_nav()))
 		if not here and P.travel.is_empty():
 			if r.dist < 300.0:
 				btns.append(_button("Angleichen", func(): P.match_target = l.id))
@@ -442,7 +636,7 @@ func _refresh_nav() -> void:
 		nav_map.center = Vector2(30000, -5000)
 		nav_map.zoom = minf(nav_map.size.x, nav_map.size.y) / 150000.0))
 	nav_side.add_child(zoom_row)
-	var help := _label("W Schub · S Gegenschub · A/D drehen · F andocken · U abdocken · Mausrad zoomen. Andocken: näher als 250 m und langsamer als 6 m/s.", COL_MUTED, 11)
+	var help := _label("Andocken: näher als 250 m, langsamer als 6 m/s und eine freie Andockschleuse zeigt zum Ziel.", COL_MUTED, 11)
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	nav_side.add_child(help)
 
@@ -1039,6 +1233,7 @@ func _refresh() -> void:
 		ShipConstructionSystem.jobs.size()]
 	money_label.add_theme_color_override("font_color", COL_AMBER)
 	_refresh_window()
+	_check_helm_walk()
 	_refresh_nav()
 	char_ui.refresh()
 	_refresh_hover()

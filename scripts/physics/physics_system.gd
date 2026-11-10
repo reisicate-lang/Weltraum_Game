@@ -15,7 +15,12 @@ var docked := "tycho"
 var travel: Dictionary = {}     ## {to, t0, t1, from}
 var autodock: Dictionary = {}   ## {to, t0, t1}
 var match_target := ""          ## Geschwindigkeit an dieses Ziel angleichen
-var thrust := 0.0               ## -0.5 .. 1 (vom Spieler)
+var thrust := 0.0               ## vor (+1) / zurück (-1), relativ zur Ausrichtung
+var strafe := 0.0               ## rechts (+1) / links (-1), relativ zur Ausrichtung
+var rot_input := 0.0            ## Drehschub: im Uhrzeigersinn (+1) / gegen (-1)
+var rot_stop := false           ## Drehung abbremsen (Gegenschub der Lagedüsen)
+var ang_vel := 0.0              ## Drehgeschwindigkeit in rad/s (bleibt ohne Gegenschub erhalten)
+var target := ""                ## ausgewähltes Ziel (Ort) für Anzeige und Andocken
 var crashed := false
 var _warned := false
 ## Sperre gegen sofortiges Wieder-Andocken am selben Ort (technische Entscheidung):
@@ -48,7 +53,9 @@ func reset() -> void:
 	travel = {}
 	autodock = {}
 	match_target = ""
-	thrust = 0.0
+	stop_inputs()
+	ang_vel = 0.0
+	target = ""
 	crashed = false
 	var s := loc_state(loc("tycho"), 0.0)
 	pos = s.pos
@@ -137,6 +144,25 @@ func working_thrusters() -> int:
 func max_thrust() -> float:
 	return working_thrusters() * ItemSystem.device("thruster").thrust
 
+## Lagedüsen (RCS): jedes Schiff hat sie, solange das Steuerpult Strom hat
+## (Ostranauts: alle Schiffe haben RCS, manche zusätzlich ein Haupttriebwerk).
+func rcs_thrust() -> float:
+	return float(space.rcs_thrust) if helm_ok() else 0.0
+
+## Beschleunigungen in km/s² (Haupttriebwerk, Lagedüsen)
+func main_accel() -> float:
+	return max_thrust() / maxf(1.0, mass()) / 1000.0
+
+func rcs_accel() -> float:
+	return rcs_thrust() / maxf(1.0, mass()) / 1000.0
+
+## Alle Flugeingaben auf null (Schub endet beim Verlassen der Steuerung)
+func stop_inputs() -> void:
+	thrust = 0.0
+	strafe = 0.0
+	rot_input = 0.0
+	rot_stop = false
+
 func helm_ok() -> bool:
 	for h in ship_devices("helm"):
 		if h.powered and not h.broken:
@@ -194,7 +220,8 @@ func step(dt: float) -> void:
 		_vx = vel.x
 		_vy = vel.y
 	var acc := gravity(pos)
-	var amax := max_thrust() / maxf(1.0, mass()) / 1000.0
+	var amax := main_accel()
+	_rotate(s, dt)
 	# Angleichen: Geschwindigkeit relativ zum Ziel abbauen
 	if match_target != "":
 		var r := rel_to(match_target)
@@ -211,16 +238,8 @@ func step(dt: float) -> void:
 				angle = dv.angle()
 			else:
 				match_target = ""
-	elif thrust != 0.0 and helm_ok():
-		var need := working_thrusters() * float(space.burn) * absf(thrust) * dt * fuel_factor()
-		if amax > 0.0 and fuel() >= need:
-			use_fuel(need)
-			acc += Vector2.from_angle(angle) * amax * thrust
-			_no_fuel_warned = false
-			SkillSystem.train_all_at("helm", "pilot", dt * 0.5)
-		elif not _no_fuel_warned:
-			_no_fuel_warned = true
-			GameState.toast("Kein Treibstoff!" if amax > 0.0 else "Keine Triebwerke mit Strom!", "bad")
+	elif (thrust != 0.0 or strafe != 0.0) and helm_ok():
+		acc += _thrust_accel(dt, amax)
 	# Halb-implizites Euler-Verfahren: stabil für Umlaufbahnen
 	_vx += acc.x * s
 	_vy += acc.y * s
@@ -231,6 +250,73 @@ func step(dt: float) -> void:
 	_p32 = pos
 	_v32 = vel
 	_check_hazards()
+
+## Schub relativ zur Ausrichtung. Vorwärts: Haupttriebwerk + Lagedüsen,
+## rückwärts und seitwärts: nur Lagedüsen. Verbraucht Treibstoff.
+func _thrust_accel(dt: float, amax: float) -> Vector2:
+	var arcs := rcs_accel()
+	var main_part := maxf(0.0, thrust) if amax > 0.0 else 0.0
+	var rcs_part := absf(thrust) + absf(strafe)
+	var need := (working_thrusters() * float(space.burn) * main_part + float(space.rcs_burn) * rcs_part) * dt * fuel_factor()
+	if fuel() < need or (amax <= 0.0 and arcs <= 0.0):
+		if not _no_fuel_warned:
+			_no_fuel_warned = true
+			GameState.toast("Kein Treibstoff!" if fuel() < need else "Keine Triebwerke mit Strom!", "bad")
+		return Vector2.ZERO
+	use_fuel(need)
+	_no_fuel_warned = false
+	SkillSystem.train_all_at("helm", "pilot", dt * 0.5)
+	var fwd := Vector2.from_angle(angle)
+	var right := Vector2.from_angle(angle + PI / 2.0)
+	var a_fwd := thrust * arcs + main_part * amax
+	return fwd * a_fwd + right * strafe * arcs
+
+## Drehung mit Schwung: Drehschub beschleunigt die Drehung, ohne Gegenschub dreht
+## das Schiff weiter. R bremst die Drehung. Eine Drehung ändert die Flugrichtung nicht.
+func _rotate(s: float, dt: float) -> void:
+	var acc := float(space.rot_accel) if helm_ok() else 0.0
+	var want := ang_vel
+	if rot_input != 0.0:
+		want = clampf(ang_vel + rot_input * acc * s, -float(space.rot_max), float(space.rot_max))
+	elif rot_stop:
+		want = move_toward(ang_vel, 0.0, acc * s)
+	if want != ang_vel:
+		var need := float(space.rcs_burn) * 0.5 * dt * fuel_factor()
+		if fuel() >= need:
+			use_fuel(need)
+			ang_vel = want
+	angle = wrapf(angle + ang_vel * s, -PI, PI)
+
+# ---------------- Anflug: Ausrichtung und Annäherung ----------------
+
+## Wie gut zeigt eine freie Andockschleuse auf das Ziel? {ok, deg, angle}
+## angle = Ausrichtung des Schiffs, bei der die beste Schleuse genau zum Ziel zeigt.
+func dock_alignment(id: String) -> Dictionary:
+	var r := rel_to(id)
+	var to_target: Vector2 = r.pos - pos
+	var best := {"ok": false, "deg": 180.0, "angle": angle, "port": false, "dir": Vector2.ZERO}
+	var ports: Array = ShipSystem.free_ports() if ShipSystem.grid != null else []
+	for p in ports:
+		var d := Vector2(p.dir)
+		var dev := rad_to_deg(absf(d.rotated(angle).angle_to(to_target))) if to_target.length() > 0.0001 else 0.0
+		if dev < best.deg:
+			best = {"ok": dev <= float(space.dock_align_deg) or to_target.length() < 0.02, "deg": dev,
+				"angle": wrapf(to_target.angle() - d.angle(), -PI, PI), "port": true, "dir": d.rotated(angle)}
+	return best
+
+## Anflugdaten zum Ziel: Entfernung, Relativgeschwindigkeit, Annäherung, Bremswege
+func approach(id: String) -> Dictionary:
+	var r := rel_to(id)
+	var to_target: Vector2 = r.pos - pos
+	var vrel: Vector2 = vel - r.vel
+	var dist := to_target.length()
+	var closing := vrel.dot(to_target / dist) if dist > 0.000001 else 0.0
+	var arcs := rcs_accel()
+	var amain := main_accel() + arcs
+	return {"dist": dist, "vrel": vrel, "speed": vrel.length(), "closing": closing,
+		"brake_rcs": closing * closing / (2.0 * arcs) if closing > 0.0 and arcs > 0.0 else 0.0,
+		"brake_main": closing * closing / (2.0 * amain) if closing > 0.0 and amain > 0.0 else 0.0,
+		"eta": dist / closing if closing > 0.000001 else -1.0}
 
 func _check_hazards() -> void:
 	var e := _body("earth")
@@ -285,8 +371,17 @@ func redock_wait(id: String) -> float:
 func dock_block_reason(id: String) -> String:
 	if redock_locked(id):
 		return "Gerade erst abgedockt. Andocken an %s ist in %d s wieder möglich." % [loc(id).name, int(ceil(redock_wait(id)))]
-	if not can_dock(id):
-		return "Zu weit weg oder zu schnell zum Andocken."
+	var r := rel_to(id)
+	var m := 2.5 if SkillSystem.any_mastered("pilot") else 1.0
+	if r.dist >= float(space.dock_dist) * m:
+		return "Zu weit weg zum Andocken (%d m, nötig unter %d m)." % [int(r.dist * 1000.0), int(float(space.dock_dist) * m * 1000.0)]
+	if r.speed >= float(space.dock_speed) * m:
+		return "Zu schnell zum Andocken (%.1f m/s, nötig unter %.0f m/s)." % [r.speed * 1000.0, float(space.dock_speed) * m * 1000.0]
+	var al := dock_alignment(id)
+	if not al.port:
+		return "Keine freie Andockschleuse."
+	if not al.ok:
+		return "Andockschleuse zeigt nicht zum Ziel (%d° daneben, erlaubt %d°). Mit Q/E drehen." % [int(al.deg), int(space.dock_align_deg)]
 	return ""
 
 func can_dock(id: String) -> bool:
@@ -297,7 +392,10 @@ func can_dock(id: String) -> bool:
 	var m := 1.0
 	if SkillSystem.any_mastered("pilot"):
 		m = 2.5
-	return r.dist < float(space.dock_dist) * m and r.speed < float(space.dock_speed) * m
+	if not (r.dist < float(space.dock_dist) * m and r.speed < float(space.dock_speed) * m):
+		return false
+	# Schleuse muss zum Ziel zeigen (Ostranauts: Andockringe ausrichten)
+	return dock_alignment(id).ok
 
 func dock(id: String, force: bool = false) -> bool:
 	if not force and not can_dock(id):
@@ -311,7 +409,8 @@ func dock(id: String, force: bool = false) -> bool:
 	if String(loc(id).get("kind", "")) == "station" and Config.ENABLE_STATION and not StationSystem.build(id):
 		return false
 	docked = id
-	thrust = 0.0
+	stop_inputs()
+	ang_vel = 0.0
 	match_target = ""
 	FleetSystem.arrive(loc(id))
 	NPCSystem.on_docked(id)
@@ -449,7 +548,7 @@ func station() -> Dictionary:
 func to_data() -> Dictionary:
 	return {"x": pos.x, "y": pos.y, "vx": vel.x, "vy": vel.y, "angle": angle, "docked": docked,
 		"travel": {"to": travel.to, "t0": travel.t0, "t1": travel.t1, "fx": travel.from.x, "fy": travel.from.y} if not travel.is_empty() else {},
-		"autodock": autodock, "lock_id": undock_lock_id, "lock_until": undock_lock_until}
+		"autodock": autodock, "lock_id": undock_lock_id, "lock_until": undock_lock_until, "ang_vel": ang_vel, "target": target}
 
 func from_data(d: Dictionary) -> void:
 	pos = Vector2(d.x, d.y); vel = Vector2(d.vx, d.vy); angle = float(d.angle); docked = String(d.docked)
@@ -459,5 +558,8 @@ func from_data(d: Dictionary) -> void:
 	autodock = d.autodock
 	undock_lock_id = String(d.get("lock_id", ""))
 	undock_lock_until = float(d.get("lock_until", 0.0))
+	ang_vel = float(d.get("ang_vel", 0.0))
+	target = String(d.get("target", ""))
+	stop_inputs()
 	crashed = false
 	match_target = ""

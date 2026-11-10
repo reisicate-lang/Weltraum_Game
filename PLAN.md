@@ -121,6 +121,7 @@ und werden Schritt für Schritt übertragen.
 - `tests/test_undock.gd` – manuelles Abdocken: Gründe, Sperre gegen Wieder-Andocken, alle Zeitstufen, Speichern (49)
 - `tests/test_docking.gd` – Andockschleusen: ohne Schleuse kein Andocken, Tür an Tür, keine Extra-Felder, Abdocken ohne Rest, Wrack, Bau, alte Spielstände (40)
 - `tests/test_core.gd` – Kernspiel mit abgeschalteter Station und abgeschaltetem Wrack (21)
+- `tests/test_flight.gd` – manuelle Schiffssteuerung: Cockpit, Drift, Drehung, Gegenschub, Anflug und Andocken, Zeitstufen, Speichern (36)
 - Alle Reihen parallel: `tests/run_all.sh` (etwa 100 s)
 - `tests/test_removal.gd` – Rechtsklick-Menü: Abbauen, Zerlegen, Zerstören, Einbauen, Gründe, Inhalt, Zeitstufen, Speichern (52)
 - `tests/test_auto.gd` – Auto-Modus: Aufgaben wählen, sofort anhalten, neu bewerten, Tragen, Notfall, Speichern (24)

@@ -151,6 +151,7 @@ func _initialize() -> void:
 	var t0: Dictionary = P.loc_state(P.loc("tycho"), P.secs())
 	P.vel = t0.vel
 	P.pos = t0.pos + Vector2(0.05, 0)
+	P.angle = P.dock_alignment("tycho").angle   # Schleuse zum Ziel drehen
 	_check("Nach Sperrzeit und Annäherung wieder andockbar", P.can_dock("tycho") and P.dock("tycho") and P.docked == "tycho" and st.active())
 
 	# 7) Alle Zeitstufen über den echten TimeSystem-Ablauf (1×, 10×, 60×, 300×, 1000×)
