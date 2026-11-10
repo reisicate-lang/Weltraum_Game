@@ -38,6 +38,8 @@ func _park() -> void:
 	P.angle = 0.0
 	P.ang_vel = 0.0
 	P.stop_inputs()
+	# Pilot steht am (einzigen) Steuerpult: nur dann gibt es manuellen Schub
+	P.helm_at = P.ship_devices("helm")[0].pos
 
 func _rel() -> Vector2:
 	return P.vel - P.rel_to("l4").vel

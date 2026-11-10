@@ -23,6 +23,11 @@ var ang_vel := 0.0              ## Drehgeschwindigkeit in rad/s (bleibt ohne Geg
 var target := ""                ## ausgewähltes Ziel (Ort) für Anzeige und Andocken
 ## Angleichen: aktuelle Schub-Eingabe der Angleichung (für Anzeige und Flammen)
 var match_input := Vector2.ZERO
+## Feld des Steuerpults, an dem der Pilot gerade steht (NO_HELM = niemand fliegt).
+## Nur eine Position, keine Geräte-Instanz; wird nicht gespeichert.
+const NO_HELM := Vector2i(-1, -1)
+var helm_at := NO_HELM
+var _helm_fail_warned := false
 const MATCH_DEADBAND := 0.00005  ## 0,05 m/s: darunter feuert die Angleichung nicht
 var crashed := false
 var _warned := false
@@ -57,6 +62,7 @@ func reset() -> void:
 	autodock = {}
 	match_target = ""
 	stop_inputs()
+	helm_at = NO_HELM
 	ang_vel = 0.0
 	target = ""
 	crashed = false
@@ -195,7 +201,7 @@ func thrust_vector_local(inp = null) -> Vector2:
 
 ## Feuert gerade ein Triebwerk in diese Richtung? (für die Anzeige)
 func firing(d: Vector2i) -> bool:
-	return docked == "" and helm_ok() and _requested()[d] > 0.0
+	return docked == "" and manual_ok() and _requested()[d] > 0.0
 
 ## Lagedüsen (RCS): jedes Schiff hat sie, solange das Steuerpult Strom hat
 ## (Ostranauts: alle Schiffe haben RCS, manche zusätzlich ein Haupttriebwerk).
@@ -220,11 +226,37 @@ func stop_inputs() -> void:
 	rot_input = 0.0
 	rot_stop = false
 
+## Hat das Schiff irgendein versorgtes, intaktes Steuerpult? (Abdocken, Schnellreise, Anzeige)
 func helm_ok() -> bool:
 	for h in ship_devices("helm"):
 		if h.powered and not h.broken:
 			return true
 	return false
+
+## Das Steuerpult, an dem der Pilot steht (oder null)
+func operated_helm() -> Device:
+	if helm_at == NO_HELM:
+		return null
+	var g := ShipSystem.grid
+	var d := g.device_at(helm_at)
+	if d == null or d.type != "helm" or d.unknown or g.foreign(g.idx(helm_at)):
+		return null
+	return d
+
+## Warum ein Steuerpult nicht geflogen werden kann ("" = es geht)
+func helm_block_reason(h: Device) -> String:
+	if h == null:
+		return "Niemand steht an einem Steuerpult."
+	if h.broken:
+		return "Dieses Steuerpult ist kaputt."
+	if not h.powered:
+		return "Dieses Steuerpult hat keinen Strom."
+	return ""
+
+## Manueller Flug (Schub, Drehen, Angleichen) nur über das bediente Pult,
+## und nur, wenn genau dieses Pult intakt ist und Strom hat.
+func manual_ok() -> bool:
+	return helm_block_reason(operated_helm()) == ""
 
 func autodock_ok() -> bool:
 	for h in ship_devices("autodock"):
@@ -277,14 +309,25 @@ func step(dt: float) -> void:
 		_vx = vel.x
 		_vy = vel.y
 	var acc := gravity(pos)
+	# Fällt das bediente Pult aus, enden Schub, Drehschub und Angleichung sofort.
+	# Die vorhandene Bewegung (Geschwindigkeit, Drehung) läuft physikalisch weiter.
+	var manual := manual_ok()
+	if not manual and (thrust != 0.0 or strafe != 0.0 or rot_input != 0.0 or rot_stop or match_target != ""):
+		var why := helm_block_reason(operated_helm())
+		if match_target != "":
+			GameState.toast("Angleichen beendet: " + why, "bad")
+		elif helm_at != NO_HELM and not _helm_fail_warned:
+			GameState.toast("Schub beendet: " + why, "bad")
+		_helm_fail_warned = helm_at != NO_HELM
+		stop_inputs()
+		match_target = ""
+	elif manual:
+		_helm_fail_warned = false
 	_rotate(s, dt)
 	# Manueller Schub hat Vorrang. Ohne Tasten arbeitet eine aktive Angleichung mit
 	# denselben Triebwerken und Lagedüsen auf die Zielgeschwindigkeit hin.
 	match_input = Vector2.ZERO
-	if match_target != "" and not helm_ok():
-		match_target = ""
-		GameState.toast("Angleichen beendet: Das Steuerpult hat keinen Strom.", "bad")
-	if (thrust != 0.0 or strafe != 0.0) and helm_ok():
+	if (thrust != 0.0 or strafe != 0.0) and manual:
 		acc += _thrust_accel(dt, Vector2(thrust, strafe))
 	elif match_target != "":
 		match_input = _match_input(s)
@@ -347,7 +390,7 @@ func _match_input(s: float) -> Vector2:
 ## Drehung mit Schwung: Drehschub beschleunigt die Drehung, ohne Gegenschub dreht
 ## das Schiff weiter. R bremst die Drehung. Eine Drehung ändert die Flugrichtung nicht.
 func _rotate(s: float, dt: float) -> void:
-	var acc := float(space.rot_accel) if helm_ok() else 0.0
+	var acc := float(space.rot_accel) if manual_ok() else 0.0
 	var want := ang_vel
 	if rot_input != 0.0:
 		want = clampf(ang_vel + rot_input * acc * s, -float(space.rot_max), float(space.rot_max))
@@ -634,6 +677,7 @@ func from_data(d: Dictionary) -> void:
 	ang_vel = float(d.get("ang_vel", 0.0))
 	target = String(d.get("target", ""))
 	stop_inputs()
+	helm_at = NO_HELM
 	crashed = false
 	match_target = ""
 	match_input = Vector2.ZERO

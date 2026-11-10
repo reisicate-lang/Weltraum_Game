@@ -69,6 +69,34 @@ Eigene Entscheidungen (nicht aus Ostranauts belegt):
 - Alle Werte stehen in `data/space.json` (`rcs_thrust`, `rcs_burn`, `rot_accel`,
   `rot_max`, `dock_align_deg`).
 
+### Flug am bedienten Steuerpult (Stand: November 2026)
+
+**Quelle:** offizieller Ostranauts-Startguide auf Steam:
+https://steamcommunity.com/sharedfiles/filedetails/?id=3347080066
+
+Laut Nutzer belegt der Guide eine installierte, mit Strom versorgte Navigationskonsole
+als Voraussetzung zum Fliegen. `steamcommunity.com` war in der Arbeitsumgebung gesperrt,
+der Text konnte deshalb **nicht gelesen** werden.
+
+**Offen:**
+- wie Ostranauts bei mehreren Pulten auswählt
+- wie ein abgewiesener Einstieg angezeigt wird
+
+Umsetzung (`PhysicsSystem.helm_at`, `manual_ok()`, `UIManager.request_flight()`,
+Tests: `tests/test_helm.gd`):
+- Schub, Drehschub und Angleichen gibt es nur über das Pult, an dem der Pilot steht.
+  Dieses Pult muss intakt sein und Strom haben. Ein anderes versorgtes Pult hilft nicht.
+- Das bediente Pult wird als Feldposition gemerkt, nicht als Geräte-Instanz, und nicht
+  gespeichert. Nach dem Laden steigt man wie gewohnt per Klick oder N wieder ein.
+- **Eigene Entscheidungen:**
+  - Klick nimmt das angeklickte Pult, N das nächste.
+  - Ist es kaputt oder ohne Strom, wird der Einstieg mit einer Meldung abgewiesen.
+  - Fällt das bediente Pult im Flug aus, bleibt das Cockpit offen. Schub, Drehschub und
+    Angleichen enden mit Meldung, und das Cockpit zeigt den Grund.
+  - Geschwindigkeit und laufende Drehung bleiben erhalten.
+- Abdocken, Schnellreise und Auto-Dock prüfen wie bisher, ob irgendein Pult an Bord
+  Strom hat (nicht Teil dieser Änderung).
+
 ## Triebwerke, Schub und Masse (Stand: November 2026)
 
 Wiki-Auszug über eine Websuche (Seite „Halvorson RCS Thruster Assembly“), **sekundär**,

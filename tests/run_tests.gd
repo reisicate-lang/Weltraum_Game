@@ -206,6 +206,7 @@ func _initialize() -> void:
 	_check("Schiff bleibt im Mondorbit (%d km statt %d km)" % [int(phys.pos.distance_to(moon)), int(d0)], absf(phys.pos.distance_to(moon) - d0) < 400.0)
 	var f0: float = phys.fuel()
 	var v0: Vector2 = phys.vel
+	phys.helm_at = phys.ship_devices("helm")[0].pos   # Pilot steht am Steuerpult
 	phys.thrust = 1.0
 	_run(1)
 	phys.thrust = 0.0

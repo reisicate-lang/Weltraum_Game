@@ -25,6 +25,7 @@ var auto_button: Button
 var flight_hud: Control
 var pilot: CrewMember = null
 var _helm_walk := false
+var _walk_helm := Vector2i(-1, -1)   ## Pult, zu dem die Spielfigur gerade läuft
 ## Tatsächliche Tastenbelegung im Flugmodus (wird im Cockpit angezeigt)
 const FLIGHT_KEYS := [["W / S", "Schub vor / zurück (Triebwerke in dieser Richtung + Lagedüsen)"], ["A / D", "Schub links / rechts (Triebwerke in dieser Richtung + Lagedüsen)"],
 	["Q / E", "drehen gegen / im Uhrzeigersinn"], ["R", "Drehung stoppen"], ["X", "Geschwindigkeit ans Ziel angleichen"],
@@ -375,8 +376,11 @@ func toggle_nav(show = null) -> void:
 	else:
 		leave_flight()
 
-## Das Steuerpult, an dem geflogen wird (das nächste zur Spielfigur)
+## Das Steuerpult, an dem geflogen wird: im Cockpit das bediente Pult,
+## sonst das nächste zur Spielfigur (Ziel für N)
 func helm_device() -> Device:
+	if nav_open:
+		return PhysicsSystem.operated_helm()
 	var p := CrewSystem.player()
 	var best: Device = null
 	for h in PhysicsSystem.ship_devices("helm"):
@@ -384,9 +388,11 @@ func helm_device() -> Device:
 			best = h
 	return best
 
-## Ins Cockpit: steht die Spielfigur am Steuerpult, sofort; sonst läuft sie hin
-func request_flight() -> void:
-	var helm := helm_device()
+## Ins Cockpit an diesem Pult (Klick) oder am nächsten (N): steht die Spielfigur
+## dort, sofort; sonst läuft sie hin. Kaputte oder stromlose Pulte weisen ab.
+func request_flight(helm: Device = null) -> void:
+	if helm == null:
+		helm = helm_device()
 	var p := CrewSystem.player()
 	if helm == null:
 		GameState.toast("Dein Schiff hat kein Steuerpult.")
@@ -394,20 +400,32 @@ func request_flight() -> void:
 	if p == null or p.unconscious:
 		GameState.toast("Niemand kann das Steuerpult bedienen.")
 		return
+	var why := PhysicsSystem.helm_block_reason(helm)
+	if why != "":
+		GameState.toast(why + " Fliegen geht hier nicht.", "bad")
+		return
 	if p.can_reach(helm.pos):
-		enter_flight()
+		enter_flight(helm)
 		return
 	var res := ShipSystem.nearest_adjacent(p.tile(), [helm.pos], 1)
 	if not res.ok or not p.order_move(res.path[-1] if not res.path.is_empty() else p.tile()):
 		GameState.toast(p.display_name + " kommt nicht ans Steuerpult.")
 		return
 	_helm_walk = true
+	_walk_helm = helm.pos
 	GameState.toast(p.display_name + " geht zum Steuerpult.")
 
-## Flugmodus an: Flugeingaben steuern das Schiff, die Figur bleibt am Pult
-func enter_flight() -> void:
+## Flugmodus an diesem Pult: Flugeingaben steuern das Schiff, die Figur bleibt am Pult
+func enter_flight(helm: Device = null) -> void:
 	_helm_walk = false
+	if helm == null:
+		helm = helm_device()
+	var why := PhysicsSystem.helm_block_reason(helm)
+	if why != "":
+		GameState.toast(why + " Fliegen geht hier nicht.", "bad")
+		return
 	pilot = CrewSystem.player()
+	PhysicsSystem.helm_at = helm.pos
 	nav_open = true
 	nav_root.visible = true
 	close_container()
@@ -431,6 +449,7 @@ func leave_flight() -> void:
 		nav_root.visible = false
 	PhysicsSystem.stop_inputs()
 	PhysicsSystem.match_target = ""
+	PhysicsSystem.helm_at = PhysicsSystem.NO_HELM
 	if pilot != null:
 		pilot.manual_until = 0.0
 	pilot = null
@@ -442,17 +461,19 @@ func _check_helm_walk() -> void:
 	if not _helm_walk:
 		return
 	var p := CrewSystem.player()
-	var helm := helm_device()
-	if p == null or helm == null:
+	var helm: Device = ShipSystem.grid.device_at(_walk_helm)
+	if p == null or helm == null or helm.type != "helm":
 		_helm_walk = false
 	elif p.can_reach(helm.pos):
-		enter_flight()
+		enter_flight(helm)
 	elif p.order == null and p.path.is_empty():
 		_helm_walk = false
 
-## Jeden Frame im Flugmodus: Pilot bleibt am Pult. Fällt er aus oder geht weg, endet der Flugmodus.
+## Jeden Frame im Flugmodus: Pilot bleibt am bedienten Pult. Fällt er aus, geht weg
+## oder ist das Pult weg, endet der Flugmodus. Hat das Pult keinen Strom oder ist kaputt,
+## bleibt das Cockpit offen, aber die Physik gibt keinen Schub (siehe PhysicsSystem.manual_ok).
 func keep_pilot() -> bool:
-	var helm := helm_device()
+	var helm := PhysicsSystem.operated_helm()
 	if pilot == null or pilot.unconscious or not pilot in CrewSystem.crew or helm == null or not pilot.can_reach(helm.pos):
 		leave_flight()
 		return false
@@ -564,6 +585,9 @@ func toggle_match() -> void:
 	var P := PhysicsSystem
 	if P.docked != "" or P.target == "":
 		return
+	if P.match_target != P.target and not P.manual_ok():
+		GameState.toast("Angleichen geht nicht: " + P.helm_block_reason(P.operated_helm()), "bad")
+		return
 	P.match_target = "" if P.match_target == P.target else P.target
 	_last_nav = ""
 
@@ -581,7 +605,7 @@ func _refresh_nav() -> void:
 	var P := PhysicsSystem
 	var e: Dictionary = P.space.earth
 	var alt := P.pos.distance_to(Vector2(e.x, e.y)) - float(e.r)
-	var rows: Array = [P.target, _flight_rows(), int(ceil(P.redock_wait(P.undock_lock_id))), P.status(), _fmt_speed(P.vel.length()), _fmt_dist(alt), int(P.fuel()), P.max_thrust(), snappedf(P.mass(), 0.1)]
+	var rows: Array = [P.target, _flight_rows(), P.helm_block_reason(P.operated_helm()), int(ceil(P.redock_wait(P.undock_lock_id))), P.status(), _fmt_speed(P.vel.length()), _fmt_dist(alt), int(P.fuel()), P.max_thrust(), snappedf(P.mass(), 0.1)]
 	for l in P.locations:
 		var r := P.rel_to(l.id)
 		rows.append([_fmt_dist(r.dist), _fmt_speed(r.speed), P.can_dock(l.id)])
@@ -603,8 +627,9 @@ func _refresh_nav() -> void:
 	nav_side.add_child(_row("Höhe über der Erde", [_label(_fmt_dist(alt), Color(0.9, 0.33, 0.29) if alt < float(P.space.warn_alt) else COL_AMBER, 12)]))
 	nav_side.add_child(_row("Treibstoff", [_label("%d" % int(P.fuel()), COL_AMBER, 12)]))
 	nav_side.add_child(_row("Schub / Masse", [_label("%d kN / %.1f t" % [int(P.max_thrust()), P.mass()], COL_AMBER, 12)]))
-	if not P.helm_ok():
-		nav_side.add_child(_label("Das Steuerpult hat keinen Strom.", Color(0.9, 0.33, 0.29), 12))
+	var helm_why := P.helm_block_reason(P.operated_helm())
+	if helm_why != "":
+		nav_side.add_child(_label(helm_why + " Kein Schub, keine Drehung.", Color(0.9, 0.33, 0.29), 12))
 	if P.docked != "":
 		nav_side.add_child(_button("Abdocken [U]", P.request_undock))
 	elif P.travel.is_empty() and P.autodock.is_empty():

@@ -143,7 +143,7 @@ func _click(t: Vector2i) -> void:
 	if g.in_bounds(t):
 		var dev := g.device_at(t)
 		if dev != null and not dev.unknown and dev.type == "helm" and g.zone[g.idx(t)] == 0:
-			UIManager.request_flight()
+			UIManager.request_flight(dev)
 			return
 		if dev != null and not dev.unknown and dev.type == "terminal":
 			UIManager.open_window("trade")
