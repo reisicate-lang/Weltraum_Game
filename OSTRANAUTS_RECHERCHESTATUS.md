@@ -99,11 +99,16 @@ Tests: `tests/test_helm.gd`):
   Pult kommt die Meldung „Das geht nur am Steuerpult: erst ins Cockpit (N).“
 - Die Knöpfe „Ausrichten“ und „Angleichen“ in der Zielliste sind ohne versorgtes,
   bedientes Pult gesperrt.
-- **Nicht geändert (offen):**
-  - Andocken mit F oder „Andocken“ prüft das Pult nicht.
-  - Eine laufende Schnellreise oder ein laufendes Auto-Dock läuft weiter, wenn das Pult
-    danach ausfällt.
-  - „Ausrichten“ dreht das Schiff weiterhin sofort (ohne Drehschub).
+- Andocken mit F oder „Andocken“ geht ebenfalls nur am bedienten Pult.
+- **Laufende Schnellreise und Auto-Dock** merken sich das Pult, das sie gestartet hat
+  (als Position, auch im Spielstand). Fällt es aus (kaputt, ohne Strom, abgebaut), bricht
+  der Vorgang mit Meldung ab. Nach einer abgebrochenen Schnellreise fliegt das Schiff mit
+  der Reisegeschwindigkeit frei weiter. Verlässt der Pilot nur das Cockpit, läuft beides
+  weiter (eigene Entscheidung). Ältere Spielstände ohne Pult-Angabe: irgendein
+  versorgtes Pult genügt.
+- **„Ausrichten“** dreht das Schiff mit den Lagedüsen zum Ziel: beschleunigen, rechtzeitig
+  bremsen, ohne Restdrehung ankommen (mit Treibstoffverbrauch wie Q/E). Q, E oder R brechen
+  ab, ebenso ein Ausfall des Pults.
 
 ## Triebwerke, Schub und Masse (Stand: November 2026)
 

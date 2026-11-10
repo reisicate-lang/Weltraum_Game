@@ -27,6 +27,8 @@ var match_input := Vector2.ZERO
 ## Nur eine Position, keine Geräte-Instanz; wird nicht gespeichert.
 const NO_HELM := Vector2i(-1, -1)
 var helm_at := NO_HELM
+var aligning := false            ## „Ausrichten“: mit Drehschub auf align_angle drehen
+var align_angle := 0.0
 var _helm_fail_warned := false
 const MATCH_DEADBAND := 0.00005  ## 0,05 m/s: darunter feuert die Angleichung nicht
 var crashed := false
@@ -225,6 +227,17 @@ func stop_inputs() -> void:
 	strafe = 0.0
 	rot_input = 0.0
 	rot_stop = false
+	aligning = false
+
+## „Ausrichten“: Schiff mit den Lagedüsen auf diese Richtung drehen (bremst rechtzeitig).
+## Q, E oder R brechen ab. Nur am bedienten, versorgten Pult.
+func start_align(a: float) -> void:
+	var why := pilot_block_reason()
+	if why != "":
+		GameState.toast(why, "bad")
+		return
+	align_angle = wrapf(a, -PI, PI)
+	aligning = true
 
 ## Hat das Schiff irgendein versorgtes, intaktes Steuerpult? (Abdocken, Schnellreise, Anzeige)
 func helm_ok() -> bool:
@@ -266,6 +279,16 @@ func pilot_block_reason() -> String:
 		return why + (" Erst reparieren." if h.broken else "")
 	return ""
 
+## Pult, das eine Schnellreise oder ein Auto-Dock gestartet hat ({hx, hy} im Auftrag):
+## "" = noch in Ordnung. Ältere Spielstände ohne Pult-Angabe: irgendein versorgtes Pult.
+func _cmd_helm_reason(d: Dictionary) -> String:
+	if not d.has("hx"):
+		return "" if helm_ok() else "Kein Steuerpult mit Strom."
+	var h := ShipSystem.grid.device_at(Vector2i(int(d.hx), int(d.hy)))
+	if h == null or h.type != "helm":
+		return "Das Steuerpult ist weg."
+	return helm_block_reason(h)
+
 ## Manueller Flug (Schub, Drehen, Angleichen) nur über das bediente Pult,
 ## und nur, wenn genau dieses Pult intakt ist und Strom hat.
 func manual_ok() -> bool:
@@ -292,6 +315,17 @@ func step(dt: float) -> void:
 		var st := loc_state(loc(docked), t)
 		pos = st.pos
 		vel = st.vel
+		return
+	if not travel.is_empty() and _cmd_helm_reason(travel) != "":
+		# Pult ausgefallen: Reise endet, das Schiff fliegt mit der Reisegeschwindigkeit weiter
+		var dest_now: Vector2 = loc_state(loc(travel.to), t).pos
+		vel = (dest_now - travel.from) / maxf(1.0, travel.t1 - travel.t0)
+		GameState.toast("Schnellreise abgebrochen: %s Das Schiff fliegt mit %.2f km/s weiter." % [_cmd_helm_reason(travel), vel.length()], "bad")
+		travel = {}
+		return
+	if not autodock.is_empty() and _cmd_helm_reason(autodock) != "":
+		GameState.toast("Auto-Dock abgebrochen: " + _cmd_helm_reason(autodock), "bad")
+		autodock = {}
 		return
 	if not travel.is_empty():
 		var f := minf(1.0, (t - travel.t0) / (travel.t1 - travel.t0))
@@ -325,7 +359,7 @@ func step(dt: float) -> void:
 	# Fällt das bediente Pult aus, enden Schub, Drehschub und Angleichung sofort.
 	# Die vorhandene Bewegung (Geschwindigkeit, Drehung) läuft physikalisch weiter.
 	var manual := manual_ok()
-	if not manual and (thrust != 0.0 or strafe != 0.0 or rot_input != 0.0 or rot_stop or match_target != ""):
+	if not manual and (thrust != 0.0 or strafe != 0.0 or rot_input != 0.0 or rot_stop or aligning or match_target != ""):
 		var why := helm_block_reason(operated_helm())
 		if match_target != "":
 			GameState.toast("Angleichen beendet: " + why, "bad")
@@ -405,15 +439,33 @@ func _match_input(s: float) -> Vector2:
 func _rotate(s: float, dt: float) -> void:
 	var acc := float(space.rot_accel) if manual_ok() else 0.0
 	var want := ang_vel
+	var settle := false
+	if rot_input != 0.0 or rot_stop:
+		aligning = false
 	if rot_input != 0.0:
 		want = clampf(ang_vel + rot_input * acc * s, -float(space.rot_max), float(space.rot_max))
 	elif rot_stop:
 		want = move_toward(ang_vel, 0.0, acc * s)
+	elif aligning and acc > 0.0:
+		# Ausrichten: beschleunigen, dann so bremsen, dass die Drehung am Ziel endet
+		var err := wrapf(align_angle - angle, -PI, PI)
+		if absf(err) <= maxf(0.002, absf(ang_vel) * s) and absf(ang_vel) <= acc * s:
+			want = 0.0
+			settle = true
+		else:
+			var goal := signf(err) * minf(float(space.rot_max), sqrt(2.0 * acc * absf(err)))
+			want = move_toward(ang_vel, goal, acc * s)
 	if want != ang_vel:
 		var need := float(space.rcs_burn) * 0.5 * dt * fuel_factor()
 		if fuel() >= need:
 			use_fuel(need)
 			ang_vel = want
+		else:
+			settle = false
+	if settle:
+		angle = align_angle
+		aligning = false
+		return
 	angle = wrapf(angle + ang_vel * s, -PI, PI)
 
 # ---------------- Anflug: Ausrichtung und Annäherung ----------------
@@ -498,6 +550,9 @@ func redock_wait(id: String) -> float:
 
 ## Grund, warum man hier nicht andocken kann ("" = es geht)
 func dock_block_reason(id: String) -> String:
+	var why := pilot_block_reason()
+	if why != "":
+		return why
 	if redock_locked(id):
 		return "Gerade erst abgedockt. Andocken an %s ist in %d s wieder möglich." % [loc(id).name, int(ceil(redock_wait(id)))]
 	var r := rel_to(id)
@@ -514,7 +569,7 @@ func dock_block_reason(id: String) -> String:
 	return ""
 
 func can_dock(id: String) -> bool:
-	if redock_locked(id):
+	if pilot_block_reason() != "" or redock_locked(id):
 		return false
 	var r := rel_to(id)
 	# Meister der Raumschiffsteuerung docken auch aus mehr Abstand und schneller an
@@ -629,7 +684,7 @@ func start_autodock() -> void:
 		return
 	use_fuel(need)
 	var t_dock: float = (300.0 + n.dist * 5.0) * (0.7 if SkillSystem.any_mastered("robotics") else 1.0)
-	autodock = {"to": n.id, "t0": secs(), "t1": secs() + t_dock}
+	autodock = {"to": n.id, "t0": secs(), "t1": secs() + t_dock, "hx": helm_at.x, "hy": helm_at.y}
 	GameState.toast("Auto-Dock läuft: " + loc(n.id).name)
 
 func travel_info(id: String) -> Dictionary:
@@ -654,7 +709,7 @@ func travel_to(id: String) -> void:
 	if not undock():
 		return
 	use_fuel(info.fuel)
-	travel = {"to": id, "t0": secs(), "t1": secs() + info.secs, "from": pos}
+	travel = {"to": id, "t0": secs(), "t1": secs() + info.secs, "from": pos, "hx": helm_at.x, "hy": helm_at.y}
 	SkillSystem.train_all_at("helm", "navigate", 10.0)
 	SkillSystem.train_all_at("helm", "pilot", 5.0)
 	GameState.toast("Schnellreise nach %s: %.1f Stunden." % [loc(id).name, info.secs / 3600.0])
@@ -677,14 +732,26 @@ func station() -> Dictionary:
 
 func to_data() -> Dictionary:
 	return {"x": pos.x, "y": pos.y, "vx": vel.x, "vy": vel.y, "angle": angle, "docked": docked,
-		"travel": {"to": travel.to, "t0": travel.t0, "t1": travel.t1, "fx": travel.from.x, "fy": travel.from.y} if not travel.is_empty() else {},
+		"travel": _travel_data(),
 		"autodock": autodock, "lock_id": undock_lock_id, "lock_until": undock_lock_until, "ang_vel": ang_vel, "target": target}
+
+func _travel_data() -> Dictionary:
+	if travel.is_empty():
+		return {}
+	var out := {"to": travel.to, "t0": travel.t0, "t1": travel.t1, "fx": travel.from.x, "fy": travel.from.y}
+	if travel.has("hx"):
+		out.hx = travel.hx
+		out.hy = travel.hy
+	return out
 
 func from_data(d: Dictionary) -> void:
 	pos = Vector2(d.x, d.y); vel = Vector2(d.vx, d.vy); angle = float(d.angle); docked = String(d.docked)
 	travel = {}
 	if not d.travel.is_empty():
 		travel = {"to": d.travel.to, "t0": float(d.travel.t0), "t1": float(d.travel.t1), "from": Vector2(d.travel.fx, d.travel.fy)}
+		if d.travel.has("hx"):
+			travel.hx = int(d.travel.hx)
+			travel.hy = int(d.travel.hy)
 	autodock = d.autodock
 	undock_lock_id = String(d.get("lock_id", ""))
 	undock_lock_until = float(d.get("lock_until", 0.0))

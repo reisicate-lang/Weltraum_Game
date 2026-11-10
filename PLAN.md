@@ -76,6 +76,7 @@ und werden Schritt für Schritt übertragen.
 - [x] Lose Ladung auf dem eigenen Schiffsboden zählt genau einmal zur Masse (fremde Bereiche nicht)
 - [x] Manueller Flug nur am bedienten Steuerpult (intakt, mit Strom, Pilot steht dort)
 - [x] Abdocken, Schnellreise und Auto-Dock ebenfalls nur am bedienten Steuerpult
+- [x] Andocken nur am bedienten Pult; Schnellreise/Auto-Dock brechen bei Pultausfall ab; „Ausrichten“ mit Drehschub
 - [x] Navigationskarte mit vorausberechneter Flugbahn, manuelles Fliegen (WASD), Geschwindigkeit angleichen
 - [x] Manuelles Andocken, Auto-Dock-Modul, Schnellreise, Zusammenstöße
 - [x] Erde als Schwerkraft-Falle (Absturz), Mond-Absturz
@@ -128,7 +129,7 @@ und werden Schritt für Schritt übertragen.
 - `tests/test_thrusters.gd` – Triebwerke: Schub addiert sich, Masse bremst, Drehen, Aus- und Einbau, Speichern, Zeitstufen, Drift (27)
 - `tests/test_match.gd` – Angleichen (X): manueller Puls, Lagedüsen allein, kein Treibstoff, Ausstieg, Laden (22)
 - `tests/test_cargo_mass.gd` – Masse loser Ladung: Behälter ↔ Boden, fremder Bereich, Haufen im All, Laden, Schiffswechsel (24)
-- `tests/test_helm.gd` – Flug am bedienten Pult: kaputtes/stromloses Pult weist ab, Pultwechsel, Stromausfall unter Schub, Angleichen, Abdocken/Reise/Auto-Dock, Laden (51)
+- `tests/test_helm.gd` – Flug am bedienten Pult: kaputtes/stromloses Pult weist ab, Pultwechsel, Stromausfall unter Schub, Angleichen, Abdocken/Reise/Auto-Dock, Andocken, Abbruch bei Pultausfall, Ausrichten, Laden (70)
 - Alle Reihen parallel: `tests/run_all.sh` (etwa 100 s)
 - `tests/test_removal.gd` – Rechtsklick-Menü: Abbauen, Zerlegen, Zerstören, Einbauen, Gründe, Inhalt, Zeitstufen, Speichern (52)
 - `tests/test_auto.gd` – Auto-Modus: Aufgaben wählen, sofort anhalten, neu bewerten, Tragen, Notfall, Speichern (24)

@@ -487,7 +487,7 @@ func _course(v: Vector2) -> String:
 ## Zahlen für die Fluganzeige (auch zum Erkennen, ob neu gezeichnet werden muss)
 func _flight_rows() -> Array:
 	var P := PhysicsSystem
-	var out: Array = [_course(Vector2.from_angle(P.angle)), int(rad_to_deg(P.ang_vel)), P.thrust, P.strafe, P.rot_input, P.match_target, P.match_input != Vector2.ZERO,
+	var out: Array = [_course(Vector2.from_angle(P.angle)), int(rad_to_deg(P.ang_vel)), P.thrust, P.strafe, P.rot_input, P.aligning, P.match_target, P.match_input != Vector2.ZERO,
 		snappedf(P.mass(), 0.1), P.thrust_dir(Vector2i(1, 0)), P.thrust_dir(Vector2i(-1, 0)), P.thrust_dir(Vector2i(0, 1)), P.thrust_dir(Vector2i(0, -1))]
 	if P.target != "" and P.docked == "":
 		var ap: Dictionary = P.approach(P.target)
@@ -509,6 +509,7 @@ func _build_flight_info() -> void:
 	if P.strafe > 0.0: thr.append("rechts")
 	if P.rot_input != 0.0: thr.append("drehen")
 	if P.rot_stop: thr.append("Drehung stoppen")
+	if P.aligning: thr.append("ausrichten")
 	if P.match_target != "":
 		thr.append("angleichen" + (" (feuert)" if P.match_input != Vector2.ZERO else " (Ziel erreicht)"))
 	nav_side.add_child(_row("Aktiver Schub", [_label(", ".join(thr) if not thr.is_empty() else "keiner – Schiff driftet", COL_AMBER, 12)]))
@@ -654,9 +655,7 @@ func _refresh_nav() -> void:
 					toggle_match())
 				mb.disabled = not P.manual_ok()
 				btns.append(mb)
-			var ab := _button("Ausrichten", func():
-				if P.manual_ok():
-					P.angle = (r.pos - P.pos).angle())
+			var ab := _button("Ausrichten", func(): P.start_align((P.rel_to(l.id).pos - P.pos).angle()))
 			ab.disabled = not P.manual_ok()
 			btns.append(ab)
 			if P.can_dock(l.id):

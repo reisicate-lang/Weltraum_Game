@@ -28,6 +28,16 @@ func _frame(w: float = 0.0, q: bool = false) -> void:
 	gs.step(1.0 / 60.0 / 60.0)
 	ui._check_helm_walk()
 
+## Bilder wie TimeSystem bei ×factor (ohne Tasten)
+func _frames_f(n: int, factor: float) -> void:
+	for f in n:
+		if ui.nav_open:
+			ui.keep_pilot()
+		var total := (1.0 / 60.0) * factor / 60.0
+		var steps := int(ceil(total / (1.0 / 60.0)))
+		for k in steps:
+			gs.step(total / steps)
+
 func _frames(n: int, w: float = 0.0, q: bool = false) -> void:
 	for k in n:
 		_frame(w, q)
@@ -278,6 +288,94 @@ func _initialize() -> void:
 	P.travel_to("karman")
 	_check("4: Schnellreise am bedienten Pult startet", not P.travel.is_empty())
 	P.travel = {}
+	ui.leave_flight()
+
+	# 5) Andocken, laufende Schnellreise/Auto-Dock und „Ausrichten“ am bedienten Pult
+	for k in 60 * 16:
+		gs.step(1.0 / 60.0 / 60.0)
+	var l4: Dictionary = P.loc_state(P.loc("l4"), P.secs())
+	P.pos = l4.pos + Vector2(0.05, 0)
+	P.vel = l4.vel
+	P.ang_vel = 0.0
+	P.angle = P.dock_alignment("l4").angle
+	P.helm_at = P.NO_HELM
+	_check("5: Ohne Pilot am Pult: Andocken verweigert (%s)" % P.dock_block_reason("l4"), not P.can_dock("l4") and not P.dock("l4") and P.docked == "" and "Cockpit" in P.dock_block_reason("l4"))
+	near.broken = true
+	P.helm_at = near.pos
+	_check("5: Am kaputten Pult: Andocken verweigert (%s)" % P.dock_block_reason("l4"), not P.dock("l4") and "kaputt" in P.dock_block_reason("l4"))
+	near.broken = false
+	mira.pos = _beside(far)
+	ui.request_flight(far)
+	_check("5: Am funktionierenden Pult: Andocken klappt", ui.nav_open and P.dock("l4") and P.docked == "l4")
+	# Schnellreise bricht ab, wenn das startende Pult ausfällt
+	for t in P.ship_devices("fueltank"):
+		t.stock = 400.0
+	P.travel_to("karman")
+	_check("5: Schnellreise läuft", not P.travel.is_empty() and P.docked == "")
+	ui.leave_flight()
+	for k in 60 * 60:
+		gs.step(1.0 / 60.0 / 60.0)
+	_check("5: Cockpit verlassen: Reise läuft weiter", not P.travel.is_empty())
+	root.get_node("SaveSystem").save_game(true)
+	root.get_node("SaveSystem").load_game(true)
+	far = ship.grid.device_at(far.pos)
+	near = ship.grid.device_at(near.pos)
+	_check("5: Geladen: Reise läuft weiter, Pult als Position gemerkt", not P.travel.is_empty() and Vector2i(int(P.travel.hx), int(P.travel.hy)) == far.pos)
+	toasts.clear()
+	_cut(far)
+	gs.step(1.0 / 60.0 / 60.0)
+	_check("5: Pult fällt aus: Reise abgebrochen (%s)" % (toasts[-1] if not toasts.is_empty() else ""), P.travel.is_empty() and P.docked == "" and toasts.any(func(t): return t.begins_with("Schnellreise abgebrochen")))
+	var v_tr: float = P.vel.length()
+	var p_tr: Vector2 = P.pos
+	for k in 60:
+		gs.step(1.0 / 60.0 / 60.0)
+	_check("5: Schiff fliegt frei mit Reisegeschwindigkeit weiter (%.2f km/s)" % v_tr, v_tr > 1.0 and P.pos.distance_to(p_tr) > 0.5)
+	_wire(far)
+	# Auto-Dock bricht ab, wenn das startende Pult ausfällt
+	l4 = P.loc_state(P.loc("l4"), P.secs())
+	P.pos = l4.pos + Vector2(0.5, 0)
+	P.vel = l4.vel
+	mira = root.get_node("CrewSystem").player()
+	mira.pos = _beside(far)
+	ui.request_flight(far)
+	P.start_autodock()
+	_check("5: Auto-Dock läuft", not P.autodock.is_empty())
+	toasts.clear()
+	_cut(far)
+	gs.step(1.0 / 60.0 / 60.0)
+	_check("5: Pult fällt aus: Auto-Dock abgebrochen (%s)" % (toasts[-1] if not toasts.is_empty() else ""), P.autodock.is_empty() and P.docked == "" and toasts.any(func(t): return t.begins_with("Auto-Dock abgebrochen")))
+	_wire(far)
+	# „Ausrichten“ dreht mit Drehschub statt sofort, bei ×1 und ×16
+	for factor in [1.0, 16.0]:
+		P.angle = 0.0
+		P.ang_vel = 0.0
+		var f5: float = P.fuel()
+		P.start_align(PI / 2.0)
+		_frames_f(1, factor)
+		_check("5 (×%d): Ausrichten springt nicht (%.3f rad nach einem Bild)" % [int(factor), P.angle], P.aligning and P.angle < 0.05)
+		var secs_needed := 0.0
+		for k in 60 * 30:
+			_frames_f(1, factor)
+			secs_needed += factor / 60.0
+			if not P.aligning:
+				break
+		_check("5 (×%d): Ausrichten endet genau auf 90° ohne Restdrehung (%.4f rad, %.1f s)" % [int(factor), P.angle, secs_needed],
+			not P.aligning and absf(P.angle - PI / 2.0) < 0.001 and P.ang_vel == 0.0 and secs_needed > 2.0)
+		_check("5 (×%d): … und verbraucht Treibstoff" % int(factor), P.fuel() < f5)
+	P.angle = 0.0
+	P.start_align(PI)
+	_frames_f(30, 1.0)
+	_frame(0.0, true)                       # Q
+	_check("5: Q bricht Ausrichten ab", not P.aligning)
+	P.ang_vel = 0.0
+	P.start_align(PI / 2.0)
+	_cut(far)
+	_frames_f(10, 1.0)
+	_check("5: Pult ohne Strom: Ausrichten endet", not P.aligning)
+	toasts.clear()
+	P.start_align(0.0)
+	_check("5: … und startet nicht (%s)" % (toasts[-1] if not toasts.is_empty() else ""), not P.aligning and not toasts.is_empty())
+	_wire(far)
 	ui.leave_flight()
 
 	# 3) Spielstand mit einem intakten Pult laden: Klick und N gehen weiter
