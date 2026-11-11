@@ -132,7 +132,11 @@ func place_device(type: String, p: Vector2i, rot: int = 0) -> Device:
 	return dev
 
 ## Umstellung: Wie viele alte 1×1-Geräte beim Laden umgebaut bzw. als Gegenstand abgelegt wurden
-var migrated := {"converted": 0, "packed": 0}
+var migrated := {"converted": 0, "packed": 0, "refined": false}
+## Nach refine(): grober Feld-Index -> feiner Feld-Index (Vertreter: Wandfeld, Gerät oder Boden).
+## Damit rechnen andere Systeme gespeicherte Positionen alter Spielstände um.
+var coarse_map := PackedInt32Array()
+var coarse_width := 0
 
 func walkable(p: Vector2i) -> bool:
 	var t := get_tile(p)
@@ -183,7 +187,7 @@ func to_data() -> Dictionary:
 		pl.append([i, piles[i].to_data()])
 	return {"w": width, "h": height, "tiles": Array(tiles), "cables": Array(cables),
 		"o2": Array(o2), "n2": Array(n2), "co2": Array(co2), "cond": Array(cond), "zone": Array(zone), "temp": Array(temp), "devices": devs, "piles": pl,
-		"vents": _closed_vents(), "linked": linked.keys()}
+		"vents": _closed_vents(), "linked": linked.keys(), "scale": Config.GRID_SCALE}
 
 func _closed_vents() -> Array:
 	var out: Array = []
@@ -217,6 +221,9 @@ static func from_data(d: Dictionary) -> ShipGrid:
 		g.vent_closed[int(i)] = 1
 	for i in d.get("linked", []):
 		g.linked[int(i)] = true
+	# Früherer Spielstand mit doppelt so großen Feldern: ins feine Raster überführen
+	if int(d.get("scale", 1)) < Config.GRID_SCALE:
+		return refine(g)
 	return g
 
 ## Altes 1×1-Triebwerk aus einem Spielstand: Passt die neue 1×3-Bauform genau hier
@@ -248,3 +255,268 @@ func _free_floor_near(p: Vector2i) -> Vector2i:
 				if get_tile(q) == Tile.FLOOR and zone[idx(q)] == 0 and not occupied(q):
 					return q
 	return p
+
+
+# ---------------- Verfeinerung (Felder früherer Spielstände halbieren) ----------------
+
+const _PENDING := 255
+
+static func _barrier(t: int) -> bool:
+	return t == Tile.WALL or t == Tile.DOOR or t == Tile.WINDOW
+
+## Feineres Raster aus einem groben (jedes Feld wird 2×2). Räumliche Anordnung bleibt:
+## - Boden und All werden 2×2 Boden bzw. All, Luft, Temperatur, Zustand, Zone, Kabel bleiben.
+## - Wände, Türen und Fenster werden zu einer 1 Feld dicken Linie auf der Außenseite
+##   (zum All hin; Innenwände an einer festen Seite). Benachbarte Wandstücke werden lückenlos
+##   verbunden, die Druckhülle bleibt also dicht. Die übrigen Teilfelder werden Boden (innen)
+##   oder All (außen); abgeschlossene Taschen ohne Luftanschluss werden Wand.
+## - Türen bleiben genau ein Feld breit und begehbar, Andockschleusen sitzen auf ihrer Tür.
+## - Geräte bleiben dieselben Instanzen (Zustand, Inventar); 1-Feld-Geräte auf einem der vier
+##   Teilfelder, Triebwerke 1×3 durch die neue, dünne Wand. Haufen bleiben erhalten.
+static func refine(c: ShipGrid) -> ShipGrid:
+	var k := 2
+	var g := ShipGrid.new(c.width * k, c.height * k)
+	var n := c.tiles.size()
+	g.migrated = c.migrated.duplicate()
+	g.migrated.refined = true
+	g.coarse_width = c.width
+	g.coarse_map.resize(n)
+	var orig_air := PackedByteArray()
+	orig_air.resize(g.tiles.size())
+	# 1) Felder übernehmen
+	for i in n:
+		var p := c.pos(i)
+		var t := int(c.tiles[i])
+		for sub in 4:
+			var j := g.idx(Vector2i(p.x * k + sub % 2, p.y * k + sub / 2))
+			g.tiles[j] = _PENDING if _barrier(t) else t
+			g.zone[j] = c.zone[i]
+			g.cond[j] = c.cond[i]
+			g.temp[j] = c.temp[i]
+			g.fire[j] = c.fire[i]
+			if not _barrier(t):
+				g.o2[j] = c.o2[i]; g.n2[j] = c.n2[i]; g.co2[j] = c.co2[i]
+				orig_air[j] = 1 if t == Tile.FLOOR else 0
+	# 2) Wandlinie: ein Ankerfeld je grobem Wandstück, zur Außenseite hin
+	var anchor := PackedInt32Array()
+	anchor.resize(n)
+	anchor.fill(-1)
+	# „Außen“ von p aus: All, Rasterrand oder ein anderer Bereich (Wrack/Station an der Schleuse).
+	# So sitzen Schleuse und angedockte Tür nach dem Verfeinern weiter direkt aneinander.
+	var space_at := func(p: Vector2i, q: Vector2i) -> bool:
+		return not c.in_bounds(q) or c.tiles[c.idx(q)] == Tile.SPACE or c.zone[c.idx(q)] != c.zone[c.idx(p)]
+	for i in n:
+		if not _barrier(c.tiles[i]):
+			continue
+		var p := c.pos(i)
+		var ax := 1 if space_at.call(p, p + Vector2i(1, 0)) and not space_at.call(p, p + Vector2i(-1, 0)) else 0
+		var ay := 1 if space_at.call(p, p + Vector2i(0, 1)) and not space_at.call(p, p + Vector2i(0, -1)) else 0
+		var a := g.idx(Vector2i(p.x * k + ax, p.y * k + ay))
+		anchor[i] = a
+		g.tiles[a] = c.tiles[i]
+		g.door_open_until[a] = c.door_open_until[i]
+		g.vent_closed[a] = c.vent_closed[i]
+		if c.tiles[i] == Tile.DOOR:
+			g.o2[a] = c.o2[i]; g.n2[a] = c.n2[i]; g.co2[a] = c.co2[i]
+			orig_air[a] = 1
+	# Verbindungen zu Nachbar-Wandstücken rechts und unten (L-förmig, 4er-Nachbarschaft)
+	for i in n:
+		if anchor[i] < 0:
+			continue
+		var p := c.pos(i)
+		for d in [Vector2i(1, 0), Vector2i(0, 1)]:
+			var q: Vector2i = p + d
+			if not c.in_bounds(q) or anchor[c.idx(q)] < 0 or c.zone[c.idx(q)] != c.zone[i]:
+				continue
+			var a := g.pos(anchor[i])
+			var b := g.pos(anchor[c.idx(q)])
+			var ct := Tile.WINDOW if c.tiles[i] == Tile.WINDOW and c.tiles[c.idx(q)] == Tile.WINDOW else Tile.WALL
+			var cells: Array[Vector2i] = []
+			if d.x == 1:
+				for x in range(a.x, b.x + 1):
+					cells.append(Vector2i(x, a.y))
+				for y in range(mini(a.y, b.y), maxi(a.y, b.y) + 1):
+					cells.append(Vector2i(b.x, y))
+			else:
+				for y in range(a.y, b.y + 1):
+					cells.append(Vector2i(a.x, y))
+				for x in range(mini(a.x, b.x), maxi(a.x, b.x) + 1):
+					cells.append(Vector2i(x, b.y))
+			for cell in cells:
+				var j := g.idx(cell)
+				if g.tiles[j] == _PENDING:
+					g.tiles[j] = ct
+	# 3) Restliche Teilfelder: auf der Außenseite der Wandlinie (am All) → All, sonst Boden.
+	#    Nur innerhalb desselben früheren Feldes, damit ein Leck nicht entlang der Wand
+	#    „durchläuft“ und Streifen aus All in Räume zieht.
+	var seen := PackedByteArray()
+	seen.resize(g.tiles.size())
+	var queue: Array[int] = []
+	for j in g.tiles.size():
+		if g.tiles[j] != _PENDING:
+			continue
+		var q := g.pos(j)
+		var outside := q.x == 0 or q.y == 0 or q.x == g.width - 1 or q.y == g.height - 1
+		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var w: Vector2i = q + d
+			if g.in_bounds(w) and g.tiles[g.idx(w)] == Tile.SPACE:
+				outside = true
+		if outside:
+			seen[j] = 1
+			queue.append(j)
+	var head := 0
+	while head < queue.size():
+		var j := queue[head]
+		head += 1
+		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var q: Vector2i = g.pos(j) + d
+			if not g.in_bounds(q):
+				continue
+			var jj := g.idx(q)
+			if seen[jj] == 0 and g.tiles[jj] == _PENDING and q / k == g.pos(j) / k:
+				seen[jj] = 1
+				queue.append(jj)
+	var new_floor: Array[int] = []
+	for j in g.tiles.size():
+		if g.tiles[j] != _PENDING:
+			continue
+		if seen[j] == 1:
+			g.tiles[j] = Tile.SPACE
+			g.cables[j] = 0
+			g.temp[j] = Config.SPACE_TEMP
+			g.zone[j] = 0
+		else:
+			g.tiles[j] = Tile.FLOOR
+			new_floor.append(j)
+	# Luft für neue Bodenfelder vom angrenzenden Raum übernehmen; Taschen ohne Anschluss → Wand
+	var got := PackedByteArray()
+	got.resize(g.tiles.size())
+	var front: Array[int] = []
+	for j in g.tiles.size():
+		if orig_air[j] == 1:
+			got[j] = 1
+			front.append(j)
+	var is_new := {}
+	for j in new_floor:
+		is_new[j] = true
+	head = 0
+	while head < front.size():
+		var j := front[head]
+		head += 1
+		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var q: Vector2i = g.pos(j) + d
+			if not g.in_bounds(q):
+				continue
+			var jj := g.idx(q)
+			if got[jj] == 0 and is_new.has(jj):
+				got[jj] = 1
+				g.o2[jj] = g.o2[j]; g.n2[jj] = g.n2[j]; g.co2[jj] = g.co2[j]; g.temp[jj] = g.temp[j]
+				front.append(jj)
+	for j in new_floor:
+		if got[j] == 0:
+			g.tiles[j] = Tile.WALL
+	# 4) Vertreterfelder (grob -> fein)
+	for i in n:
+		var p := c.pos(i)
+		g.coarse_map[i] = anchor[i] if anchor[i] >= 0 else g.idx(p * k)
+	# Kabel: eine einfache Linie über die Vertreterfelder, zu Nachbarkabeln lückenlos verbunden
+	for i in n:
+		if c.cables[i] == 0:
+			continue
+		var a := g.pos(g.coarse_map[i])
+		if g.get_tile(a) != Tile.SPACE:
+			g.cables[g.idx(a)] = 1
+		var p := c.pos(i)
+		for d in [Vector2i(1, 0), Vector2i(0, 1)]:
+			var q: Vector2i = p + d
+			if not c.in_bounds(q) or c.cables[c.idx(q)] == 0:
+				continue
+			var b := g.pos(g.coarse_map[c.idx(q)])
+			var cells: Array[Vector2i] = []
+			for x in range(mini(a.x, b.x), maxi(a.x, b.x) + 1):
+				cells.append(Vector2i(x, a.y))
+			for y in range(mini(a.y, b.y), maxi(a.y, b.y) + 1):
+				cells.append(Vector2i(b.x, y))
+			for cell in cells:
+				if g.get_tile(cell) != Tile.SPACE:
+					g.cables[g.idx(cell)] = 1
+	# 5) Geräte: dieselben Instanzen. Erst Mehrfeld-Geräte (durch die Wand), dann die übrigen.
+	var order: Array = c.devices.keys()
+	order.sort_custom(func(a, b): return int(c.devices[a].data().length > 1) > int(c.devices[b].data().length > 1))
+	for ci in order:
+		var dev: Device = c.devices[ci]
+		var p := dev.pos
+		if dev.data().length > 1:
+			var mid := p + dev.outward()
+			if c.in_bounds(mid) and anchor[c.idx(mid)] >= 0:
+				var inner := g.pos(anchor[c.idx(mid)]) - dev.outward()
+				if g.mount_reason(dev.type, inner, dev.rot) == "":
+					dev.pos = inner
+					g.put_device(dev)
+					g.coarse_map[ci] = g.idx(inner)
+					if c.cables[ci] == 1:
+						g.cables[g.idx(inner)] = 1   # Stromanschluss wie am alten Platz
+					continue
+			# passt nicht mehr: einmal als vollständiger Gegenstand an Bord ablegen
+			dev.pos = g._free_floor_near(p * k)
+			g._migrate_legacy(dev)
+			continue
+		var spot := Vector2i(-1, -1)
+		if anchor[ci] >= 0:
+			spot = g.pos(anchor[ci])           # z. B. Andockschleuse auf ihrer Tür
+		else:
+			for sub in 4:
+				var q := Vector2i(p.x * k + sub % 2, p.y * k + sub / 2)
+				if g.get_tile(q) == Tile.FLOOR and not g.occupied(q):
+					spot = q
+					break
+			if spot.x < 0:
+				spot = g._free_floor_near(p * k)
+		dev.pos = spot
+		g.put_device(dev)
+		if c.cables[ci] == 1 and g.cables[g.idx(spot)] == 0:
+			# Gerät nicht auf der Kabellinie: kurzes Stück zum Vertreterfeld legen
+			var r := g.pos(g.coarse_map[ci])
+			for x in range(mini(r.x, spot.x), maxi(r.x, spot.x) + 1):
+				g.cables[g.idx(Vector2i(x, r.y))] = 1
+			for y in range(mini(r.y, spot.y), maxi(r.y, spot.y) + 1):
+				g.cables[g.idx(Vector2i(spot.x, y))] = 1
+		g.coarse_map[ci] = g.idx(spot)
+		if c.linked.has(ci):
+			g.linked[g.idx(spot)] = true
+	# 6) Haufen auf ein freies Teilfeld
+	for ci in c.piles:
+		var p := c.pos(ci)
+		var spot := Vector2i(-1, -1)
+		for sub in 4:
+			var q := Vector2i(p.x * k + sub % 2, p.y * k + sub / 2)
+			if g.get_tile(q) != Tile.SPACE and g.walkable(q):
+				spot = q
+				break
+		if spot.x < 0:
+			spot = p * k if c.tiles[ci] == Tile.SPACE else g._free_floor_near(p * k)
+		var pile: Inventory = c.piles[ci]
+		for it in pile.items:
+			g.drop_items(spot, it.type, int(it.qty), float(it.cond), it.get("data"))
+	return g
+
+## Vertreter-Feld eines groben Feldes nach refine() (für gespeicherte Positionen)
+func fine_of_coarse(cp: Vector2i) -> Vector2i:
+	if coarse_map.is_empty() or coarse_width <= 0:
+		return cp
+	return pos(coarse_map[cp.y * coarse_width + cp.x])
+
+## Gespeicherte Figurenposition (grobe Feld-Einheiten) ins feine Raster: gleiche Stelle,
+## auf ein begehbares Feld
+func fine_pos(cpos: Vector2) -> Vector2:
+	var f := cpos * 2.0
+	var q := Vector2i(floori(f.x), floori(f.y))
+	if walkable(q):
+		return f
+	for r in 4:
+		for dy in range(-r, r + 1):
+			for dx in range(-r, r + 1):
+				var w := q + Vector2i(dx, dy)
+				if walkable(w):
+					return Vector2(w) + Vector2(0.5, 0.5)
+	return f

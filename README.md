@@ -43,6 +43,7 @@ godot --headless --path . --script res://tests/boot.gd -- test_cargo_mass
 godot --headless --path . --script res://tests/boot.gd -- test_helm
 godot --headless --path . --script res://tests/boot.gd -- test_parts
 godot --headless --path . --script res://tests/boot.gd -- test_select
+godot --headless --path . --script res://tests/boot.gd -- test_grid
 ```
 
 ## Steuerung
@@ -51,7 +52,7 @@ godot --headless --path . --script res://tests/boot.gd -- test_select
 |---|---|
 | Deine Figur | `WASD`, `Umschalt` = rennen |
 | Hinlaufen lassen | Werkzeug **Auswahl**, Klick auf Boden |
-| Bauen | Boden `B`, Wand `M`, Tür `T`, Kabel `K`, Geräte-Menü unten |
+| Bauen | Boden `B`, Wand `M`, Tür `T`, Kabel `K`, Geräte-Menü unten. Ein Baufeld ist 16 px groß (halb so groß wie früher); die Figur deckt etwa 2×2 Felder. Wände sind 1 Feld dick, Türen 1 Feld breit |
 | Abreißen / Plan löschen | `X` / `C`, Rechtsklick bricht ab |
 | Objekt entfernen | Rechtsklick (Werkzeug **Auswahl**) wählt eine Ebene der Kachel und öffnet das Menü: Abbauen, Zerlegen, Zerstören. Jeder weitere Rechtsklick auf dieselbe Kachel wechselt Kabel → Gerät → Boden/Wand (leere Ebenen werden übersprungen), danach wieder von oben. Die gewählte Ebene ist gelb markiert und steht oben im Menü |
 | Abgebautes wieder einbauen | Abgebaute Geräte liegen als ein Gegenstand am Boden (mit Zustand und Inhalt). Daneben stellen, `E` → „Nehmen“ (in die Hände). Dann Rechtsklick auf ein freies Feld → „Einbauen“, oder im Inventar/Haufen „Einbauen“ |

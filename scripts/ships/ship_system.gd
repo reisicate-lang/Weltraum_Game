@@ -3,14 +3,19 @@ extends Node
 
 var grid: ShipGrid
 var astar := AStarGrid2D.new()
+## Abbildung der Startschiff-Vorlage (frühere Felder) aufs feine Raster, siehe template_cell
+var template_map := PackedInt32Array()
+var template_w := 0
 var _astar_dirty := true
 
 func _ready() -> void:
 	EventBus.ship_changed.connect(func(): _astar_dirty = true)
 
-## Baut das Startschiff "Rostlaube" in die Mitte des Rasters.
+## Baut das Startschiff "Rostlaube" in die Mitte des Rasters. Die Vorlage ist in den
+## Feldern früherer Versionen beschrieben (doppelt so groß) und wird mit ShipGrid.refine
+## ins feine Raster übertragen – genauso wie ein alter Spielstand.
 func create_start_ship() -> void:
-	grid = ShipGrid.new()
+	grid = ShipGrid.new(Config.WORLD_W / Config.GRID_SCALE, Config.WORLD_H / Config.GRID_SCALE)
 	var T := ShipGrid.Tile
 	var sw := 16
 	var sh := 10
@@ -93,6 +98,9 @@ func create_start_ship() -> void:
 	for i in grid.tiles.size():
 		if grid.holds_air(i):
 			grid.fill_air(i)
+	grid = ShipGrid.refine(grid)
+	template_map = grid.coarse_map.duplicate()
+	template_w = grid.coarse_width
 	EventBus.ship_changed.emit()
 
 # ---------------- Andockschleusen ----------------
@@ -137,8 +145,27 @@ func ports() -> Array:
 func free_ports(dir := Vector2i.ZERO) -> Array:
 	return ports().filter(func(p): return not grid.linked.has(p.i) and (dir == Vector2i.ZERO or p.dir == dir))
 
+## Feld der Startschiff-Vorlage (Koordinaten der früheren, doppelt so großen Felder) im
+## feinen Raster: Wandstück → seine Wandlinie, Gerät → sein Feld, Boden → linkes oberes Teilfeld
+func template_cell(cp: Vector2i) -> Vector2i:
+	if template_w <= 0:
+		return cp * Config.GRID_SCALE
+	return grid.pos(template_map[cp.y * template_w + cp.x])
+
+## Startplatz der Crew: Mitte des früheren Feldes (4, 7) der Schiffsvorlage, auf begehbarem Boden
 func spawn_point() -> Vector2i:
-	return Vector2i((grid.width - 16) / 2 + 4, (grid.height - 10) / 2 + 7)
+	var k := Config.GRID_SCALE
+	var cw := grid.width / k
+	var ch := grid.height / k
+	var p := Vector2i(((cw - 16) / 2 + 4) * k + 1, ((ch - 10) / 2 + 7) * k + 1)
+	if grid.walkable(p):
+		return p
+	for r in 6:
+		for dy in range(-r, r + 1):
+			for dx in range(-r, r + 1):
+				if grid.walkable(p + Vector2i(dx, dy)):
+					return p + Vector2i(dx, dy)
+	return p
 
 # ---------------- Wegfindung (AStarGrid2D) ----------------
 

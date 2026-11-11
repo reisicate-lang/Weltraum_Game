@@ -94,8 +94,8 @@ func _initialize() -> void:
 	gs.new_game()
 	root.get_node("TimeSystem").set_speed(0)
 	var g = ship.grid
-	var x0: int = (g.width - 16) / 2
-	var y0: int = (g.height - 10) / 2
+	var x0: int = (g.width / Config.GRID_SCALE - 16) / 2
+	var y0: int = (g.height / Config.GRID_SCALE - 10) / 2
 	var mira = root.get_node("CrewSystem").player()
 	mira.pos = Vector2(ship.spawn_point()) + Vector2(0.5, 0.5)
 	mira.needs = {"food": 100.0, "water": 100.0, "sleep": 100.0, "hygiene": 100.0, "air": 100.0}
@@ -104,8 +104,8 @@ func _initialize() -> void:
 	P.request_undock()
 	_secs(2)
 	# Startschiff: zwei 1×3-Triebwerke durch die hintere Außenwand (Düse nach hinten, Schub nach vorn)
-	var t1: Vector2i = Vector2i(x0 + 1, y0 + 2)
-	var t2: Vector2i = Vector2i(x0 + 1, y0 + 3)
+	var t1: Vector2i = C(x0 + 1, y0 + 2)
+	var t2: Vector2i = C(x0 + 1, y0 + 3)
 	var thr: float = root.get_node("ItemSystem").device("thruster").thrust
 	var rcs: float = P.rcs_thrust()
 	_check("Startschiff: zwei Triebwerke nach vorn (%d kN)" % int(P.thrust_dir(Vector2i(1, 0))), P.thrust_dir(Vector2i(1, 0)) == 2.0 * thr)
@@ -134,8 +134,8 @@ func _initialize() -> void:
 	var light_m: float = P.mass()
 	var dv_light := _burn(1.0, 0.0, 10)
 	var ballast: Array = []
-	for k in 50:
-		var q := Vector2i(2 + k % 10, 2 + k / 10)    # 50 Bodenfelder Ballast (+10 t)
+	for k in 200:
+		var q := Vector2i(2 + k % 20, 2 + k / 20)    # 200 feine Bodenfelder Ballast (+10 t)
 		g.tiles[g.idx(q)] = ShipGrid.Tile.FLOOR
 		ballast.append(g.idx(q))
 	var heavy_m: float = P.mass()
@@ -153,8 +153,8 @@ func _initialize() -> void:
 			dv.inv.add("pipe", 6, 90.0)
 			dv.inv.add("plate", 8, 90.0)
 			break
-	var tr: Vector2i = Vector2i(x0 + 12, y0 + 1)   # Cockpit, oben an der Außenwand
-	g.cables[g.idx(tr)] = 1                       # Kabel ans Netz (Heizung daneben)
+	var tr: Vector2i = inside_wall(x0 + 12, y0, Vector2i(0, -1))   # Cockpit, direkt innen an der oberen Außenwand
+	cable_line(g, tr, C(x0 + 13, y0 + 1))         # Kabel ans Netz (Heizung daneben)
 	CS.build_rot = 1
 	_check("Rechts-Triebwerk oben planbar (%s)" % CS.place_reason("dev:thruster", tr), CS.place("dev:thruster", tr))
 	_check("Crew baut es", _until_done(tr, 3600) and g.device_at(tr) != null and g.device_at(tr).rot == 1)
@@ -198,7 +198,8 @@ func _initialize() -> void:
 	_check("Wieder eingebaut (nach rechts)", installed and g.device_at(tr) != null and g.device_at(tr).rot == 1 and P.thrust_dir(Vector2i(0, 1)) == thr)
 	_check("… Masse unverändert (%.3f t)" % (P.mass() - m_before), absf(P.mass() - m_before) < 0.000001 and _count_type("pk_thruster") == 0)
 	# 3e) Ein neues Triebwerk bauen (vorn rechts, Düse nach vorn = Schub zurück)
-	var spot := Vector2i(x0 + 14, y0 + 2)   # Kabel liegt hier schon (Steuerpult-Leitung)
+	var spot := inside_wall(x0 + 15, y0 + 2, Vector2i(1, 0))   # vorn innen an der Außenwand
+	cable_line(g, spot, C(x0 + 14, y0 + 2))                     # an die Steuerpult-Leitung
 	CS.build_rot = 2
 	var m_b: float = P.mass()
 	_check("Vorderes Triebwerk planbar (%s)" % CS.place_reason("dev:thruster", spot), CS.place("dev:thruster", spot))

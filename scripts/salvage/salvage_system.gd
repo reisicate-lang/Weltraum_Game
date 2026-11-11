@@ -38,10 +38,11 @@ func generate() -> bool:
 	var h := 0
 	var left := 0
 	var found := false
+	var K := Config.GRID_SCALE   # Maße wie früher, im feinen Raster (1 Feld dicke Wände)
 	for attempt in 40:
-		w = randi_range(15, 22) - attempt / 5
-		h = randi_range(7, 10) - attempt / 10
-		left = clampi(e.x - randi_range(3, w - 4), 1, g.width - w - 1)
+		w = (randi_range(15, 22) - attempt / 5) * K
+		h = (randi_range(7, 10) - attempt / 10) * K
+		left = clampi(e.x - randi_range(3, w / K - 4) * K, 1, g.width - w - 1)
 		if e.x <= left or e.x >= left + w - 1 or top + h > g.height - 1:
 			continue
 		if _free_rect(g, left, top, w, h):
@@ -61,24 +62,24 @@ func generate() -> bool:
 	var doors: Array[Vector2i] = [e]
 	_link(g, pt, e)
 	# Innenwände
-	var x := left + randi_range(4, 6)
+	var x := left + randi_range(4, 6) * K
 	var splits := 0
-	while x < left + w - 4 and splits < 2:
-		if x != e.x:
+	while x < left + w - 4 * K and splits < 2:
+		if absi(x - e.x) > 1:
 			for y in range(top, top + h):
 				_put(g, Vector2i(x, y), ShipGrid.Tile.WALL)
-			var dy := randi_range(top + 2, top + h - 3)
+			var dy := randi_range(top + 2 * K, top + h - 3 * K)
 			_put(g, Vector2i(x, dy), ShipGrid.Tile.DOOR if randf() < 0.7 else ShipGrid.Tile.FLOOR)
 			doors.append(Vector2i(x, dy))
 			splits += 1
-		x += randi_range(5, 8)
+		x += randi_range(5, 8) * K
 	# Lecks in der Hülle
 	var hull: Array[Vector2i] = []
 	for y in range(top, top + h):
 		for xx in range(left, left + w):
 			var corner := (xx == left or xx == left + w - 1) and (y == top or y == top + h - 1)
 			var edge := xx == left or y == top or xx == left + w - 1 or y == top + h - 1
-			if edge and not corner and g.get_tile(Vector2i(xx, y)) == ShipGrid.Tile.WALL and absi(xx - e.x) > 1:
+			if edge and not corner and g.get_tile(Vector2i(xx, y)) == ShipGrid.Tile.WALL and absi(xx - e.x) > K:
 				hull.append(Vector2i(xx, y))
 	for k in randi_range(1, 3):
 		_put(g, hull.pick_random(), ShipGrid.Tile.FLOOR)
@@ -94,7 +95,7 @@ func generate() -> bool:
 			continue
 		var near_door := false
 		for d in doors:
-			if absi(d.x - p.x) <= 1 and absi(d.y - p.y) <= 1:
+			if absi(d.x - p.x) <= K and absi(d.y - p.y) <= K:
 				near_door = true
 		if near_door:
 			continue
@@ -182,10 +183,11 @@ func generate_asteroid() -> bool:
 		GameState.toast("Für den Asteroiden fehlt eine freie Andockschleuse nach unten.", "bad")
 		return false
 	var e: Vector2i = pt.pos + Vector2i(0, 1)
-	var c := Vector2(e.x + randi_range(-2, 4), e.y + 5)
-	var rx := randf_range(6.0, 10.0)
-	var ry := randf_range(3.5, 5.0)
-	for y in range(e.y, e.y + 11):
+	var K := Config.GRID_SCALE
+	var c := Vector2(e.x + randi_range(-2, 4) * K, e.y + 5 * K)
+	var rx := randf_range(6.0, 10.0) * K
+	var ry := randf_range(3.5, 5.0) * K
+	for y in range(e.y, e.y + 11 * K):
 		for x in range(int(c.x - rx) - 1, int(c.x + rx) + 2):
 			var p := Vector2i(x, y)
 			if not g.in_bounds(p) or g.get_tile(p) != ShipGrid.Tile.SPACE or g.zone[g.idx(p)] != 0:

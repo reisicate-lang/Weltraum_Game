@@ -30,7 +30,7 @@ func step(dt: float) -> void:
 
 func at(world_pos: Vector2) -> CrewMember:
 	for c in crew:
-		if c.pos.distance_to(world_pos) < 0.5:
+		if c.pos.distance_to(world_pos) < 0.5 * Config.GRID_SCALE:   # Figur ist 2 Felder groß
 			return c
 	return null
 

@@ -34,7 +34,7 @@ static func hourly() -> void:
 		for j in range(i + 1, crew.size()):
 			var a: CrewMember = crew[i]
 			var b: CrewMember = crew[j]
-			if a.pos.distance_to(b.pos) > 8.0 or a.away_until > GameState.time or b.away_until > GameState.time:
+			if a.pos.distance_to(b.pos) > 8.0 * Config.GRID_SCALE or a.away_until > GameState.time or b.away_until > GameState.time:
 				continue
 			var d := 0.5 * (TraitSystem.factor(a, "social") + TraitSystem.factor(b, "social") - 1.0)
 			for h in a.hobbies:

@@ -16,32 +16,69 @@ func step(dt: float) -> void:
 	_acc = 0.0
 	_simulate(d)
 
-func _simulate(dt: float) -> void:
-	var g := ShipSystem.grid
+# Luftfelder und ihre Nachbarn, vorab eingeordnet (neu, sobald sich das Raster ändert):
+# Nachbar-Art 0 = Luft, 1 = All, 2 = Fenster, 3 = Wand
+var _key := ""
+var _cells := PackedInt32Array()
+var _nb := PackedInt32Array()     ## je Luftfeld 4 Nachbarn (-1 = keiner)
+var _kind := PackedByteArray()
+
+func _prepare(g: ShipGrid) -> void:
+	var key := "%d:%d" % [g.get_instance_id(), hash(g.tiles)]
+	if key == _key:
+		return
+	_key = key
+	_cells = PackedInt32Array()
+	_nb = PackedInt32Array()
+	_kind = PackedByteArray()
 	var w := g.width
-	var dirs := [1, -1, w, -w]
-	for i in g.tiles.size():
+	var n := g.tiles.size()
+	for i in n:
 		if not g.holds_air(i):
 			g.temp[i] = Config.SPACE_TEMP
 			continue
+		_cells.append(i)
+		for d in [1, -1, w, -w]:
+			var j: int = i + d
+			if j < 0 or j >= n:
+				_nb.append(-1)
+				_kind.append(0)
+				continue
+			_nb.append(j)
+			if g.holds_air(j):
+				_kind.append(0)
+			elif g.tiles[j] == ShipGrid.Tile.SPACE:
+				_kind.append(1)
+			elif g.tiles[j] == ShipGrid.Tile.WINDOW:
+				_kind.append(2)
+			else:
+				_kind.append(3)
+
+func _simulate(dt: float) -> void:
+	var g := ShipSystem.grid
+	_prepare(g)
+	var k_air := minf(0.2, 0.1 * dt)
+	var k_space := minf(0.5, Config.HEAT_LOSS * dt * 3.0)
+	var k_window := minf(0.2, Config.HEAT_LOSS * dt)
+	var k_wall := minf(0.1, Config.HEAT_LOSS * dt * 0.003)   # gut gedämmte Wand
+	var k_thin := minf(1.0, dt * 0.2)
+	var space_t := Config.SPACE_TEMP
+	for c in _cells.size():
+		var i := _cells[c]
 		var t := g.temp[i]
 		# Dünne Luft hält kaum Wärme
-		var p := g.pressure(i)
-		if p < 20.0:
-			t += (Config.SPACE_TEMP - t) * minf(1.0, dt * 0.2)
+		if g.o2[i] + g.n2[i] + g.co2[i] < 20.0:
+			t += (space_t - t) * k_thin
 		# Wärmeaustausch mit Nachbarn
-		for d in dirs:
-			var j: int = i + d
-			if j < 0 or j >= g.tiles.size():
+		for e in 4:
+			var j := _nb[c * 4 + e]
+			if j < 0:
 				continue
-			if g.holds_air(j):
-				t += (g.temp[j] - t) * minf(0.2, 0.1 * dt)
-			elif g.tiles[j] == ShipGrid.Tile.SPACE:
-				t += (Config.SPACE_TEMP - t) * minf(0.5, Config.HEAT_LOSS * dt * 3.0)
-			elif g.tiles[j] == ShipGrid.Tile.WINDOW:
-				t += (Config.SPACE_TEMP - t) * minf(0.2, Config.HEAT_LOSS * dt)
-			else:
-				t += (Config.SPACE_TEMP - t) * minf(0.1, Config.HEAT_LOSS * dt * 0.003)  # gut gedämmte Wand
+			match _kind[c * 4 + e]:
+				0: t += (g.temp[j] - t) * k_air
+				1: t += (space_t - t) * k_space
+				2: t += (space_t - t) * k_window
+				_: t += (space_t - t) * k_wall
 		g.temp[i] = t
 	# Wärmequellen
 	for i in g.devices:
@@ -49,7 +86,8 @@ func _simulate(dt: float) -> void:
 		if dev.broken:
 			continue
 		# Heizung wärmt alle Luftfelder im Umkreis von 5 Feldern, der Generator etwas im Umkreis von 2
-		var radius := 5 if dev.type == "heater" and dev.powered else (2 if dev.type == "generator" and dev.producing else 0)
+		var K := Config.GRID_SCALE   # gleiche sichtbare Fläche wie früher (5 bzw. 2 der großen Felder)
+		var radius := 5 * K if dev.type == "heater" and dev.powered else (2 * K if dev.type == "generator" and dev.producing else 0)
 		if radius == 0:
 			continue
 		var rate := Config.HEATER_RATE if dev.type == "heater" else 0.3

@@ -100,14 +100,14 @@ func _initialize() -> void:
 	var mira = root.get_node("CrewSystem").player()
 	mira.needs = {"food": 100.0, "water": 100.0, "sleep": 100.0, "hygiene": 100.0, "air": 100.0}
 	var g = ship.grid
-	x0 = (g.width - 16) / 2
-	y0 = (g.height - 10) / 2
+	x0 = (g.width / Config.GRID_SCALE - 16) / 2
+	y0 = (g.height / Config.GRID_SCALE - 10) / 2
 	# Klickpunkt mitten in der Schiffsansicht (nicht über einem Bedienfeld)
-	screen = root.get_viewport().get_canvas_transform() * ((Vector2(x0 + 2, y0 + 5) + Vector2(0.5, 0.5)) * Config.TILE_SIZE)
+	screen = root.get_viewport().get_canvas_transform() * ((Vector2(C(x0 + 2, y0 + 5)) + Vector2(0.5, 0.5)) * Config.TILE_SIZE)
 	await process_frame
-	var bat := Vector2i(x0 + 2, y0 + 5)
-	var gen := Vector2i(x0 + 1, y0 + 5)
-	var bed := Vector2i(x0 + 1, y0 + 1)
+	var bat := C(x0 + 2, y0 + 5)
+	var gen := C(x0 + 1, y0 + 5)
+	var bed := C(x0 + 1, y0 + 1)
 	_check("Batterie-Kachel hat Kabel, Gerät und Boden (%s)" % str(R.layers_at(bat)), R.layers_at(bat) == ["cable", "dev:battery", "tile:floor"])
 
 	# 1) Dreimal rechtsklicken: Kabel, Gerät, Boden – dann wieder von vorn
@@ -159,12 +159,12 @@ func _initialize() -> void:
 	ui.object_menu.hide()
 
 	# Mehrfeld-Gerät: jede belegte Kachel wählt dieselbe Instanz
-	var inner := Vector2i(x0 + 1, y0 + 2)
+	var inner := C(x0 + 1, y0 + 2)
 	var thr = g.device_at(inner)
-	await _rclick(Vector2i(x0 + 3, y0 + 2))     # andere Kachel, damit jede Prüfung oben beginnt
+	await _rclick(C(x0 + 3, y0 + 2))     # andere Kachel, damit jede Prüfung oben beginnt
 	var m1: String = await _rclick(inner + Vector2i(-1, 0))
 	var mid_dev = g.device_at(inner + Vector2i(-1, 0))
-	await _rclick(Vector2i(x0 + 3, y0 + 2))
+	await _rclick(C(x0 + 3, y0 + 2))
 	var m2: String = await _rclick(inner + Vector2i(-2, 0))
 	var out_dev = g.device_at(inner + Vector2i(-2, 0))
 	_check("Triebwerk: Wandfeld und Düsenfeld wählen dasselbe Gerät (%s, %s)" % [m1, m2], m1 == "dev:thruster" and m2 == "dev:thruster" and mid_dev == thr and out_dev == thr)

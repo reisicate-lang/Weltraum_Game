@@ -51,8 +51,8 @@ func _initialize() -> void:
 	ui = root.get_node("UIManager")
 	root.get_node("Settings").meteors = false
 	root.get_node("EventBus").toast.connect(func(t, _k): toasts.append(String(t)))
-	var x0: int = (ship.grid.width - 16) / 2
-	var y0: int = (ship.grid.height - 10) / 2
+	var x0: int = (ship.grid.width / Config.GRID_SCALE - 16) / 2
+	var y0: int = (ship.grid.height / Config.GRID_SCALE - 10) / 2
 
 	# 1) Auto an: Aufgabe wählen, hinlaufen, ausführen, nächste suchen
 	var mira = _fresh()
@@ -60,8 +60,8 @@ func _initialize() -> void:
 	gs.selected = mira
 	ui._refresh_auto(mira)
 	_check("Standard: Auto an, Knopf zeigt „Auto: AN“", mira.auto_mode and ui.auto_button.text == "Auto: AN")
-	var bed := Vector2i(x0 + 1, y0 + 1)
-	var sink := Vector2i(x0 + 3, y0 + 1)
+	var bed := C(x0 + 1, y0 + 1)
+	var sink := C(x0 + 3, y0 + 1)
 	R.order("dismantle", bed)
 	R.order("dismantle", sink)
 	for k in 10:
@@ -87,7 +87,7 @@ func _initialize() -> void:
 	mira = _fresh()
 	g = ship.grid
 	gs.selected = mira
-	var far := Vector2i(x0 + 1, y0 + 1)
+	var far := C(x0 + 1, y0 + 1)
 	R.order("dismantle", far)
 	_run(3)
 	_check("Auf dem Weg zum Bett", mira.job != null and not mira.path.is_empty())
@@ -116,7 +116,7 @@ func _initialize() -> void:
 	_check("… Fortschritt bleibt beim offenen Auftrag (%.2f)" % float(CS.jobs[g.idx(far)].progress), CS.jobs.has(g.idx(far)) and float(CS.jobs[g.idx(far)].progress) > 0.3)
 
 	# 4) Wieder einschalten: Aufgaben neu bewerten (nimmt jetzt die nähere)
-	var near := Vector2i(x0 + 2, y0 + 8)   # Ladestation, nah am Startpunkt
+	var near := C(x0 + 2, y0 + 8)   # Ladestation, nah am Startpunkt
 	R.order("dismantle", near)
 	var d_far: float = mira.pos.distance_to(Vector2(far))
 	var d_near: float = mira.pos.distance_to(Vector2(near))
@@ -137,7 +137,7 @@ func _initialize() -> void:
 	for d in g.devices.values():
 		if d.type == "crate":
 			crates_before += 1
-	CS.place_move(Vector2i(x0 + 13, y0 + 8), Vector2i(x0 + 12, y0 + 2))
+	CS.place_move(C(x0 + 13, y0 + 8), C(x0 + 12, y0 + 2))
 	var carried := false
 	for k in 60 * 10:
 		gs.step(1.0 / 60.0)

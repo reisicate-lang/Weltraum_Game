@@ -112,8 +112,8 @@ func _fresh() -> void:
 	root.get_node("TimeSystem").set_speed(0)
 	ui.char_ui.creation.visible = false
 	var g = ship.grid
-	x0 = (g.width - 16) / 2
-	y0 = (g.height - 10) / 2
+	x0 = (g.width / Config.GRID_SCALE - 16) / 2
+	y0 = (g.height / Config.GRID_SCALE - 10) / 2
 	var m = _mira()
 	m.needs = {"food": 100.0, "water": 100.0, "sleep": 100.0, "hygiene": 100.0, "air": 100.0}
 	_secs(2)
@@ -195,7 +195,7 @@ func _initialize() -> void:
 	_check("1: Tastenhinweis im Cockpit: T = Ziel, Tab = Inventar", hint and ui.FLIGHT_KEYS.any(func(kk): return kk[0] == "Tab" and "Inventar" in kk[1]))
 	ui.leave_flight()
 	# Behälter offen + Tab: Austausch geht weiter
-	var crate_p := Vector2i(x0 + 13, y0 + 8)
+	var crate_p := C(x0 + 13, y0 + 8)
 	mira.pos = _beside(crate_p)
 	mira.path.clear()
 	ui.open_container(crate_p)
@@ -270,7 +270,7 @@ func _initialize() -> void:
 	_fresh()
 	g = ship.grid
 	mira = _mira()
-	var plate_crate := Vector2i(x0 + 14, y0 + 8)   # Kiste mit Platten
+	var plate_crate := C(x0 + 14, y0 + 8)   # Kiste mit Platten
 	crate = g.device_at(plate_crate)
 	mira.pos = _beside(plate_crate)
 	mira.path.clear()
@@ -338,22 +338,24 @@ func _initialize() -> void:
 	var thr: float = root.get_node("ItemSystem").device("thruster").thrust
 	# Ungültige Plätze (Vorschau = can_place / place_reason, alle drei Felder)
 	CS.build_rot = 2
-	var inner_wall := Vector2i(x0 + 9, y0 + 2)        # Trennwand Kabine/Cockpit, dahinter Boden
+	var inner_wall := inside_wall(x0 + 10, y0 + 2, Vector2i(1, 0))   # Trennwand Kabine/Cockpit, dahinter Boden
 	_check("4: Innenwand abgewiesen (%s)" % CS.place_reason("dev:thruster", inner_wall), not CS.can_place("dev:thruster", inner_wall) and "Innenwand" in CS.place_reason("dev:thruster", inner_wall))
 	CS.build_rot = 3
-	var swapped := Vector2i(x0 + 12, y0 - 1)          # innen draußen im All, außen in der Kabine
+	var swapped := inside_wall(x0 + 12, y0, Vector2i(0, 1))          # innen draußen im All, außen in der Kabine
 	_check("4: Vertauschte Innen-/Außenseite abgewiesen (%s)" % CS.place_reason("dev:thruster", swapped), not CS.can_place("dev:thruster", swapped) and "inner" in CS.place_reason("dev:thruster", swapped))
 	CS.build_rot = 1
-	var blocked := Vector2i(x0 + 7, y0 + 1)
-	var junk = g.place_device("solar", Vector2i(x0 + 7, y0 - 1))   # etwas schwebt vor der Düse
+	var blocked := inside_wall(x0 + 7, y0, Vector2i(0, -1))
+	var nozzle := blocked + Vector2i(0, -2)
+	var junk = g.place_device("solar", nozzle)   # etwas schwebt vor der Düse
 	_check("4: Blockiertes Düsenfeld abgewiesen (%s)" % CS.place_reason("dev:thruster", blocked), not CS.can_place("dev:thruster", blocked) and "Düsenfeld" in CS.place_reason("dev:thruster", blocked))
 	g.remove_device(junk)
-	_check("4: Vorschau umfasst 3 Felder", CS.cells_of("thruster", blocked, 1).size() == 3 and CS.cells_of("thruster", blocked, 1)[2] == Vector2i(x0 + 7, y0 - 1))
-	_check("4: Überschneidung mit vorhandenem Triebwerk abgewiesen", not CS.can_place("dev:thruster", Vector2i(x0 + 1, y0 + 2)))
+	_check("4: Vorschau umfasst 3 Felder", CS.cells_of("thruster", blocked, 1).size() == 3 and CS.cells_of("thruster", blocked, 1)[2] == nozzle)
+	_check("4: Überschneidung mit vorhandenem Triebwerk abgewiesen", not CS.can_place("dev:thruster", C(x0 + 1, y0 + 2)))
 	# Horizontale Außenwand (oben, schiebt nach rechts) und vertikale (vorn, schiebt zurück)
-	var top := Vector2i(x0 + 12, y0 + 1)
-	g.cables[g.idx(top)] = 1
-	var front := Vector2i(x0 + 14, y0 + 2)
+	var top := inside_wall(x0 + 12, y0, Vector2i(0, -1))
+	cable_line(g, top, C(x0 + 13, y0 + 1))            # Anschluss an die Heizung daneben
+	var front := inside_wall(x0 + 15, y0 + 2, Vector2i(1, 0))
+	cable_line(g, front, C(x0 + 14, y0 + 2))          # Anschluss an die Steuerpult-Leitung
 	var n0: int = P.ship_devices("thruster").size()
 	var right0: float = P.thrust_dir(Vector2i(0, 1))
 	var back0: float = P.thrust_dir(Vector2i(-1, 0))
@@ -390,11 +392,11 @@ func _initialize() -> void:
 	mira.inv.items.clear()
 	mira.inv.add("plate", 2, 80.0)
 	# alter Stand: mehrere leichte abgebaute Teile im Gepäck waren erlaubt
-	mira.inv.items.append({"type": "pk_generator", "qty": 1, "cond": 77.0, "data": g.device_at(Vector2i(x0 + 1, y0 + 5)).to_data()})
+	mira.inv.items.append({"type": "pk_generator", "qty": 1, "cond": 77.0, "data": g.device_at(C(x0 + 1, y0 + 5)).to_data()})
 	mira.inv.items.append({"type": "pk_tile_wall", "qty": 1, "cond": 64.0})
 	save.save_game(true)
 	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(save.path()))
-	var old_pos := Vector2i(x0 + 11, y0 + 8)           # alte Position mitten im Raum
+	var old_pos := C(x0 + 11, y0 + 8)           # alte Position mitten im Raum
 	var n_thr := 0
 	for dd in data.ship.devices:
 		if dd.type == "thruster":
@@ -421,7 +423,8 @@ func _initialize() -> void:
 	mira = _mira()
 	_check("5: Umstellung: 1 direkt umgebaut, 1 als Gegenstand (%s)" % str(g.migrated), g.migrated.converted == 1 and g.migrated.packed == 1)
 	var thrusters: Array = P.ship_devices("thruster")
-	_check("5: Das passende alte Triebwerk sitzt jetzt 1×3 in der Wand", thrusters.size() == 1 and thrusters[0].pos == Vector2i(x0 + 1, y0 + 2) and g.device_at(Vector2i(x0 - 1, y0 + 2)) == thrusters[0])
+	_check("5: Das passende alte Triebwerk sitzt jetzt 1×3 in der Wand", thrusters.size() == 1 and thrusters[0].pos in [C(x0 + 1, y0 + 2), C(x0 + 1, y0 + 3)] and g.device_at(thrusters[0].pos + Vector2i(-2, 0)) == thrusters[0]
+		and g.get_tile(thrusters[0].pos + Vector2i(-1, 0)) == ShipGrid.Tile.WALL)
 	var pkt := _pile_with("pk_thruster")
 	_check("5: Das andere liegt einmal als Gegenstand an seinem Platz (Zustand %d %%)" % int(_find("pk_thruster").get("cond", -1)), _deep("pk_thruster") == 1 and pkt == g.idx(old_pos) and g.walkable(old_pos) and int(_find("pk_thruster").cond) == 66)
 	var others2: Array = []

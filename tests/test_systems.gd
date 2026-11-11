@@ -51,21 +51,21 @@ func _initialize() -> void:
 	root.get_node("SalvageSystem").clear()
 	Config.METEORS_PER_DAY
 	var g = ship.grid
-	var x0: int = (g.width - 16) / 2
-	var y0: int = (g.height - 10) / 2
+	var x0: int = (g.width / Config.GRID_SCALE - 16) / 2
+	var y0: int = (g.height / Config.GRID_SCALE - 10) / 2
 	var mira = crew.player()
 
 	# 1) Temperatur bleibt im Schiff angenehm
 	_run_coarse(24 * 60, 15.0)   # Wärmegleichgewicht: grobe Schritte reichen
-	var cabin: int = g.idx(Vector2i(x0 + 4, y0 + 2))
-	var cockpit: int = g.idx(Vector2i(x0 + 12, y0 + 3))
+	var cabin: int = g.idx(C(x0 + 4, y0 + 2))
+	var cockpit: int = g.idx(C(x0 + 12, y0 + 3))
 	_check("Wohnkabine warm nach 1 Tag (%.1f °C)" % g.temp[cabin], g.temp[cabin] > 17.0)
 	_check("Cockpit nicht ausgekühlt (%.1f °C)" % g.temp[cockpit], g.temp[cockpit] > 10.0)
 	_check("Mira friert nicht (%.1f °C)" % mira.body_temp, mira.body_temp > 36.0)
 	_check("Strom reicht trotz Heizung", root.get_node("ShipPowerSystem").main_net().ok)
 
 	# 2) Kälte: Heizung aus, Fenster nach außen -> Körperwärme sinkt, Jacke hilft
-	var cold := Vector2i(x0 + 12, y0 + 3)
+	var cold := C(x0 + 12, y0 + 3)
 	for k in 3000:
 		g.temp[g.idx(cold)] = -20.0
 		mira.pos = Vector2(cold) + Vector2(0.5, 0.5)
@@ -85,21 +85,21 @@ func _initialize() -> void:
 	mira.stress = 10.0
 	mira.needs = {"food": 90.0, "water": 90.0, "sleep": 90.0, "hygiene": 90.0, "air": 100.0}
 	mira.inv.take("thermojacket", 1)
-	mira.pos = Vector2(x0 + 12, y0 + 6) + Vector2(0.5, 0.5)
+	mira.pos = Vector2(C(x0 + 12, y0 + 6)) + Vector2(0.5, 0.5)
 	for i in g.tiles.size():
 		if g.holds_air(i) and g.pressure(i) > 50.0:
 			g.temp[i] = 21.0
 
 	# 3) Fenster
-	build.place("window", Vector2i(x0 + 15, y0 + 2))
-	_check("Fenster ist planbar (Wand wird ersetzt? nein: nur auf Boden/All)", not build.can_place("window", Vector2i(x0 + 15, y0 + 2)) or true)
-	var win := Vector2i(x0 - 2, y0 + 2)
+	build.place("window", C(x0 + 15, y0 + 2))
+	_check("Fenster ist planbar (Wand wird ersetzt? nein: nur auf Boden/All)", not build.can_place("window", C(x0 + 15, y0 + 2)) or true)
+	var win := C(x0 - 2, y0 + 2)
 	build.place("floor", win)
-	_check("Fenster kann im All geplant werden", build.can_place("window", Vector2i(x0 - 2, y0 + 3)))
+	_check("Fenster kann im All geplant werden", build.can_place("window", C(x0 - 2, y0 + 3)))
 	build.jobs.clear()
 
 	# 4) Feuer: brennt, verbraucht Sauerstoff, Crew löscht
-	var fire_tile: int = g.idx(Vector2i(x0 + 5, y0 + 6))
+	var fire_tile: int = g.idx(C(x0 + 5, y0 + 6))
 	var o2_before: float = g.o2[fire_tile]
 	temp.ignite(fire_tile)
 	_check("Feuer brennt", g.fire[fire_tile] == 1)
@@ -108,17 +108,14 @@ func _initialize() -> void:
 	_run(20)
 	_check("Crew hat das Feuer gelöscht (brennend: %d, Mira: %s, hp %d, Stress %d, manuell %s)" % [temp.burning_count(), mira.task, int(mira.health), int(mira.stress), str(mira.is_manual())], temp.burning_count() == 0)
 	# Feuer im Vakuum erlischt
-	var vac: int = g.idx(Vector2i(x0 - 4, y0 + 3))
+	var vac: int = g.idx(C(x0 - 4, y0 + 3))
 	g.fire[vac] = 1
 	_run(0.5)
 	_check("Feuer ohne Luft erlischt", g.fire[vac] == 0)
 
 	# 5) Wasser: Abwasser entsteht und wird aufbereitet
-	var wf = g.place_device("waterfilter", Vector2i(x0 + 3, y0 + 3))
-	g.cables[g.idx(Vector2i(x0 + 3, y0 + 3))] = 1
-	g.cables[g.idx(Vector2i(x0 + 4, y0 + 3))] = 1
-	for xx in range(x0 + 4, x0 + 10):
-		g.cables[g.idx(Vector2i(xx, y0 + 3))] = 1
+	var wf = g.place_device("waterfilter", C(x0 + 3, y0 + 3))
+	cable_line(g, C(x0 + 3, y0 + 3), C(x0 + 9, y0 + 3))
 	root.get_node("EventBus").ship_changed.emit()
 	var dispenser = null
 	for dv in g.devices.values():
@@ -131,8 +128,8 @@ func _initialize() -> void:
 	_check("Filter verbraucht Filterleistung", wf.stock < 20.0)
 
 	# 6) Hydrokultur: Pflege, Wachstum, Ernte
-	var hydro = g.place_device("hydro", Vector2i(x0 + 2, y0 + 3))
-	g.cables[g.idx(Vector2i(x0 + 2, y0 + 3))] = 1
+	var hydro = g.place_device("hydro", C(x0 + 2, y0 + 3))
+	cable_line(g, C(x0 + 2, y0 + 3), C(x0 + 3, y0 + 3))
 	root.get_node("EventBus").ship_changed.emit()
 	var rations_before: int = build.available("ration")
 	_run_coarse(60)
@@ -142,12 +139,11 @@ func _initialize() -> void:
 	_check("Hydrokultur geerntet (Rationen %d -> %d)" % [rations_before, build.available("ration")], build.available("ration") > rations_before or hydro.growth < 0.5)
 
 	# 7) Auto-Farm mit Gen-Mod und Fleischtank
-	var farm = g.place_device("autofarm", Vector2i(x0 + 14, y0 + 2))
-	g.cables[g.idx(Vector2i(x0 + 14, y0 + 2))] = 1
-	var vat = g.place_device("meatvat", Vector2i(x0 + 13, y0 + 2))
-	g.cables[g.idx(Vector2i(x0 + 13, y0 + 2))] = 1
-	for yy in range(y0 + 2, y0 + 5):
-		g.cables[g.idx(Vector2i(x0 + 14, yy))] = 1
+	var farm = g.place_device("autofarm", C(x0 + 14, y0 + 2))
+	g.cables[g.idx(C(x0 + 14, y0 + 2))] = 1
+	var vat = g.place_device("meatvat", C(x0 + 13, y0 + 2))
+	g.cables[g.idx(C(x0 + 13, y0 + 2))] = 1
+	cable_line(g, C(x0 + 13, y0 + 2), C(x0 + 14, y0 + 4))
 	root.get_node("EventBus").ship_changed.emit()
 	for dv in g.devices.values():
 		if dv.type == "crate" and g.zone[g.idx(dv.pos)] == 0:
@@ -161,7 +157,7 @@ func _initialize() -> void:
 	_check("Fleischtank hat Fleisch geliefert (Futter %.0f)" % vat.stock, vat.stock < 10.0)
 
 	# 8) Chemiestation
-	g.place_device("chemstation", Vector2i(x0 + 12, y0 + 3))
+	g.place_device("chemstation", C(x0 + 12, y0 + 3))
 	for dv in g.devices.values():
 		if dv.type == "crate" and g.zone[g.idx(dv.pos)] == 0:
 			dv.inv.add("scrap", 4)

@@ -59,9 +59,9 @@ func _initialize() -> void:
 
 	# 2) Bauen mit Material (Wrack weg, sonst holt Mira Stoff aus dem Wrack)
 	root.get_node("SalvageSystem").clear()
-	var x0: int = (ship.grid.width - 16) / 2
-	var y0: int = (ship.grid.height - 10) / 2
-	var target := Vector2i(x0 + 13, y0 + 3)  # im Cockpit
+	var x0: int = (ship.grid.width / Config.GRID_SCALE - 16) / 2
+	var y0: int = (ship.grid.height / Config.GRID_SCALE - 10) / 2
+	var target := C(x0 + 13, y0 + 3)  # im Cockpit
 	build.place("dev:bed", target)
 	_run(10)
 	_check("Bett ohne Stoff wird nicht gebaut (Material fehlt)", ship.grid.device_at(target) == null)
@@ -78,16 +78,16 @@ func _initialize() -> void:
 
 	# 4) Leck: Außenwand oben im Cockpit entfernen -> Luft entweicht
 	# (rechts liegt die angedockte Station direkt an der Wand)
-	var hole := Vector2i(x0 + 14, y0)
+	var hole := C(x0 + 14, y0)
 	ship.grid.set_tile(hole, 1)
 	_run(20)
-	var near: int = ship.grid.idx(Vector2i(x0 + 14, y0 + 1))
+	var near: int = ship.grid.idx(C(x0 + 14, y0 + 1))
 	_check("Luft entweicht durch das Loch (%.1f kPa)" % ship.grid.pressure(near), ship.grid.pressure(near) < 80.0)
 
 	# 5) Außeneinsatz: Boden draußen vor der Luftschleuse bauen -> Raumanzug, Schleuse
 	gs.new_game()
 	root.get_node("DamageSystem").effects.clear()
-	var steg := Vector2i(x0 - 4, y0 + 7)
+	var steg := C(x0 - 3, y0 + 7) + Vector2i(-1, 0)   # direkt vor der Außentür der Luftschleuse
 	build.place("floor", steg)
 	mira = crew.player()
 	var saw_suit := false
@@ -104,12 +104,12 @@ func _initialize() -> void:
 	_run(10)
 	_check("Mira legt den Anzug danach ab", mira.suit == null)
 	_check("Mira ist gesund (%d)" % int(mira.health), mira.health > 80.0)
-	var inside: int = ship.grid.idx(Vector2i(x0 + 4, y0 + 6))
+	var inside: int = ship.grid.idx(C(x0 + 4, y0 + 6))
 	_check("Schiff hat noch Druck (%d kPa)" % int(ship.grid.pressure(inside)), ship.grid.pressure(inside) > 85.0)
 
 	# 6) Gerät versetzen
-	var charger_from := Vector2i(x0 + 2, y0 + 8)
-	var charger_to := Vector2i(x0 + 6, y0 + 7)
+	var charger_from := C(x0 + 2, y0 + 8)
+	var charger_to := C(x0 + 6, y0 + 7)
 	build.place_move(charger_from, charger_to)
 	_run(5)
 	_check("Ladestation versetzt", ship.grid.device_at(charger_to) != null and ship.grid.device_at(charger_to).type == "charger")

@@ -10,24 +10,32 @@ static var ENABLE_STATION := false
 ## Wrack: Wrack/Asteroid an der unteren Andockschleuse, Bergungsrecht, Verschrotten.
 static var ENABLE_WRECK := false
 
-const TILE_SIZE := 32
-const WORLD_W := 64
-const WORLD_H := 44
+## Raster: Ein Baufeld ist 16 px groß (früher 32 px). GRID_SCALE = so viele heutige Felder
+## je Richtung passen in ein Feld früherer Spielstände (alte Stände werden beim Laden verfeinert).
+## Figuren und Kamera bleiben gleich groß; Figuren wirken daher im Verhältnis zu den Feldern größer.
+const GRID_SCALE := 2
+const TILE_SIZE := 16
+const WORLD_W := 128
+const WORLD_H := 88
+## Sichtbare Größe einer Figur in Pixeln (bleibt beim feineren Raster gleich)
+const CHAR_PX := 32.0
 
 ## Bei 1x ist eine Sekunde im Spiel eine echte Sekunde.
 const MINUTES_PER_SECOND := 1.0 / 60.0
 const SPEEDS: Array[float] = [0.0, 1.0, 2.0, 4.0, 8.0, 16.0]   ## Pause, ×1 (Echtzeit), ×2, ×4, ×8, ×16
 const START_MINUTES := 8 * 60
 
-## Laufgeschwindigkeit: 2,5 Kacheln pro Sekunde (in Kacheln pro Spielminute)
-const WALK_SPEED := 150.0
+## Laufgeschwindigkeit: 5 Felder pro Sekunde (in Feldern pro Spielminute) – dieselbe sichtbare
+## Strecke wie früher 2,5 der doppelt so großen Felder
+const WALK_SPEED := 150.0 * GRID_SCALE
 const SPRINT := 1.6
 
 ## Bauzeiten und Kosten der Kacheln
 const TILE_BUILD_TIME := {1: 2.0, 2: 3.0, 3: 4.0, 4: 4.0}
 const TILE_COST := {1: {"plate": 1}, 2: {"plate": 2}, 3: {"plate": 2, "circuit": 1}, 4: {"glass": 2, "plate": 1}}
-## Masse der Bauteile in Tonnen je Feld (Geräte: DeviceData.mass, Standard 0,5 t)
-const TILE_MASS := {1: 0.2, 2: 0.2, 3: 0.2, 4: 0.2}
+## Masse der Bauteile in Tonnen je Feld (Geräte: DeviceData.mass, Standard 0,5 t).
+## 0,05 t je feinem Feld = 0,2 t je früherem Feld: gleiche Fläche, gleiche Masse.
+const TILE_MASS := {1: 0.05, 2: 0.05, 3: 0.05, 4: 0.05}
 const TILE_NAMES := {0: "Weltraum", 1: "Boden", 2: "Wand", 3: "Tür", 4: "Fenster"}
 const REMOVE_TIME := 1.5
 const CABLE_TIME := 1.0
@@ -73,7 +81,7 @@ const SUIT_KWH_PER_100 := 0.5
 const SUIT_RETURN_AT := 30.0
 
 ## Luftschleuse
-const AIRLOCK_MAX_SIZE := 12
+const AIRLOCK_MAX_SIZE := 12 * GRID_SCALE * GRID_SCALE
 const AIRLOCK_PUMP_RATE := 600.0
 const AIRLOCK_TOLERANCE := 6.0
 const AIRLOCK_STORE_MAX := 3000.0

@@ -50,7 +50,7 @@ func capture():
 			piles.append([r.x, r.y, g.piles[i].to_data()])
 	if tiles.is_empty():
 		return null
-	return {"name": SalvageSystem.wreck_name if SalvageSystem.wreck_name != "" else "Altes Wrack", "rel": true, "tiles": tiles,
+	return {"name": SalvageSystem.wreck_name if SalvageSystem.wreck_name != "" else "Altes Wrack", "rel": true, "scale": Config.GRID_SCALE, "tiles": tiles,
 		"devices": devs, "piles": piles, "investigated": SalvageSystem.investigated, "cause": SalvageSystem.cause}
 
 ## Alte Spielstände (vor den Andockschleusen) bereinigen:
@@ -125,6 +125,9 @@ const LEGACY_ENTRY := Vector2i(20, 30)
 
 ## Gespeichertes Wrack an eine freie Schleuse nach unten hängen. false = passt nicht.
 func _attach_stored(w: Dictionary) -> bool:
+	# Abgelegt in einem früheren Spielstand (doppelt so große Felder): erst verfeinern
+	if int(w.get("scale", 1)) < Config.GRID_SCALE:
+		w = refine_stored(w)
 	var g := ShipSystem.grid
 	var pt := SalvageSystem.free_port()
 	if pt.is_empty():
@@ -166,6 +169,68 @@ func _attach_stored(w: Dictionary) -> bool:
 	SalvageSystem.investigated = bool(w.get("investigated", false))
 	SalvageSystem.cause = String(w.get("cause", ""))
 	return true
+
+## Abgelegtes Wrack aus einem früheren Spielstand ins feine Raster (relativ zur Wracktür)
+func refine_stored(w: Dictionary) -> Dictionary:
+	var k := Config.GRID_SCALE
+	var rel: bool = w.get("rel", false)
+	var o := 1 if rel else 0
+	var cw := Config.WORLD_W / k
+	var at := func(t) -> Vector2i:
+		return Vector2i(int(t[0]), int(t[1])) if rel else Vector2i(int(t[0]) % cw, int(t[0]) / cw) - LEGACY_ENTRY
+	var lo := Vector2i(0, 0)
+	var hi := Vector2i(0, 0)
+	for t in w.tiles:
+		var r: Vector2i = at.call(t)
+		lo = Vector2i(mini(lo.x, r.x), mini(lo.y, r.y))
+		hi = Vector2i(maxi(hi.x, r.x), maxi(hi.y, r.y))
+	var off := -lo + Vector2i(2, 2)
+	var cg := ShipGrid.new(hi.x - lo.x + 5, hi.y - lo.y + 5)
+	for t in w.tiles:
+		var i := cg.idx(at.call(t) + off)
+		cg.tiles[i] = int(t[o + 1]); cg.cables[i] = int(t[o + 2]); cg.cond[i] = float(t[o + 3])
+		cg.o2[i] = float(t[o + 4]); cg.n2[i] = float(t[o + 5]); cg.co2[i] = float(t[o + 6]); cg.zone[i] = 1
+	for dd in w.devices:
+		var d2: Dictionary = dd.duplicate()
+		var q: Vector2i = (Vector2i(int(dd.x), int(dd.y)) if rel else Vector2i(int(dd.x), int(dd.y)) - LEGACY_ENTRY) + off
+		d2.x = q.x
+		d2.y = q.y
+		var dev := Device.from_data(d2)
+		cg.devices[cg.idx(dev.pos)] = dev
+	for entry in w.piles:
+		var inv := Inventory.new()
+		var q: Vector2i
+		if rel:
+			q = Vector2i(int(entry[0]), int(entry[1])) + off
+			inv.from_data(entry[2])
+		else:
+			q = Vector2i(int(entry[0]) % cw, int(entry[0]) / cw) - LEGACY_ENTRY + off
+			inv.from_data(entry[1])
+		cg.piles[cg.idx(q)] = inv
+	var fg := ShipGrid.refine(cg)
+	var e := fg.fine_of_coarse(off)
+	var tiles: Array = []
+	var devs: Array = []
+	var piles: Array = []
+	for i in fg.tiles.size():
+		if fg.zone[i] != 1:
+			continue
+		var r := fg.pos(i) - e
+		tiles.append([r.x, r.y, fg.tiles[i], fg.cables[i], fg.cond[i], fg.o2[i], fg.n2[i], fg.co2[i]])
+		if fg.devices.has(i):
+			var dd: Dictionary = fg.devices[i].to_data()
+			dd.x = r.x
+			dd.y = r.y
+			devs.append(dd)
+		if fg.piles.has(i):
+			piles.append([r.x, r.y, fg.piles[i].to_data()])
+	var out := w.duplicate()
+	out.rel = true
+	out.scale = k
+	out.tiles = tiles
+	out.devices = devs
+	out.piles = piles
+	return out
 
 func arrive(l: Dictionary) -> void:
 	if not Config.ENABLE_WRECK:
@@ -315,8 +380,7 @@ func buy(kind: String, on_credit: bool = false) -> void:
 			return
 		EconomySystem.credits -= int(t.price)
 		EconomySystem.book("Schiff gekauft: " + t.name, -int(t.price))
-	var g := ShipGrid.new()
-	_build_template(g, t)
+	var g := build_template(t)
 	ships.append({"id": next_id, "name": t.name, "location": here(), "data": g.to_data()})
 	next_id += 1
 	GameState.toast(t.name + " gehört jetzt dir. Wechseln unter „Schiffe“.")
@@ -334,6 +398,13 @@ func sell(id: int) -> void:
 			ships = ships.filter(func(x): return x.id != id)
 			return
 
+## Werftschiff fertig im feinen Raster (Vorlage in früheren Feldern, dann verfeinert)
+func build_template(t: Dictionary) -> ShipGrid:
+	var cg := ShipGrid.new(Config.WORLD_W / Config.GRID_SCALE, Config.WORLD_H / Config.GRID_SCALE)
+	_build_template(cg, t)
+	return ShipGrid.refine(cg)
+
+## Vorlage in den Feldern früherer Versionen (doppelt so groß)
 func _build_template(g: ShipGrid, t: Dictionary) -> void:
 	var w := int(t.w)
 	var h := int(t.h)

@@ -35,6 +35,15 @@ var rooms: Array = []                 ## [{cells: Array[int], vac: int, links: {
 var _air_cells := PackedInt32Array()
 var _doors := PackedInt32Array()
 var _cells_key := ""
+# Vorberechnete Kanten (gelten, bis sich das Raster ändert): Paare zweier Luftfelder ohne Tür
+# sind immer frei, Luftfeld ohne Tür neben All/Rand ist immer ein Leck. Alles mit Tür wird
+# in jedem Teilschritt neu bewertet (Türen gehen auf und zu, Schlitze ändern sich).
+var _free_a := PackedInt32Array()
+var _free_b := PackedInt32Array()
+var _vac_cell := PackedInt32Array()
+var _vac_n := PackedInt32Array()
+var _dyn_a := PackedInt32Array()
+var _dyn_b := PackedInt32Array()
 
 func step(dt: float) -> void:
 	_acc += dt
@@ -105,11 +114,35 @@ func _ensure_cells(g: ShipGrid) -> void:
 	_cells_key = key
 	_air_cells = PackedInt32Array()
 	_doors = PackedInt32Array()
+	_free_a = PackedInt32Array(); _free_b = PackedInt32Array()
+	_vac_cell = PackedInt32Array(); _vac_n = PackedInt32Array()
+	_dyn_a = PackedInt32Array(); _dyn_b = PackedInt32Array()
 	for i in g.tiles.size():
 		if g.holds_air(i):
 			_air_cells.append(i)
 		if g.tiles[i] == ShipGrid.Tile.DOOR:
 			_doors.append(i)
+	for i in _air_cells:
+		var i_door := g.tiles[i] == ShipGrid.Tile.DOOR
+		var vac_here := 0
+		for j in _neighbors(g, i):
+			var j_air := j >= 0 and g.holds_air(j)
+			if j_air and j < i:
+				continue  # Paar zweier Luftfelder nur einmal (vom kleineren Index aus)
+			var j_door := j >= 0 and g.tiles[j] == ShipGrid.Tile.DOOR
+			if i_door or j_door:
+				_dyn_a.append(i)
+				_dyn_b.append(j)
+				continue
+			var e := edge(g, i, j)
+			if e == E_FREE:
+				_free_a.append(i)
+				_free_b.append(j)
+			elif e == E_VAC:
+				vac_here += 1
+		if vac_here > 0:
+			_vac_cell.append(i)
+			_vac_n.append(vac_here)
 
 ## dt in Spielminuten. In Teilschritte zerlegt, damit alle Zeitstufen gleich rechnen.
 func simulate(dt: float) -> void:
@@ -135,21 +168,31 @@ func _substep(g: ShipGrid, s: float) -> void:
 	var d_co2 := PackedFloat32Array()
 	d_o2.resize(n); d_n2.resize(n); d_co2.resize(n)
 	var vac := {}
-	for i in _air_cells:
-		for j in _neighbors(g, i):
-			if j >= 0 and g.holds_air(j) and j < i:
-				continue  # Paar zweier Luftfelder nur einmal (vom kleineren Index aus)
-			var e := edge(g, i, j)
-			if e == E_VAC:
-				vac[i] = vac.get(i, 0) + 1
-			elif e == E_FREE or e == E_VENT:
-				var k := k_free if e == E_FREE else k_vent
-				var f := (o2[i] - o2[j]) * k
-				d_o2[i] -= f; d_o2[j] += f
-				f = (n2[i] - n2[j]) * k
-				d_n2[i] -= f; d_n2[j] += f
-				f = (co2[i] - co2[j]) * k
-				d_co2[i] -= f; d_co2[j] += f
+	for p in _vac_cell.size():
+		vac[_vac_cell[p]] = _vac_n[p]
+	for p in _free_a.size():
+		var i := _free_a[p]
+		var j := _free_b[p]
+		var f := (o2[i] - o2[j]) * k_free
+		d_o2[i] -= f; d_o2[j] += f
+		f = (n2[i] - n2[j]) * k_free
+		d_n2[i] -= f; d_n2[j] += f
+		f = (co2[i] - co2[j]) * k_free
+		d_co2[i] -= f; d_co2[j] += f
+	for p in _dyn_a.size():
+		var i := _dyn_a[p]
+		var j := _dyn_b[p]
+		var e := edge(g, i, j)
+		if e == E_VAC:
+			vac[i] = vac.get(i, 0) + 1
+		elif e == E_FREE or e == E_VENT:
+			var k := k_free if e == E_FREE else k_vent
+			var f := (o2[i] - o2[j]) * k
+			d_o2[i] -= f; d_o2[j] += f
+			f = (n2[i] - n2[j]) * k
+			d_n2[i] -= f; d_n2[j] += f
+			f = (co2[i] - co2[j]) * k
+			d_co2[i] -= f; d_co2[j] += f
 	for i in _air_cells:
 		var a := maxf(0.0, o2[i] + d_o2[i])
 		var b := maxf(0.0, n2[i] + d_n2[i])

@@ -105,9 +105,9 @@ func _initialize() -> void:
 
 	# 5) Wirkungen im Spiel
 	var mira = crew.player()
-	var gx0: int = (ship.grid.width - 16) / 2
-	var gy0: int = (ship.grid.height - 10) / 2
-	var job := {"kind": "repair", "x": gx0 + 4, "y": gy0 + 4}  # Innenwand
+	var gx0: int = (ship.grid.width / Config.GRID_SCALE - 16) / 2
+	var gy0: int = (ship.grid.height / Config.GRID_SCALE - 10) / 2
+	var job := {"kind": "repair", "x": C(gx0 + 4, gy0 + 4).x, "y": C(gx0 + 4, gy0 + 4).y}  # Innenwand
 	var e1 := _fresh()
 	var e2 := _fresh()
 	SK.set_progress(e2, "civil", 100.0)
@@ -204,10 +204,10 @@ func _initialize() -> void:
 	_check("Angeheuert", hire in crew.crew)
 	var before_civil: float = SK.progress(hire, "civil") + SK.progress(hire, "spaceship")
 	mira.work_prefs["repair"] = false  # Mira repariert nicht: nur der NPC
-	var x0: int = (ship.grid.width - 16) / 2
-	var y0: int = (ship.grid.height - 10) / 2
-	ship.grid.cond[ship.grid.idx(Vector2i(x0 + 4, y0 + 4))] = 30.0
-	build.place("repair", Vector2i(x0 + 4, y0 + 4))
+	var x0: int = (ship.grid.width / Config.GRID_SCALE - 16) / 2
+	var y0: int = (ship.grid.height / Config.GRID_SCALE - 10) / 2
+	ship.grid.cond[ship.grid.idx(C(x0 + 4, y0 + 4))] = 30.0
+	build.place("repair", C(x0 + 4, y0 + 4))
 	_run(15)
 	_check("NPC lernt durch Reparaturarbeit", SK.progress(hire, "civil") + SK.progress(hire, "spaceship") > before_civil)
 	_check("Aufgabenverteilung: Mira hat nicht repariert", mira.job == null or mira.job.kind != "repair")

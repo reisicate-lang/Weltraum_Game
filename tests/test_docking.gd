@@ -140,13 +140,13 @@ func _initialize() -> void:
 	_check("… und kein einziges neues Feld", _count_zone(3) == 0 and _count_zone(1) == 0)
 
 	# 6) Schleuse bauen: nur in der Außenwand
-	var x0: int = (g.width - 16) / 2
-	var y0: int = (g.height - 10) / 2
-	var hull_east := Vector2i(x0 + 15, y0 + 5)
+	var x0: int = (g.width / Config.GRID_SCALE - 16) / 2
+	var y0: int = (g.height / Config.GRID_SCALE - 10) / 2
+	var hull_east := C(x0 + 15, y0 + 5)
 	_check("Platzierung in der Außenwand erlaubt", CS.can_place("dev:dockport", hull_east))
-	_check("Nicht in einer Innenwand", not CS.can_place("dev:dockport", Vector2i(x0 + 10, y0 + 2)))
-	_check("Nicht auf Boden", not CS.can_place("dev:dockport", Vector2i(x0 + 4, y0 + 6)))
-	_check("Nicht in einer Ecke", not CS.can_place("dev:dockport", Vector2i(x0 + 15, y0)))
+	_check("Nicht in einer Innenwand", not CS.can_place("dev:dockport", C(x0 + 10, y0 + 2)))
+	_check("Nicht auf Boden", not CS.can_place("dev:dockport", C(x0 + 4, y0 + 6)))
+	_check("Nicht in einer Ecke", not CS.can_place("dev:dockport", C(x0 + 15, y0)))
 	CS.place("dev:dockport", hull_east)
 	var built := false
 	for k in 60 * 20:

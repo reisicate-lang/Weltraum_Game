@@ -199,6 +199,41 @@ Entscheidungen**:
     Gepäck hatte, behält sie, kann aber erst wieder eines aufnehmen, wenn die Hände frei
     sind.
 
+### Feineres Baufeld-Raster (Stand: November 2026)
+
+**Quelle:** Ostranauts-Screenshot des Nutzers (Figur mit weißen Eckmarkierungen, kleine
+Baufelder). Gemessen wurde nichts. Ziel: Die Figur wirkt im Verhältnis zu den Baufeldern
+größer.
+
+**Umsetzung:**
+- Ein Baufeld ist 16 px groß statt 32 px, das Raster 128×88 statt 64×44.
+  Figur (32 px) und Kamera-Zoom bleiben gleich. Ausgewählte Figuren tragen weiße
+  Eckmarkierungen.
+- Wände sind 1 Feld dick, Türen 1 Feld breit. Ein Gerät belegt 1 Feld, das Triebwerk
+  1×3 Felder.
+- **An der Feldgröße hängende Werte:**
+  - Laufen doppelt so viele Felder pro Zeit (gleiche sichtbare Strecke).
+  - Klick- und Gesprächsabstände, Heiz- und Einschlagradius ×2.
+  - Rumpfmasse 0,05 t je Feld (= 0,2 t je früherem Feld).
+  - Luftschleuse bis 48 Felder.
+  - Wrack, Asteroid und Station in doppelten Maßen.
+- **Alte Spielstände** werden beim Laden verfeinert (`ShipGrid.refine`):
+  - Böden werden 2×2.
+  - Wände werden eine dichte Linie auf der Außenseite; abgeschlossene Taschen
+    werden Wand.
+  - Geräte bleiben dieselben Instanzen (Zustand, Inventar). Triebwerke sitzen
+    durch die neue, dünne Wand.
+  - Kabel werden eine einfache, verbundene Linie.
+  - Positionen von Crew, Aufträgen, Wrack-Schleuse, Stations-Luke und abgelegten
+    Wracks werden umgerechnet.
+  - Eine angedockte Station oder ein Wrack zählt dabei als „außen“, damit Schleuse und
+    Tür direkt aneinander bleiben.
+- **Eigene Entscheidungen:**
+  - Kosten und Bauzeiten gelten weiter je Feld, eine Fläche kostet also mehr Material.
+  - Die Luftwerte (Austausch, Lecks, Lüftung) gelten weiter je Feld. Große Räume
+    reagieren deshalb langsamer als früher.
+  - Beim Steuern mit WASD rutscht die Figur vor einer Tür zur Türmitte (Einlaufhilfe).
+
 ## Geschwindigkeitsangleichung im Cockpit (Stand: November 2026)
 
 **Quelle:** offizieller Ostranauts-Startguide auf Steam, Abschnitte „Flight Metrics“ und

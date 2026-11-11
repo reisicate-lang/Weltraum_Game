@@ -37,7 +37,7 @@ func _initialize() -> void:
 		root.get_node("UIManager").char_ui.creation.visible = false
 		root.get_node("TimeSystem").set_speed(1)
 		var cam: Camera2D = current_scene.get_node("Camera2D")
-		cam.position = Vector2(44, 22) * Config.TILE_SIZE
+		cam.position = Vector2(44, 22) * Config.GRID_SCALE * Config.TILE_SIZE
 		cam.zoom = Vector2(1.05, 1.05)
 	for i in frames:
 		await process_frame

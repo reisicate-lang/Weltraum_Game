@@ -234,10 +234,30 @@ func manual_move(dir: Vector2, dist: float) -> void:
 				g.door_open_until[ti] = GameState.time + 0.05
 		return true
 	# Achsen getrennt: so gleitet man an Wänden entlang
+	var moved_x := false
+	var moved_y := false
 	if fits.call(pos + Vector2(dir.x * dist, 0)):
 		pos.x += dir.x * dist
+		moved_x = dir.x != 0.0
 	if fits.call(pos + Vector2(0, dir.y * dist)):
 		pos.y += dir.y * dist
+		moved_y = dir.y != 0.0
+	# Einlaufhilfe für Türen (1 Feld breit): an einer Kante hängengeblieben, aber das Feld
+	# davor ist begehbar → seitlich zu dessen Mitte rutschen
+	if absf(dir.x) > 0.5 and not moved_x:
+		var ahead := Vector2i(floori(pos.x + signf(dir.x) * (r + 0.5)), floori(pos.y))
+		if g.walkable(ahead):
+			var cy := float(ahead.y) + 0.5
+			var ny := move_toward(pos.y, cy, dist)
+			if fits.call(Vector2(pos.x, ny)):
+				pos.y = ny
+	if absf(dir.y) > 0.5 and not moved_y:
+		var ahead := Vector2i(floori(pos.x), floori(pos.y + signf(dir.y) * (r + 0.5)))
+		if g.walkable(ahead):
+			var cx := float(ahead.x) + 0.5
+			var nx := move_toward(pos.x, cx, dist)
+			if fits.call(Vector2(nx, pos.y)):
+				pos.x = nx
 
 func push_out_if_stuck() -> void:
 	var g := grid()

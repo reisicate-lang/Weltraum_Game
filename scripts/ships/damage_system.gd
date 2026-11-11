@@ -53,7 +53,7 @@ func strike() -> void:
 	g.cond[i] -= randf_range(35.0, 80.0) * (0.8 if SkillSystem.any_mastered("civil") else 1.0)
 	effects.append({"pos": p, "start": Time.get_ticks_msec()})
 	for dev in g.devices.values():
-		if absi(dev.pos.x - p.x) <= 2 and absi(dev.pos.y - p.y) <= 2 and not dev.broken:
+		if absi(dev.pos.x - p.x) <= 2 * Config.GRID_SCALE and absi(dev.pos.y - p.y) <= 2 * Config.GRID_SCALE and not dev.broken:
 			dev.cond = maxf(0.0, dev.cond - randf() * 30.0)
 			if dev.cond <= 0.0:
 				dev.broken = true

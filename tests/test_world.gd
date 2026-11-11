@@ -146,10 +146,10 @@ func _initialize() -> void:
 	var G = root.get_node("GoalSystem")
 	var build = root.get_node("ShipConstructionSystem")
 	var gg = root.get_node("ShipSystem").grid
-	var x0: int = (gg.width - 16) / 2
-	var y0: int = (gg.height - 10) / 2
+	var x0: int = (gg.width / Config.GRID_SCALE - 16) / 2
+	var y0: int = (gg.height / Config.GRID_SCALE - 10) / 2
 	_check("Erstes Ziel: Raumanzug", G.current().id == "suit")
-	build.place("floor", Vector2i(x0 - 4, y0 + 7))   # vor der Luftschleuse im All
+	build.place("floor", C(x0 - 3, y0 + 7) + Vector2i(-1, 0))   # direkt vor der Außentür der Luftschleuse im All
 	for k in 60 * 3:
 		gs.step(1.0 / 60.0)
 	_check("Ziel Raumanzug erreicht", "suit" in G.done)

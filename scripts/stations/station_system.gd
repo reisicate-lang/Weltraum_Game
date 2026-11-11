@@ -7,8 +7,12 @@
 extends Node
 
 const ZONE := 3
-const PITCH := 5            ## Höhe eines Raums samt Wand
-const ROOM_W := 9           ## Innenbreite eines Raums
+## Maße im feinen Raster (wie früher 5 bzw. 9 der doppelt so großen Felder)
+const PITCH := 5 * Config.GRID_SCALE    ## Höhe eines Raums samt Wand
+const ROOM_W := 9 * Config.GRID_SCALE   ## Innenbreite eines Raums
+const CORR := 2 * Config.GRID_SCALE     ## Breite des Gangs
+const WALL_V := 1 + CORR                ## Raumwand mit den Türen
+const RS := 2 + CORR                    ## erste Reihe in den Räumen
 const DEFAULT_ROOMS := ["market", "bar", "board", "hiring", "claims", "bank"]
 
 ## Raumarten: Tresen-Gerät, Reiter im Handelsfenster, wer dort arbeitet, was sie sagen
@@ -109,8 +113,8 @@ func build(id: String) -> bool:
 	return false
 
 ## Station im eigenen Raster: u entlang des Gangs, v weg vom Schiff.
-## v=0 Außenwand mit Andocktür, v=1..2 Gang, v=3 Raumwand mit Türen, v=4..12 Räume, v=13 Rückwand.
-const DEPTH := 4 + ROOM_W + 1
+## v=0 Außenwand mit Andocktür, v=1..CORR Gang, v=WALL_V Raumwand mit Türen, dann die Räume, dann die Rückwand.
+const DEPTH := RS + ROOM_W + 1
 
 ## Lage im Schiffsraster: Andocktür D liegt direkt vor der Schleuse
 func _map(port: Dictionary, ud: int, u: int, v: int) -> Vector2i:
@@ -149,21 +153,22 @@ func _build_at(g: ShipGrid, id: String, port: Dictionary, ud: int, kinds: Array)
 	var length := kinds.size() * PITCH + 1
 	for u in length:
 		for v in DEPTH:
-			var edge := u == 0 or u == length - 1 or v == 0 or v == DEPTH - 1 or v == 3 or (v > 3 and u % PITCH == 0)
+			var edge := u == 0 or u == length - 1 or v == 0 or v == DEPTH - 1 or v == WALL_V or (v > WALL_V and u % PITCH == 0)
 			_put(g, _map(port, ud, u, v), ShipGrid.Tile.WALL if edge else ShipGrid.Tile.FLOOR)
 	for k in kinds.size():
 		var r := k * PITCH
-		var door := _map(port, ud, r + 2, 3)
+		var door := _map(port, ud, r + PITCH / 2, WALL_V)
 		_put(g, door, ShipGrid.Tile.DOOR)
-		var desk := _map(port, ud, r + 2, 4 + ROOM_W - 3)
+		var desk := _map(port, ud, r + PITCH / 2, RS + ROOM_W - 3 * Config.GRID_SCALE)
 		var info: Dictionary = ROOMS[kinds[k]]
 		g.place_device(info.desk, desk)
-		rooms.append({"kind": kinds[k], "inner": _rect(port, ud, r + 1, 4, r + PITCH - 1, 4 + ROOM_W - 1), "desk": desk, "door": door,
-			"behind": _rect(port, ud, r + 1, 4 + ROOM_W - 2, r + PITCH - 1, 4 + ROOM_W - 1),
-			"front": _rect(port, ud, r + 1, 4, r + PITCH - 1, 4 + ROOM_W - 4)})
+		var K := Config.GRID_SCALE
+		rooms.append({"kind": kinds[k], "inner": _rect(port, ud, r + 1, RS, r + PITCH - 1, RS + ROOM_W - 1), "desk": desk, "door": door,
+			"behind": _rect(port, ud, r + 1, RS + ROOM_W - 2 * K, r + PITCH - 1, RS + ROOM_W - 1),
+			"front": _rect(port, ud, r + 1, RS, r + PITCH - 1, RS + ROOM_W - 4 * K)})
 	# Andocktür der Station direkt vor der Schleuse
 	_put(g, _map(port, ud, ud, 0), ShipGrid.Tile.DOOR)
-	corridor = _rect(port, ud, 1, 1, length - 2, 2)
+	corridor = _rect(port, ud, 1, 1, length - 2, CORR)
 	area = _rect(port, ud, 0, 0, length - 1, DEPTH - 1)
 	hatch = int(port.i)
 	g.linked[hatch] = true
@@ -313,7 +318,7 @@ func step(dt: float) -> void:
 		var spot: Vector2 = Vector2(pending.target) + Vector2(0.5, 0.5)
 		if not c in CrewSystem.crew or not npc in npcs:
 			pending = {}
-		elif c.pos.distance_to(npc.pos) <= 2.3 or c.pos.distance_to(spot) <= 1.6:
+		elif c.pos.distance_to(npc.pos) <= 2.3 * Config.GRID_SCALE or c.pos.distance_to(spot) <= 1.6 * Config.GRID_SCALE:
 			pending = {}
 			talk(npc, c)
 		elif c.order == null and c.path.is_empty():
@@ -335,7 +340,7 @@ func _move_npc(n: Dictionary, secs: float) -> void:
 			if to != from:
 				n.path = ShipSystem.find_path(from, to)
 		return
-	var left := secs * 1.2
+	var left := secs * 1.2 * Config.GRID_SCALE
 	while left > 0.0 and not path.is_empty():
 		var target := Vector2(path[0]) + Vector2(0.5, 0.5)
 		var d: float = n.pos.distance_to(target)
@@ -349,7 +354,7 @@ func _move_npc(n: Dictionary, secs: float) -> void:
 
 func npc_at(world: Vector2) -> Dictionary:
 	for n in npcs:
-		if n.pos.distance_to(world) < 0.5:
+		if n.pos.distance_to(world) < 0.5 * Config.GRID_SCALE:
 			return n
 	return {}
 
@@ -381,7 +386,7 @@ func click(t: Vector2i, world: Vector2) -> bool:
 
 ## Figur zum Gesprächspartner schicken (oder gleich reden, wenn sie nah genug ist)
 func approach(c: CrewMember, npc: Dictionary) -> void:
-	if c.pos.distance_to(npc.pos) <= 2.3:
+	if c.pos.distance_to(npc.pos) <= 2.3 * Config.GRID_SCALE:
 		talk(npc, c)
 		return
 	var target := Vector2i(npc.pos)

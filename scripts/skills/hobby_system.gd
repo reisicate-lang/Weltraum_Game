@@ -61,5 +61,5 @@ func practice(c: CrewMember, minutes: float) -> void:
 		SkillSystem.train(c, "perform_song", minutes * 0.3)
 		var mood := 3.0 + SkillSystem.effect(c, "crew_mood") * 15.0
 		for other in CrewSystem.crew:
-			if other != c and other.pos.distance_to(c.pos) < 5.0:
+			if other != c and other.pos.distance_to(c.pos) < 5.0 * Config.GRID_SCALE:
 				other.stress = maxf(0.0, other.stress - mood * minutes / 60.0)

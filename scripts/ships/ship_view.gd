@@ -4,6 +4,8 @@
 extends Node2D
 
 const S := Config.TILE_SIZE
+## Figurengröße in Pixeln (bleibt beim feineren Raster gleich)
+const CS := Config.CHAR_PX
 const COL_FLOOR := Color(0.165, 0.204, 0.259)
 const COL_FLOOR_ALT := Color(0.153, 0.192, 0.251)
 const COL_WALL := Color(0.655, 0.694, 0.753)
@@ -307,27 +309,34 @@ func _draw_char(c: CrewMember) -> void:
 	var center := c.pos * S
 	var font := ThemeDB.fallback_font
 	if c.unconscious:
-		draw_circle(center, S * 0.28, Color(0.48, 0.42, 0.35))
-		draw_string(font, center + Vector2(-3, -S * 0.4), "!", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, COL_REMOVE)
+		draw_circle(center, CS * 0.28, Color(0.48, 0.42, 0.35))
+		draw_string(font, center + Vector2(-3, -CS * 0.4), "!", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, COL_REMOVE)
 		return
-	draw_circle(center + Vector2(1, 2), S * 0.3, Color(0, 0, 0, 0.35))
+	draw_circle(center + Vector2(1, 2), CS * 0.3, Color(0, 0, 0, 0.35))
 	if c.suit != null:
 		# Raumanzug: weiß mit farbigem Ring und Rucksack
-		draw_circle(center - Vector2.from_angle(c.facing) * S * 0.2, S * 0.13, Color(0.54, 0.58, 0.65))
-		draw_circle(center, S * 0.31, Color(0.9, 0.91, 0.93))
-		draw_arc(center, S * 0.31, 0, TAU, 24, c.color, 2.5)
-		draw_circle(center + Vector2.from_angle(c.facing) * S * 0.14, S * 0.14, Color(0.95, 0.76, 0.31))
+		draw_circle(center - Vector2.from_angle(c.facing) * CS * 0.2, CS * 0.13, Color(0.54, 0.58, 0.65))
+		draw_circle(center, CS * 0.31, Color(0.9, 0.91, 0.93))
+		draw_arc(center, CS * 0.31, 0, TAU, 24, c.color, 2.5)
+		draw_circle(center + Vector2.from_angle(c.facing) * CS * 0.14, CS * 0.14, Color(0.95, 0.76, 0.31))
 	else:
-		draw_circle(center, S * 0.28, c.color)
-		draw_circle(center + Vector2.from_angle(c.facing) * S * 0.14, S * 0.11, Color(0.75, 0.91, 1.0))
+		draw_circle(center, CS * 0.28, c.color)
+		draw_circle(center + Vector2.from_angle(c.facing) * CS * 0.14, CS * 0.11, Color(0.75, 0.91, 1.0))
 	if c.carrying != null:
-		var cr := Rect2(center + Vector2(-0.25, -0.85) * S, Vector2(0.5, 0.5) * S)
+		var cr := Rect2(center + Vector2(-0.25, -0.85) * CS, Vector2(0.5, 0.5) * CS)
 		draw_rect(cr, c.carrying.data().color)
 		draw_rect(cr, Color(0, 0, 0, 0.5), false, 1.0)
 	if GameState.selected == c:
-		draw_arc(center, S * 0.42, 0, TAU, 32, Color(0.95, 0.64, 0.23), 1.5)
+		# Ausgewählt: weiße Eckmarkierungen um die Figur (wie in Ostranauts)
+		var h := CS * 0.5
+		var l := CS * 0.18
+		for sx in [-1.0, 1.0]:
+			for sy in [-1.0, 1.0]:
+				var corner := center + Vector2(sx * h, sy * h)
+				draw_line(corner, corner - Vector2(sx * l, 0), Color(1, 1, 1, 0.95), 2.0)
+				draw_line(corner, corner - Vector2(0, sy * l), Color(1, 1, 1, 0.95), 2.0)
 	var label := ("▸ " if c.is_player else "") + c.display_name
-	draw_string(font, center + Vector2(-S * 2, -S * 0.5), label, HORIZONTAL_ALIGNMENT_CENTER, S * 4, 11,
+	draw_string(font, center + Vector2(-CS * 2, -CS * 0.5), label, HORIZONTAL_ALIGNMENT_CENTER, CS * 4, 11,
 		Color(0.95, 0.76, 0.31) if c.is_player else Color(0.91, 0.93, 0.96))
 	if not c.path.is_empty() and (c.order != null):
 		var prev := center
@@ -540,18 +549,18 @@ func _draw_station() -> void:
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(0.75, 0.8, 0.86, 0.75))
 	for n in StationSystem.npcs:
 		var center: Vector2 = n.pos * S
-		draw_circle(center + Vector2(1, 2), S * 0.28, Color(0, 0, 0, 0.35))
-		draw_circle(center, S * 0.26, n.color)
+		draw_circle(center + Vector2(1, 2), CS * 0.28, Color(0, 0, 0, 0.35))
+		draw_circle(center, CS * 0.26, n.color)
 		match n.kind:
 			"staff":
-				draw_arc(center, S * 0.26, 0, TAU, 20, Color(0.95, 0.76, 0.31), 2.0)
+				draw_arc(center, CS * 0.26, 0, TAU, 20, Color(0.95, 0.76, 0.31), 2.0)
 			"contact":
-				draw_arc(center, S * 0.26, 0, TAU, 20, Color(0.62, 0.85, 1.0), 2.0)
+				draw_arc(center, CS * 0.26, 0, TAU, 20, Color(0.62, 0.85, 1.0), 2.0)
 			"candidate":
-				draw_string(font, center + Vector2(-3, -S * 0.32), "+", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.5, 0.9, 0.6))
-		var near: bool = hover.distance_to(Vector2i(n.pos)) <= 1.0
+				draw_string(font, center + Vector2(-3, -CS * 0.32), "+", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.5, 0.9, 0.6))
+		var near: bool = hover.distance_to(Vector2i(n.pos)) <= 1.0 * Config.GRID_SCALE
 		if near or n.kind != "visitor":
-			draw_string(font, center + Vector2(-S * 3, S * 0.75), String(n.name).split(" (")[0].split(",")[0], HORIZONTAL_ALIGNMENT_CENTER, S * 6, 10,
+			draw_string(font, center + Vector2(-CS * 3, CS * 0.75), String(n.name).split(" (")[0].split(",")[0], HORIZONTAL_ALIGNMENT_CENTER, CS * 6, 10,
 				Color(0.91, 0.93, 0.96, 0.95 if near else 0.6))
 
 func _draw_bubbles() -> void:
@@ -564,7 +573,7 @@ func _draw_bubbles() -> void:
 		var text := String(n.line)
 		var size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11)
 		var center: Vector2 = n.pos * S
-		var box := Rect2(center + Vector2(-size.x / 2.0 - 5, -S * 0.55 - size.y - 6), size + Vector2(10, 6))
+		var box := Rect2(center + Vector2(-size.x / 2.0 - 5, -CS * 0.55 - size.y - 6), size + Vector2(10, 6))
 		draw_rect(box, Color(0.08, 0.1, 0.13, 0.92))
 		draw_rect(box, Color(0.95, 0.76, 0.31, 0.8), false, 1.0)
 		draw_string(font, box.position + Vector2(5, size.y), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.95, 0.93, 0.88))

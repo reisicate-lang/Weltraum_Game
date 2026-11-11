@@ -136,8 +136,8 @@ func _initialize() -> void:
 	root.get_node("Settings").meteors = false
 	root.get_node("EventBus").toast.connect(func(t, _k): toasts.append(String(t)))
 	_fresh()
-	var x0: int = (ship.grid.width - 16) / 2
-	var y0: int = (ship.grid.height - 10) / 2
+	var x0: int = (ship.grid.width / Config.GRID_SCALE - 16) / 2
+	var y0: int = (ship.grid.height / Config.GRID_SCALE - 10) / 2
 	var mira = crew.player()
 	var g = ship.grid
 
@@ -147,7 +147,7 @@ func _initialize() -> void:
 	_check("Zerlege-Rezept aus removal.json (Generator %s)" % str(gy), int(gy.plate) == 2 and int(gy.motor) == 1 and int(gy.circuit) == 1 and gy == R.data.generator.dismantle)
 
 	# 1) Block abbauen und wieder einbauen (Innenwand zwischen Kabine und Cockpit)
-	var wall := Vector2i(x0 + 10, y0 + 2)
+	var wall := C(x0 + 10, y0 + 2)
 	_check("Menü zeigt Abbauen (%s)" % _menu_text(wall, "uninstall"), _menu_text(wall, "uninstall").begins_with("Abbauen  ("))
 	_click(wall, "uninstall")
 	_check("Abbau-Auftrag angelegt", CS.jobs.has(g.idx(wall)) and CS.jobs[g.idx(wall)].kind == "uninstall")
@@ -166,7 +166,7 @@ func _initialize() -> void:
 	_check("Wand wieder da (100 %%), Gegenstand verbraucht", g.get_tile(wall) == ShipGrid.Tile.WALL and g.cond[g.idx(wall)] == 100.0 and _count("pk_tile_wall") == 0)
 
 	# 2) Beschädigt abbauen und mit gleichem Zustand einbauen (Wand und Batterie)
-	var wall2 := Vector2i(x0 + 10, y0 + 7)
+	var wall2 := C(x0 + 10, y0 + 7)
 	g.cond[g.idx(wall2)] = 63.0
 	_click(wall2, "uninstall")
 	_until_done(wall2)
@@ -175,7 +175,7 @@ func _initialize() -> void:
 	_click(wall2, "install")
 	_until_done(wall2)
 	_check("Wieder eingebaut mit 63 %%", g.get_tile(wall2) == ShipGrid.Tile.WALL and int(g.cond[g.idx(wall2)]) == 63)
-	var bat_p := Vector2i(x0 + 2, y0 + 5)
+	var bat_p := C(x0 + 2, y0 + 5)
 	var bat = g.device_at(bat_p)
 	bat.cond = 71.0
 	bat.charge = 12.5
@@ -205,7 +205,7 @@ func _initialize() -> void:
 	_fresh()
 	g = ship.grid
 	mira = crew.player()
-	var bed_p := Vector2i(x0 + 1, y0 + 1)
+	var bed_p := C(x0 + 1, y0 + 1)
 	var yield_bed: Dictionary = R.dismantle_yield("dev:bed")
 	var before := {}
 	for t in yield_bed:
@@ -219,7 +219,7 @@ func _initialize() -> void:
 	_check("Bett zerlegt: genau %s" % str(yield_bed), exact)
 
 	# 4) Zerstören: mehrere Schläge, Müll laut Daten, sichtbare Treffer
-	var bench_p := Vector2i(x0 + 13, y0 + 5)
+	var bench_p := C(x0 + 13, y0 + 5)
 	var scrap_before := _count("scrap")
 	var fx_before: int = root.get_node("DamageSystem").effects.size()
 	_click(bench_p, "destroy")
@@ -242,7 +242,7 @@ func _initialize() -> void:
 	_fresh()
 	g = ship.grid
 	mira = crew.player()
-	var sink_p := Vector2i(x0 + 3, y0 + 1)
+	var sink_p := C(x0 + 3, y0 + 1)
 	for kind in ["uninstall", "dismantle"]:
 		_click(sink_p, kind)
 		for k in 60 * 3:
@@ -263,8 +263,8 @@ func _initialize() -> void:
 	_click(sink_p, "destroy")
 	_check("Neustart setzt beim Schaden fort (Fortschritt %.2f)" % CS.jobs[g.idx(sink_p)].progress, absf(CS.jobs[g.idx(sink_p)].progress - (1.0 - dmg_cond / 100.0)) < 0.001)
 	_check("Neu gestartetes Zerstören wird fertig", _until_done(sink_p))
-	_click(Vector2i(x0 + 5, y0 + 1), "uninstall")
-	_check("Abbauen nach Abbruch neu gestartet und fertig", _until_done(Vector2i(x0 + 5, y0 + 1)) and _count("pk_food") == 1)
+	_click(C(x0 + 5, y0 + 1), "uninstall")
+	_check("Abbauen nach Abbruch neu gestartet und fertig", _until_done(C(x0 + 5, y0 + 1)) and _count("pk_food") == 1)
 
 	# 6) Volles Gepäck: Ergebnis landet als Haufen daneben
 	_fresh()
@@ -272,7 +272,7 @@ func _initialize() -> void:
 	mira = crew.player()
 	while mira.inv.add("plate", 1, 90.0) > 0:
 		pass
-	var o2_p := Vector2i(x0 + 9, y0 + 1)
+	var o2_p := C(x0 + 9, y0 + 1)
 	var y_o2: Dictionary = R.dismantle_yield("dev:o2gen")
 	var b2 := {}
 	for t in y_o2:
@@ -296,7 +296,7 @@ func _initialize() -> void:
 	_check("Unerreichbar: Grund im Menü (%s)" % _menu_text(far, "destroy"), "Niemand kommt" in _menu_text(far, "destroy") and _menu_text(far, "destroy").begins_with("[aus]"))
 	ui.object_menu.hide()
 	mira.inv.take("crowbar", 9)
-	var wall3 := Vector2i(x0 + 10, y0 + 2)
+	var wall3 := C(x0 + 10, y0 + 2)
 	_check("Ohne Brechstange: Wand abbauen gesperrt (%s)" % R.reason("uninstall", wall3), "Braucht Werkzeug: Brechstange" in R.reason("uninstall", wall3))
 	_check("… Zerstören geht mit bloßen Händen", R.reason("destroy", wall3) == "")
 	var st_desk: Vector2i = root.get_node("StationSystem").rooms[0].desk
@@ -304,7 +304,7 @@ func _initialize() -> void:
 	mira.inv.add("crowbar", 1, 80.0)
 
 	# 8) Mehrfach schnell auf denselben Eintrag klicken
-	var heater_p := Vector2i(x0 + 8, y0 + 1)
+	var heater_p := C(x0 + 8, y0 + 1)
 	var id := _menu(heater_p, "dismantle")
 	ui._on_object_menu(id)
 	ui._on_object_menu(id)
@@ -319,33 +319,33 @@ func _initialize() -> void:
 	_fresh()
 	g = ship.grid
 	mira = crew.player()
-	var crate_p := Vector2i(x0 + 13, y0 + 8)
+	var crate_p := C(x0 + 13, y0 + 8)
 	var rations := _count("ration")
 	_click(crate_p, "uninstall")
 	_until_done(crate_p)
 	var pkc: Dictionary = _find_packed("pk_crate")
 	_check("Kiste abgebaut: ein Gegenstand am Boden, Inhalt darin erhalten, nichts verloren", g.device_at(crate_p) == null and _count_deep("ration") == rations and _count("ration") == 0
 		and g.piles.has(g.idx(crate_p)) and g.piles[g.idx(crate_p)].count("pk_crate") == 1 and not pkc.get("data", {}).get("items", []).is_empty())
-	var locker_p := Vector2i(x0 + 1, y0 + 8)
+	var locker_p := C(x0 + 1, y0 + 8)
 	_check("Spind mit Anzug: Zerlegen gesperrt (%s)" % R.reason("dismantle", locker_p), "Raumanzug" in R.reason("dismantle", locker_p))
 	_click(locker_p, "uninstall")
 	_until_done(locker_p)
 	var lk: Dictionary = _find_packed("pk_locker")
 	_check("Abgebauter Spind behält den Anzug", lk.get("data", {}).get("suit") != null)
-	var gen_p := Vector2i(x0 + 1, y0 + 5)
+	var gen_p := C(x0 + 1, y0 + 5)
 	power.step(0.0)
 	var prod_before: float = power.main_net().production
 	_click(gen_p, "uninstall")
 	_until_done(gen_p)
 	power.step(0.0)
 	_check("Generator weg: Stromnetz neu berechnet (%.1f → %.1f kW), Kabel bleibt" % [prod_before, power.main_net().production], power.main_net().production < prod_before and g.cables[g.idx(gen_p)] == 1)
-	g.devices[g.idx(Vector2i(x0 + 13, y0 + 1))].lock_level = 0
-	var crate2: Vector2i = Vector2i(x0 + 14, y0 + 8)
+	g.devices[g.idx(C(x0 + 13, y0 + 1))].lock_level = 0
+	var crate2: Vector2i = C(x0 + 14, y0 + 8)
 	g.device_at(crate2).lock_level = 2
 	_check("Verschlossene Kiste: gesperrt", R.reason("destroy", crate2) == "Verschlossen – erst knacken (Hacken).")
 	g.device_at(crate2).lock_level = 0
 	# Objekt verschwindet während des Auftrags
-	var sink2 := Vector2i(x0 + 3, y0 + 1)
+	var sink2 := C(x0 + 3, y0 + 1)
 	_click(sink2, "dismantle")
 	g.devices.erase(g.idx(sink2))
 	var pipes := _count("pipe")
@@ -358,7 +358,7 @@ func _initialize() -> void:
 		_fresh()
 		g = ship.grid
 		var time = root.get_node("TimeSystem")
-		var p := Vector2i(x0 + 13, y0 + 5)
+		var p := C(x0 + 13, y0 + 5)
 		_click(p, "destroy")
 		var fx0: int = root.get_node("DamageSystem").effects.filter(func(e): return e.get("small", false) and e.pos == p).size()
 		time.set_speed(si)
@@ -386,7 +386,7 @@ func _initialize() -> void:
 	_check("Schlagabstand passt zur Spielzeit (Dauer ≈ Schläge × 1,5 s, ± ein Bild)", results.all(func(r): return absf(r[2] - (r[1] - 1) * 1.5) <= 3.0 + r[3]))
 	_fresh()
 	g = ship.grid
-	var tp := Vector2i(x0 + 13, y0 + 5)
+	var tp := C(x0 + 13, y0 + 5)
 	_click(tp, "destroy")
 	for k in 60 * 20:
 		gs.step(1.0 / 60.0)

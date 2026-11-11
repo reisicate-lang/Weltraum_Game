@@ -51,6 +51,36 @@ func save_game(silent: bool = false) -> bool:
 		GameState.toast("Spiel gespeichert.")
 	return true
 
+## Früherer Spielstand (doppelt so große Felder): gespeicherte Positionen ins feine Raster.
+## Das Schiff selbst hat ShipGrid.from_data schon verfeinert (coarse_map: grob -> fein).
+func _upscale_positions(data: Dictionary) -> void:
+	var g := ShipSystem.grid
+	var cw := g.coarse_width
+	for c in data.crew:
+		var fp := g.fine_pos(Vector2(float(c.x), float(c.y)))
+		c.x = fp.x
+		c.y = fp.y
+	for j in data.jobs:
+		var p := g.fine_of_coarse(Vector2i(int(j.x), int(j.y)))
+		j.x = p.x
+		j.y = p.y
+		if j.has("tx"):
+			var t := g.fine_of_coarse(Vector2i(int(j.tx), int(j.ty)))
+			j.tx = t.x
+			j.ty = t.y
+	var sv: Dictionary = data.get("salvage", {})
+	if int(sv.get("port", -1)) >= 0:
+		sv.port = g.coarse_map[int(sv.port)]
+	if int(sv.get("ex", -1)) >= 0:
+		var e := g.fine_of_coarse(Vector2i(int(sv.ex), int(sv.ey)))
+		sv.ex = e.x
+		sv.ey = e.y
+	var st: Dictionary = data.get("station", {})
+	if int(st.get("hatch", -1)) >= 0 and int(st.hatch) < g.coarse_map.size():
+		st.hatch = g.coarse_map[int(st.hatch)]
+	if cw > 0:
+		GameState.toast("Älterer Spielstand: Raster verfeinert (jedes Feld ist jetzt 2×2 Felder).")
+
 func has_save() -> bool:
 	return FileAccess.file_exists(path())
 
@@ -66,7 +96,10 @@ func load_game(silent: bool = false) -> bool:
 			GameState.toast("Der Spielstand passt nicht zu dieser Version.", "bad")
 		return false
 	GameState.time = float(data.time)
+	var legacy := int(data.ship.get("scale", 1)) < Config.GRID_SCALE
 	ShipSystem.grid = ShipGrid.from_data(data.ship)
+	if legacy:
+		_upscale_positions(data)
 	CrewSystem.from_data(data.crew)
 	ShipConstructionSystem.from_data(data.jobs)
 	EconomySystem.from_data(data.economy)
