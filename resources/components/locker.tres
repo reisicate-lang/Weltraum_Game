@@ -18,3 +18,4 @@ need = ""
 wears = false
 color = Color(0.27, 0.31, 0.37, 1)
 tech = "furniture"
+category = "furniture"

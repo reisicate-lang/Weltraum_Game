@@ -13,6 +13,7 @@ cost = {"plate": 2, "circuit": 1}
 storage = 0.0
 color = Color(0.36, 0.33, 0.24, 1)
 tech = "mechanical"
+category = "docking"
 length = 2
 width = 5
 buildable = false

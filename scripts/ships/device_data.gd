@@ -25,6 +25,10 @@ extends Resource
 @export var wears: bool = false
 ## Technik-Art für Fähigkeiten: "mechanical", "electrical", "robotic", "computer", "propulsion", "furniture"
 @export var tech: String = "furniture"
+## Gerätekategorie (englische Schlüssel): "appliance" (Haushaltsgeräte), "control" (Steuerungen),
+## "furniture" (Möbel), "hvac" (Klima und Lüftung), "misc" (Miscellaneous), "power", "propulsion",
+## "docking", "water", "farming", "production", "station". Fähigkeiten können darauf wirken.
+@export var category: String = ""
 ## Schub in kN (nur Triebwerke)
 @export var thrust: float = 0.0
 ## Masse in Tonnen (für die Beschleunigung des Schiffs)

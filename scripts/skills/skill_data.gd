@@ -22,3 +22,9 @@ extends Resource
 @export var gameplay_effects: Dictionary = {}
 ## Beschreibung der vollständigen Wirkung (freigeschaltet bei 100 %)
 @export_multiline var mastery_text: String = ""
+## Charaktererstellung: als Kurs wählbar, kostet so viele Lebensjahre (0 = kein Kurs)
+@export var course_years: int = 0
+## Erworben (100 %): additiver Arbeitswert für Aufträge an Geräten dieser Kategorien
+## (DeviceData.category). Arbeitswert = Arbeitstempo × 10, siehe SkillSystem.work_value().
+@export var work_value_bonus: float = 0.0
+@export var work_categories: PackedStringArray = []

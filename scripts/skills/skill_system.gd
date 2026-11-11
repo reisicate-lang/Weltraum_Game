@@ -129,6 +129,8 @@ func _unlock(c: CrewMember, id: String) -> void:
 	e.unlocked = true
 	if id == BUSINESS:
 		GameState.toast("%s acquired Business Admin: exact Item Values are now shown." % c.display_name)
+	elif skill(id).work_value_bonus > 0.0:
+		GameState.toast("%s acquired %s: +%d work value on %s." % [c.display_name, skill(id).skill_name, int(skill(id).work_value_bonus), category_list(skill(id).work_categories)])
 	else:
 		GameState.toast("%s beherrscht jetzt %s vollständig!" % [c.display_name, skill(id).skill_name])
 
@@ -184,8 +186,64 @@ func any_mastered(id: String) -> bool:
 
 # ---------------- Arbeit: welche Aktion, wie schnell ----------------
 
-## Welche Aktionen und Tempo-Wirkungen gehören zu einem Auftrag?
+## Welche Aktionen und Tempo-Wirkungen gehören zu einem Auftrag? Arbeit an einem Gerät einer
+## Kategorie, auf die eine Fähigkeit wirkt (work_categories), trainiert zusätzlich deren
+## Aktion "<skill_id>_work" (z. B. civil_work), falls die übrigen Aktionen sie noch nicht trainieren.
 func job_profile(job: Dictionary) -> Dictionary:
+	var prof := _base_profile(job)
+	var cat := job_category(job)
+	if cat == "":
+		return prof
+	for id in skills:
+		var s: SkillData = skills[id]
+		var act: String = id + "_work"
+		if not cat in s.work_categories or not actions.has(act):
+			continue
+		var trained := false
+		for a in prof.actions:
+			if actions.has(a) and id in actions[a].skills:
+				trained = true
+		if not trained:
+			prof.actions = prof.actions + [act]
+	return prof
+
+## Gerätekategorien in Worten (für Tooltips und Meldungen)
+const CATEGORY_NAMES := {"appliance": "Appliances", "control": "Controls", "furniture": "Furniture", "hvac": "Climate & Ventilation",
+	"misc": "Miscellaneous", "power": "Power", "propulsion": "Propulsion", "docking": "Docking", "water": "Water",
+	"farming": "Farming", "production": "Production", "station": "Station"}
+
+func category_list(cats: PackedStringArray) -> String:
+	var names: PackedStringArray = []
+	for k in cats:
+		names.append(CATEGORY_NAMES.get(k, k))
+	return ", ".join(names)
+
+## Auftragsarten, die an einem Gerät arbeiten (bauen, einbauen, reparieren, abbauen, zerlegen, drehen, versetzen)
+const DEVICE_JOB_KINDS := ["device", "install", "repair", "remove", "uninstall", "dismantle", "destroy", "rotate", "move"]
+
+## Geräteart, an der ein Auftrag arbeitet ("" = kein Gerät, z. B. Wand, Boden, Kabel)
+func job_device_id(job: Dictionary) -> String:
+	if not String(job.get("kind", "")) in DEVICE_JOB_KINDS:
+		return ""
+	if job.kind == "device":
+		return String(job.dev)
+	if job.kind == "install":
+		var key: String = RemovalSystem.key_of_packed(String(job.item))
+		return key.substr(4) if key.begins_with("dev:") else ""
+	if job.has("target") and not String(job.target).begins_with("dev:"):
+		return ""   # Abbau einer anderen Ebene (Kabel, Boden) auf demselben Feld
+	var g := ShipSystem.grid
+	var dev := g.device_at(ShipConstructionSystem.pos_of(job)) if g != null else null
+	return dev.type if dev != null else ""
+
+## Gerätekategorie eines Auftrags ("" = kein Gerät)
+func job_category(job: Dictionary) -> String:
+	var id := job_device_id(job)
+	if id == "" or ItemSystem.device(id) == null:
+		return ""
+	return ItemSystem.device(id).category
+
+func _base_profile(job: Dictionary) -> Dictionary:
 	var g := ShipSystem.grid
 	var p := ShipConstructionSystem.pos_of(job)
 	var dev := g.device_at(p) if g != null else null
@@ -267,13 +325,35 @@ func _work_effect(tech: String) -> String:
 		"propulsion": return "work_propulsion"
 	return "work_furniture"
 
+## Arbeitswert-Skala: Arbeitswert = Arbeitstempo × 10. Grundwert 7 (Tempo 0,7), Tempo-Wirkungen
+## der Fähigkeiten zählen ×10, feste Boni erworbener Fähigkeiten (work_value_bonus) kommen
+## additiv dazu. Eigenschaften, Anzug und Stress wirken danach als Faktoren aufs Tempo.
+const WORK_VALUE_SCALE := 10.0
+const BASE_WORK_VALUE := 7.0
+
+## Additiver Arbeitswert aus erworbenen Fähigkeiten für die Gerätekategorie dieses Auftrags
+func work_value_bonus(c: CrewMember, job: Dictionary) -> float:
+	var cat := job_category(job)
+	if cat == "":
+		return 0.0
+	var total := 0.0
+	for id in skills:
+		var s: SkillData = skills[id]
+		if s.work_value_bonus != 0.0 and cat in s.work_categories and acquired(c, id):
+			total += s.work_value_bonus
+	return total
+
+## Arbeitswert eines Charakters für einen Auftrag (vor Eigenschaften, Anzug und Stress)
+func work_value(c: CrewMember, job: Dictionary) -> float:
+	var bonus := 0.0
+	for e in job_profile(job).effects:
+		bonus += effect(c, e)
+	return BASE_WORK_VALUE + bonus * WORK_VALUE_SCALE + work_value_bonus(c, job)
+
 ## Arbeitstempo eines Charakters für einen Auftrag (1.0 = normal)
 func work_speed(c: CrewMember, job: Dictionary) -> float:
 	var prof := job_profile(job)
-	var bonus := 0.0
-	for e in prof.effects:
-		bonus += effect(c, e)
-	var speed := (0.7 + bonus) * TraitSystem.factor(c, "work_speed")
+	var speed := work_value(c, job) / WORK_VALUE_SCALE * TraitSystem.factor(c, "work_speed")
 	if prof.get("fine", false):
 		speed *= TraitSystem.factor(c, "work_fine")
 	if c.suit != null:
@@ -399,10 +479,26 @@ const EFFECT_NAMES := {
 	"black_bonus": "Mehr am Schwarzmarkt",
 }
 
+## Tooltip einer Fähigkeit (englisch): Kurskosten, Bonus, Kategorien, Lernwege, aktueller Fortschritt
+func skill_tooltip(c: CrewMember, id: String) -> String:
+	var s: SkillData = skill(id)
+	var lines: PackedStringArray = [s.skill_name, s.description]
+	if s.course_years > 0:
+		lines.append("Character creation: costs %d years." % s.course_years)
+	if s.work_value_bonus != 0.0:
+		lines.append("Bonus when acquired (100 %%): %+d work value." % int(s.work_value_bonus))
+		lines.append("Affected categories: %s." % category_list(s.work_categories))
+	lines.append("Ways to learn: " + "; ".join(s.learning_sources) + ".")
+	var p := progress(c, id) if c != null else 0.0
+	lines.append("Learning progress: %.1f %%%s" % [p, " (acquired)" if p >= ACQUIRED else ""])
+	return "\n".join(lines)
+
 func effect_lines(c: CrewMember, id: String) -> PackedStringArray:
 	var out: PackedStringArray = []
 	var s: SkillData = skill(id)
 	var p := progress(c, id)
+	if s.work_value_bonus != 0.0:
+		out.append("Work value %+d on %s: %s" % [int(s.work_value_bonus), category_list(s.work_categories), "active" if p >= ACQUIRED else "locked until 100 %"])
 	for e in s.gameplay_effects:
 		var v := float(s.gameplay_effects[e]) * p / 100.0 + (float(s.gameplay_effects[e]) * MASTERY_BONUS if p >= 100.0 else 0.0)
 		out.append("%s: +%d %%" % [EFFECT_NAMES.get(e, e), int(round(v * 100.0))])

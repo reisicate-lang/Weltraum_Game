@@ -146,6 +146,7 @@ func _skills(c: CrewMember) -> void:
 				detail = id
 				_last = ""
 				refresh())
+			name_btn.tooltip_text = SkillSystem.skill_tooltip(c, id)
 			name_btn.custom_minimum_size = Vector2(200, 0)
 			name_btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 			name_btn.add_theme_font_size_override("font_size", 12)
@@ -281,8 +282,11 @@ func refresh_creation() -> void:
 	_fit()
 	creation_box.add_child(ui._label("LEBENSLAUF: %s" % c.display_name, ui.COL_AMBER, 18))
 	creation_box.add_child(_wrap("Du bestimmst Miras Vergangenheit. Jede Station kostet Lebensjahre und prägt Fähigkeiten, Eigenschaften, Kontakte und Geld. Mit mindestens 18 Jahren kann es losgehen."))
-	var course := CharacterSystem.course_drafted(c)
-	creation_box.add_child(ui._label("Alter: %d%s · Startgeld aus dem Lebenslauf: %+d Cr" % [CharacterSystem.preview_age(c), " (incl. Business Admin course +%d years)" % CharacterSystem.COURSE_YEARS if course else "", CharacterSystem.start_credits(c)], Color(0.87, 0.9, 0.94), 14))
+	var picked: PackedStringArray = []
+	for id in CharacterSystem.course_ids():
+		if CharacterSystem.course_drafted(c, id):
+			picked.append("%s course +%d years" % [SkillSystem.skill(id).skill_name, CharacterSystem.course_years(id)])
+	creation_box.add_child(ui._label("Alter: %d%s · Startgeld aus dem Lebenslauf: %+d Cr" % [CharacterSystem.preview_age(c), " (incl. " + ", ".join(picked) + ")" if not picked.is_empty() else "", CharacterSystem.start_credits(c)], Color(0.87, 0.9, 0.94), 14))
 	var tr: PackedStringArray = []
 	for t in c.traits:
 		tr.append(TraitSystem.get_trait(t).trait_name)
@@ -304,12 +308,20 @@ func refresh_creation() -> void:
 			[ui._button("Wählen", func():
 				CharacterSystem.apply_career(c, k.id)
 				refresh_creation())]))
-	# Kurs: zählt erst beim Bestätigen (Los geht's), bis dahin nur im Vorschaualter
-	if course or CharacterSystem.preview_age(c) + CharacterSystem.COURSE_YEARS <= CharacterSystem.max_age and not SkillSystem.acquired(c, SkillSystem.BUSINESS):
-		creation_box.add_child(ui._row("Business Admin course (%d years): exact Item Value when trading%s" % [CharacterSystem.COURSE_YEARS, " · selected" if course else ""],
+	# Kurse: zählen erst beim Bestätigen (Los geht's), bis dahin nur im Vorschaualter
+	const COURSE_TEXT := {"business": "exact Item Value when trading", "civil": "+4 work value on appliances, controls, furniture, climate & ventilation, miscellaneous"}
+	for id in CharacterSystem.course_ids():
+		var course := CharacterSystem.course_drafted(c, id)
+		var years := CharacterSystem.course_years(id)
+		if not course and (CharacterSystem.preview_age(c) + years > CharacterSystem.max_age or SkillSystem.acquired(c, id)):
+			continue
+		var crow: HBoxContainer = ui._row("%s course (%d years): %s%s" % [SkillSystem.skill(id).skill_name, years, COURSE_TEXT.get(id, SkillSystem.skill(id).description), " · selected" if course else ""],
 			[ui._button("Remove" if course else "Add", func():
-				CharacterSystem.set_course(c, not course)
-				refresh_creation())]))
+				CharacterSystem.set_course(c, not course, id)
+				refresh_creation())])
+		crow.set_meta("course", id)
+		crow.tooltip_text = SkillSystem.skill_tooltip(c, id)
+		creation_box.add_child(crow)
 	if c.hobbies.size() < 2:
 		var row := HFlowContainer.new()
 		row.add_child(ui._label("Hobby wählen: ", ui.COL_MUTED, 12))

@@ -18,3 +18,4 @@ need = "hygiene"
 wears = false
 color = Color(0.34, 0.39, 0.44, 1)
 tech = "mechanical"
+category = "appliance"

@@ -13,3 +13,4 @@ cost = {"plate": 2, "circuit": 3, "datachip": 1}
 storage = 300.0
 color = Color(0.2, 0.33, 0.4, 1)
 tech = "computer"
+category = "control"

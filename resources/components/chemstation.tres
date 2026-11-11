@@ -16,4 +16,5 @@ storage = 0.0
 need = ""
 wears = false
 tech = "electrical"
+category = "production"
 color = Color(0.35, 0.3, 0.5, 1)

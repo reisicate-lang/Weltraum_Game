@@ -19,3 +19,4 @@ rotatable = true
 length = 3
 color = Color(0.42, 0.3, 0.25, 1)
 tech = "propulsion"
+category = "propulsion"

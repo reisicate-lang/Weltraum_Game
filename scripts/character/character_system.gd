@@ -22,33 +22,65 @@ func _ready() -> void:
 	start_age = int(d.start_age)
 	max_age = int(d.max_age)
 
-# ---------------- Kurs „Business Admin“ (Entwurf bis zur Bestätigung) ----------------
+# ---------------- Kurse (Entwurf bis zur Bestätigung) ----------------
+# Jede Fähigkeit mit course_years > 0 (z. B. Business Admin 2, Civil Engineering 3) ist im
+# Lebenslauf als Kurs wählbar. Auswahl und Entfernen ändern nur das Vorschaualter;
+# erst confirm() übernimmt Alter und Fähigkeit, genau einmal.
 
-const COURSE_YEARS := 2
+const COURSE_YEARS := 2   ## Business Admin (ältere Aufrufer)
 
-func course_drafted(c: CrewMember) -> bool:
-	return bool(c.get_meta("draft_business", false))
+## Fähigkeiten, die als Kurs wählbar sind (sortiert nach ID)
+func course_ids() -> Array:
+	var out: Array = []
+	for id in SkillSystem.skills:
+		if SkillSystem.skill(id).course_years > 0:
+			out.append(id)
+	out.sort()
+	return out
+
+func course_years(id: String) -> int:
+	var s: SkillData = SkillSystem.skill(id)
+	return s.course_years if s != null else 0
+
+func _drafts(c: CrewMember) -> Array:
+	return c.get_meta("draft_courses", [])
+
+func course_drafted(c: CrewMember, id: String = SkillSystem.BUSINESS) -> bool:
+	return id in _drafts(c)
 
 ## Kurs in den Entwurf aufnehmen oder entfernen. Ändert nur das Vorschaualter.
-func set_course(c: CrewMember, on: bool) -> bool:
-	if on and (course_drafted(c) or c.age + COURSE_YEARS > max_age or SkillSystem.acquired(c, SkillSystem.BUSINESS)):
-		return false
-	c.set_meta("draft_business", on)
+func set_course(c: CrewMember, on: bool, id: String = SkillSystem.BUSINESS) -> bool:
+	var drafts: Array = _drafts(c).duplicate()
+	if on:
+		if course_years(id) <= 0 or id in drafts or preview_age(c) + course_years(id) > max_age or SkillSystem.acquired(c, id):
+			return false
+		drafts.append(id)
+	else:
+		if not id in drafts:
+			return false
+		drafts.erase(id)
+	c.set_meta("draft_courses", drafts)
 	return true
 
 ## Alter mit allem, was im Entwurf gewählt ist
 func preview_age(c: CrewMember) -> int:
-	return c.age + (COURSE_YEARS if course_drafted(c) else 0)
+	var age := c.age
+	for id in _drafts(c):
+		age += course_years(id)
+	return age
 
-## Lebenslauf bestätigen: Kurs (Alter und Fähigkeit) genau einmal übernehmen
+## Lebenslauf bestätigen: gewählte Kurse (Alter und Fähigkeit) genau einmal übernehmen
 func confirm(c: CrewMember) -> void:
-	if not course_drafted(c):
-		return
-	c.set_meta("draft_business", false)
-	c.age += COURSE_YEARS
-	SkillSystem.set_progress(c, SkillSystem.BUSINESS, SkillSystem.ACQUIRED)
-	SkillSystem._entry(c, SkillSystem.BUSINESS).unlocked = true
-	c.history.append("%d–%d: Business Admin course. Learned to judge what goods are worth." % [c.age - COURSE_YEARS, c.age])
+	var drafts: Array = _drafts(c)
+	c.set_meta("draft_courses", [])
+	for id in course_ids():   # feste Reihenfolge
+		if not id in drafts:
+			continue
+		var years := course_years(id)
+		c.age += years
+		SkillSystem.set_progress(c, id, SkillSystem.ACQUIRED)
+		SkillSystem._entry(c, id).unlocked = true
+		c.history.append("%d–%d: %s course." % [c.age - years, c.age, SkillSystem.skill(id).skill_name])
 
 func career(id: String) -> Dictionary:
 	for c in careers:
@@ -68,7 +100,7 @@ func begin(c: CrewMember) -> void:
 	c.inv.items.clear()
 	c.set_meta("careers", [])
 	c.set_meta("credits", 0)
-	c.set_meta("draft_business", false)
+	c.set_meta("draft_courses", [])
 	# Eine angeborene Eigenschaft
 	var ids := TraitSystem.traits.keys()
 	TraitSystem.add(c, ids.pick_random())

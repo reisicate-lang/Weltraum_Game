@@ -13,3 +13,4 @@ training_actions = PackedStringArray("trade", "appraise", "study_business")
 required_skills = {}
 gameplay_effects = {"appraise": 1.0}
 mastery_text = "Acquired: exact Item Value in item tooltips and at the trade terminal (offers stay the same). Salvage values are shown exactly."
+course_years = 2

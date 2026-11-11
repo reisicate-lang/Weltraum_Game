@@ -599,5 +599,12 @@
   ],
   "difficulty": 0.5,
   "gain": 1.0
+ },
+ "civil_work": {
+  "skills": [
+   "civil"
+  ],
+  "difficulty": 0.4,
+  "gain": 1.0
  }
 }

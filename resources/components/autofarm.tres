@@ -16,4 +16,5 @@ storage = 0.0
 need = ""
 wears = false
 tech = "robotic"
+category = "farming"
 color = Color(0.15, 0.5, 0.35, 1)

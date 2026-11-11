@@ -46,7 +46,7 @@ func _initialize() -> void:
 	_check("32 Fähigkeiten geladen", SK.skills.size() == 32)
 	for id in SK.skills:
 		var s: SkillData = SK.skill(id)
-		_check(id + ": hat Trainingsaktionen, Name, Beschreibung, Wirkungen", s.training_actions.size() > 0 and s.skill_name != "" and s.description != "" and not s.gameplay_effects.is_empty())
+		_check(id + ": hat Trainingsaktionen, Name, Beschreibung, Wirkungen", s.training_actions.size() > 0 and s.skill_name != "" and s.description != "" and (not s.gameplay_effects.is_empty() or s.work_value_bonus != 0.0))
 		var c := _fresh()
 		for r in s.required_skills:
 			SK.set_progress(c, r, 100.0)
@@ -111,7 +111,10 @@ func _initialize() -> void:
 	var e1 := _fresh()
 	var e2 := _fresh()
 	SK.set_progress(e2, "civil", 100.0)
-	_check("Bauingenieur repariert Wände schneller (%.2f vs %.2f)" % [SK.work_speed(e2, job), SK.work_speed(e1, job)], SK.work_speed(e2, job) > SK.work_speed(e1, job) * 1.3)
+	# Civil Engineering wirkt nur auf Geräte bestimmter Kategorien (+4 Arbeitswert), nicht auf Wände
+	var bedjob := {"kind": "device", "dev": "bed", "x": 0, "y": 0}
+	_check("Civil Engineering: Möbel +4 Arbeitswert, Wände unverändert (%.2f vs %.2f)" % [SK.work_value(e2, bedjob), SK.work_value(e1, bedjob)],
+		is_equal_approx(SK.work_value(e2, bedjob) - SK.work_value(e1, bedjob), 4.0) and is_equal_approx(SK.work_speed(e2, job), SK.work_speed(e1, job)))
 	var eljob := {"kind": "device", "dev": "battery", "x": 0, "y": 0}
 	var el := _fresh()
 	SK.set_progress(el, "electrical", 80.0)

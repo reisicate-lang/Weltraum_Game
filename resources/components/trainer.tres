@@ -11,3 +11,4 @@ build_time = 4.0
 cost = {"plate": 2, "fabric": 4}
 color = Color(0.4, 0.25, 0.25, 1)
 tech = "furniture"
+category = "furniture"

@@ -16,4 +16,5 @@ storage = 0.0
 need = ""
 wears = false
 tech = "furniture"
+category = "misc"
 color = Color(0.7, 0.15, 0.15, 1)

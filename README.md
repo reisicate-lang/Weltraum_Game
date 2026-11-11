@@ -49,6 +49,7 @@ godot --headless --path . --script res://tests/boot.gd -- test_needs
 godot --headless --path . --script res://tests/boot.gd -- test_walk_delay
 godot --headless --path . --script res://tests/boot.gd -- test_resume
 godot --headless --path . --script res://tests/boot.gd -- test_business
+godot --headless --path . --script res://tests/boot.gd -- test_civil
 ```
 
 ## Steuerung
@@ -59,6 +60,7 @@ godot --headless --path . --script res://tests/boot.gd -- test_business
 | Hinlaufen lassen | Werkzeug **Auswahl**, Klick auf Boden. Direkt nach WASD wird der Klick vorgemerkt: die Figur läuft 0,5 echte Sekunden nach dem Loslassen der letzten Taste los |
 | Unterbrochene Arbeit fortsetzen | Hat WASD deine Figur bei einem Auftrag unterbrochen, bleibt der Auftrag mit Fortschritt für sie reserviert. Rechtsklick (Werkzeug **Auswahl**) → „Resume Task“: sie läuft sofort (ohne die 0,5-s-Frist) zurück und arbeitet weiter, auch bei ausgeschaltetem Auto-Modus. Ist der Auftrag inzwischen fertig oder das Ziel weg, kommt eine kurze Meldung und es entsteht kein neuer Auftrag |
 | Business Admin | Im Lebenslauf als Kurs wählbar („Add“/„Remove“, +2 Jahre im Vorschaualter, zählt erst bei „Los geht's“). Im Spiel über die Lehrbücher „Textbook: Business Admin“ (Basics 40 %, Advanced 75 %, Complete 100 %). Erworben bei 100 %: Gegenstands-Tooltips und Handelsterminal zeigen den exakten „Item Value“ getrennt vom Angebot. Angebote ändert der Skill nicht. Abfrage für Voraussetzungen: `SkillSystem.meets(c, {"business": 100})` |
+| Civil Engineering | Im Lebenslauf als Kurs wählbar (+3 Jahre im Vorschaualter, zählt erst bei „Los geht's“). Im Spiel durch Arbeit an passenden Geräten und die Lehrbücher „Textbook: Civil Engineering“ (Basics 40 %, Advanced 75 %, Complete 100 %). Erworben bei 100 %: +4 Arbeitswert für Aufträge an Geräten der Kategorien Appliances (Vorratsschrank, Wasserspender, Waschbecken, Fleischtank), Controls (Steuerpult, Handelsterminal, Schleusenpumpe), Furniture (Bett, Frachtkiste, Anzugschrank, Werkbank, Trainingsgerät), Climate & Ventilation (Heizung, CO₂-Filter, Sauerstoff-Generator, Lufttank) und Miscellaneous (Feuerlöscher-Station, Ladestation). **Arbeitswert = Arbeitstempo × 10**: Grundwert 7 (Tempo 0,7), Tempo-Wirkungen der Skills ×10, feste Boni additiv; +4 heißt also Tempo +0,4. Werkzeug und Material bleiben nötig |
 | Bauen | Boden `B`, Wand `M`, Tür `T`, Kabel `K`, Geräte-Menü unten. Ein Baufeld ist 16 px groß (halb so groß wie früher); die Figur deckt etwa 2×2 Felder. Wände sind 1 Feld dick, Türen 1 Feld breit |
 | Abreißen / Plan löschen | `X` / `C`, Rechtsklick bricht ab |
 | Objekt entfernen | Rechtsklick (Werkzeug **Auswahl**) wählt eine Ebene der Kachel und öffnet das Menü: Abbauen, Zerlegen, Zerstören. Jeder weitere Rechtsklick auf dieselbe Kachel wechselt Kabel → Gerät → Boden/Wand (leere Ebenen werden übersprungen), danach wieder von oben. Die gewählte Ebene ist gelb markiert und steht oben im Menü |

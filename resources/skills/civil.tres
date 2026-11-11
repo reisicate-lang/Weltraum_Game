@@ -5,11 +5,14 @@
 [resource]
 script = ExtResource("1")
 skill_id = "civil"
-skill_name = "Bauingenieurwesen"
-description = "Tragende Strukturen, Böden, Wände und Möbel. Wer das kann, baut und repariert Rumpf und Einrichtung schneller und sauberer."
+skill_name = "Civil Engineering"
+description = "Practical engineering for ship interiors: appliances, controls, furniture, climate and ventilation, and miscellaneous equipment."
 category = "technik"
-learning_sources = PackedStringArray("Bauen und Reparieren von Wänden, Böden, Möbeln", "Lehrbuch Statik")
-training_actions = PackedStringArray("build_structure", "repair_structure", "repair_furniture", "deconstruct_furniture", "study_civil")
+learning_sources = PackedStringArray("Practical work: building, installing, repairing or removing appliances, controls, furniture, climate & ventilation and miscellaneous devices", "Building and repairing walls and floors", "Textbook: Civil Engineering")
+training_actions = PackedStringArray("civil_work", "build_structure", "repair_structure", "repair_furniture", "deconstruct_furniture", "study_civil")
 required_skills = {}
-gameplay_effects = {"work_structure": 0.6, "work_furniture": 0.4}
-mastery_text = "Meister: Wände und Böden halten 20 % länger (weniger Schaden durch Einschläge)."
+gameplay_effects = {}
+mastery_text = "Acquired (100 %): +4 work value on jobs at appliances, controls, furniture, climate & ventilation and miscellaneous devices. Tools and materials are still required."
+course_years = 3
+work_value_bonus = 4.0
+work_categories = PackedStringArray("appliance", "control", "furniture", "hvac", "misc")

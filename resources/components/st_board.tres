@@ -12,3 +12,4 @@ build_time = 1.0
 cost = {}
 color = Color(0.24, 0.32, 0.26, 1)
 tech = "station"
+category = "station"

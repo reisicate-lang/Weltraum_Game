@@ -50,7 +50,7 @@ func strike() -> void:
 	var p: Vector2i = hull.pick_random()
 	var i := g.idx(p)
 	var was_door := g.tiles[i] == ShipGrid.Tile.DOOR
-	g.cond[i] -= randf_range(35.0, 80.0) * (0.8 if SkillSystem.any_mastered("civil") else 1.0)
+	g.cond[i] -= randf_range(35.0, 80.0)
 	effects.append({"pos": p, "start": Time.get_ticks_msec()})
 	for dev in g.devices.values():
 		if absi(dev.pos.x - p.x) <= 2 * Config.GRID_SCALE and absi(dev.pos.y - p.y) <= 2 * Config.GRID_SCALE and not dev.broken:

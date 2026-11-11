@@ -16,4 +16,5 @@ storage = 0.0
 need = ""
 wears = false
 tech = "mechanical"
+category = "appliance"
 color = Color(0.5, 0.2, 0.25, 1)

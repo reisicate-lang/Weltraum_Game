@@ -18,3 +18,4 @@ need = ""
 wears = false
 color = Color(0.24, 0.29, 0.27, 1)
 tech = "electrical"
+category = "power"

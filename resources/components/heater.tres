@@ -16,4 +16,5 @@ storage = 0.0
 need = ""
 wears = true
 tech = "electrical"
+category = "hvac"
 color = Color(0.55, 0.25, 0.15, 1)
