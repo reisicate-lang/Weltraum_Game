@@ -78,9 +78,7 @@ func migrate_docking() -> void:
 	if ShipSystem.ports().is_empty():
 		for d in [Vector2i(1, 0), Vector2i(0, 1)]:
 			var p := _port_spot(g, d)
-			if p.x >= 0:
-				g.set_tile(p, ShipGrid.Tile.DOOR)
-				g.place_device("dockport", p)
+			if p.x >= 0 and g.build_dock(p) != null:
 				changed = true
 		if changed:
 			GameState.toast("Alter Spielstand: Steg entfernt, Andockschleusen nachgerüstet.")
@@ -114,7 +112,7 @@ func _port_spot(g: ShipGrid, d: Vector2i) -> Vector2i:
 		var p := g.pos(i)
 		if g.tiles[i] != ShipGrid.Tile.WALL or g.zone[i] != 0 or g.occupied(g.pos(i)):
 			continue
-		if ShipSystem.port_dir(p) != d or not g.walkable(p - d):
+		if g.dock_check(p).dir != d:
 			continue
 		if best.x < 0 or Vector2(p).distance_to(center) < Vector2(best).distance_to(center):
 			best = p

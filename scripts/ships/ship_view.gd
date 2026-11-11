@@ -159,6 +159,9 @@ func _draw_cable(g: ShipGrid, p: Vector2i) -> void:
 
 func _draw_device(dev: Device, ghost: bool = false) -> void:
 	var d := dev.data()
+	if d.width > 1 and not (dev.unknown and not ghost):
+		_draw_dock(dev, ghost)
+		return
 	if d.length > 1 and not (dev.unknown and not ghost):
 		_draw_long_device(dev, ghost)
 		return
@@ -229,6 +232,32 @@ func _draw_long_device(dev: Device, ghost: bool) -> void:
 		draw_line(Vector2(r0.end.x, r0.position.y), Vector2(r0.position.x, r0.end.y), COL_REMOVE, 2.0)
 	if ((dev.needs_power() and not dev.powered) or dev.broken) and int(Time.get_ticks_msec() / 400) % 2 == 0:
 		draw_circle(Vector2(cells[0]) * S + Vector2(0.82, 0.18) * S, S * 0.09, COL_REMOVE)
+
+## Andockschleuse 5×2: Rahmen über die ganze Fläche, Außentür mit Lampe (grün = gekoppelt),
+## Innentür mit Pfeil nach außen
+func _draw_dock(dev: Device, ghost: bool) -> void:
+	var a := 0.45 if ghost else 1.0
+	var cells := dev.cells()
+	var lo := cells[0]
+	var hi := cells[0]
+	for c in cells:
+		lo = Vector2i(mini(lo.x, c.x), mini(lo.y, c.y))
+		hi = Vector2i(maxi(hi.x, c.x), maxi(hi.y, c.y))
+	var r := Rect2(Vector2(lo) * S, Vector2(hi - lo + Vector2i.ONE) * S).grow(-1.0)
+	if ghost:
+		draw_rect(r, Color(0.36, 0.33, 0.24, 0.45))
+	draw_rect(r, Color(0.95, 0.76, 0.31, a), false, 2.0)
+	var out := Vector2(dev.outward())
+	var linked := ShipSystem.grid.linked.has(ShipSystem.grid.idx(dev.pos))
+	var od := (Vector2(dev.pos) + Vector2(0.5, 0.5)) * S
+	draw_circle(od, S * 0.22, Color(0.44, 0.81, 0.56, a) if linked else Color(0.9, 0.33, 0.29, a))
+	var idr := od - out * S
+	draw_line(idr - out * S * 0.25, idr + out * S * 0.25, Color(0.95, 0.76, 0.31, a), 2.0)
+	if ghost:
+		return
+	_draw_cracks(dev.pos, dev.cond)
+	if dev.broken:
+		draw_line(r.position, r.end, COL_REMOVE, 2.0)
 
 func _draw_pile(p: Vector2i) -> void:
 	var o := Vector2(p) * S
@@ -398,6 +427,12 @@ func _draw_preview(g: ShipGrid) -> void:
 				draw_rect(_rect(c), Color(0.35, 0.78, 0.9, 0.35) if ok_all else Color(0.9, 0.33, 0.29, 0.3))
 		var gh := Device.new(long_type, hover)
 		gh.rot = ShipConstructionSystem.build_rot
+		if long_type == "dockport":
+			# Andockschleuse richtet sich selbst an der Wand aus
+			var dd: Vector2i = g.dock_check(hover).dir
+			if dd == Vector2i.ZERO:
+				return
+			gh.rot = Device.PUSH_DIRS.find(-dd)
 		_draw_device(gh, true)
 		return
 	if preview.is_empty():

@@ -130,8 +130,7 @@ func _initialize() -> void:
 	seat_pilot()   # Pilot am Steuerpult (Flugbefehle nur dort)
 	P.request_undock()
 	for p in ship.ports():
-		g.devices.erase(p.i)
-		g.tiles[p.i] = ShipGrid.Tile.WALL
+		g.remove_dock(g.devices[p.i])   # Außentür wieder Wand, Innenreihe wieder Boden
 	root.get_node("EventBus").ship_changed.emit()
 	toasts.clear()
 	_run(20)

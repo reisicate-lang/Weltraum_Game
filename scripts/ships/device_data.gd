@@ -35,5 +35,7 @@ extends Resource
 ## nach außen durch eine Außenwand: Innenfeld (Schiffsboden), Wandfeld (Befestigung),
 ## Außenfeld (Düse im All). Siehe ShipGrid.mount_reason().
 @export var length: int = 1
+## Breite in Feldern quer zur Einbaurichtung (Andockschleuse: 5, mittig um pos)
+@export var width: int = 1
 ## Farbe für die einfache Darstellung
 @export var color: Color = Color(0.35, 0.4, 0.45)

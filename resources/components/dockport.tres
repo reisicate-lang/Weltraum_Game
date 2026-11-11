@@ -6,10 +6,12 @@
 script = ExtResource("1")
 id = "dockport"
 display_name = "Andockschleuse"
-description = "Wird in eine Außenwand gebaut (innen Raum, außen All). Nur damit kann das Schiff an Stationen und Wracks andocken: Tür an Tür, ohne Gang dazwischen. Zu ist sie immer dicht."
+description = "Andockschleuse 5×2, längs an einer geraden Außenwand: außen 5 Felder Wand mit der Außentür in der Mitte (hier koppeln Station und Wrack, Tür an Tür), innen eine Reihe Wand mit der Innentür. Ungekoppelt ist die Außentür dicht und gesperrt. Baupunkt: die Außentür in der Wand."
 power = 0.0
 build_time = 4.0
 cost = {"plate": 2, "circuit": 1}
 storage = 0.0
 color = Color(0.36, 0.33, 0.24, 1)
 tech = "mechanical"
+length = 2
+width = 5

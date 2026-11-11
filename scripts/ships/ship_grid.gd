@@ -74,15 +74,113 @@ func device_at(p: Vector2i) -> Device:
 	var d = devices.get(idx(p))
 	if d != null:
 		return d
-	for k in range(1, MAX_DEVICE_LEN):
-		for dir in Device.PUSH_DIRS:
-			var q: Vector2i = p + dir * k
+	# Mehrfeld-Geräte im Umkreis von 2 Feldern (Triebwerk 1×3, Andockschleuse 5×2)
+	for dy in range(-MAX_DEVICE_LEN + 1, MAX_DEVICE_LEN):
+		for dx in range(-MAX_DEVICE_LEN + 1, MAX_DEVICE_LEN):
+			if dx == 0 and dy == 0:
+				continue
+			var q := p + Vector2i(dx, dy)
 			if not in_bounds(q):
 				continue
 			var a = devices.get(idx(q))
-			if a != null and a.data().length > k and q + a.outward() * k == p:
+			if a != null and a.data().length > 1 and a.cells().has(p):
 				return a
 	return null
+
+# ---------------- Andockschleuse 5×2 ----------------
+
+## Felder einer Andockschleuse mit Außentür p und Richtung out (nach außen): erst p, dann die
+## übrigen Felder der Außenreihe (in der Wand) und die Innenreihe dahinter
+static func dock_cells(p: Vector2i, out: Vector2i, w: int = 5) -> Array[Vector2i]:
+	var along := Vector2i(out.y, out.x)
+	var cells: Array[Vector2i] = [p]
+	for k in 2:
+		for u in range(-w / 2, w / 2 + 1):
+			var q: Vector2i = p - out * k + along * u
+			if q != p:
+				cells.append(q)
+	return cells
+
+## Kann hier (p = Außentür) eine Andockschleuse sitzen? {"dir": nach außen, "reason": ""}.
+## Außenreihe: 5 Wandfelder einer geraden Außenwand (Mitte darf schon Tür sein), außen frei;
+## Innenreihe: 5 freie Bodenfelder; hinter der Innentür ein freies Bodenfeld.
+## allow_foreign: außen darf schon eine Station/ein Wrack anliegen (Umstellung alter Stände).
+func dock_check(p: Vector2i, ignore: Device = null, allow_foreign: bool = false) -> Dictionary:
+	var why := "Die Andockschleuse (5×2) braucht eine gerade Außenwand: 5 Wandfelder, außen frei, innen 5 freie Bodenfelder und dahinter Platz."
+	if not in_bounds(p) or zone[idx(p)] != 0 or (get_tile(p) != Tile.WALL and get_tile(p) != Tile.DOOR):
+		return {"dir": Vector2i.ZERO, "reason": why}
+	for d in Device.PUSH_DIRS:
+		if _dock_fits(p, d, ignore, allow_foreign):
+			return {"dir": d, "reason": ""}
+	return {"dir": Vector2i.ZERO, "reason": why}
+
+func _dock_fits(p: Vector2i, d: Vector2i, ignore: Device, allow_foreign: bool) -> bool:
+	var along := Vector2i(d.y, d.x)
+	var busy := func(q: Vector2i) -> bool:
+		var dv := device_at(q)
+		return dv != null and dv != ignore
+	for u in range(-2, 3):
+		var w := p + along * u
+		var o := w + d
+		var r := w - d
+		if not in_bounds(o) or not in_bounds(r) or zone[idx(w)] != 0 or zone[idx(r)] != 0:
+			return false
+		var t := get_tile(w)
+		if not (t == Tile.WALL or (u == 0 and t == Tile.DOOR)) or busy.call(w):
+			return false
+		var oz := zone[idx(o)]
+		if not ((get_tile(o) == Tile.SPACE and oz == 0) or (allow_foreign and oz != 0)):
+			return false
+		if get_tile(r) != Tile.FLOOR or busy.call(r):
+			return false
+	var behind := p - d * 2
+	return in_bounds(behind) and get_tile(behind) == Tile.FLOOR and zone[idx(behind)] == 0 and not busy.call(behind)
+
+## Andockschleuse einsetzen: Felder setzen (Außentür, Innentür, Seitenwände) und Gerät eintragen
+func apply_dock(dev: Device, d: Vector2i) -> void:
+	dev.rot = Device.PUSH_DIRS.find(-d)
+	var p := dev.pos
+	var along := Vector2i(d.y, d.x)
+	var behind := p - d * 2
+	for u in range(-2, 3):
+		var r := p - d + along * u
+		if piles.has(idx(r)):
+			var pile: Inventory = piles[idx(r)]
+			piles.erase(idx(r))
+			for it in pile.items:
+				drop_items(behind, it.type, int(it.qty), float(it.cond), it.get("data"))
+		if u != 0:
+			set_tile(r, Tile.WALL)
+	var inner := p - d
+	set_tile(inner, Tile.DOOR)
+	set_tile(p, Tile.DOOR)
+	o2[idx(p)] = o2[idx(inner)]; n2[idx(p)] = n2[idx(inner)]; co2[idx(p)] = co2[idx(inner)]
+	temp[idx(p)] = temp[idx(inner)]
+	put_device(dev)
+
+## Andockschleuse entfernen: Außentür wird wieder Wand, die Innenreihe wieder Boden
+func remove_dock(dev: Device) -> void:
+	var d := dev.outward()
+	var p := dev.pos
+	var along := Vector2i(d.y, d.x)
+	var behind := p - d * 2
+	remove_device(dev)
+	linked.erase(idx(p))
+	set_tile(p, Tile.WALL)
+	for u in range(-2, 3):
+		var r := p - d + along * u
+		set_tile(r, Tile.FLOOR)
+		var b := idx(behind)
+		o2[idx(r)] = o2[b]; n2[idx(r)] = n2[b]; co2[idx(r)] = co2[b]; temp[idx(r)] = temp[b]
+
+## Neue Andockschleuse mit Außentür p bauen (falls es passt), sonst null
+func build_dock(p: Vector2i, allow_foreign: bool = false) -> Device:
+	var chk := dock_check(p, null, allow_foreign)
+	if chk.reason != "":
+		return null
+	var dev := Device.new("dockport", p)
+	apply_dock(dev, chk.dir)
+	return dev
 
 ## Ist das Feld von einem Gerät belegt (auch von einem Teil eines Mehrfeld-Geräts)?
 func occupied(p: Vector2i) -> bool:
@@ -204,10 +302,12 @@ static func from_data(d: Dictionary) -> ShipGrid:
 		g.zone[i] = int(d.zone[i]) if d.has("zone") else 0
 		g.temp[i] = float(d.temp[i]) if d.has("temp") else (Config.ROOM_TEMP if g.holds_air(i) else Config.SPACE_TEMP)
 	var legacy: Array[Device] = []
+	var coarse := int(d.get("scale", 1)) < Config.GRID_SCALE
 	for dd in d.devices:
 		var dev := Device.from_data(dd)
-		# Alter Spielstand: Mehrfeld-Gerät (Triebwerk) war noch 1×1 → unten umstellen
-		if dev.data().length > 1 and int(dd.get("shape", 1)) != dev.data().length:
+		# Alter Spielstand: Mehrfeld-Gerät (Triebwerk, Andockschleuse) war noch 1×1 → unten
+		# umstellen. Andockschleusen grober Stände stellt erst refine() im feinen Raster um.
+		if dev.data().length > 1 and int(dd.get("shape", 1)) != dev.data().length and not (coarse and dev.type == "dockport"):
 			legacy.append(dev)
 			continue
 		g.devices[g.idx(dev.pos)] = dev
@@ -232,6 +332,9 @@ static func from_data(d: Dictionary) -> ShipGrid:
 ## bzw. dem nächsten freien Boden. Gespeichert wird danach die neue Form ("shape"),
 ## die Umstellung greift also nur einmal.
 func _migrate_legacy(dev: Device) -> void:
+	if dev.type == "dockport":
+		_migrate_dock(dev)
+		return
 	if mount_reason(dev.type, dev.pos, dev.rot) == "":
 		put_device(dev)
 		migrated.converted += 1
@@ -243,6 +346,23 @@ func _migrate_legacy(dev: Device) -> void:
 	if get_tile(spot) != Tile.FLOOR or occupied(spot):
 		spot = _free_floor_near(dev.pos)
 	drop_items(spot, "pk_" + dev.type, 1, dev.cond, dd)
+	migrated.packed += 1
+
+## Alte 1-Feld-Andockschleuse (Tür in der Außenwand) → 5×2 an derselben Stelle, wenn innen
+## Platz ist (Kopplung bleibt an derselben Außentür). Sonst: Wand schließen, die Schleuse
+## einmal als vollständiger Gegenstand an Bord ablegen.
+func _migrate_dock(dev: Device) -> void:
+	var chk := dock_check(dev.pos, dev, true)
+	if chk.reason == "":
+		apply_dock(dev, chk.dir)
+		migrated.converted += 1
+		return
+	var dd := dev.to_data()
+	dd.unknown = false
+	dd.lock = 0
+	linked.erase(idx(dev.pos))
+	set_tile(dev.pos, Tile.WALL)
+	drop_items(_free_floor_near(dev.pos), "pk_" + dev.type, 1, dev.cond, dd)
 	migrated.packed += 1
 
 func _free_floor_near(p: Vector2i) -> Vector2i:
@@ -443,9 +563,20 @@ static func refine(c: ShipGrid) -> ShipGrid:
 	# 5) Geräte: dieselben Instanzen. Erst Mehrfeld-Geräte (durch die Wand), dann die übrigen.
 	var order: Array = c.devices.keys()
 	order.sort_custom(func(a, b): return int(c.devices[a].data().length > 1) > int(c.devices[b].data().length > 1))
+	var docks: Array[Device] = []
 	for ci in order:
 		var dev: Device = c.devices[ci]
 		var p := dev.pos
+		if dev.type == "dockport":
+			# Andockschleuse: erst auf ihre Tür setzen, nach allen Geräten auf 5×2 umstellen
+			var a := g.pos(anchor[ci]) if anchor[ci] >= 0 else p * k
+			dev.pos = a
+			g.put_device(dev)
+			g.coarse_map[ci] = g.idx(a)
+			if c.linked.has(ci):
+				g.linked[g.idx(a)] = true
+			docks.append(dev)
+			continue
 		if dev.data().length > 1:
 			var mid := p + dev.outward()
 			if c.in_bounds(mid) and anchor[c.idx(mid)] >= 0:
@@ -484,6 +615,9 @@ static func refine(c: ShipGrid) -> ShipGrid:
 		g.coarse_map[ci] = g.idx(spot)
 		if c.linked.has(ci):
 			g.linked[g.idx(spot)] = true
+	for dev in docks:
+		g.remove_device(dev)
+		g._migrate_dock(dev)
 	# 6) Haufen auf ein freies Teilfeld
 	for ci in c.piles:
 		var p := c.pos(ci)

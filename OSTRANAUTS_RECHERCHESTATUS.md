@@ -234,6 +234,20 @@ größer.
     reagieren deshalb langsamer als früher.
   - Beim Steuern mit WASD rutscht die Figur vor einer Tür zur Türmitte (Einlaufhilfe).
 
+### Andockschleuse 5×2 (Stand: November 2026)
+
+**Vorgabe des Nutzers:** 2×5-Andockschleuse, längs an der Wand, nur Durchgang ohne Pumpe.
+Ostranauts-Werte wurden nicht gemessen.
+
+**Umsetzung (eigene Ausgestaltung):**
+- Die Außenreihe liegt in der Außenwand: Wand, Wand, Außentür, Wand, Wand. Dahinter liegt
+  eine Innenreihe mit der Innentür in der Mitte.
+- Gebaut wird an der Stelle der Außentür. Die Richtung ergibt sich aus der Wand.
+- Ungekoppelt ist die Außentür dicht und gesperrt, gekoppelt ist sie begehbar. Station und
+  Wrack koppeln Tür an Tür an der Außentür.
+- **Alte 1-Feld-Schleusen** werden an derselben Stelle auf 5×2 umgestellt, wenn innen Platz
+  ist. Sonst wird die Wand geschlossen und die Schleuse liegt als Gegenstand an Bord.
+
 ## Geschwindigkeitsangleichung im Cockpit (Stand: November 2026)
 
 **Quelle:** offizieller Ostranauts-Startguide auf Steam, Abschnitte „Flight Metrics“ und

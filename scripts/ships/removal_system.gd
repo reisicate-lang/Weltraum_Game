@@ -414,10 +414,11 @@ func finish(job: Dictionary, worker: CrewMember, worker_pos: Vector2i) -> void:
 				c.stop_activity()
 		if g.zone[i] == 1:
 			GoalSystem.stripped += 1
-		g.remove_device(dev)
-		# Andockschleuse: das Loch in der Außenwand wird wieder Wand
+		# Andockschleuse: Außentür wird wieder Wand, die Innenreihe wieder Boden
 		if dev.type == "dockport":
-			g.set_tile(p, ShipGrid.Tile.WALL)
+			g.remove_dock(dev)
+		else:
+			g.remove_device(dev)
 	else:
 		var t := g.tiles[i]
 		if t == ShipGrid.Tile.FLOOR:
@@ -478,7 +479,12 @@ func install_reason(pk: String, p: Vector2i) -> String:
 	var t := g.get_tile(p)
 	var has_dev := g.occupied(p)
 	var ok := false
-	if key.begins_with("dev:") and ItemSystem.device(key.substr(4)).length > 1:
+	if key == "dev:dockport":
+		var dwhy: String = g.dock_check(p).reason
+		if dwhy != "":
+			return dwhy
+		ok = true
+	elif key.begins_with("dev:") and ItemSystem.device(key.substr(4)).length > 1:
 		var why := g.mount_reason(key.substr(4), p, ShipConstructionSystem.build_rot)
 		if why != "":
 			return why
@@ -504,7 +510,6 @@ func _cells(type: String, p: Vector2i, rot: int) -> Array[Vector2i]:
 func _fits(key: String, t: int, has_dev: bool, p: Vector2i) -> bool:
 	var ok := false
 	match key:
-		"dev:dockport": ok = t == ShipGrid.Tile.WALL and not has_dev and ShipSystem.grid.zone[ShipSystem.grid.idx(p)] == 0 and ShipSystem.port_dir(p) != Vector2i.ZERO
 		"tile:floor": ok = t == ShipGrid.Tile.SPACE
 		"tile:wall", "tile:window": ok = (t == ShipGrid.Tile.SPACE or t == ShipGrid.Tile.FLOOR) and not has_dev
 		"tile:door": ok = t != ShipGrid.Tile.DOOR and t != ShipGrid.Tile.SPACE and not has_dev
@@ -540,14 +545,20 @@ func finish_install(job: Dictionary, worker_pos: Vector2i) -> void:
 			dev.cond = float(st.cond)
 		if dev.data().rotatable:
 			dev.rot = int(job.get("rot", dev.rot))
-		# Mehrfeld-Gerät: Halterung inzwischen ungültig? Dann bleibt das Stück erhalten
-		if dev.data().length > 1 and g.mount_reason(dev.type, p, dev.rot) != "":
-			GameState.toast("%s: Einbau nicht möglich – %s Das Stück liegt daneben." % [name_of(key), g.mount_reason(dev.type, p, dev.rot)], "bad")
+		var why := ""
+		if dev.type == "dockport":
+			why = g.dock_check(p).reason
+		elif dev.data().length > 1:
+			why = g.mount_reason(dev.type, p, dev.rot)
+		# Mehrfeld-Gerät: Platz inzwischen ungültig? Dann bleibt das Stück erhalten
+		if why != "":
+			GameState.toast("%s: Einbau nicht möglich – %s Das Stück liegt daneben." % [name_of(key), why], "bad")
 			g.drop_items(ShipConstructionSystem.drop_spot(worker_pos), String(job.item), 1, float(st.cond), st.get("data"))
 			return
 		if dev.type == "dockport":
-			g.set_tile(p, ShipGrid.Tile.DOOR)
-		g.put_device(dev)
+			g.apply_dock(dev, g.dock_check(p).dir)
+		else:
+			g.put_device(dev)
 	else:
 		var tile: int = TILE_KEYS.find_key(key)
 		g.set_tile(p, tile)

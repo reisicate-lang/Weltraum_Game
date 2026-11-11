@@ -20,8 +20,8 @@ func can_place(tool: String, p: Vector2i) -> bool:
 	if (StationSystem.reserved(p) or StationSystem.is_hatch(i)) and not tool in ["haul", "cancel"]:
 		return false
 	if tool == "dev:dockport":
-		# Andockschleuse: nur in eine Außenwand (innen Raum, außen All)
-		return t == ShipGrid.Tile.WALL and not has_dev and g.zone[i] == 0 and ShipSystem.port_dir(p) != Vector2i.ZERO
+		# Andockschleuse 5×2: Außentür mitten in einer geraden Außenwand (siehe ShipGrid.dock_check)
+		return place_reason(tool, p) == ""
 	if tool.begins_with("dev:"):
 		var dd := ItemSystem.device(tool.substr(4))
 		if dd.length > 1:
@@ -53,6 +53,16 @@ func place_reason(tool: String, p: Vector2i) -> String:
 	var type := tool.substr(4)
 	if not g.in_bounds(p):
 		return "Außerhalb."
+	if type == "dockport":
+		var chk := g.dock_check(p)
+		if chk.reason != "":
+			return chk.reason
+		for c in ShipGrid.dock_cells(p, chk.dir):
+			if jobs.has(g.idx(c)):
+				return "Hier läuft schon ein Auftrag."
+			if StationSystem.reserved(c) or StationSystem.is_hatch(g.idx(c)):
+				return "Gehört der Station."
+		return ""
 	var why := g.mount_reason(type, p, build_rot)
 	if why != "":
 		return why
@@ -66,6 +76,12 @@ func place_reason(tool: String, p: Vector2i) -> String:
 ## Felder eines Geräts dieser Art an p (Innenfeld) mit Drehung rot
 func cells_of(type: String, p: Vector2i, rot: int) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
+	if type == "dockport":
+		var chk := ShipSystem.grid.dock_check(p)
+		if chk.reason == "":
+			return ShipGrid.dock_cells(p, chk.dir)
+		out.append(p)
+		return out
 	for k in maxi(1, ItemSystem.device(type).length):
 		out.append(p - Device.PUSH_DIRS[rot % 4] * k)
 	return out
@@ -286,16 +302,21 @@ func complete(job: Dictionary, worker_pos: Vector2i, worker: CrewMember = null) 
 		"device":
 			_move_pile_away(i, worker_pos)
 			var rot := int(job.get("rot", 0))
-			# Mehrfeld-Gerät: Halterung inzwischen ungültig? Material kommt zurück
-			if ItemSystem.device(job.dev).length > 1 and g.mount_reason(job.dev, p, rot) != "":
-				GameState.toast("%s: Bau nicht möglich – %s Material liegt daneben." % [ItemSystem.device(job.dev).display_name, g.mount_reason(job.dev, p, rot)], "bad")
+			var why := ""
+			if job.dev == "dockport":
+				why = g.dock_check(p).reason
+			elif ItemSystem.device(job.dev).length > 1:
+				why = g.mount_reason(job.dev, p, rot)
+			# Mehrfeld-Gerät: Platz inzwischen ungültig? Material kommt zurück
+			if why != "":
+				GameState.toast("%s: Bau nicht möglich – %s Material liegt daneben." % [ItemSystem.device(job.dev).display_name, why], "bad")
 				var back := drop_spot(worker_pos)
 				var c := cost(job)
 				for type in c:
 					g.drop_items(back, type, int(c[type]), 80.0)
+			elif job.dev == "dockport":
+				g.build_dock(p)
 			else:
-				if job.dev == "dockport":
-					g.set_tile(p, ShipGrid.Tile.DOOR)
 				g.place_device(job.dev, p, rot)
 		"rotate":
 			var rd := g.device_at(p)

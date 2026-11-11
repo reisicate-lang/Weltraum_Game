@@ -131,13 +131,15 @@ func port_dir(p: Vector2i) -> Vector2i:
 	return Vector2i.ZERO
 
 ## Andockschleusen des eigenen Schiffs: [{pos, dir, i}]
+## pos = Außentür der Schleuse (5×2), dir = nach außen
 func ports() -> Array:
 	var out: Array = []
 	for i in grid.devices:
 		var dev: Device = grid.devices[i]
 		if dev.type == "dockport" and grid.zone[i] == 0:
-			var d := port_dir(dev.pos)
-			if d != Vector2i.ZERO:
+			var d := dev.outward()
+			var o := dev.pos + d
+			if grid.in_bounds(o) and (grid.get_tile(o) == ShipGrid.Tile.SPACE or grid.foreign(grid.idx(o))):
 				out.append({"pos": dev.pos, "dir": d, "i": i})
 	return out
 

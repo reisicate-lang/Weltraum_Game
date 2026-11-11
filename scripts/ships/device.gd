@@ -39,8 +39,12 @@ func push_dir() -> Vector2i:
 func outward() -> Vector2i:
 	return -push_dir()
 
-## Alle Felder des Geräts: pos ist das Innenfeld, dann nach außen (1×3: innen, Wand, Düse)
+## Alle Felder des Geräts, pos zuerst.
+## Triebwerk 1×3: pos ist das Innenfeld, dann nach außen (innen, Wand, Düse).
+## Andockschleuse 5×2: pos ist die Außentür; Außenreihe in der Wand, dahinter die Innenreihe.
 func cells() -> Array[Vector2i]:
+	if data().width > 1:
+		return ShipGrid.dock_cells(pos, outward(), data().width)
 	var out: Array[Vector2i] = []
 	for k in maxi(1, data().length):
 		out.append(pos + outward() * k)
