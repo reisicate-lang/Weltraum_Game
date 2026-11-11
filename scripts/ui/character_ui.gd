@@ -309,7 +309,8 @@ func refresh_creation() -> void:
 				CharacterSystem.apply_career(c, k.id)
 				refresh_creation())]))
 	# Kurse: zählen erst beim Bestätigen (Los geht's), bis dahin nur im Vorschaualter
-	const COURSE_TEXT := {"business": "exact Item Value when trading", "civil": "+4 work value on appliances, controls, furniture, climate & ventilation, miscellaneous"}
+	const COURSE_TEXT := {"business": "exact Item Value when trading", "civil": "+4 work value on appliances, controls, furniture, climate & ventilation, miscellaneous",
+		"combat_eng": "+4 work value on appliances, controls, furniture, climate & ventilation, sensors, weapons"}
 	for id in CharacterSystem.course_ids():
 		var course := CharacterSystem.course_drafted(c, id)
 		var years := CharacterSystem.course_years(id)

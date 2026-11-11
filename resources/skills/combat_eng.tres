@@ -5,11 +5,14 @@
 [resource]
 script = ExtResource("1")
 skill_id = "combat_eng"
-skill_name = "Kampftechnik"
-description = "Wartung von Waffen, Panzerung und militärischer Technik. Hilft beim Ausschlachten von Kriegswracks."
+skill_name = "Combat Engineering"
+description = "Field engineering under pressure: appliances, controls, furniture, climate and ventilation, sensors and weapons."
 category = "technik"
-learning_sources = PackedStringArray("Waffen warten", "Militärische Wracks ausschlachten", "Lehrbuch Waffentechnik")
-training_actions = PackedStringArray("maintain_weapon", "deconstruct_military", "repair_furniture", "deconstruct_furniture", "study_combat_eng")
-required_skills = {"mechanical": 20}
-gameplay_effects = {"military_salvage": 0.5, "weapon_care": 0.5}
-mastery_text = "Meister: Aus Wracks im Trümmerfeld fallen deutlich mehr Teile."
+learning_sources = PackedStringArray("Practical work: building, installing, repairing or removing appliances, controls, furniture, climate & ventilation and sensor devices, and making weapons at the workbench", "Textbook: Combat Engineering")
+training_actions = PackedStringArray("combat_eng_work", "maintain_weapon", "deconstruct_military", "repair_furniture", "deconstruct_furniture", "study_combat_eng")
+required_skills = {}
+gameplay_effects = {}
+mastery_text = "Acquired (100 %): +4 work value on jobs at appliances, controls, furniture, climate & ventilation and sensor devices, and on making weapons. Tools and materials are still required."
+course_years = 3
+work_value_bonus = 4.0
+work_categories = PackedStringArray("appliance", "control", "furniture", "hvac", "sensor", "weapon")

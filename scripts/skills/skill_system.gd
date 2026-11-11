@@ -210,7 +210,7 @@ func job_profile(job: Dictionary) -> Dictionary:
 ## Gerätekategorien in Worten (für Tooltips und Meldungen)
 const CATEGORY_NAMES := {"appliance": "Appliances", "control": "Controls", "furniture": "Furniture", "hvac": "Climate & Ventilation",
 	"misc": "Miscellaneous", "power": "Power", "propulsion": "Propulsion", "docking": "Docking", "water": "Water",
-	"farming": "Farming", "production": "Production", "station": "Station"}
+	"farming": "Farming", "production": "Production", "station": "Station", "sensor": "Sensors", "weapon": "Weapons"}
 
 func category_list(cats: PackedStringArray) -> String:
 	var names: PackedStringArray = []
@@ -236,8 +236,12 @@ func job_device_id(job: Dictionary) -> String:
 	var dev := g.device_at(ShipConstructionSystem.pos_of(job)) if g != null else null
 	return dev.type if dev != null else ""
 
-## Gerätekategorie eines Auftrags ("" = kein Gerät)
+## Kategorie eines Auftrags: Gerätekategorie, oder "weapon" für das Herstellen einer Waffe
+## an der Werkbank ("" = nichts davon, z. B. Wand, Boden, Kabel, andere Rezepte)
 func job_category(job: Dictionary) -> String:
+	if String(job.get("kind", "")) == "craft":
+		var out: Array = EconomySystem.recipe(String(job.get("recipe", ""))).get("out", [])
+		return "weapon" if not out.is_empty() and ItemSystem.item(String(out[0])) != null and ItemSystem.item(String(out[0])).weapon != "" else ""
 	var id := job_device_id(job)
 	if id == "" or ItemSystem.device(id) == null:
 		return ""

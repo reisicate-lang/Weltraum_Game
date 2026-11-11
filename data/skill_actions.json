@@ -606,5 +606,12 @@
   ],
   "difficulty": 0.4,
   "gain": 1.0
+ },
+ "combat_eng_work": {
+  "skills": [
+   "combat_eng"
+  ],
+  "difficulty": 0.4,
+  "gain": 1.0
  }
 }
