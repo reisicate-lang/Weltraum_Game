@@ -61,11 +61,23 @@ func set_progress(c: CrewMember, id: String, value: float) -> void:
 
 ## Sind die Voraussetzungen erfüllt?
 func requirements_met(c: CrewMember, id: String) -> bool:
-	var req: Dictionary = skill(id).required_skills
+	return meets(c, skill(id).required_skills)
+
+## Prüflogik für Voraussetzungen: {skill_id: Mindestfortschritt}. Auch für Interaktionen nutzbar,
+## z. B. meets(c, {"business": ACQUIRED}) = Business Admin erworben.
+func meets(c: CrewMember, req: Dictionary) -> bool:
 	for r in req:
 		if progress(c, r) < float(req[r]):
 			return false
 	return true
+
+## Ab diesem Fortschritt gilt eine Fähigkeit als erworben (gemeistert)
+const ACQUIRED := 100.0
+const BUSINESS := "business"
+
+## Hat die Figur die Fähigkeit erworben?
+func acquired(c: CrewMember, id: String) -> bool:
+	return c != null and meets(c, {id: ACQUIRED})
 
 func cap(c: CrewMember, id: String) -> float:
 	return 100.0 if requirements_met(c, id) else CAP_WITHOUT_REQ
@@ -106,8 +118,19 @@ func train(c: CrewMember, action: String, amount: float) -> float:
 		c.last_trained = id
 		total += delta
 		if p < 100.0 and new_p >= 100.0:
-			GameState.toast("%s beherrscht jetzt %s vollständig!" % [c.display_name, skill(id).skill_name])
+			_unlock(c, id)
 	return total
+
+## Fähigkeit beim ersten Erreichen von 100 % freischalten (genau einmal pro Figur)
+func _unlock(c: CrewMember, id: String) -> void:
+	var e := _entry(c, id)
+	if e.get("unlocked", false):
+		return
+	e.unlocked = true
+	if id == BUSINESS:
+		GameState.toast("%s acquired Business Admin: exact Item Values are now shown." % c.display_name)
+	else:
+		GameState.toast("%s beherrscht jetzt %s vollständig!" % [c.display_name, skill(id).skill_name])
 
 func _add_history(e: Dictionary, action: String, delta: float) -> void:
 	var h: Array = e.hist

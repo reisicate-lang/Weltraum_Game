@@ -5,10 +5,10 @@
 [resource]
 script = ExtResource("1")
 id = "book_business_1"
-display_name = "Lehrbuch: Betriebswirtschaft (Grundlagen)"
+display_name = "Textbook: Business Admin (Basics)"
 weight = 0.8
 volume = 1.0
 value = 40
-description = "Bringt Betriebswirtschaft bis 40 %. Lesen in Ruhezeiten."
+description = "Brings Business Admin to 40 %. Read during rest time."
 teaches = "business"
 book_level = 1

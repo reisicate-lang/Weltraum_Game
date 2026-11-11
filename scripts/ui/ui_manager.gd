@@ -900,8 +900,8 @@ func _refresh_window() -> void:
 				var total := 0
 				for it in t.inv.items:
 					total += E.sell_price(it)
-					window_box.add_child(_row("%s ×%d · %d %%" % [ItemSystem.item(it.type).display_name, it.qty, int(it.cond)],
-						[_button("%d Cr" % E.sell_price(it), E.sell.bind(it.type, it.qty))]))
+					window_box.add_child(_trade_row("%s ×%d · %d %%" % [ItemSystem.item(it.type).display_name, it.qty, int(it.cond)], it,
+						[_offer_button("Offer", E.sell_price(it), E.sell.bind(it.type, it.qty))]))
 				window_box.add_child(_row("Summe: %d Cr" % total, [_button("Alles verkaufen", E.sell_all)], COL_AMBER))
 			else:
 				window_box.add_child(_label("Das Terminal ist leer.", COL_MUTED, 12))
@@ -910,8 +910,8 @@ func _refresh_window() -> void:
 				var at_market := talk_role == "market"
 				window_box.add_child(_label(("Gepäck von %s – direkt an den Händler" if at_market else "Gepäck von %s") % c.display_name, COL_MUTED, 11))
 				for it in c.inv.items:
-					var btn: Button = _button("%d Cr" % E.sell_price(it), E.sell.bind(it.type, it.qty, c.inv)) if at_market else _button("Hineinlegen", _put_terminal.bind(it.type, it.qty))
-					window_box.add_child(_row("%s ×%d" % [ItemSystem.item(it.type).display_name, it.qty], [btn]))
+					var btn: Button = _offer_button("Offer", E.sell_price(it), E.sell.bind(it.type, it.qty, c.inv)) if at_market else _button("Hineinlegen", _put_terminal.bind(it.type, it.qty))
+					window_box.add_child(_trade_row("%s ×%d" % [ItemSystem.item(it.type).display_name, it.qty], it, [btn]))
 		"buy":
 			window_box.add_child(_label("Gekauftes landet im Terminal. Preise ändern sich jeden Tag.", COL_MUTED, 12))
 			var ids: Array = ItemSystem.items.keys().filter(func(x): return not RemovalSystem.is_packed(x))
@@ -919,8 +919,8 @@ func _refresh_window() -> void:
 			for id in ids:
 				var f: float = E.prices.get(id, 1.0)
 				var trend := "  ▲ teuer" if f > 1.1 else ("  ▼ günstig" if f < 0.9 else "")
-				window_box.add_child(_row(ItemSystem.item(id).display_name + trend,
-					[_button("%d Cr" % E.buy_price(id), E.buy.bind(id, 1)), _button("×5", E.buy.bind(id, 5))]))
+				window_box.add_child(_trade_row(ItemSystem.item(id).display_name + trend, {"type": id, "qty": 1, "cond": 100.0},
+					[_offer_button("Price", E.buy_price(id), E.buy.bind(id, 1)), _button("×5", E.buy.bind(id, 5))]))
 		"bank":
 			var days := maxf(0.0, (E.next_payment - GameState.time) / 1440.0)
 			window_box.add_child(_row("Restschuld", [_label("%d Cr" % E.debt, COL_AMBER, 13)]))
@@ -1547,12 +1547,32 @@ func _install_btn(row: HBoxContainer, type: String) -> HBoxContainer:
 			close_container()))
 	return row
 
+## Handelszeile: Gegenstandswert (nur mit Business Admin) und Angebot getrennt
+func _trade_row(text: String, it: Dictionary, controls: Array) -> HBoxContainer:
+	var v := EconomySystem.value_text(EconomySystem.trader(), it)
+	var row := _row(text + (" · " + v if v != "" else ""), controls)
+	row.tooltip_text = item_tooltip(it)
+	return row
+
+## Knopf mit dem konkreten Händlerangebot (kann über oder unter dem Gegenstandswert liegen)
+func _offer_button(kind: String, price: int, cb: Callable) -> Button:
+	var b := _button("%d Cr" % price, cb)
+	b.tooltip_text = "%s: %d Cr (the trader's offer, independent of the Item Value)" % [kind, price]
+	return b
+
 func _item_row(it: Dictionary, action: String, cb: Callable, hand: bool = false) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	var d := ItemSystem.item(it.type)
 	var l := _label("%s ×%d · %d %% · %.1f kg%s" % [d.display_name, it.qty, int(it.cond), Inventory.stack_weight(it), " · in den Händen" if hand else ""], Color(0.87, 0.9, 0.94), 12)
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	l.tooltip_text = d.description
+	l.tooltip_text = item_tooltip(it)
 	row.add_child(l)
 	row.add_child(_button(action, cb))
 	return row
+
+## Tooltip eines Gegenstands für die betrachtende Figur (ausgewählt, sonst deine):
+## mit Business Admin zusätzlich der exakte Gegenstandswert
+func item_tooltip(it: Dictionary) -> String:
+	var text := ItemSystem.item(it.type).description
+	var v := EconomySystem.value_text(EconomySystem.trader(), it)
+	return text + ("\n" + v if v != "" else "")

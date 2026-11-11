@@ -281,7 +281,8 @@ func refresh_creation() -> void:
 	_fit()
 	creation_box.add_child(ui._label("LEBENSLAUF: %s" % c.display_name, ui.COL_AMBER, 18))
 	creation_box.add_child(_wrap("Du bestimmst Miras Vergangenheit. Jede Station kostet Lebensjahre und prägt Fähigkeiten, Eigenschaften, Kontakte und Geld. Mit mindestens 18 Jahren kann es losgehen."))
-	creation_box.add_child(ui._label("Alter: %d · Startgeld aus dem Lebenslauf: %+d Cr" % [c.age, CharacterSystem.start_credits(c)], Color(0.87, 0.9, 0.94), 14))
+	var course := CharacterSystem.course_drafted(c)
+	creation_box.add_child(ui._label("Alter: %d%s · Startgeld aus dem Lebenslauf: %+d Cr" % [CharacterSystem.preview_age(c), " (incl. Business Admin course +%d years)" % CharacterSystem.COURSE_YEARS if course else "", CharacterSystem.start_credits(c)], Color(0.87, 0.9, 0.94), 14))
 	var tr: PackedStringArray = []
 	for t in c.traits:
 		tr.append(TraitSystem.get_trait(t).trait_name)
@@ -302,6 +303,12 @@ func refresh_creation() -> void:
 		creation_box.add_child(ui._row("%s (%d Jahre): %s" % [k.name, int(k.years), ", ".join(gains)],
 			[ui._button("Wählen", func():
 				CharacterSystem.apply_career(c, k.id)
+				refresh_creation())]))
+	# Kurs: zählt erst beim Bestätigen (Los geht's), bis dahin nur im Vorschaualter
+	if course or CharacterSystem.preview_age(c) + CharacterSystem.COURSE_YEARS <= CharacterSystem.max_age and not SkillSystem.acquired(c, SkillSystem.BUSINESS):
+		creation_box.add_child(ui._row("Business Admin course (%d years): exact Item Value when trading%s" % [CharacterSystem.COURSE_YEARS, " · selected" if course else ""],
+			[ui._button("Remove" if course else "Add", func():
+				CharacterSystem.set_course(c, not course)
 				refresh_creation())]))
 	if c.hobbies.size() < 2:
 		var row := HFlowContainer.new()
@@ -329,11 +336,12 @@ func refresh_creation() -> void:
 		CharacterSystem.randomize_life(c, randi_range(22, 35))
 		refresh_creation()))
 	var go: Button = ui._button("Los geht's", func():
+		CharacterSystem.confirm(c)
 		EconomySystem.credits = Config.START_CREDITS + CharacterSystem.start_credits(c)
 		creation.visible = false
 		ui.show_help()
 		TimeSystem.set_speed(1))
-	go.disabled = c.age < 18
+	go.disabled = CharacterSystem.preview_age(c) < 18
 	bottom.add_child(go)
 
 # ---------------- Begegnung mit Plünderern ----------------

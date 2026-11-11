@@ -128,7 +128,7 @@ func _initialize() -> void:
 	SK.set_progress(mira, "business", 0.0)
 	var p0: int = econ.sell_price(it)
 	SK.set_progress(mira, "business", 100.0)
-	_check("Betriebswirtschaft bringt mehr beim Verkauf (%d -> %d)" % [p0, econ.sell_price(it)], econ.sell_price(it) > p0)
+	_check("Business Admin ändert das Verkaufsangebot nicht (%d -> %d)" % [p0, econ.sell_price(it)], econ.sell_price(it) == p0)
 	var fighter := _fresh()
 	var weak := _fresh()
 	SK.set_progress(fighter, "unarmed", 100.0)

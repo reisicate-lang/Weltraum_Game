@@ -93,8 +93,23 @@ func negotiated_factor(selling: bool) -> float:
 func inv_value(inv: Inventory) -> int:
 	var s := 0
 	for it in inv.items:
-		s += int(ItemSystem.item(it.type).value * it.qty * (0.25 + 0.75 * it.cond / 100.0))
+		s += item_value(it)
 	return s
+
+## Gegenstandswert eines Stapels aus den Spieldaten (Grundwert × Menge, nach Zustand).
+## Unabhängig von Markt und Fähigkeiten; das Handelsangebot kann davon abweichen.
+func item_value(it: Dictionary) -> int:
+	return int(ItemSystem.item(it.type).value * int(it.get("qty", 1)) * (0.25 + 0.75 * float(it.get("cond", 100.0)) / 100.0))
+
+## „Item Value: …“ für Figuren mit Business Admin, sonst leer (bisherige Anzeige bleibt)
+func value_text(viewer: CrewMember, it: Dictionary) -> String:
+	if not SkillSystem.acquired(viewer, SkillSystem.BUSINESS):
+		return ""
+	var v := item_value(it)
+	var qty := int(it.get("qty", 1))
+	if qty > 1:
+		return "Item Value: %d Cr (%d Cr each)" % [v, item_value({"type": it.type, "qty": 1, "cond": it.get("cond", 100.0)})]
+	return "Item Value: %d Cr" % v
 
 # ---------------- Handel ----------------
 

@@ -5,11 +5,11 @@
 [resource]
 script = ExtResource("1")
 skill_id = "business"
-skill_name = "Betriebswirtschaft"
-description = "Werte erkennen, Preise einschätzen, besser handeln, Risiken bewerten."
+skill_name = "Business Admin"
+description = "Know what goods are worth. Acquired at 100 %: the exact Item Value is shown in item tooltips and at the trade terminal. Trade offers are not affected."
 category = "praxis"
-learning_sources = PackedStringArray("Handeln am Terminal", "Waren schätzen", "Lehrbuch Betriebswirtschaft")
+learning_sources = PackedStringArray("Trading at the terminal", "Appraising goods", "Textbook: Business Admin", "Business Admin course (character creation)")
 training_actions = PackedStringArray("trade", "appraise", "study_business")
 required_skills = {}
-gameplay_effects = {"sell_bonus": 0.15, "buy_discount": 0.1, "appraise": 1.0}
-mastery_text = "Meister: Bergungswerte werden exakt angezeigt und Preise sagen ihren Trend voraus."
+gameplay_effects = {"appraise": 1.0}
+mastery_text = "Acquired: exact Item Value in item tooltips and at the trade terminal (offers stay the same). Salvage values are shown exactly."
