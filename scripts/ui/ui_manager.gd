@@ -1069,6 +1069,13 @@ func clear_selection() -> void:
 func selection_valid() -> bool:
 	return sel_key != "" and RemovalSystem.layers_at(sel_tile).has(sel_key)
 
+## Ausgewählte Figur (sonst deine), wenn sie einen fortsetzbaren unterbrochenen Auftrag hat
+func _resume_crew() -> CrewMember:
+	var c: CrewMember = GameState.selected if GameState.selected != null and is_instance_valid(GameState.selected) and GameState.selected in CrewSystem.crew else CrewSystem.player()
+	if c == null or c.resume_job == null or c.resume_route().why != "":
+		return null
+	return c
+
 func open_object_menu(p: Vector2i) -> bool:
 	var g := ShipSystem.grid
 	if not g.in_bounds(p):
@@ -1086,11 +1093,17 @@ func open_object_menu(p: Vector2i) -> bool:
 		for it in inv.items:
 			if R.is_packed(it.type) and not installs.has(it.type) and R.can_install(it.type, p):
 				installs[it.type] = it.cond
-	if key == "" and installs.is_empty() and job == null:
+	var rc := _resume_crew()
+	if key == "" and installs.is_empty() and job == null and rc == null:
 		return false
 	object_menu.clear()
 	menu_actions.clear()
 	menu_pos = p
+	# Von WASD unterbrochener Auftrag der ausgewählten Figur: dort weitermachen
+	if rc != null:
+		object_menu.add_item("Resume Task", menu_actions.size())
+		object_menu.set_item_tooltip(object_menu.item_count - 1, "%s: %s" % [rc.display_name, ShipConstructionSystem.label(rc.resume_job)])
+		menu_actions.append({"kind": "resume", "crew": rc, "job": rc.resume_job})
 	if key != "":
 		var layers := R.layers_at(p)
 		var pos_in := layers.find(key)
@@ -1199,6 +1212,15 @@ func _on_object_menu(id: int) -> void:
 	var a: Dictionary = menu_actions[id]
 	var g := ShipSystem.grid
 	match a.kind:
+		"resume":
+			# Beim Auswählen neu prüfen: Menü kann veraltet sein (Auftrag fertig, Ziel weg)
+			var c = a.crew
+			if c == null or not is_instance_valid(c) or not is_same(c.resume_job, a.job):
+				GameState.toast("Task is no longer available.")
+				return
+			var why: String = c.resume_task()
+			if why != "":
+				GameState.toast(why)
 		"rotate":
 			if ShipConstructionSystem.place("rotate", menu_pos):
 				GameState.toast("Auftrag: Gerät um 90° drehen.")

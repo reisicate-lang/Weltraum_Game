@@ -23,6 +23,8 @@ var unconscious := false
 var is_player := false
 var manual_until := 0.0             ## echte Zeit (ms), bis wann von Hand gesteuert
 var manual_last := -100000.0        ## echte Zeit (ms) des letzten WASD-Schritts
+var resume_job = null               ## von WASD unterbrochener Auftrag (bleibt für diese Figur reserviert)
+var _job_cmd := false               ## Auftrag per „Resume Task“ befohlen (läuft auch ohne Auto-Modus)
 var task := "Wartet"
 var inv := Inventory.new(Config.CARRY_WEIGHT, Config.CARRY_VOLUME)
 var suit = null                     ## getragener Raumanzug {"o2", "battery"} oder null
@@ -104,6 +106,69 @@ func order_move(target: Vector2i) -> bool:
 	path = p
 	return true
 
+## Unterbrochenen Auftrag nicht mehr vormerken (Reservierung freigeben)
+func _drop_resume() -> void:
+	if resume_job != null and not is_same(job, resume_job) and int(resume_job.claimed_by) == id:
+		resume_job.claimed_by = -1
+	resume_job = null
+
+## Kann der unterbrochene Auftrag fortgesetzt werden? {"why": "" oder kurze englische Meldung, "path": Weg}
+func resume_route() -> Dictionary:
+	var CS := ShipConstructionSystem
+	if resume_job == null:
+		return {"why": "No interrupted task."}
+	var j: Dictionary = resume_job
+	if not is_same(CS.jobs.get(grid().idx(CS.pos_of(j))), j):
+		return {"why": "Task is already finished or cancelled.", "gone": true}
+	if j.kind in RemovalSystem.KINDS and not RemovalSystem.target_ok(j):
+		return {"why": "Target was removed.", "gone": true}
+	if int(j.claimed_by) != -1 and int(j.claimed_by) != id:
+		return {"why": "Task was taken over by someone else.", "gone": true}
+	if unconscious:
+		return {"why": "Cannot work right now."}
+	if not RemovalSystem.worker_ok(self, j):
+		return {"why": "The right tool is missing."}
+	var res := ShipSystem.nearest_adjacent(tile(), [CS.pos_of(j)], _reach(j))
+	if not res.ok:
+		return {"why": "Target is unreachable."}
+	# Weg oder Arbeitsort im Vakuum: nur mit Raumanzug (wie bei der normalen Auftragswahl)
+	if not suit_ok():
+		var hostile := not safe_air(grid().idx(tile())) or grid().get_tile(CS.target_of(j)) == ShipGrid.Tile.SPACE
+		for q in res.path:
+			if not safe_air(grid().idx(q)):
+				hostile = true
+		if hostile:
+			return {"why": "A space suit is needed for this task."}
+	return {"why": "", "path": res.path}
+
+## „Resume Task“: denselben Auftrag sofort wieder übernehmen (ohne Laufsperre nach WASD).
+## Leer = übernommen, sonst kurze englische Meldung. Legt nie einen neuen Auftrag an.
+func resume_task() -> String:
+	var r := resume_route()
+	if r.why != "":
+		if r.get("gone", false):
+			resume_job = null
+		return r.why
+	var j: Dictionary = resume_job
+	resume_job = null
+	stop_activity()
+	order = null
+	if job != null and not is_same(job, j):
+		release_job()
+	job = j
+	job.claimed_by = id
+	job.retry_at = 0.0
+	path = r.path
+	_job_cmd = true
+	manual_until = 0.0
+	var CS := ShipConstructionSystem
+	if not job.paid and not CS.missing(CS.remaining_cost(job), inv).is_empty():
+		if not _start_fetch():
+			job.retry_at = GameState.time + 0.5
+			release_job()
+			return "Materials are missing."
+	return ""
+
 func release_job() -> void:
 	if carrying != null:
 		drop_carried()
@@ -114,6 +179,7 @@ func release_job() -> void:
 		if job.kind == "haul" and job.phase == "deliver":
 			ShipConstructionSystem.jobs.erase(grid().idx(ShipConstructionSystem.pos_of(job)))
 	job = null
+	_job_cmd = false
 	path.clear()
 
 func stop_activity() -> void:
@@ -160,6 +226,7 @@ func set_auto(on: bool) -> void:
 				j.retry_at = 0.0
 
 func cancel_all() -> void:
+	_drop_resume()
 	if job != null:
 		var j: Dictionary = job
 		release_job()
@@ -219,9 +286,18 @@ func manual_move(dir: Vector2, dist: float) -> void:
 	if move_factor() < 1.0 or grid().pressure(grid().idx(tile())) < 5.0:
 		SkillSystem.train(self, "eva_move", dist / Config.WALK_SPEED * 2.0)
 	if order != null or job != null or activity != null:
+		# Laufenden Auftrag merken (Fortschritt bleibt im Auftrag); nicht beim Tragen oder Abliefern
+		var keep = null
+		if job != null and carrying == null and not (job.kind in ["haul", "move"] and job.get("phase", "") == "deliver"):
+			keep = job
 		release_job()
 		stop_activity()
 		order = null
+		if keep != null:
+			if not is_same(resume_job, keep):
+				_drop_resume()
+			resume_job = keep
+			keep.claimed_by = id
 	manual_last = Time.get_ticks_msec()
 	manual_until = manual_last + 8000
 	path.clear()
@@ -440,10 +516,12 @@ func update(dt: float) -> void:
 			return
 		if activity != null:
 			stop_activity()
-		task = "Steht – Auto-Modus aus"
-		for k in ["food", "water", "sleep", "hygiene"]:
-			_warn("auto-" + k, needs[k] < Config.NEEDS[k].at, "%s: %s – der Auto-Modus ist aus." % [display_name, Config.NEEDS[k].name], needs[k] >= Config.NEEDS[k].at)
-		return
+		if job == null or not _job_cmd:
+			_job_cmd = false
+			task = "Steht – Auto-Modus aus"
+			for k in ["food", "water", "sleep", "hygiene"]:
+				_warn("auto-" + k, needs[k] < Config.NEEDS[k].at, "%s: %s – der Auto-Modus ist aus." % [display_name, Config.NEEDS[k].name], needs[k] >= Config.NEEDS[k].at)
+			return
 	# 3) Tätigkeit (Freizeit wird für Arbeit unterbrochen)
 	if activity != null and activity.get("kind", "") in ["study", "hobby", "trainer"] and _has_open_job():
 		stop_activity()
@@ -462,7 +540,7 @@ func update(dt: float) -> void:
 			if _start_device("suit_off", func(d): return d.type == "locker" and d.suit == null and not d.broken):
 				return
 		SalvageSystem.reveal(self)
-		if carrying == null and _start_need():
+		if carrying == null and auto_mode and _start_need():
 			return
 	# 5) Bauplan
 	if job != null:
@@ -527,7 +605,7 @@ func update(dt: float) -> void:
 	if check and stress >= 95.0:
 		task = "Zusammenbruch: braucht Ruhe"
 		return
-	if check:
+	if check and auto_mode:
 		_assign_job()
 		if job == null and activity == null and suit == null:
 			_start_free_time()
@@ -772,6 +850,10 @@ func _assign_job() -> void:
 			chosen.retry_at = GameState.time + 1.0
 			_warn("need-suit", true, display_name + " braucht einen Raumanzug für diese Arbeit.", false)
 			return
+	if is_same(chosen, resume_job):
+		resume_job = null
+	else:
+		_drop_resume()
 	job = chosen
 	job.claimed_by = id
 	path = res.path
