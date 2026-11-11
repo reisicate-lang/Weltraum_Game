@@ -59,8 +59,11 @@ const TANK_TARGET := 95.0
 
 ## Bedürfnisse: decay = Verlust pro Stunde, at = ab hier wird gehandelt
 const NEEDS := {
-	"food": {"name": "Hunger", "decay": 4.0, "at": 45.0, "gain": 45.0, "use_time": 20.0, "verb": "Isst", "use": 1.0},
-	"water": {"name": "Durst", "decay": 6.0, "at": 50.0, "gain": 50.0, "use_time": 5.0, "verb": "Trinkt", "use": 0.5},
+	# Hunger und Durst in echten Abständen (bei ×1 ist ein Spieltag ein echter Tag):
+	# wach etwa alle 6 h eine Mahlzeit (30 Punkte, 0,5 Portionen) und alle 2 h ein Glas (10 Punkte, 0,12 l).
+	# Im Schlaf sinkt beides halb so schnell. Ohne Essen oder Trinken ist der Wert nach 20 h leer.
+	"food": {"name": "Hunger", "decay": 5.0, "at": 70.0, "gain": 30.0, "use_time": 20.0, "verb": "Isst", "use": 0.5},
+	"water": {"name": "Durst", "decay": 5.0, "at": 90.0, "gain": 10.0, "use_time": 2.0, "verb": "Trinkt", "use": 0.12},
 	"sleep": {"name": "Energie", "decay": 4.0, "at": 30.0, "gain": 13.0, "use_time": 0.0, "verb": "Schläft", "use": 0.0},
 	"hygiene": {"name": "Hygiene", "decay": 3.0, "at": 35.0, "gain": 70.0, "use_time": 15.0, "verb": "Wäscht sich", "use": 2.0},
 }

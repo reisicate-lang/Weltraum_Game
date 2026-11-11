@@ -17,7 +17,7 @@ var order = null                    ## Vector2i oder null
 var job = null                      ## Dictionary oder null
 var fetch = null                    ## {"pos": Vector2i, "inv": Inventory} oder null
 var activity = null                 ## {"need": String, "dev": Device, "timer": float} oder {"flee": true}
-var needs := {"food": 85.0, "water": 80.0, "sleep": 75.0, "hygiene": 80.0, "air": 100.0}
+var needs := {"food": 95.0, "water": 100.0, "sleep": 75.0, "hygiene": 80.0, "air": 100.0}
 var health := 100.0
 var unconscious := false
 var is_player := false
@@ -821,8 +821,10 @@ func _do_fetch(dt: float) -> void:
 func _start_need() -> bool:
 	var g := grid()
 	var order_needs: Array = []
+	# Im Anzug (Außeneinsatz) unterbrechen Essen und Trinken erst, wenn es dringend wird
+	var margin := 30.0 if suit != null else 0.0
 	for k in Config.NEEDS:
-		if needs[k] < Config.NEEDS[k].at:
+		if needs[k] < Config.NEEDS[k].at - (margin if k in ["food", "water"] else 0.0):
 			order_needs.append(k)
 	order_needs.sort_custom(func(a, b): return needs[a] < needs[b])
 	for need in order_needs:

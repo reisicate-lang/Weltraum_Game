@@ -45,6 +45,7 @@ godot --headless --path . --script res://tests/boot.gd -- test_parts
 godot --headless --path . --script res://tests/boot.gd -- test_select
 godot --headless --path . --script res://tests/boot.gd -- test_grid
 godot --headless --path . --script res://tests/boot.gd -- test_modules
+godot --headless --path . --script res://tests/boot.gd -- test_needs
 ```
 
 ## Steuerung

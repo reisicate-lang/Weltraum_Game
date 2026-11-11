@@ -39,13 +39,14 @@ und werden Schritt für Schritt übertragen.
 - [x] Sauerstoff-Generator, CO₂-Filter, Lufttank
 - [x] Strom: Generator, Batterien, Kabel, Stromnetze
 - [x] Bedürfnisse: Hunger, Durst, Energie, Hygiene, Atmung, Gesundheit
+- [x] Hunger und Durst in echten Abständen: wach etwa alle 6 h essen, alle 2 h trinken (bei ×1 ist ein Spieltag ein echter Tag); im Anzug erst, wenn es dringend wird
 
 ### Etappe 3 – Weltraum & Schäden
 - [x] Luftschleuse mit Pumpe, Raumanzüge, Anzugschrank, Außeneinsätze
 - [x] Tragbare Ladestation, Gerät versetzen
 - [x] Brennstoff für den Generator, Solarpanel
 - [x] Verschleiß, Mikrometeoriten, sichtbare Risse, Reparatur
-- [x] Echtzeit (1 s = 1 s), Vorspulen bis 300×, Rechtsklick bricht ab
+- [x] Echtzeit (1 s = 1 s), Zeitstufen ×1 bis ×16, Rechtsklick bricht ab
 
 ## Geplant
 
