@@ -81,6 +81,7 @@ und werden Schritt für Schritt übertragen.
 - [x] Abbauen legt genau einen vollständigen Gegenstand (Zustand, Inhalt) auf den Boden; eine Figur trägt ein Gerät in den Händen
 - [x] Einheitliches Gewicht: Gegenstand = Gerätemasse; Getragenes an Bord zählt zur Schiffsmasse
 - [x] Triebwerke als 1×3-Geräte durch die Außenwand; alte 1×1-Triebwerke werden beim Laden umgestellt
+- [x] Rechtsklick-Auswahl in Ebenen (Kabel → Gerät → Boden), Abbauen wirkt genau auf die markierte Ebene
 - [x] Navigationskarte mit vorausberechneter Flugbahn, manuelles Fliegen (WASD), Geschwindigkeit angleichen
 - [x] Manuelles Andocken, Auto-Dock-Modul, Schnellreise, Zusammenstöße
 - [x] Erde als Schwerkraft-Falle (Absturz), Mond-Absturz
@@ -131,6 +132,7 @@ und werden Schritt für Schritt übertragen.
 - `tests/test_core.gd` – Kernspiel mit abgeschalteter Station und abgeschaltetem Wrack (21)
 - `tests/test_flight.gd` – manuelle Schiffssteuerung: Cockpit, Drift, Drehung, Gegenschub, Anflug und Andocken, Zeitstufen, Speichern (36)
 - `tests/test_thrusters.gd` – Triebwerke (1×3): Schub addiert sich, Masse bremst, Richtungen, Aus- und Einbau, Speichern, Zeitstufen, Drift (32)
+- `tests/test_select.gd` – Rechtsklick-Ebenen mit echten Mausklicks: Reihenfolge, Abbau Ebene für Ebene, leere Ebenen, Kachelwechsel, Triebwerk (22)
 - `tests/test_parts.gd` – Tab-Inventar (auch Cockpit), Abbau als Gegenstand am Boden, Gewicht beim Umlagern und von Bord, 1×3-Einbau und Abweisungen, alte Spielstände (60)
 - `tests/test_match.gd` – Angleichen (X): manueller Puls, Lagedüsen allein, kein Treibstoff, Ausstieg, Laden (22)
 - `tests/test_cargo_mass.gd` – Masse loser Ladung: Behälter ↔ Boden, fremder Bereich, Haufen im All, Laden, Schiffswechsel (24)

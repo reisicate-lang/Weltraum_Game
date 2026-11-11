@@ -52,6 +52,7 @@ func _draw() -> void:
 		_draw_char(c)
 	_draw_bubbles()
 	_draw_effects()
+	_draw_selection(g)
 	_draw_preview(g)
 
 func _draw_effects() -> void:
@@ -334,6 +335,37 @@ func _draw_char(c: CrewMember) -> void:
 			var nxt := (Vector2(q) + Vector2(0.5, 0.5)) * S
 			draw_line(prev, nxt, Color(0.95, 0.64, 0.23, 0.6), 1.0)
 			prev = nxt
+
+## Rechtsklick-Auswahl: genau die markierte Ebene hervorheben (Kabel, Gerät mit allen
+## Feldern, oder Boden/Wand) und benennen
+func _draw_selection(g: ShipGrid) -> void:
+	if not UIManager.selection_valid():
+		return
+	var p: Vector2i = UIManager.sel_tile
+	var key: String = UIManager.sel_key
+	var col := Color(1.0, 0.86, 0.2)
+	var c := (Vector2(p) + Vector2(0.5, 0.5)) * S
+	if key == "cable":
+		draw_circle(c, S * 0.16, col)
+		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var q: Vector2i = p + d
+			if g.in_bounds(q) and g.cables[g.idx(q)] == 1:
+				draw_line(c, c + Vector2(d) * S * 0.5, col, 4.0)
+	elif key.begins_with("dev:"):
+		var dev := g.device_at(p)
+		for cell in dev.cells():
+			draw_rect(_rect(cell, 0.04), col, false, 3.0)
+	else:
+		# Boden/Wand: gestrichelter Rahmen am Feldrand
+		var r := _rect(p)
+		for k in 4:
+			var a := r.position + Vector2(r.size.x * k / 4.0, 0)
+			draw_line(a, a + Vector2(r.size.x / 8.0, 0), col, 3.0)
+			draw_line(a + Vector2(0, r.size.y), a + Vector2(r.size.x / 8.0, r.size.y), col, 3.0)
+			var b := r.position + Vector2(0, r.size.y * k / 4.0)
+			draw_line(b, b + Vector2(0, r.size.y / 8.0), col, 3.0)
+			draw_line(b + Vector2(r.size.x, 0), b + Vector2(r.size.x, r.size.y / 8.0), col, 3.0)
+	draw_string(ThemeDB.fallback_font, Vector2(p) * S + Vector2(0, -4), RemovalSystem.name_of(key), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, col)
 
 func _draw_preview(g: ShipGrid) -> void:
 	if not g.in_bounds(hover):

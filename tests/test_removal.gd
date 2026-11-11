@@ -79,8 +79,16 @@ func _count_deep(type: String) -> int:
 	return n
 
 ## Menüeintrag für eine Aktion wählen (wie ein Klick im Rechtsklick-Menü)
+## Wählt dabei die Ebene „Gerät, sonst Feld“ (Rechtsklick schaltet Kabel → Gerät → Boden durch)
 func _menu(p: Vector2i, kind: String) -> int:
-	if not ui.open_object_menu(p):
+	ui.clear_selection()
+	var want: String = R.key_at(p)
+	var opened := false
+	for k in 3:
+		opened = ui.open_object_menu(p)
+		if not opened or ui.sel_key == want or want == "":
+			break
+	if not opened:
 		return -1
 	for k in ui.menu_actions.size():
 		if ui.menu_actions[k].kind == kind:

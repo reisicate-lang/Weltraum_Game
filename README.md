@@ -42,6 +42,7 @@ godot --headless --path . --script res://tests/boot.gd -- test_match
 godot --headless --path . --script res://tests/boot.gd -- test_cargo_mass
 godot --headless --path . --script res://tests/boot.gd -- test_helm
 godot --headless --path . --script res://tests/boot.gd -- test_parts
+godot --headless --path . --script res://tests/boot.gd -- test_select
 ```
 
 ## Steuerung
@@ -52,7 +53,7 @@ godot --headless --path . --script res://tests/boot.gd -- test_parts
 | Hinlaufen lassen | Werkzeug **Auswahl**, Klick auf Boden |
 | Bauen | Boden `B`, Wand `M`, Tür `T`, Kabel `K`, Geräte-Menü unten |
 | Abreißen / Plan löschen | `X` / `C`, Rechtsklick bricht ab |
-| Objekt entfernen | Rechtsklick auf Gerät oder Block (Werkzeug **Auswahl**): Abbauen, Zerlegen, Zerstören |
+| Objekt entfernen | Rechtsklick (Werkzeug **Auswahl**) wählt eine Ebene der Kachel und öffnet das Menü: Abbauen, Zerlegen, Zerstören. Jeder weitere Rechtsklick auf dieselbe Kachel wechselt Kabel → Gerät → Boden/Wand (leere Ebenen werden übersprungen), danach wieder von oben. Die gewählte Ebene ist gelb markiert und steht oben im Menü |
 | Abgebautes wieder einbauen | Abgebaute Geräte liegen als ein Gegenstand am Boden (mit Zustand und Inhalt). Daneben stellen, `E` → „Nehmen“ (in die Hände). Dann Rechtsklick auf ein freies Feld → „Einbauen“, oder im Inventar/Haufen „Einbauen“ |
 | Persönliches Inventar | `Tab` öffnet/schließt (auch im Cockpit). Mit offener Kiste: „Nehmen“/„Hineinlegen“, sonst „Ablegen“ auf den Boden. Tragelimit 40 kg, dazu genau ein abgebautes Gerät in den Händen |
 | Tür ganz dicht machen | Rechtsklick auf die Tür → „Lüftungsschlitz schließen“ |

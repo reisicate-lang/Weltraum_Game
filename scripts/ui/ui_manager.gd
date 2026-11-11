@@ -33,6 +33,11 @@ const FLIGHT_KEYS := [["W / S", "Schub vor / zurück (Triebwerke in dieser Richt
 	["Mausrad", "Karte zoomen"], ["Esc / N", "Cockpit verlassen"]]
 ## Persönliches Inventar offen (Tab)
 var inv_open := false
+## Rechtsklick-Auswahl: Kachel und Ebene ("cable", "dev:…", "tile:…"), siehe RemovalSystem.next_layer
+var sel_tile := Vector2i(-1, -1)
+## Hauptszene (meldet sich in ihrem _ready an), bekommt weitergereichte Rechtsklicks
+var world_view: Node = null
+var sel_key := ""
 ## Rechtsklick-Menü für Objekte (Abbauen, Zerlegen, Zerstören, Einbauen)
 var object_menu: PopupMenu
 var menu_pos := Vector2i(-1, -1)
@@ -90,6 +95,7 @@ func _ready() -> void:
 	_build_gameover()
 	object_menu = PopupMenu.new()
 	object_menu.id_pressed.connect(_on_object_menu)
+	object_menu.window_input.connect(_on_object_menu_input)
 	add_child(object_menu)
 	char_ui = load("res://scripts/ui/character_ui.gd").new()
 	add_child(char_ui)
@@ -1034,12 +1040,27 @@ func _refresh_auto(c: CrewMember) -> void:
 # ---------------- Rechtsklick-Menü ----------------
 
 ## Menü für das Objekt auf Feld p öffnen. false = hier gibt es nichts.
+## Rechtsklick auf p: nächste vorhandene Ebene dieser Kachel auswählen (Kabel → Gerät →
+## Boden, dann wieder von oben). Andere Kachel: oben beginnen. Gibt die Ebene zurück.
+func select_at(p: Vector2i) -> String:
+	sel_key = RemovalSystem.next_layer(p, sel_tile, sel_key)
+	sel_tile = p if sel_key != "" else Vector2i(-1, -1)
+	return sel_key
+
+func clear_selection() -> void:
+	sel_tile = Vector2i(-1, -1)
+	sel_key = ""
+
+## Ist die Auswahl noch da? (abgebaute Ebene zeigt nichts mehr an)
+func selection_valid() -> bool:
+	return sel_key != "" and RemovalSystem.layers_at(sel_tile).has(sel_key)
+
 func open_object_menu(p: Vector2i) -> bool:
 	var g := ShipSystem.grid
 	if not g.in_bounds(p):
 		return false
 	var R := RemovalSystem
-	var key := R.key_at(p)
+	var key := select_at(p)
 	var i := g.idx(p)
 	var job = ShipConstructionSystem.jobs.get(i)
 	# Abgebaute Stücke, die hier passen würden (aus Gepäck und Lager)
@@ -1057,11 +1078,23 @@ func open_object_menu(p: Vector2i) -> bool:
 	menu_actions.clear()
 	menu_pos = p
 	if key != "":
-		var dev := g.device_at(p)
-		var cond: float = dev.cond if dev != null else g.cond[i]
-		object_menu.add_separator("%s · Zustand %d %%" % [R.name_of(key), int(cond)])
+		var layers := R.layers_at(p)
+		var pos_in := layers.find(key)
+		var after: String = layers[(pos_in + 1) % layers.size()]
+		var dev := g.device_at(p) if key.begins_with("dev:") else null
+		var head := "▶ Ausgewählt: %s" % R.name_of(key)
+		if key != "cable":
+			head += " · Zustand %d %%" % int(dev.cond if dev != null else g.cond[i])
+		head += " · Ebene %d von %d" % [pos_in + 1, layers.size()]
+		object_menu.add_separator(head)
+		if layers.size() > 1:
+			object_menu.add_item("(Nächster Rechtsklick hier: %s)" % R.name_of(after), menu_actions.size())
+			object_menu.set_item_disabled(object_menu.item_count - 1, true)
+			menu_actions.append({"kind": "none"})
 		for kind in R.KINDS:
-			var why := R.reason(kind, p)
+			if key == "cable" and kind != "uninstall":
+				continue
+			var why := R.reason(kind, p, key)
 			var text: String = R.NAMES[kind]
 			if why == "":
 				text += "  (" + _menu_detail(kind, key) + ")"
@@ -1071,15 +1104,15 @@ func open_object_menu(p: Vector2i) -> bool:
 			var idx := object_menu.item_count - 1
 			object_menu.set_item_disabled(idx, why != "")
 			object_menu.set_item_tooltip(idx, why)
-			menu_actions.append({"kind": kind})
+			menu_actions.append({"kind": kind, "key": key})
 	# Drehbare Geräte (Triebwerke): um 90° drehen lassen
-	var rdev := g.device_at(p)
+	var rdev := g.device_at(p) if key.begins_with("dev:") else null
 	if rdev != null and rdev.data().rotatable and not g.foreign(i):
 		object_menu.add_item("Drehen (90° im Uhrzeigersinn) – schiebt jetzt %s" % _push_name(rdev.push_dir()), menu_actions.size())
 		object_menu.set_item_disabled(object_menu.item_count - 1, not ShipConstructionSystem.can_place("rotate", p))
 		menu_actions.append({"kind": "rotate"})
 	# Türen: Lüftungsschlitz (geschlossene Tür lässt sonst etwas Luft durch)
-	if g.get_tile(p) == ShipGrid.Tile.DOOR and not StationSystem.reserved(p):
+	if key == "tile:door" and not StationSystem.reserved(p):
 		var lock := AirlockSystem.is_lock_door(i) or StationSystem.is_hatch(i)
 		var closed := g.vent_closed[i] == 1
 		object_menu.add_item("Schleusentür: immer dicht" if lock else ("Lüftungsschlitz öffnen" if closed else "Lüftungsschlitz schließen (Tür wird dicht)"), menu_actions.size())
@@ -1097,13 +1130,26 @@ func open_object_menu(p: Vector2i) -> bool:
 	object_menu.popup()
 	return true
 
+## Offenes Menü verschluckt sonst jeden weiteren Rechtsklick (die Auswahl „hängt“).
+## Rechtsklick außerhalb des Menüs: Menü zu und als neuen Rechtsklick ans Spiel geben –
+## auf derselben Kachel wählt das die nächste Ebene.
+func _on_object_menu_input(e: InputEvent) -> void:
+	if not (e is InputEventMouseButton) or e.button_index != MOUSE_BUTTON_RIGHT or not e.pressed:
+		return
+	if Rect2(Vector2.ZERO, Vector2(object_menu.size)).has_point(e.position):
+		return
+	object_menu.hide()
+	object_menu.set_input_as_handled()
+	if world_view != null and is_instance_valid(world_view):
+		world_view.call_deferred("_right_click", world_view.call("_tile_at_mouse"))
+
 func _menu_detail(kind: String, key: String) -> String:
 	var R := RemovalSystem
 	var tool := R.tool_for(kind, key)
 	var tool_txt := (", " + ItemSystem.item(tool).display_name) if tool != "" else ""
 	match kind:
 		"uninstall":
-			return "%.1f min%s → %s" % [R.time_for(kind, key), tool_txt, ItemSystem.item(R.packed_id(key)).display_name]
+			return "%.1f min%s → %s" % [R.time_for(kind, key), tool_txt, R.uninstall_result(key)]
 		"dismantle":
 			return "%.1f min%s → %s" % [R.time_for(kind, key), tool_txt, _items_text(R.dismantle_yield(key))]
 	return "Schläge%s → %s" % [tool_txt, _items_text(R.debris(key))]
@@ -1155,9 +1201,13 @@ func _on_object_menu(id: int) -> void:
 				GameState.toast("Auftrag: %s einbauen." % ItemSystem.item(a.item).display_name)
 			else:
 				GameState.toast(RemovalSystem.install_reason(String(a.item), menu_pos))
+		"none":
+			pass
 		_:
-			var name := RemovalSystem.name_of(RemovalSystem.key_at(menu_pos))
-			var why := RemovalSystem.order(String(a.kind), menu_pos)
+			# Genau die ausgewählte Ebene (Kabel, Gerät oder Boden)
+			var key := String(a.get("key", RemovalSystem.key_at(menu_pos)))
+			var name := RemovalSystem.name_of(key)
+			var why := RemovalSystem.order(String(a.kind), menu_pos, key)
 			GameState.toast(why if why != "" else "Auftrag: %s – %s." % [RemovalSystem.NAMES[a.kind], name])
 	menu_actions.clear()
 

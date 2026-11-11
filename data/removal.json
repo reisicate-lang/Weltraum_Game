@@ -467,5 +467,12 @@
   "debris": {
    "scrap": 2
   }
+ },
+ "cable": {
+  "actions": [
+   "uninstall"
+  ],
+  "uninstall_time": 1.0,
+  "uninstall_tool": ""
  }
 }

@@ -15,6 +15,7 @@ var _pan_origin := Vector2.ZERO
 func _ready() -> void:
 	cam.position = Vector2(Config.WORLD_W, Config.WORLD_H) * Config.TILE_SIZE * 0.5
 	cam.zoom = Vector2(1.4, 1.4)
+	UIManager.world_view = self
 	# Zu Spielbeginn den Lebenslauf wählen lassen
 	UIManager.char_ui.open_creation.call_deferred()
 	EventBus.game_loaded.connect(func(): _drag_start = Vector2i(-1, -1))
@@ -226,7 +227,7 @@ func _key(k: InputEventKey) -> void:
 		KEY_4: TimeSystem.set_speed(4)
 		KEY_5: TimeSystem.set_speed(5)
 		KEY_N: UIManager.request_flight()
-		KEY_ESCAPE: UIManager.close_help(); UIManager.set_tool("select"); UIManager.inv_open = false; UIManager.close_container(); UIManager.close_window()
+		KEY_ESCAPE: UIManager.close_help(); UIManager.set_tool("select"); UIManager.inv_open = false; UIManager.close_container(); UIManager.close_window(); UIManager.clear_selection()
 		KEY_B: UIManager.set_tool("floor")
 		KEY_M: UIManager.set_tool("wall")
 		KEY_T: UIManager.set_tool("door")

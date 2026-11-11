@@ -53,7 +53,61 @@ func key_at(p: Vector2i) -> String:
 		return "tile:rock"
 	return TILE_KEYS.get(t, "")
 
+## Feld selbst (ohne Gerät): "tile:floor", "tile:wall", "tile:rock" ... oder ""
+func tile_key_at(p: Vector2i) -> String:
+	var g := ShipSystem.grid
+	if not g.in_bounds(p):
+		return ""
+	var t := g.get_tile(p)
+	if t == ShipGrid.Tile.WALL and g.zone[g.idx(p)] == 1 and SalvageSystem.is_asteroid():
+		return "tile:rock"
+	return TILE_KEYS.get(t, "")
+
+## Ebenen einer Kachel von oben nach unten: Kabel → Gerät → Boden/Wand.
+## Nur vorhandene Ebenen, immer aus dem aktuellen Zustand der Kachel.
+## Ein Mehrfeld-Gerät (Triebwerk 1×3) erscheint auf jedem seiner Felder.
+func layers_at(p: Vector2i) -> Array[String]:
+	var out: Array[String] = []
+	var g := ShipSystem.grid
+	if g == null or not g.in_bounds(p):
+		return out
+	var i := g.idx(p)
+	if g.cables[i] == 1 and g.tiles[i] != ShipGrid.Tile.SPACE:
+		out.append("cable")
+	var dev := g.device_at(p)
+	if dev != null:
+		out.append("dev:" + dev.type)
+	var tk := tile_key_at(p)
+	if tk != "":
+		out.append(tk)
+	return out
+
+## Rang einer Ebene: 0 Kabel, 1 Gerät, 2 Boden/Wand
+func layer_rank(key: String) -> int:
+	if key == "cable":
+		return 0
+	if key.begins_with("dev:"):
+		return 1
+	return 2
+
+## Welche Ebene ein Rechtsklick auf p auswählt: Auf einer neuen Kachel die oberste
+## vorhandene; auf derselben Kachel die nächste vorhandene unter der zuletzt gewählten
+## (auch wenn die inzwischen abgebaut ist), nach der letzten wieder die oberste.
+func next_layer(p: Vector2i, prev_tile: Vector2i, prev_key: String) -> String:
+	var layers := layers_at(p)
+	if layers.is_empty():
+		return ""
+	if p != prev_tile or prev_key == "":
+		return layers[0]
+	var rank := layer_rank(prev_key)
+	for k in layers:
+		if layer_rank(k) > rank:
+			return k
+	return layers[0]
+
 func name_of(key: String) -> String:
+	if key == "cable":
+		return "Kabel"
 	if key.begins_with("dev:"):
 		return ItemSystem.device(key.substr(4)).display_name
 	if key == "tile:rock":
@@ -124,6 +178,18 @@ func _build_cost(key: String) -> Dictionary:
 			return Config.TILE_COST[t]
 	return {}
 
+func _cable_text() -> String:
+	var parts: PackedStringArray = []
+	for type in Config.CABLE_COST:
+		parts.append("%d× %s" % [int(Config.CABLE_COST[type]), ItemSystem.item(type).display_name])
+	return ", ".join(parts)
+
+## Was beim Abbauen herauskommt (für das Menü)
+func uninstall_result(key: String) -> String:
+	if key == "cable":
+		return _cable_text()
+	return ItemSystem.item(packed_id(key)).display_name
+
 func tool_for(kind: String, key: String) -> String:
 	return String(config(key).get(kind + "_tool", ""))
 
@@ -162,14 +228,17 @@ func worker_ok(c: CrewMember, job: Dictionary) -> bool:
 	return has_tool(c, String(job.get("tool", "")))
 
 ## Grund, warum die Aktion hier nicht geht ("" = es geht)
-func reason(kind: String, p: Vector2i) -> String:
+## key: die ausgewählte Ebene ("cable", "dev:…", "tile:…"); leer = Gerät, sonst Feld.
+func reason(kind: String, p: Vector2i, key: String = "") -> String:
 	var g := ShipSystem.grid
 	if not g.in_bounds(p):
 		return "Außerhalb des Schiffs."
-	p = anchor(p)
-	var i := g.idx(p)
-	var key := key_at(p)
 	if key == "":
+		key = key_at(p)
+	if key.begins_with("dev:"):
+		p = anchor(p)
+	var i := g.idx(p)
+	if key == "" or not layers_at(p).has(key):
 		return "Hier ist nichts."
 	var nm := name_of(key)
 	if g.linked.has(i):
@@ -181,7 +250,9 @@ func reason(kind: String, p: Vector2i) -> String:
 	var cfg := config(key)
 	if not kind in cfg.actions:
 		return "%s lässt sich nicht %s." % [nm, {"uninstall": "abbauen", "dismantle": "zerlegen", "destroy": "zerstören"}[kind]]
-	var dev := g.device_at(p)
+	var dev := g.device_at(p) if key.begins_with("dev:") else null
+	if key.begins_with("tile:") and g.device_at(p) != null:
+		return "Darauf steht %s. Erst das Gerät abbauen (nächster Rechtsklick wählt es)." % g.device_at(p).data().display_name
 	if dev != null:
 		if dev.lock_level > 0:
 			return "Verschlossen – erst knacken (Hacken)."
@@ -191,7 +262,7 @@ func reason(kind: String, p: Vector2i) -> String:
 			return "Die Schleuse ist gerade angedockt. Erst abdocken."
 	elif key == "tile:floor":
 		if g.cables[i] == 1:
-			return "Auf dem Boden liegt ein Kabel. Erst das Kabel entfernen (Abreißen X)."
+			return "Auf dem Boden liegt ein Kabel. Erst das Kabel abbauen (Rechtsklick wählt es)."
 	# Werkzeug und Erreichbarkeit
 	var tool := tool_for(kind, key)
 	var with_tool: Array = CrewSystem.crew.filter(func(c): return not c.unconscious and has_tool(c, tool))
@@ -209,13 +280,16 @@ func anchor(p: Vector2i) -> Vector2i:
 	var dev := ShipSystem.grid.device_at(p)
 	return dev.pos if dev != null else p
 
-func order(kind: String, p: Vector2i) -> String:
-	p = anchor(p)
-	var why := reason(kind, p)
+## key: die ausgewählte Ebene (leer = Gerät, sonst Feld – wie bisher)
+func order(kind: String, p: Vector2i, key: String = "") -> String:
+	if key == "":
+		key = key_at(p)
+	if key.begins_with("dev:"):
+		p = anchor(p)
+	var why := reason(kind, p, key)
 	if why != "":
 		return why
 	var g := ShipSystem.grid
-	var key := key_at(p)
 	var job := {"kind": kind, "x": p.x, "y": p.y, "target": key, "tool": tool_for(kind, key), "progress": 0.0,
 		"claimed_by": -1, "retry_at": 0.0, "paid": true, "need": time_for(kind, key)}
 	if kind == "destroy":
@@ -227,7 +301,7 @@ func order(kind: String, p: Vector2i) -> String:
 
 ## Steht noch dasselbe Objekt da?
 func target_ok(job: Dictionary) -> bool:
-	return key_at(ShipConstructionSystem.pos_of(job)) == String(job.target)
+	return layers_at(ShipConstructionSystem.pos_of(job)).has(String(job.target))
 
 ## Auftrag ohne Ziel (Objekt anderweitig entfernt) auflösen, ohne Ergebnis
 func drop_stale(job: Dictionary) -> void:
@@ -300,8 +374,16 @@ func finish(job: Dictionary, worker: CrewMember, worker_pos: Vector2i) -> void:
 		return
 	var key := String(job.target)
 	var kind := String(job.kind)
-	var dev := g.device_at(p)
-	var cond := _cond(p)
+	if key == "cable":
+		# Kabel abbauen: nur das Kabel, Gerät und Boden bleiben; das Material liegt daneben
+		g.cables[i] = 0
+		var cspot := p if g.walkable(p) else ShipConstructionSystem.drop_spot(worker_pos)
+		for type in Config.CABLE_COST:
+			g.drop_items(cspot, type, int(Config.CABLE_COST[type]), 80.0)
+		GameState.toast("%s: Kabel abgebaut – %s liegt am Boden." % [worker.display_name if worker != null else "Crew", _cable_text()])
+		return
+	var dev := g.device_at(p) if key.begins_with("dev:") else null
+	var cond := dev.cond if dev != null else g.cond[i]
 	var results: Array = []   # [type, qty, cond, data]
 	var packed: Array = []    # Abbauen: genau ein Gegenstand mit Inhalt, auf den Boden
 	match kind:
