@@ -45,6 +45,7 @@ godot --headless --path . --script res://tests/boot.gd -- test_parts
 godot --headless --path . --script res://tests/boot.gd -- test_select
 godot --headless --path . --script res://tests/boot.gd -- test_grid
 godot --headless --path . --script res://tests/boot.gd -- test_dockport
+godot --headless --path . --script res://tests/boot.gd -- test_modules
 ```
 
 ## Steuerung
@@ -69,6 +70,7 @@ godot --headless --path . --script res://tests/boot.gd -- test_dockport
 | Cockpit (am Steuerpult) | `N` oder Klick aufs Steuerpult: die Figur geht hin und übernimmt das Steuer; `Esc`/`N` verlässt es |
 | Fliegen | `W`/`S` Schub vor/zurück, `A`/`D` seitwärts, `Q`/`E` drehen, `R` Drehung stoppen, `X` ans Ziel angleichen, `T` nächstes Ziel (oder „Ziel“ in der Liste), `F` andocken, `U` abdocken |
 | Triebwerk einbauen | Geräte-Menü → „Triebwerk“ (1×3 Felder). `G` dreht die Richtung. Klick auf ein Bodenfeld mit Kabel direkt an einer Außenwand: Mitte sitzt auf der Wand, die Düse ragt ins All, Schub vom All weg. Die Vorschau zeigt alle drei Felder. Umsetzen: abbauen und neu einbauen |
+| Steuerpult-Module | `E` neben dem Steuerpult (oder im Cockpit „Modulfach [E]“) öffnet das Modulfach: „Hineinlegen“/„Nehmen“ wie bei einer Kiste. Das Autodock-Modul schaltet an genau diesem Pult „Auto-Dock“ im Cockpit frei; ist es gesperrt, steht der Grund darunter |
 | Andockschleuse bauen | Geräte-Menü → „Andockschleuse“ (5×2 Felder), Klick auf die Stelle der Außentür in einer geraden Außenwand. Die Vorschau zeigt alle 10 Felder: außen 5 Wandfelder mit der Außentür, innen eine Reihe Wand mit der Innentür. Die Ausrichtung ergibt sich aus der Wand. Stationen docken an jeder freien Schleuse an, Wracks an einer Schleuse in der unteren Außenwand |
 | Speichern | `Strg+S`, Autosave jede Minute |
 

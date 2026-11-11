@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "mod_autodock"
+display_name = "Autodock-Modul"
+weight = 3.0
+volume = 2.0
+value = 420
+description = "Steuerpultmodul. Ins Modulfach eines Steuerpults gelegt (E am Pult), schaltet es dort im Cockpit das Auto-Dock frei. Wirkt nur in dem Pult, in dem es steckt."
+helm_module = "autodock"

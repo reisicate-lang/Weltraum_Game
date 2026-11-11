@@ -199,7 +199,8 @@ func _initialize() -> void:
 	old_types.sort()
 	new_types.sort()
 	# Die Station wird beim Laden frisch aufgebaut: ihre Tresen zählen beidseitig nicht
-	old_types = old_types.filter(func(t): return not String(t).begins_with("st_"))
+	# Die Station wird beim Laden frisch aufgebaut; das frühere Auto-Dock-Gerät ist jetzt ein Modul im Pult
+	old_types = old_types.filter(func(t): return not String(t).begins_with("st_") and t != "autodock")
 	new_types = new_types.filter(func(t): return not String(t).begins_with("st_"))
 	_check("4: Alle Geräte als einzelne Instanzen erhalten (%d)" % new_types.size(), old_types == new_types)
 	var crate42 := false

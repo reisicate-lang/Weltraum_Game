@@ -265,6 +265,7 @@ func _initialize() -> void:
 	_check("4: Abdocken am bedienten Pult klappt", P.request_undock() and P.docked == "")
 	for k in 60 * 16:
 		gs.step(1.0 / 60.0 / 60.0)          # Sperre gegen sofortiges Wieder-Andocken abwarten
+	near.inv.move_to(far.inv, "mod_autodock", 1)   # Autodock-Modul ins bediente Pult legen
 	toasts.clear()
 	P.start_autodock()
 	_check("4: Auto-Dock am bedienten Pult startet (%s)" % toasts[-1], not P.autodock.is_empty())

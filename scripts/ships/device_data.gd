@@ -37,5 +37,7 @@ extends Resource
 @export var length: int = 1
 ## Breite in Feldern quer zur Einbaurichtung (Andockschleuse: 5, mittig um pos)
 @export var width: int = 1
+## Im Geräte-Menü baubar (false: nur noch für alte Spielstände vorhanden)
+@export var buildable: bool = true
 ## Farbe für die einfache Darstellung
 @export var color: Color = Color(0.35, 0.4, 0.45)

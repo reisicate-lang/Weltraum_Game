@@ -243,8 +243,8 @@ func _build_bottom() -> void:
 	var keys := ItemSystem.devices.keys()
 	keys.sort()
 	for k in keys:
-		# Stationstresen kann man nicht bauen
-		if ItemSystem.device(k).tech == "station":
+		# Stationstresen und frühere Geräte (z. B. eigenständiges Auto-Dock) kann man nicht bauen
+		if ItemSystem.device(k).tech == "station" or not ItemSystem.device(k).buildable:
 			continue
 		device_ids.append(k)
 		device_menu.get_popup().add_item(ItemSystem.device(k).display_name)
@@ -616,7 +616,8 @@ func _refresh_nav() -> void:
 	var P := PhysicsSystem
 	var e: Dictionary = P.space.earth
 	var alt := P.pos.distance_to(Vector2(e.x, e.y)) - float(e.r)
-	var rows: Array = [P.target, _flight_rows(), P.helm_block_reason(P.operated_helm()), int(ceil(P.redock_wait(P.undock_lock_id))), P.status(), _fmt_speed(P.vel.length()), _fmt_dist(alt), int(P.fuel()), P.max_thrust(), snappedf(P.mass(), 0.1)]
+	var rows: Array = [P.target, _flight_rows(), P.helm_block_reason(P.operated_helm()), P.autodock_block_reason(),
+		P.operated_helm().inv.to_data() if P.operated_helm() != null and P.operated_helm().inv != null else [], int(ceil(P.redock_wait(P.undock_lock_id))), P.status(), _fmt_speed(P.vel.length()), _fmt_dist(alt), int(P.fuel()), P.max_thrust(), snappedf(P.mass(), 0.1)]
 	for l in P.locations:
 		var r := P.rel_to(l.id)
 		rows.append([_fmt_dist(r.dist), _fmt_speed(r.speed), P.can_dock(l.id)])
@@ -645,8 +646,21 @@ func _refresh_nav() -> void:
 		nav_side.add_child(_button("Abdocken [U]", P.request_undock))
 	elif P.travel.is_empty() and P.autodock.is_empty():
 		var b := _button("Auto-Dock (nächster Ort)", P.start_autodock)
-		b.disabled = not P.autodock_ok()
+		var ad_why := P.autodock_block_reason()
+		b.disabled = ad_why != ""
+		b.tooltip_text = ad_why
 		nav_side.add_child(b)
+		if ad_why != "":
+			nav_side.add_child(_label("Auto-Dock gesperrt: " + ad_why, Color(0.9, 0.33, 0.29), 11))
+	# Modulfach des bedienten Steuerpults
+	var oh := P.operated_helm()
+	if oh != null and oh.inv != null:
+		var mods: PackedStringArray = []
+		for it in oh.inv.items:
+			mods.append("%s (%d %%)" % [ItemSystem.item(it.type).display_name, int(it.cond)])
+		var mrow := _row("Module im Pult", [_label(", ".join(mods) if not mods.is_empty() else "keine", COL_AMBER if not mods.is_empty() else COL_MUTED, 12)])
+		mrow.add_child(_button("Modulfach [E]", func(): open_container(PhysicsSystem.operated_helm().pos)))
+		nav_side.add_child(mrow)
 	nav_side.add_child(_label("ZIELE", COL_MUTED, 11))
 	for l in P.locations:
 		var r := P.rel_to(l.id)
@@ -1264,9 +1278,14 @@ func interact() -> void:
 	var p := CrewSystem.player()
 	if p == null:
 		return
-	# Nächstgelegener Behälter oder Haufen (ein Haufen unter den Füßen zuerst)
+	# Nächstgelegener Behälter oder Haufen (ein Haufen unter den Füßen zuerst);
+	# dazu das Modulfach eines Steuerpults daneben
 	var best := Vector2i(-1, -1)
-	for src in ShipConstructionSystem.sources():
+	var cands: Array = ShipConstructionSystem.sources()
+	for dv in ShipSystem.grid.devices.values():
+		if dv.type == "helm" and dv.inv != null and not ShipSystem.grid.foreign(ShipSystem.grid.idx(dv.pos)):
+			cands.append({"pos": dv.pos, "inv": dv.inv})
+	for src in cands:
 		if p.can_reach(src.pos) and (best.x < 0 or p.pos.distance_to(Vector2(src.pos) + Vector2(0.5, 0.5)) < p.pos.distance_to(Vector2(best) + Vector2(0.5, 0.5))):
 			best = src.pos
 	if best.x >= 0:
@@ -1332,7 +1351,10 @@ func _transfer(from_box: bool, type: String, qty: int) -> void:
 		return
 	var moved := inv.move_to(c.inv, type, qty) if from_box else c.inv.move_to(inv, type, qty)
 	if moved < qty:
-		GameState.toast("Nicht alles passt hinein." if not from_box else c.display_name + " kann nicht mehr tragen.")
+		if not from_box and inv.only_modules and ItemSystem.item(type).helm_module == "":
+			GameState.toast("Das Modulfach des Steuerpults nimmt nur Steuerpultmodule auf.")
+		else:
+			GameState.toast("Nicht alles passt hinein." if not from_box else c.display_name + " kann nicht mehr tragen.")
 	ShipSystem.grid.clean_piles()
 	_last_container = ""
 	_refresh_container()
@@ -1443,11 +1465,16 @@ func _refresh_container() -> void:
 		return
 	var head := HBoxContainer.new()
 	var dev := ShipSystem.grid.device_at(open_pos)
-	var title := _label(dev.data().display_name if dev != null else "Haufen auf dem Boden", COL_AMBER, 15)
+	var helm_box: bool = dev != null and inv != null and inv.only_modules
+	var title := _label((dev.data().display_name + (" – Modulfach" if helm_box else "")) if dev != null else "Haufen auf dem Boden", COL_AMBER, 15)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
 	head.add_child(_button("✕", close_container))
 	container_box.add_child(head)
+	if helm_box:
+		# Was dieses Pult freischaltet (nur dieses Pult, nur funktionsfähige Module)
+		var why := PhysicsSystem.module_block_reason(dev, "autodock")
+		container_box.add_child(_label("Nimmt nur Steuerpultmodule. Auto-Dock an diesem Pult: " + ("freigeschaltet" if why == "" else why), COL_MUTED, 11))
 	if dev != null and dev.lock_level > 0:
 		container_box.add_child(_label("Verschlossen (Sicherheitsstufe %d). Nötig: Hacken+Software %d (beste Figur hat %d)." % [
 			dev.lock_level, int(SkillSystem.hack_needed(dev.lock_level)), int(_best_hack())], Color(0.9, 0.33, 0.29), 12))

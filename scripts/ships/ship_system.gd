@@ -58,7 +58,6 @@ func create_start_ship() -> void:
 	# Flugsystem
 	grid.place_device("helm", Vector2i(x0 + 14, y0 + 1))
 	grid.place_device("fueltank", Vector2i(x0 + 11, y0 + 1))
-	grid.place_device("autodock", Vector2i(x0 + 14, y0 + 3))
 	# Zwei Triebwerke (1×3) durch die hintere Außenwand: innen in der Wohnkabine,
 	# Düse hinten ins All, Schub nach vorn
 	grid.place_device("thruster", Vector2i(x0 + 1, y0 + 2), 0)
@@ -99,6 +98,11 @@ func create_start_ship() -> void:
 		if grid.holds_air(i):
 			grid.fill_air(i)
 	grid = ShipGrid.refine(grid)
+	# Steuerpult mit Autodock-Modul im Modulfach (früher ein eigenes Gerät im Cockpit)
+	for dev in grid.devices.values():
+		if dev.type == "helm":
+			dev.inv.add("mod_autodock", 1, 100.0)
+			break
 	template_map = grid.coarse_map.duplicate()
 	template_w = grid.coarse_width
 	EventBus.ship_changed.emit()

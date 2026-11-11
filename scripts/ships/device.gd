@@ -59,6 +59,7 @@ func _init(t: String, p: Vector2i) -> void:
 		charge = d.capacity * 0.5
 	if d.storage > 0.0:
 		inv = Inventory.new(INF, d.storage)
+		inv.only_modules = t == "helm"
 	if t == "locker":
 		suit = {"o2": 100.0, "battery": 100.0}
 	if t == "pump":
@@ -66,6 +67,24 @@ func _init(t: String, p: Vector2i) -> void:
 
 func data() -> DeviceData:
 	return ItemSystem.device(type)
+
+## Funktionsfähiges Steuerpultmodul dieser Art im Modulfach ({} = keins)
+func module(kind: String) -> Dictionary:
+	if inv == null or not inv.only_modules:
+		return {}
+	for it in inv.items:
+		if ItemSystem.item(it.type).helm_module == kind and float(it.cond) > 0.0:
+			return it
+	return {}
+
+## Steckt ein (auch kaputtes) Modul dieser Art im Fach?
+func has_module_item(kind: String) -> bool:
+	if inv == null or not inv.only_modules:
+		return false
+	for it in inv.items:
+		if ItemSystem.item(it.type).helm_module == kind:
+			return true
+	return false
 
 func needs_power() -> bool:
 	return data().power < 0.0

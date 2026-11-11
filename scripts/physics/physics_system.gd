@@ -303,11 +303,43 @@ func _cmd_helm_reason(d: Dictionary) -> String:
 func manual_ok() -> bool:
 	return helm_block_reason(operated_helm()) == ""
 
+## Auto-Dock ist freigeschaltet, wenn am bedienten Pult (intakt, mit Strom) ein
+## funktionsfähiges Autodock-Modul im Modulfach steckt. Module anderswo (Gepäck, Boden,
+## anderes Pult) zählen nicht; mehrere gleiche Module schalten dieselbe Funktion frei.
 func autodock_ok() -> bool:
-	for h in ship_devices("autodock"):
-		if h.powered and not h.broken:
-			return true
-	return false
+	return autodock_block_reason() == ""
+
+## Grund, warum Auto-Dock hier gesperrt ist ("" = freigeschaltet)
+func autodock_block_reason() -> String:
+	var why := pilot_block_reason()
+	if why != "":
+		return why
+	return module_block_reason(operated_helm(), "autodock")
+
+## Steckt im Pult h ein funktionsfähiges Modul dieser Art? "" = ja, sonst der Grund
+func module_block_reason(h: Device, kind: String) -> String:
+	if h == null:
+		return "Das Steuerpult ist weg."
+	if not h.module(kind).is_empty():
+		return ""
+	var name := module_name(kind)
+	if h.has_module_item(kind):
+		return "Das %s in diesem Steuerpult ist kaputt." % name
+	return "Kein %s in diesem Steuerpult. Modul ins Modulfach legen (E am Pult)." % name
+
+## Anzeigename des Moduls für eine Funktion (z. B. "Autodock-Modul")
+func module_name(kind: String) -> String:
+	for id in ItemSystem.items:
+		if ItemSystem.item(id).helm_module == kind:
+			return ItemSystem.item(id).display_name
+	return kind
+
+## Kann ein laufendes Auto-Dock-Manöver weitergehen? (Pult, Strom, Modul im startenden Pult)
+func _autodock_reason() -> String:
+	var why := _cmd_helm_reason(autodock)
+	if why != "" or not autodock.has("hx"):
+		return why
+	return module_block_reason(ShipSystem.grid.device_at(Vector2i(int(autodock.hx), int(autodock.hy))), "autodock")
 
 ## Pilot-Fähigkeit spart Treibstoff (siehe SkillSystem)
 func fuel_factor() -> float:
@@ -332,8 +364,10 @@ func step(dt: float) -> void:
 		GameState.toast("Schnellreise abgebrochen: %s Das Schiff fliegt mit %.2f km/s weiter." % [_cmd_helm_reason(travel), vel.length()], "bad")
 		travel = {}
 		return
-	if not autodock.is_empty() and _cmd_helm_reason(autodock) != "":
-		GameState.toast("Auto-Dock abgebrochen: " + _cmd_helm_reason(autodock), "bad")
+	if not autodock.is_empty() and _autodock_reason() != "":
+		# Kontrolliert abbrechen: freier Flug mit der erreichten Lage und Geschwindigkeit,
+		# keine Kopplung
+		GameState.toast("Auto-Dock abgebrochen: " + _autodock_reason(), "bad")
 		autodock = {}
 		return
 	if not travel.is_empty():
@@ -355,7 +389,8 @@ func step(dt: float) -> void:
 		if f >= 1.0:
 			var dest: String = autodock.to
 			autodock = {}
-			dock(dest, true)
+			if not dock(dest, true):
+				GameState.toast("Auto-Dock: Ankoppeln nicht möglich, das Schiff treibt frei.", "bad")
 		return
 	# Wurde pos/vel von außen gesetzt (Abdocken, Laden, Zusammenstoß)? Dann übernehmen.
 	if pos != _p32:
@@ -673,12 +708,15 @@ func undock() -> bool:
 	return true
 
 func start_autodock() -> void:
-	var why := pilot_block_reason()
+	var why := autodock_block_reason()
 	if why != "":
 		GameState.toast(why, "bad")
 		return
-	if not autodock_ok():
-		GameState.toast("Kein funktionierendes Auto-Dock-Modul an Bord.", "bad")
+	if docked != "":
+		GameState.toast("Das Schiff ist schon angedockt.")
+		return
+	if ShipSystem.free_ports().is_empty():
+		GameState.toast("Keine freie Andockschleuse für das Auto-Dock.", "bad")
 		return
 	var n := nearest()
 	if redock_locked(n.id):

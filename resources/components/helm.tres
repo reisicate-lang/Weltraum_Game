@@ -16,3 +16,5 @@ wears = false
 thrust = 0.0
 color = Color(0.2, 0.3, 0.42, 1)
 tech = "computer"
+storage = 6.0
+description = "Steuerpult: Fliegen im Cockpit (N oder Klick). Hat ein Modulfach (E am Pult): eingelegte Module wie das Autodock-Modul schalten an diesem Pult Funktionen frei."

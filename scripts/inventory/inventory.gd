@@ -16,6 +16,8 @@ var items: Array[Dictionary] = []
 var max_weight: float = INF
 var max_volume: float = INF
 var hands := false
+## Modulfach eines Steuerpults: nimmt nur Steuerpultmodule (ItemData.helm_module)
+var only_modules := false
 
 func _init(w: float = INF, v: float = INF) -> void:
 	max_weight = w
@@ -92,6 +94,8 @@ func room(type: String) -> int:
 	if hands and is_heavy(type):
 		return 1 if in_hands().is_empty() else 0
 	var d: ItemData = ItemSystem.item(type)
+	if only_modules and d.helm_module == "":
+		return 0
 	var w := (max_weight - load_weight()) / d.weight
 	var v := (max_volume - load_volume()) / d.volume
 	var r := minf(w, v)
@@ -166,4 +170,7 @@ func from_data(data: Array) -> void:
 		var st := {"type": String(it.type), "qty": int(it.qty), "cond": float(it.cond)}
 		if it.has("data") and it.data != null:
 			st.data = it.data
+		# Früher: abgebautes eigenständiges Auto-Dock-Gerät → heute das Autodock-Modul
+		if st.type == "pk_autodock":
+			st = {"type": "mod_autodock", "qty": int(it.qty), "cond": float(it.cond)}
 		items.append(st)

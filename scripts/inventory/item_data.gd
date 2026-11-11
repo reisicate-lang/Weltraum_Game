@@ -19,5 +19,7 @@ extends Resource
 @export var weapon: String = ""
 ## Schmuggelware (am Schwarzmarkt viel wert, kann bei Kontrollen beschlagnahmt werden)
 @export var contraband: bool = false
+## Steuerpultmodul: welche Funktion es im Modulfach eines Steuerpults freischaltet (z. B. "autodock")
+@export var helm_module: String = ""
 ## Welches Gerät damit aufgefüllt wird und um wie viel, z. B. {"generator": 40}
 @export var refill: Dictionary = {}

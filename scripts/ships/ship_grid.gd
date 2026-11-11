@@ -230,7 +230,7 @@ func place_device(type: String, p: Vector2i, rot: int = 0) -> Device:
 	return dev
 
 ## Umstellung: Wie viele alte 1×1-Geräte beim Laden umgebaut bzw. als Gegenstand abgelegt wurden
-var migrated := {"converted": 0, "packed": 0, "refined": false}
+var migrated := {"converted": 0, "packed": 0, "refined": false, "modules": 0}
 ## Nach refine(): grober Feld-Index -> feiner Feld-Index (Vertreter: Wandfeld, Gerät oder Boden).
 ## Damit rechnen andere Systeme gespeicherte Positionen alter Spielstände um.
 var coarse_map := PackedInt32Array()
@@ -317,6 +317,7 @@ static func from_data(d: Dictionary) -> ShipGrid:
 		g.piles[int(entry[0])] = inv
 	for dev in legacy:
 		g._migrate_legacy(dev)
+	g._migrate_autodock()
 	for i in d.get("vents", []):
 		g.vent_closed[int(i)] = 1
 	for i in d.get("linked", []):
@@ -364,6 +365,26 @@ func _migrate_dock(dev: Device) -> void:
 	set_tile(dev.pos, Tile.WALL)
 	drop_items(_free_floor_near(dev.pos), "pk_" + dev.type, 1, dev.cond, dd)
 	migrated.packed += 1
+
+## Früheres eigenständiges Auto-Dock-Gerät → Autodock-Modul (Zustand bleibt).
+## Es kommt ins Modulfach eines Steuerpults im selben Bereich, das noch keins hat; sonst
+## liegt es einmal als Gegenstand an seinem Platz. So entsteht kein doppeltes Modul.
+func _migrate_autodock() -> void:
+	for i in devices.keys():
+		var dev: Device = devices[i]
+		if dev.type != "autodock":
+			continue
+		remove_device(dev)
+		var cond := 0.0 if dev.broken else dev.cond
+		var placed := false
+		for h in devices.values():
+			if h.type == "helm" and h.inv != null and zone[idx(h.pos)] == zone[i] and not h.has_module_item("autodock"):
+				placed = h.inv.add("mod_autodock", 1, cond) == 1
+				if placed:
+					break
+		if not placed:
+			drop_items(dev.pos if get_tile(dev.pos) == Tile.FLOOR else _free_floor_near(dev.pos), "mod_autodock", 1, cond)
+		migrated.modules += 1
 
 func _free_floor_near(p: Vector2i) -> Vector2i:
 	for r in 12:

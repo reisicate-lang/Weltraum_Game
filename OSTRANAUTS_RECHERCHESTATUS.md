@@ -248,6 +248,25 @@ Ostranauts-Werte wurden nicht gemessen.
 - **Alte 1-Feld-Schleusen** werden an derselben Stelle auf 5×2 umgestellt, wenn innen Platz
   ist. Sonst wird die Wand geschlossen und die Schleuse liegt als Gegenstand an Bord.
 
+### Steuerpult-Module (Stand: November 2026)
+
+Vorgabe des Nutzers, ohne Ostranauts-Quelle. **Umsetzung:**
+- Jedes Steuerpult hat ein Modulfach mit 6 Litern. Es nimmt nur Steuerpultmodule
+  (`ItemData.helm_module`).
+- Das Autodock-Modul ist ein Gegenstand mit 3 kg. Andere Steuerpultmodule gibt es im
+  Spiel noch nicht; weitere bekommen nur ein `helm_module` und eine Abfrage an ihrer
+  Funktion.
+- **Auto-Dock** ist nur frei, wenn das bediente Pult intakt ist, Strom hat und ein Modul mit
+  Zustand über 0 % enthält. Mehrere gleiche Module schalten die Funktion nur einmal frei.
+- **Laufendes Manöver:** Es bricht ab, wenn am startenden Pult Strom, Zustand oder Modul
+  fehlen. Das Schiff bleibt im freien Flug mit der erreichten Lage, es entsteht keine
+  Kopplung.
+- **Alte Spielstände:** Das eigenständige Auto-Dock-Gerät wird zum Modul.
+  - Es kommt ins Pult desselben Bereichs ohne Modul. Sonst liegt es als Gegenstand an
+    seinem Platz.
+  - Ein abgebautes Auto-Dock im Inventar wird ebenfalls zum Modul.
+- **Neues Startschiff:** Das Modul liegt im Pult.
+
 ## Geschwindigkeitsangleichung im Cockpit (Stand: November 2026)
 
 **Quelle:** offizieller Ostranauts-Startguide auf Steam, Abschnitte „Flight Metrics“ und

@@ -369,7 +369,8 @@ func sources() -> Array:
 	var g := ShipSystem.grid
 	var out: Array = []
 	for i in g.devices:
-		if g.devices[i].inv != null and g.devices[i].lock_level == 0 and g.devices[i].type != "terminal" and g.devices[i].data().length == 1:
+		# Nicht: Handelsterminal, Modulfach des Steuerpults, Mehrfeld-Geräte
+		if g.devices[i].inv != null and g.devices[i].lock_level == 0 and g.devices[i].type != "terminal" and g.devices[i].type != "helm" and g.devices[i].data().length == 1:
 			out.append({"pos": g.pos(i), "inv": g.devices[i].inv})
 	for i in g.piles:
 		out.append({"pos": g.pos(i), "inv": g.piles[i]})
