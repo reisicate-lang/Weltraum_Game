@@ -23,6 +23,8 @@ const CHAR_PX := 32.0
 ## Bei 1x ist eine Sekunde im Spiel eine echte Sekunde.
 const MINUTES_PER_SECOND := 1.0 / 60.0
 const SPEEDS: Array[float] = [0.0, 1.0, 2.0, 4.0, 8.0, 16.0]   ## Pause, ×1 (Echtzeit), ×2, ×4, ×8, ×16
+## Echte Sekunden nach dem Loslassen der letzten WASD-Taste, bis ein Laufbefehl (Klick) startet
+const MANUAL_WALK_DELAY := 0.5
 const START_MINUTES := 8 * 60
 
 ## Laufgeschwindigkeit: 5 Felder pro Sekunde (in Feldern pro Spielminute) – dieselbe sichtbare

@@ -40,6 +40,7 @@ func _initialize() -> void:
 	# 3) Ein halber Tag (12 h) mit der Startcrew: Mira isst 2×, trinkt 5–7×, bleibt gesund
 	var crew = root.get_node("CrewSystem").crew
 	var m = crew[0]
+	m.traits.clear()   # neutrale Figur: Charakterzüge wie „Genügsam“ verschieben die Mahlzeiten
 	var meals := 0
 	var drinks := 0
 	var last := ""

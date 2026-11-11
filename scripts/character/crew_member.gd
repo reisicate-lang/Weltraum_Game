@@ -22,6 +22,7 @@ var health := 100.0
 var unconscious := false
 var is_player := false
 var manual_until := 0.0             ## echte Zeit (ms), bis wann von Hand gesteuert
+var manual_last := -100000.0        ## echte Zeit (ms) des letzten WASD-Schritts
 var task := "Wartet"
 var inv := Inventory.new(Config.CARRY_WEIGHT, Config.CARRY_VOLUME)
 var suit = null                     ## getragener Raumanzug {"o2", "battery"} oder null
@@ -83,6 +84,11 @@ func suit_ok() -> bool:
 
 func is_manual() -> bool:
 	return is_player and Time.get_ticks_msec() < manual_until
+
+## Darf ein Laufbefehl (Klick) schon starten? Erst MANUAL_WALK_DELAY echte Sekunden
+## nach dem letzten WASD-Schritt; ein früherer Klick wird bis dahin vorgemerkt.
+func walk_ready() -> bool:
+	return Time.get_ticks_msec() >= manual_last + Config.MANUAL_WALK_DELAY * 1000.0
 
 # ---------------- Befehle ----------------
 
@@ -216,7 +222,8 @@ func manual_move(dir: Vector2, dist: float) -> void:
 		release_job()
 		stop_activity()
 		order = null
-	manual_until = Time.get_ticks_msec() + 8000
+	manual_last = Time.get_ticks_msec()
+	manual_until = manual_last + 8000
 	path.clear()
 	dir = dir.normalized()
 	facing = dir.angle()
@@ -398,8 +405,12 @@ func update(dt: float) -> void:
 	if away_until > GameState.time:
 		task = "Auf der Station unterwegs"
 		return
+	# Nach WASD: Selbststeuerung bleibt kurz aus, ein Laufbefehl startet aber schon
+	# nach MANUAL_WALK_DELAY echten Sekunden (vorgemerkter Klick läuft dann von selbst los)
+	if is_manual() and order != null and UIManager.pilot != self and walk_ready():
+		manual_until = 0.0
 	if is_manual():
-		task = "Steuert das Schiff" if UIManager.pilot == self else "Wird von dir gesteuert"
+		task = "Steuert das Schiff" if UIManager.pilot == self else ("Läuft gleich los" if order != null else "Wird von dir gesteuert")
 		return
 	# 1) Laufbefehl
 	if order != null:
