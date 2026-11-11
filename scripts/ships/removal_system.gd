@@ -480,10 +480,7 @@ func install_reason(pk: String, p: Vector2i) -> String:
 	var has_dev := g.occupied(p)
 	var ok := false
 	if key == "dev:dockport":
-		var dwhy: String = g.dock_check(p).reason
-		if dwhy != "":
-			return dwhy
-		ok = true
+		return "Andockschleusen werden nicht mehr eingebaut – angedockt wird an der Außentür einer Luftschleuse."
 	elif key.begins_with("dev:") and ItemSystem.device(key.substr(4)).length > 1:
 		var why := g.mount_reason(key.substr(4), p, ShipConstructionSystem.build_rot)
 		if why != "":

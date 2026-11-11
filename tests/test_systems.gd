@@ -43,11 +43,16 @@ func _initialize() -> void:
 	# Haufen ohne Grenze müssen Gegenstände aufnehmen (früher int(INF) -> 0 Platz)
 	var heap := Inventory.new()
 	_check("Haufen nimmt Gegenstände auf", heap.add("plate", 5) == 5 and heap.count("plate") == 5)
+	# Wrack ankoppeln (sonst ein eigenes Ziel): Station lösen, Wrack an den Port
+	root.get_node("StationSystem").clear()
+	root.get_node("SalvageSystem").generate()
 	var junk_ok := false
 	for pi in ship.grid.piles:
-		if not ship.grid.piles[pi].items.is_empty():
+		if not ship.grid.piles[pi].items.is_empty() and ship.grid.zone[pi] == 1:
 			junk_ok = true
-	_check("Mondmüll am Steg ist nicht leer", junk_ok)
+	_check("Schrott im Wrack ist nicht leer", junk_ok)
+	root.get_node("SalvageSystem").clear()
+	root.get_node("StationSystem").build("tycho")
 	root.get_node("SalvageSystem").clear()
 	Config.METEORS_PER_DAY
 	var g = ship.grid
@@ -108,7 +113,7 @@ func _initialize() -> void:
 	_run(20)
 	_check("Crew hat das Feuer gelöscht (brennend: %d, Mira: %s, hp %d, Stress %d, manuell %s)" % [temp.burning_count(), mira.task, int(mira.health), int(mira.stress), str(mira.is_manual())], temp.burning_count() == 0)
 	# Feuer im Vakuum erlischt
-	var vac: int = g.idx(C(x0 - 4, y0 + 3))
+	var vac: int = g.idx(C(x0 + 17, y0 + 3))   # rechts neben dem Schiff im All (links hängt die Station)
 	g.fire[vac] = 1
 	_run(0.5)
 	_check("Feuer ohne Luft erlischt", g.fire[vac] == 0)

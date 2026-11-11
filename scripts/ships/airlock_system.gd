@@ -53,8 +53,14 @@ func _rebuild() -> void:
 		locks.append(lock)
 	_dirty = false
 
+var _grid_id := 0
+
 func ensure() -> void:
-	if _dirty:
+	# Auch neu aufbauen, wenn das Raster ausgetauscht wurde (Laden, Schiffswechsel)
+	if _dirty or ShipSystem.grid == null or ShipSystem.grid.get_instance_id() != _grid_id:
+		if ShipSystem.grid == null:
+			return
+		_grid_id = ShipSystem.grid.get_instance_id()
 		_rebuild()
 
 func is_lock_tile(i: int) -> bool:

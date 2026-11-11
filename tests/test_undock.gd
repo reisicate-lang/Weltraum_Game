@@ -80,7 +80,7 @@ func _initialize() -> void:
 	var rel: float = (P.vel - l4.vel).length()
 	_check("Sanfter Abstoß 3 m/s (%.1f m/s)" % (rel * 1000.0), absf(rel - P.UNDOCK_PUSH) < 0.0002)
 	_check("Station und Luke entfernt", not st.active() and st.hatch == -1)
-	_check("Wrack-Zustand am Ort abgelegt", fleet.places.has("l4"))
+	_check("An der Station wird kein Wrack abgelegt (Wracks sind eigene Ziele)", fleet.places.get("l4", {}).get("wreck") == null)
 	_run(30)
 	var r: Dictionary = P.rel_to("l4")
 	_check("Schiff treibt gleichmäßig weg (%.0f m nach 30 s)" % (r.dist * 1000.0), r.dist > 0.07 and r.dist < 0.12)
@@ -124,6 +124,9 @@ func _initialize() -> void:
 	mira.pos = Vector2(ship.grid.pos(st.hatch)) + Vector2(0.5, 0.5)
 	_check("Crew in der Luke: verweigert (%s)" % P.undock_block_reason(), not P.request_undock() and "Luke" in _last())
 	mira.pos = Vector2(ship.spawn_point()) + Vector2(0.5, 0.5)
+	# Ein Wrack am Port (sonst ein eigenes Ziel): Station lösen, Wrack direkt ankoppeln
+	st.clear()
+	_check("(Vorbereitung) Wrack am Port", root.get_node("SalvageSystem").generate())
 	var wreck_tile := Vector2i(-1, -1)
 	for i in ship.grid.tiles.size():
 		if ship.grid.zone[i] == 1 and ship.grid.walkable(ship.grid.pos(i)):
@@ -172,7 +175,7 @@ func _initialize() -> void:
 			frames += 1
 		var rr: Dictionary = P.rel_to("tycho")
 		_check("Zeitstufe %d: frei, ohne Wiederandocken, gleichmäßig (%.0f m, %.1f m/s, %d Bilder)" % [si, rr.dist * 1000.0, rr.speed * 1000.0, frames],
-			P.docked == "" and rr.speed > 0.0025 and rr.speed < 0.0035 and rr.dist > 0.1 and rr.dist < 0.3)
+			P.docked == "" and rr.speed > 0.0025 and rr.speed < 0.004 and rr.dist > 0.1 and rr.dist < 0.3)   # 3 m/s Abstoß + Bahnabdrift
 		_check("Zeitstufe %d: kein Zusammenstoß" % si, _hull(ship.grid) == hb and not toasts.any(func(t): return "Zusammenstoß" in t))
 	time.set_speed(0)
 

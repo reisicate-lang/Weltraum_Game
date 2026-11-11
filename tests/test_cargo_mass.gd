@@ -113,6 +113,7 @@ func _initialize() -> void:
 
 	# 2) Auf einen fremden Bereich übertragen: Masse fällt um das Stapelgewicht
 	Config.ENABLE_WRECK = true
+	root.get_node("StationSystem").clear()   # ein Port: Station lösen, Wrack ankoppeln
 	_check("Wrack angehängt", root.get_node("SalvageSystem").generate())
 	g = ship.grid
 	crate = _crate()

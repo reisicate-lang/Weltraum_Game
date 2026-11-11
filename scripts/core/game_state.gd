@@ -29,9 +29,10 @@ func new_game() -> void:
 	QuestSystem.reset()
 	GoalSystem.reset()
 	DialogueSystem.reset()
-	# Erst die Station an die Schleuse, dann das Wrack (es weicht der Station aus)
+	# Station an die Luftschleuse; das Wrack liegt als eigenes Ziel neben Tycho
 	StationSystem.build(PhysicsSystem.docked)
-	SalvageSystem.generate()
+	if Config.ENABLE_WRECK:
+		FleetSystem.add_site(PhysicsSystem.docked)
 	# Standard-Lebenslauf für Mira (im Startbildschirm änderbar)
 	var mira := CrewSystem.player()
 	CharacterSystem.begin(mira)

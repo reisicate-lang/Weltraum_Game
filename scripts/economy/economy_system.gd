@@ -180,19 +180,12 @@ func buy_claim() -> void:
 	if credits < fee:
 		GameState.toast("Nicht genug Credits für ein Bergungsrecht.")
 		return
-	if not SalvageSystem.clearable():
-		GameState.toast("Erst alle Crewmitglieder vom Wrack holen.")
-		return
-	# Das neue Wrack braucht eine Andockschleuse nach unten (die alte wird beim Verschrotten frei)
-	if ShipSystem.ports().filter(func(p): return p.dir == Vector2i(0, 1) and (not ShipSystem.grid.linked.has(p.i) or p.i == SalvageSystem.port)).is_empty():
-		GameState.toast("Für ein neues Wrack fehlt eine freie Andockschleuse nach unten (untere Außenwand).", "bad")
-		return
 	credits -= fee
 	DialogueSystem.claim_discount = false
 	book("Bergungsrecht für neues Wrack", -fee)
-	SalvageSystem.clear()
-	SalvageSystem.generate()
-	GameState.toast("Ein neues Wrack wurde an die Bergungsleine geschleppt: " + SalvageSystem.wreck_name)
+	# Das Wrack ist ein eigenes Ziel neben der Station: anfliegen und ankoppeln
+	var site := FleetSystem.add_site(PhysicsSystem.docked if PhysicsSystem.docked != "" else "tycho")
+	GameState.toast("Bergungsrecht gekauft: %s treibt jetzt neben der Station (Navigation → Ziele)." % String(site.name))
 
 func scrap_hull() -> void:
 	if not Config.ENABLE_WRECK:

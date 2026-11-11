@@ -89,22 +89,17 @@ func build(id: String) -> bool:
 	if l.is_empty() or String(l.get("kind", "")) != "station":
 		return false
 	var g := ShipSystem.grid
+	# Jeder freie Port (Außentür einer Luftschleuse) passt, in jeder Richtung; der beim
+	# Klammern ausgerichtete zuerst (ShipSystem.dock_pref)
 	var ports: Array = ShipSystem.free_ports()
 	if ShipSystem.ports().is_empty():
-		GameState.toast("Keine Andockschleuse vorhanden. Bau eine in eine Außenwand (Geräte-Menü: Andockschleuse).", "bad")
+		GameState.toast("Kein Andockport: Angedockt wird an der Außentür einer Luftschleuse.", "bad")
 		return false
-	# Schleusen nach unten bleiben möglichst für Wracks frei
-	ports.sort_custom(func(a, b): return int(a.dir == Vector2i(0, 1)) < int(b.dir == Vector2i(0, 1)))
-	var allowed: Array = []
-	for name in l.get("docks", DOCK_DIRS.keys()):
-		allowed.append(DOCK_DIRS[name])
 	var kinds: Array = l.get("rooms", DEFAULT_ROOMS).duplicate()
 	if l.get("shipyard", false) and not "shipyard" in kinds:
 		kinds.append("shipyard")
 	var length := kinds.size() * PITCH + 1
 	for port in ports:
-		if not port.dir in allowed:
-			continue
 		var ud := _fit(g, port, length)
 		if ud >= 0:
 			_build_at(g, id, port, ud, kinds)
@@ -131,7 +126,7 @@ func _fit(g: ShipGrid, port: Dictionary, length: int) -> int:
 		for u in length:
 			for v in DEPTH:
 				var q := _map(port, ud, u, v)
-				if q.x < 1 or q.y < 1 or q.x > g.width - 2 or q.y > g.height - 2 or g.get_tile(q) != ShipGrid.Tile.SPACE or g.zone[g.idx(q)] != 0:
+				if q.x < 1 or q.y < 1 or q.x > g.width - 2 or q.y > g.height - 2 or g.get_tile(q) != ShipGrid.Tile.SPACE or g.zone[g.idx(q)] != 0 or g.occupied(q):
 					ok = false
 					break
 			if not ok:
@@ -212,8 +207,9 @@ func clear() -> void:
 				g.zone[i] = 0
 		# Nur die Verbindung lösen: die Schleuse bleibt, es bleiben keine Felder zurück
 		g.linked.erase(hatch)
-		# Alter Spielstand: frühere Luke (Tür ohne Schleuse) wieder zur Wand machen
-		if hatch >= 0 and hatch < g.tiles.size() and g.tiles[hatch] == ShipGrid.Tile.DOOR and not g.devices.has(hatch):
+		# Alter Spielstand: frühere Luke (Tür ohne Schleuse) wieder zur Wand machen –
+		# aber nie die Außentür einer Luftschleuse (das ist der Andockport)
+		if hatch >= 0 and hatch < g.tiles.size() and g.tiles[hatch] == ShipGrid.Tile.DOOR and not g.devices.has(hatch) and not AirlockSystem.is_lock_door(hatch):
 			g.tiles[hatch] = ShipGrid.Tile.WALL
 		EventBus.ship_changed.emit()
 	tiles.clear()
@@ -450,7 +446,11 @@ func to_data() -> Dictionary:
 func from_data(d: Dictionary) -> void:
 	tiles.clear()
 	hatch = int(d.get("hatch", -1))
+	var old_hatch := hatch
 	station_id = "x"
 	clear()
 	if PhysicsSystem.docked != "":
+		# Wieder an derselben Tür aufbauen (auch an einer früheren Andockschleuse; die wird
+		# erst nach dem regulären Abdocken entfernt)
+		ShipSystem.dock_pref = old_hatch
 		build(PhysicsSystem.docked)

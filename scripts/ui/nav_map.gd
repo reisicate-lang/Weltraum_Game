@@ -54,7 +54,7 @@ func _draw() -> void:
 			var b: Dictionary = P.space[l.body]
 			draw_arc(to_screen(Vector2(b.x, b.y)), float(l.radius) * zoom, 0, TAU, 96, Color(0.35, 0.78, 0.9, 0.15), 1.0)
 		var sp := to_screen(P.loc_state(l, P.secs()).pos)
-		var col := Color(0.63, 0.53, 0.42) if l.kind in ["debris", "asteroid", "outpost"] else (Color(0.69, 0.42, 0.82) if l.get("black", false) else Color(0.35, 0.78, 0.9))
+		var col := Color(0.63, 0.53, 0.42) if l.kind in ["debris", "asteroid", "outpost", "wreck"] else (Color(0.69, 0.42, 0.82) if l.get("black", false) else Color(0.35, 0.78, 0.9))
 		var sz := maxf(6.0, 0.08 * zoom)
 		draw_rect(Rect2(sp - Vector2(sz, sz) * 0.5, Vector2(sz, sz)), col)
 		draw_string(font, sp + Vector2(sz * 0.5 + 6, 4), l.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.87, 0.9, 0.94))

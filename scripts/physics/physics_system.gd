@@ -54,7 +54,12 @@ var _no_fuel_warned := false
 func _ready() -> void:
 	var f := FileAccess.open("res://data/space.json", FileAccess.READ)
 	space = JSON.parse_string(f.get_as_text())
-	locations = space.locations
+	locations = space.locations.duplicate()
+
+## Zusätzliche Orte (Wracks als eigene Ziele, siehe FleetSystem.sites) zu den festen Orten
+func set_extra_locations(extra: Array) -> void:
+	locations = space.locations.duplicate()
+	locations.append_array(extra)
 
 func reset() -> void:
 	undock_lock_id = ""
@@ -65,6 +70,7 @@ func reset() -> void:
 	match_target = ""
 	stop_inputs()
 	helm_at = NO_HELM
+	angle = 0.0          # neues Spiel: Nase nach vorn (nicht vom vorigen Spiel erben)
 	ang_vel = 0.0
 	target = ""
 	crashed = false
@@ -86,6 +92,12 @@ func _body(name: String) -> Dictionary:
 
 ## Position und Geschwindigkeit eines Ortes (Stationen kreisen um Erde oder Mond)
 func loc_state(l: Dictionary, t: float) -> Dictionary:
+	# Wrack neben einem Ort: fester Abstand, bewegt sich mit diesem Ort
+	if l.has("near"):
+		var base := loc(String(l.near))
+		if not base.is_empty():
+			var st := loc_state(base, t)
+			return {"pos": st.pos + Vector2(float(l.off[0]), float(l.off[1])), "vel": st.vel}
 	if l.has("body"):
 		var b := _body(l.body)
 		var r: float = l.radius
@@ -526,7 +538,7 @@ func dock_alignment(id: String) -> Dictionary:
 		var dev := rad_to_deg(absf(d.rotated(angle).angle_to(to_target))) if to_target.length() > 0.0001 else 0.0
 		if dev < best.deg:
 			best = {"ok": dev <= float(space.dock_align_deg) or to_target.length() < 0.02, "deg": dev,
-				"angle": wrapf(to_target.angle() - d.angle(), -PI, PI), "port": true, "dir": d.rotated(angle)}
+				"angle": wrapf(to_target.angle() - d.angle(), -PI, PI), "port": true, "dir": d.rotated(angle), "i": int(p.i)}
 	return best
 
 ## Anflugdaten zum Ziel: Entfernung, Relativgeschwindigkeit, Annäherung, Bremswege
@@ -632,9 +644,15 @@ func dock(id: String, force: bool = false) -> bool:
 		return true
 	# Andocken nur mit Andockschleuse (Tür an Tür, keine Gänge)
 	if ShipSystem.ports().is_empty():
-		GameState.toast("Keine Andockschleuse vorhanden. Bau eine in eine Außenwand (Geräte-Menü: Andockschleuse).", "bad")
+		GameState.toast("Kein Andockport: Angedockt wird an der Außentür einer Luftschleuse (Raum mit Pumpe, Tür ins All).", "bad")
 		return false
+	# Klammern am ausgerichteten Port: dort entsteht der Übergang
+	var al := dock_alignment(id)
+	ShipSystem.dock_pref = int(al.get("i", -1))
 	if String(loc(id).get("kind", "")) == "station" and Config.ENABLE_STATION and not StationSystem.build(id):
+		return false
+	# Wrack als eigenes Ziel: erst jetzt an den Port hängen (vorher kein Wrackbereich am Schiff)
+	if String(loc(id).get("kind", "")) == "wreck" and Config.ENABLE_WRECK and not FleetSystem.attach_site(loc(id)):
 		return false
 	docked = id
 	stop_inputs()
@@ -700,6 +718,8 @@ func undock() -> bool:
 	StationSystem.clear()
 	FleetSystem.leave(loc(from))
 	docked = ""
+	# Frühere Andockschleusen (5×2) nach dem Lösen entfernen und abdichten
+	ShipSystem.retire_legacy_ports()
 	# Sanfter Abstoß nach hinten
 	vel += Vector2.from_angle(angle + PI) * UNDOCK_PUSH
 	undock_lock_id = from

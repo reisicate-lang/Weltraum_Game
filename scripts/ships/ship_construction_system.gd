@@ -24,6 +24,8 @@ func can_place(tool: String, p: Vector2i) -> bool:
 		return place_reason(tool, p) == ""
 	if tool.begins_with("dev:"):
 		var dd := ItemSystem.device(tool.substr(4))
+		if not dd.buildable:
+			return false
 		if dd.length > 1:
 			return place_reason(tool, p) == ""
 		return t == ShipGrid.Tile.FLOOR and not has_dev

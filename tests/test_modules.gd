@@ -155,9 +155,9 @@ func _initialize() -> void:
 		if P.docked != "":
 			break
 	var hp: Vector2i = g.pos(st.hatch) if st.hatch >= 0 else Vector2i(-1, -1)
-	var hd = g.devices.get(st.hatch)
-	_check("1: Angedockt an der Außentür einer 5×2-Schleuse, Station Tür an Tür", P.docked == "tycho" and hd != null and hd.type == "dockport" and hd.cells().size() == 10
-		and g.linked.has(st.hatch) and g.get_tile(hp + hd.outward()) == ShipGrid.Tile.DOOR and g.zone[g.idx(hp + hd.outward())] == 3)
+	var pdir := Vector2i(-1, 0)   # Luftschleuse links: Außentür zeigt nach links
+	_check("1: Angedockt an der Außentür der Luftschleuse, Station Tür an Tür", P.docked == "tycho" and root.get_node("AirlockSystem").is_lock_door(st.hatch)
+		and g.linked.has(st.hatch) and g.get_tile(hp + pdir) == ShipGrid.Tile.DOOR and g.zone[g.idx(hp + pdir)] == 3)
 
 	# ---------------- 2) Zwei Pulte: nur A hat das Modul ----------------
 	P.request_undock()

@@ -299,6 +299,7 @@ func _initialize() -> void:
 	_check("3: Gepäck → Kiste: Masse gleich, nichts verloren", mira.inv.count("plate") == 0 and _deep("plate") == pl0 and absf(P.mass() - m3) < 0.000001)
 	# Von Bord: auf das Wrack (fremder Bereich)
 	Config.ENABLE_WRECK = true
+	root.get_node("StationSystem").clear()   # ein Port: Station lösen, Wrack ankoppeln
 	_check("3: Wrack angehängt", root.get_node("SalvageSystem").generate())
 	var m_w: float = P.mass()
 	ui._transfer(true, "plate", 1)

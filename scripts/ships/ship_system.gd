@@ -40,10 +40,7 @@ func create_start_ship() -> void:
 			var edge := x == x0 - 3 or y == y0 + 5 or y == y0 + 8
 			grid.set_tile(Vector2i(x, y), T.WALL if edge else T.FLOOR)
 	grid.set_tile(Vector2i(x0 - 3, y0 + 7), T.DOOR)
-	# Andockschleusen: rechts im Cockpit für Stationen, unten für Wracks
-	for p in [Vector2i(x0 + 15, y0 + 5), Vector2i(x0 + 6, y0 + 9)]:
-		grid.set_tile(p, T.DOOR)
-		grid.place_device("dockport", p)
+	# Angedockt wird an der Außentür der Luftschleuse links (Station und Wrack)
 
 	# Einrichtung
 	grid.place_device("bed", Vector2i(x0 + 1, y0 + 1))
@@ -135,17 +132,61 @@ func port_dir(p: Vector2i) -> Vector2i:
 	return Vector2i.ZERO
 
 ## Andockschleusen des eigenen Schiffs: [{pos, dir, i}]
-## pos = Außentür der Schleuse (5×2), dir = nach außen
+## Andockports: die Außentüren der Luftschleusen (Raum mit Pumpe, Tür zum All).
+## Station und Wrack koppeln Tür an Tür an einer solchen Außentür, egal in welche Richtung.
+## Frühere Andockschleusen-Geräte zählen nur noch, solange das Schiff keine Luftschleuse hat.
+## pos = Außentür, dir = nach außen, i = Feld-Index. Der beim Klammern gewählte Port zuerst.
 func ports() -> Array:
 	var out: Array = []
+	if grid == null:
+		return out
+	AirlockSystem.ensure()
+	for di in AirlockSystem.door_lock:
+		var e: Dictionary = AirlockSystem.door_lock[di]
+		var o: int = e.outside
+		if o < 0 or grid.zone[di] != 0:
+			continue
+		if grid.tiles[o] == ShipGrid.Tile.SPACE or grid.foreign(o):
+			out.append({"pos": grid.pos(di), "dir": grid.pos(o) - grid.pos(di), "i": di})
+	# Frühere Andockschleusen (5×2): nur ohne Luftschleuse, oder solange sie noch gekoppelt
+	# sind bzw. ein geladener Spielstand dort wieder ankoppelt (dock_pref)
+	var no_lock := out.is_empty()
 	for i in grid.devices:
 		var dev: Device = grid.devices[i]
-		if dev.type == "dockport" and grid.zone[i] == 0:
+		if dev.type == "dockport" and grid.zone[i] == 0 and (no_lock or grid.linked.has(i) or i == dock_pref):
 			var d := dev.outward()
-			var o := dev.pos + d
-			if grid.in_bounds(o) and (grid.get_tile(o) == ShipGrid.Tile.SPACE or grid.foreign(grid.idx(o))):
+			var o2 := dev.pos + d
+			if grid.in_bounds(o2) and (grid.get_tile(o2) == ShipGrid.Tile.SPACE or grid.foreign(grid.idx(o2))):
 				out.append({"pos": dev.pos, "dir": d, "i": i})
+	if dock_pref >= 0:
+		out.sort_custom(func(a, b): return int(a.i == dock_pref) > int(b.i == dock_pref))
 	return out
+
+## Beim Klammern ausgerichteter Port (Feld-Index), wird bevorzugt belegt
+var dock_pref := -1
+
+## Frühere Andockschleusen-Geräte (5×2) entfernen, sobald sie nicht mehr gekoppelt sind und das
+## Schiff eine Luftschleuse als Port hat: Außentür wird Wand, Innenreihe Boden – dicht.
+func retire_legacy_ports() -> int:
+	if grid == null:
+		return 0
+	var has_lock_port := false
+	AirlockSystem.ensure()
+	for di in AirlockSystem.door_lock:
+		var o: int = AirlockSystem.door_lock[di].outside
+		if o >= 0 and grid.zone[di] == 0 and (grid.tiles[o] == ShipGrid.Tile.SPACE or grid.foreign(o)):
+			has_lock_port = true
+	if not has_lock_port:
+		return 0
+	var n := 0
+	for dev in grid.devices.values():
+		if dev.type == "dockport" and grid.zone[grid.idx(dev.pos)] == 0 and not grid.linked.has(grid.idx(dev.pos)):
+			grid.remove_dock(dev)
+			n += 1
+	if n > 0:
+		EventBus.ship_changed.emit()
+		GameState.toast("Alte Andockschleuse entfernt, Außenwand abgedichtet. Angedockt wird jetzt an der Luftschleuse.")
+	return n
 
 ## Freie (nicht verbundene) Schleusen, optional nur in eine Richtung
 func free_ports(dir := Vector2i.ZERO) -> Array:

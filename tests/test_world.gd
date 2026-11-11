@@ -149,10 +149,29 @@ func _initialize() -> void:
 	var x0: int = (gg.width / Config.GRID_SCALE - 16) / 2
 	var y0: int = (gg.height / Config.GRID_SCALE - 10) / 2
 	_check("Erstes Ziel: Raumanzug", G.current().id == "suit")
-	build.place("floor", C(x0 - 3, y0 + 7) + Vector2i(-1, 0))   # direkt vor der Außentür der Luftschleuse im All
+	# Die Station hängt an der Luftschleuse: erst abdocken, dann draußen bauen
+	for k in 3:
+		gs.step(1.0 / 60.0)   # Strom verteilen
+	seat_pilot()
+	phys.request_undock()
+	var outside := C(x0 - 3, y0 + 7) + Vector2i(-1, -1)   # schräg neben der Außentür (davor wird angedockt)
+	build.place("floor", outside)
 	for k in 60 * 3:
 		gs.step(1.0 / 60.0)
 	_check("Ziel Raumanzug erreicht", "suit" in G.done)
+	# Zum Wrackziel und ankoppeln (das Bodenstück stünde dem Wrack im Weg)
+	gg.set_tile(outside, ShipGrid.Tile.SPACE)
+	var site = root.get_node("FleetSystem").sites[0]
+	for k in 20:
+		gs.step(1.0 / 60.0)
+	var sst: Dictionary = phys.loc_state(site, phys.secs())
+	phys.pos = sst.pos + Vector2(0.05, 0)
+	phys.vel = sst.vel
+	phys.angle = phys.dock_alignment(site.id).angle
+	for c in crew.crew:
+		c.pos = Vector2(root.get_node("ShipSystem").spawn_point()) + Vector2(0.5, 0.5)
+		c.path.clear()
+	_check("Am Wrack angekoppelt", phys.dock(site.id))
 	for i in gg.piles.keys():
 		if gg.zone[i] == 1:
 			build.place("haul", gg.pos(i))
@@ -170,7 +189,7 @@ func _initialize() -> void:
 	for k in 30:
 		gs.step(1.0 / 60.0)
 	var salv = root.get_node("SalvageSystem")
-	_check("7 Orte im All", phys.locations.size() == 7)
+	_check("7 feste Orte im All und das Wrack neben Tycho", phys.locations.size() == 8 and phys.locations.filter(func(l): return l.kind == "wreck").size() == 1)
 	seat_pilot()   # Pilot am Steuerpult (Flugbefehle nur dort)
 	phys.travel_to("kx7")
 	for k in int((phys.travel.t1 - phys.travel.t0) / 60.0 + 2.0) * 60:

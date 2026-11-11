@@ -85,6 +85,7 @@ und werden Schritt für Schritt übertragen.
 - [x] Feineres Baufeld-Raster (16 px statt 32 px); alte Spielstände werden beim Laden verfeinert
 - [x] Andockschleuse 5×2 längs der Außenwand (Durchgang, Außentür koppelt); alte 1-Feld-Schleusen werden umgestellt
 - [x] Modulfach im Steuerpult; Autodock-Modul schaltet Auto-Dock nur am bedienten Pult frei
+- [x] Ein Andockport: Außentür der Luftschleuse; Wrack als eigenes Navigationsziel; Station und Wrack wieder eingeschaltet
 - [x] Navigationskarte mit vorausberechneter Flugbahn, manuelles Fliegen (WASD), Geschwindigkeit angleichen
 - [x] Manuelles Andocken, Auto-Dock-Modul, Schnellreise, Zusammenstöße
 - [x] Erde als Schwerkraft-Falle (Absturz), Mond-Absturz
@@ -131,12 +132,11 @@ und werden Schritt für Schritt übertragen.
 - `tests/test_world.gd` – Crew-Beziehungen, Aufträge, Fraktionen, Einstellungen, Mods, Speicherplätze, neue Orte, Ziele (32)
 - `tests/test_stations.gd` – begehbare Stationen: Aufbau, Luft, Gespräche, Verkauf, Speichern, Abdocken (36)
 - `tests/test_undock.gd` – manuelles Abdocken: Gründe, Sperre gegen Wieder-Andocken, alle Zeitstufen, Speichern (49)
-- `tests/test_docking.gd` – Andockschleusen: ohne Schleuse kein Andocken, Tür an Tür, keine Extra-Felder, Abdocken ohne Rest, Wrack, Bau, alte Spielstände (40)
+- `tests/test_docking.gd` – Andocken an der Luftschleuse: ein Port, Station/Wrack Tür an Tür, Wrack als Ziel (Reichweite, Ausrichtung, Tempo), Autodock, alter Spielstand mit früheren Ports (39)
 - `tests/test_core.gd` – Kernspiel mit abgeschalteter Station und abgeschaltetem Wrack (21)
 - `tests/test_flight.gd` – manuelle Schiffssteuerung: Cockpit, Drift, Drehung, Gegenschub, Anflug und Andocken, Zeitstufen, Speichern (36)
 - `tests/test_thrusters.gd` – Triebwerke (1×3): Schub addiert sich, Masse bremst, Richtungen, Aus- und Einbau, Speichern, Zeitstufen, Drift (32)
 - `tests/test_modules.gd` – Modulfach und Autodock-Modul: ohne Modul gesperrt, zwei Pulte, Strom/Defekt/Entnahme, Abbruch im Manöver, Speichern, alte Spielstände (34)
-- `tests/test_dockport.gd` – Andockschleuse 5×2: Aufbau, dicht, Bau/Vorschau/Abweisungen, Abbau/Einbau, Kopplung mit Durchgang, alte 1-Feld-Schleusen (29)
 - `tests/test_grid.gd` – Feineres Raster: 4 Felder pro altem Feld bauen/abbauen, Ebenen, Laufstrecke, Türdurchgang, alter Spielstand (Schleuse, Druckhülle, Ports, Andocken) (45)
 - `tests/test_select.gd` – Rechtsklick-Ebenen mit echten Mausklicks: Reihenfolge, Abbau Ebene für Ebene, leere Ebenen, Kachelwechsel, Triebwerk (22)
 - `tests/test_parts.gd` – Tab-Inventar (auch Cockpit), Abbau als Gegenstand am Boden, Gewicht beim Umlagern und von Bord, 1×3-Einbau und Abweisungen, alte Spielstände (60)

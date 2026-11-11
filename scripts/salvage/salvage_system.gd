@@ -17,23 +17,40 @@ var cause := ""
 var port := -1
 var entry := Vector2i(-1, -1)
 
-## Freie Andockschleuse nach unten für ein Wrack (oder leer)
+## Freier Andockport (Außentür einer Luftschleuse), in jeder Richtung; der beim Klammern
+## ausgerichtete zuerst
 func free_port() -> Dictionary:
-	var ports: Array = ShipSystem.free_ports(Vector2i(0, 1))
+	var ports: Array = ShipSystem.free_ports()
 	return ports[0] if not ports.is_empty() else {}
 
+# Port-Rahmen: Wracks werden in Koordinaten relativ zur Wracktür gebaut (x entlang der
+# Schiffswand, y vom Schiff weg) und so in jede Richtung an den Port gesetzt.
+var _e := Vector2i.ZERO
+var _a := Vector2i(1, 0)
+var _d := Vector2i(0, 1)
+
+func _frame(pt: Dictionary) -> void:
+	_d = pt.dir
+	_a = Vector2i(_d.y, -_d.x)
+	_e = pt.pos + _d
+
+## Feld im Port-Rahmen → Feld im Raster
+func _w(x: int, y: int) -> Vector2i:
+	return _e + _a * x + _d * y
+
 ## Wrack mit seiner Tür direkt unter die Schleuse hängen (Tür an Tür).
-## Gibt false zurück, wenn keine freie Schleuse nach unten da ist oder kein Platz ist.
+## Gibt false zurück, wenn kein freier Andockport da ist oder kein Platz ist.
 func generate() -> bool:
 	if not Config.ENABLE_WRECK:
 		return false
 	var g := ShipSystem.grid
 	var pt := free_port()
 	if pt.is_empty():
-		GameState.toast("Für ein Wrack fehlt eine freie Andockschleuse nach unten (in der unteren Außenwand).", "bad")
+		GameState.toast("Für ein Wrack fehlt ein freier Andockport (Außentür einer Luftschleuse).", "bad")
 		return false
-	var e: Vector2i = pt.pos + Vector2i(0, 1)
-	var top := e.y
+	_frame(pt)
+	var e := Vector2i(0, 0)      # Wracktür im Port-Rahmen
+	var top := 0
 	var w := 0
 	var h := 0
 	var left := 0
@@ -42,35 +59,35 @@ func generate() -> bool:
 	for attempt in 40:
 		w = (randi_range(15, 22) - attempt / 5) * K
 		h = (randi_range(7, 10) - attempt / 10) * K
-		left = clampi(e.x - randi_range(3, w / K - 4) * K, 1, g.width - w - 1)
-		if e.x <= left or e.x >= left + w - 1 or top + h > g.height - 1:
+		left = e.x - randi_range(3, w / K - 4) * K
+		if e.x <= left or e.x >= left + w - 1:
 			continue
 		if _free_rect(g, left, top, w, h):
 			found = true
 			break
 	if not found:
-		GameState.toast("Kein Platz für das Wrack unter der Andockschleuse.", "bad")
+		GameState.toast("Kein Platz für das Wrack vor dem Andockport.", "bad")
 		return false
 	var inner: Array[Vector2i] = []
 	for y in range(top, top + h):
 		for x in range(left, left + w):
 			var edge := x == left or y == top or x == left + w - 1 or y == top + h - 1
-			_put(g, Vector2i(x, y), ShipGrid.Tile.WALL if edge else ShipGrid.Tile.FLOOR)
+			_put(g, _w(x, y), ShipGrid.Tile.WALL if edge else ShipGrid.Tile.FLOOR)
 			if not edge:
-				inner.append(Vector2i(x, y))
-	_put(g, e, ShipGrid.Tile.DOOR)
-	var doors: Array[Vector2i] = [e]
-	_link(g, pt, e)
+				inner.append(_w(x, y))
+	_put(g, _w(0, 0), ShipGrid.Tile.DOOR)
+	var doors: Array[Vector2i] = [_w(0, 0)]
+	_link(g, pt, _w(0, 0))
 	# Innenwände
 	var x := left + randi_range(4, 6) * K
 	var splits := 0
 	while x < left + w - 4 * K and splits < 2:
 		if absi(x - e.x) > 1:
 			for y in range(top, top + h):
-				_put(g, Vector2i(x, y), ShipGrid.Tile.WALL)
+				_put(g, _w(x, y), ShipGrid.Tile.WALL)
 			var dy := randi_range(top + 2 * K, top + h - 3 * K)
-			_put(g, Vector2i(x, dy), ShipGrid.Tile.DOOR if randf() < 0.7 else ShipGrid.Tile.FLOOR)
-			doors.append(Vector2i(x, dy))
+			_put(g, _w(x, dy), ShipGrid.Tile.DOOR if randf() < 0.7 else ShipGrid.Tile.FLOOR)
+			doors.append(_w(x, dy))
 			splits += 1
 		x += randi_range(5, 8) * K
 	# Lecks in der Hülle
@@ -79,8 +96,8 @@ func generate() -> bool:
 		for xx in range(left, left + w):
 			var corner := (xx == left or xx == left + w - 1) and (y == top or y == top + h - 1)
 			var edge := xx == left or y == top or xx == left + w - 1 or y == top + h - 1
-			if edge and not corner and g.get_tile(Vector2i(xx, y)) == ShipGrid.Tile.WALL and absi(xx - e.x) > K:
-				hull.append(Vector2i(xx, y))
+			if edge and not corner and g.get_tile(_w(xx, y)) == ShipGrid.Tile.WALL and absi(xx - e.x) > K:
+				hull.append(_w(xx, y))
 	for k in randi_range(1, 3):
 		_put(g, hull.pick_random(), ShipGrid.Tile.FLOOR)
 	# Abgestandene Luft
@@ -141,7 +158,7 @@ func generate() -> bool:
 	var cy := top + randi_range(1, h - 2)
 	for cx in range(left + 1, left + w - 1):
 		if randf() < 0.8:
-			g.cables[g.idx(Vector2i(cx, cy))] = 1
+			g.cables[g.idx(_w(cx, cy))] = 1
 	wreck_name = NAMES.pick_random()
 	investigated = false
 	cause = ["ein Reaktorbrand", "ein Treffer im Krieg", "eine Kollision mit Trümmern", "ein Hüllenbruch durch Materialermüdung", "Meuterei an Bord"].pick_random()
@@ -152,8 +169,8 @@ func generate() -> bool:
 func _free_rect(g: ShipGrid, left: int, top: int, w: int, h: int) -> bool:
 	for y in range(top, top + h):
 		for x in range(left, left + w):
-			var q := Vector2i(x, y)
-			if x < 1 or y < 1 or x > g.width - 2 or y > g.height - 2 or g.get_tile(q) != ShipGrid.Tile.SPACE or g.zone[g.idx(q)] != 0:
+			var q := _w(x, y)
+			if q.x < 1 or q.y < 1 or q.x > g.width - 2 or q.y > g.height - 2 or g.get_tile(q) != ShipGrid.Tile.SPACE or g.zone[g.idx(q)] != 0 or g.occupied(q):
 				return false
 	return true
 
@@ -173,31 +190,31 @@ func is_wreck(i: int) -> bool:
 	return ShipSystem.grid.zone[i] == 1
 
 ## Asteroid: ein Brocken aus Fels (Wände), der beim Abreißen Eis und Erz gibt.
-## Hängt unter einer freien Schleuse nach unten; direkt darunter ein Landeplatz.
+## Hängt an einem freien Andockport; direkt davor ein Landeplatz.
 func generate_asteroid() -> bool:
 	if not Config.ENABLE_WRECK:
 		return false
 	var g := ShipSystem.grid
 	var pt := free_port()
 	if pt.is_empty():
-		GameState.toast("Für den Asteroiden fehlt eine freie Andockschleuse nach unten.", "bad")
+		GameState.toast("Für den Asteroiden fehlt ein freier Andockport.", "bad")
 		return false
-	var e: Vector2i = pt.pos + Vector2i(0, 1)
+	_frame(pt)
 	var K := Config.GRID_SCALE
-	var c := Vector2(e.x + randi_range(-2, 4) * K, e.y + 5 * K)
+	var c := Vector2(randi_range(-2, 4) * K, 5 * K)
 	var rx := randf_range(6.0, 10.0) * K
 	var ry := randf_range(3.5, 5.0) * K
-	for y in range(e.y, e.y + 11 * K):
+	for y in range(0, 11 * K):
 		for x in range(int(c.x - rx) - 1, int(c.x + rx) + 2):
-			var p := Vector2i(x, y)
+			var p := _w(x, y)
 			if not g.in_bounds(p) or g.get_tile(p) != ShipGrid.Tile.SPACE or g.zone[g.idx(p)] != 0:
 				continue
 			var d := Vector2((x - c.x) / rx, (y - c.y) / ry).length() + randf_range(-0.12, 0.12)
 			if d < 1.0:
 				_put(g, p, ShipGrid.Tile.WALL)
-	# Landeplatz direkt unter der Schleuse
-	_put(g, e, ShipGrid.Tile.FLOOR)
-	_link(g, pt, e)
+	# Landeplatz direkt vor dem Port
+	_put(g, _w(0, 0), ShipGrid.Tile.FLOOR)
+	_link(g, pt, _w(0, 0))
 	wreck_name = "Asteroid " + ["KX-7a", "KX-7b", "Brocken 12", "Splitter 4"].pick_random()
 	investigated = true
 	EventBus.ship_changed.emit()

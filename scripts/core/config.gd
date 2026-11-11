@@ -6,9 +6,9 @@ extends RefCounted
 ## ---- Vorübergehend abgeschaltete Spielteile (Code bleibt erhalten) ----
 ## Zum Wiedereinschalten auf true setzen.
 ## Station: begehbare Station mit Räumen und Figuren beim Andocken an Stationen.
-static var ENABLE_STATION := false
+static var ENABLE_STATION := true
 ## Wrack: Wrack/Asteroid an der unteren Andockschleuse, Bergungsrecht, Verschrotten.
-static var ENABLE_WRECK := false
+static var ENABLE_WRECK := true
 
 ## Raster: Ein Baufeld ist 16 px groß (früher 32 px). GRID_SCALE = so viele heutige Felder
 ## je Richtung passen in ein Feld früherer Spielstände (alte Stände werden beim Laden verfeinert).

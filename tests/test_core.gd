@@ -1,4 +1,4 @@
-## Kernspiel mit abgeschalteter Station und abgeschaltetem Wrack (Standard-Einstellung)
+## Kernspiel mit abgeschalteter Station und abgeschaltetem Wrack (beide Schalter aus)
 ##   godot --headless --path . --script res://tests/boot.gd -- test_core
 extends "res://tests/test_base.gd"
 
@@ -40,7 +40,10 @@ func _initialize() -> void:
 	root.get_node("Settings").meteors = false
 	root.get_node("EventBus").toast.connect(func(t, _k): toasts.append(String(t)))
 
-	_check("Standard: Station und Wrack abgeschaltet", not Config.ENABLE_STATION and not Config.ENABLE_WRECK)
+	# Station und Wrack sind im Spiel eingeschaltet; hier wird der Kern mit beiden Schaltern aus geprüft
+	_check("Standard: Station und Wrack eingeschaltet", Config.ENABLE_STATION and Config.ENABLE_WRECK)
+	Config.ENABLE_STATION = false
+	Config.ENABLE_WRECK = false
 
 	# 1) Neues Spiel: keine Station, kein Wrack
 	gs.new_game()
@@ -103,8 +106,11 @@ func _initialize() -> void:
 	Config.ENABLE_STATION = true
 	Config.ENABLE_WRECK = true
 	gs.new_game()
+	# Ein Port: Station lösen und ein Wrack direkt ankoppeln (wie nach dem Andocken am Wrackziel)
+	st.clear()
+	salv.generate()
 	var had_wreck: String = salv.wreck_name
-	_check("(Vorbereitung) Spielstand mit Station und Wrack", st.active() and had_wreck != "")
+	_check("(Vorbereitung) Spielstand mit angekoppeltem Wrack", had_wreck != "" and _zone(g, 1) == 0 and _zone(ship.grid, 1) > 0)
 	save.save_game(true)
 	Config.ENABLE_STATION = false
 	Config.ENABLE_WRECK = false
@@ -114,8 +120,11 @@ func _initialize() -> void:
 	_check("Geladen: keine Stationsfelder, Station inaktiv", _zone(g, 3) == 0 and not st.active())
 	_check("Geladen: keine Wrackfelder", _zone(g, 1) == 0 and salv.wreck_name == "")
 	_check("Geladen: Schleusen frei", g.linked.is_empty())
-	var parked = fleet.places.get("tycho", {}).get("wreck")
-	_check("Wrack nicht gelöscht, sondern am Ort abgelegt (%s)" % (parked.name if parked != null else "-"), parked != null)
+	var parked = null
+	for site in fleet.sites:
+		if fleet.places.get(site.id, {}).get("wreck") != null:
+			parked = fleet.places[site.id].wreck
+	_check("Wrack nicht gelöscht, sondern als eigenes Wrackziel abgelegt (%s)" % (parked.name if parked != null else "-"), parked != null and parked.name == had_wreck)
 
 	print("%d OK, %d Fehler" % [ok_count, fail_count])
 	quit()

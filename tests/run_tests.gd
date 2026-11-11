@@ -87,6 +87,7 @@ func _initialize() -> void:
 	# 5) Außeneinsatz: Boden draußen vor der Luftschleuse bauen -> Raumanzug, Schleuse
 	gs.new_game()
 	root.get_node("DamageSystem").effects.clear()
+	root.get_node("StationSystem").clear()   # an der Luftschleuse hängt sonst die Station
 	var steg := C(x0 - 3, y0 + 7) + Vector2i(-1, 0)   # direkt vor der Außentür der Luftschleuse
 	build.place("floor", steg)
 	mira = crew.player()
@@ -134,6 +135,9 @@ func _initialize() -> void:
 	gs.new_game()
 	var econ = root.get_node("EconomySystem")
 	var salv = root.get_node("SalvageSystem")
+	# Ein Port: Station lösen, Wrack ankoppeln (sonst liegt es als eigenes Ziel neben Tycho)
+	root.get_node("StationSystem").clear()
+	salv.generate()
 	_check("Wrack erzeugt: " + salv.wreck_name, salv.wreck_name != "")
 	var wreck_devs: Array = []
 	for i in ship.grid.devices:
@@ -170,8 +174,9 @@ func _initialize() -> void:
 	_check("Kaufen legt Ware ins Terminal", term.inv.count("fuelcan") >= 1)
 	var old_name: String = salv.wreck_name
 	econ.credits = 5000
+	var sites_before: int = root.get_node("FleetSystem").sites.size()
 	econ.buy_claim()
-	_check("Neues Bergungsrecht: neues Wrack", salv.wreck_name != "" and econ.credits == 5000 - Config.CLAIM_FEE)
+	_check("Neues Bergungsrecht: neues Wrackziel neben der Station", root.get_node("FleetSystem").sites.size() == sites_before + 1 and econ.credits == 5000 - Config.CLAIM_FEE)
 	econ.credits = 0
 	root.get_node("Settings").debt_paused = false
 	gs.time = econ.next_payment + 0.01
@@ -227,7 +232,7 @@ func _initialize() -> void:
 	phys.pos = phys.rel_to("tycho").pos + Vector2(0.1, 0)
 	phys.angle = phys.dock_alignment("tycho").angle   # Schleuse zum Ziel drehen
 	_check("Manuell angedockt", phys.dock("tycho"))
-	_check("Wrack wieder da: " + salv.wreck_name, salv.wreck_name == wreck_before)
+	_check("Wrack nicht mehr an Tycho, sondern eigenes Ziel (%s)" % wreck_before, salv.wreck_name == "" and fleet.sites.any(func(x): return x.wreck_name == wreck_before))
 	# Schnellreise
 	var info: Dictionary = phys.travel_info("karman")
 	seat_pilot()   # Pilot am Steuerpult (Flugbefehle nur dort)

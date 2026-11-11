@@ -75,6 +75,13 @@ func _uninstall_from_menu() -> bool:
 			return true
 	return false
 
+func _sealed_ship(g) -> bool:
+	A.topology()
+	for r in A.rooms.size():
+		if g.zone[A.rooms[r].cells[0]] == 0 and A.room_leak(r) != "":
+			return false
+	return true
+
 func _fresh() -> void:
 	gs.new_game()
 	root.get_node("TimeSystem").set_speed(0)
@@ -278,8 +285,13 @@ func _initialize() -> void:
 	for c in root.get_node("CrewSystem").crew:
 		if g.zone[g.idx(c.tile())] != 0:
 			c.pos = Vector2(ship.spawn_point()) + Vector2(0.5, 0.5)
+	# Der Boden direkt vor der Außentür würde den Port blockieren: wieder entfernen
+	g.set_tile(steg, ShipGrid.Tile.SPACE)
+	var old_ports: Array = ship.ports().map(func(p): return p.pos)
 	salv.clear()
 	_check("4: Abdocken von der Station", P.request_undock() and not st.active())
+	_check("4: Alte Schleusen nach dem Lösen entfernt, Öffnungen sind Wand, Hülle dicht", P.ship_devices("dockport").is_empty()
+		and old_ports.all(func(p): return g.get_tile(p) == ShipGrid.Tile.WALL or root.get_node("AirlockSystem").is_lock_door(g.idx(p))) and _sealed_ship(g))
 	_secs(20)
 	var t0: Dictionary = P.loc_state(P.loc("tycho"), P.secs())
 	P.vel = t0.vel
@@ -287,12 +299,13 @@ func _initialize() -> void:
 	P.angle = P.dock_alignment("tycho").angle
 	_check("4: Wieder angedockt (%s)" % P.dock_block_reason("tycho"), P.dock("tycho") and st.active())
 	g = ship.grid
-	_check("4: Station wieder Tür an Tür an einer Schiffsschleuse", st.hatch >= 0 and g.linked.has(st.hatch) and g.devices.has(st.hatch) and g.devices[st.hatch].type == "dockport")
+	_check("4: Station jetzt Tür an Tür an der Außentür der Luftschleuse (roter Port)", st.hatch >= 0 and g.linked.has(st.hatch) and root.get_node("AirlockSystem").is_lock_door(st.hatch)
+		and st.hatch == g.idx(outer_door))
 	# Erneut speichern und laden: keine zweite Verfeinerung
 	save.save_game(true)
 	gs.new_game()
 	save.load_game(true)
-	_check("4: Erneut geladen: kein zweites Verfeinern, Größe bleibt", not ship.grid.migrated.refined and ship.grid.width == 128 and ship.ports().size() == 2)
+	_check("4: Erneut geladen: kein zweites Verfeinern, Größe bleibt", not ship.grid.migrated.refined and ship.grid.width == 128 and ship.ports().size() == 1)
 	Config.ENABLE_STATION = false
 	Config.ENABLE_WRECK = false
 

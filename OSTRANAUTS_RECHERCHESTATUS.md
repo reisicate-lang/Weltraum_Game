@@ -267,6 +267,25 @@ Vorgabe des Nutzers, ohne Ostranauts-Quelle. **Umsetzung:**
   - Ein abgebautes Auto-Dock im Inventar wird ebenfalls zum Modul.
 - **Neues Startschiff:** Das Modul liegt im Pult.
 
+### Ein Andockport: die Luftschleuse (Stand: November 2026)
+
+Vorgabe des Nutzers: Die Luftschleuse links ist der einzige Andockport, das Wrack ist ein
+eigenes Ziel. **Umsetzung:**
+- **Ports:** Andockports sind die Außentüren von Luftschleusen (Raum mit Pumpe, Tür ins All).
+  Ausgerichtet wird nach dem Port-Pfeil, eine Richtung ist nicht festgelegt. Station und
+  Wrack koppeln Tür an Tür. Die Pumpe gleicht beim Durchgehen den Druck an.
+- **Frühere Andockschleusen (5×2):** Sie sind nicht mehr baubar. In alten Spielständen
+  bleiben sie, solange etwas angedockt ist. Nach dem regulären Abdocken werden sie entfernt
+  und die Außenwand wird dicht geschlossen.
+- **Wrack als Ziel:**
+  - Es bewegt sich mit Tycho, etwa 8 km daneben.
+  - Ins Raster kommt es erst beim Klammern: nah, langsam, Port ausgerichtet.
+  - Beim Abdocken wird es mit dem Bergungsfortschritt am Ziel gespeichert.
+  - Alte Wracks, die an einer Station hingen, werden ein eigenes Ziel daneben.
+- **Werftschiffe** bekommen eine Luftschleuse links.
+- **Folge:** Solange Station oder Wrack an der einzigen Luftschleuse hängen, kann niemand
+  durch sie ins All.
+
 ## Geschwindigkeitsangleichung im Cockpit (Stand: November 2026)
 
 **Quelle:** offizieller Ostranauts-Startguide auf Steam, Abschnitte „Flight Metrics“ und

@@ -132,7 +132,8 @@ func _initialize() -> void:
 	seat_pilot()   # Pilot am Steuerpult (Flugbefehle nur dort)
 	_check("Abdocken klappt", phys.undock())
 	_check("Station weg", not st.active() and st.npcs.is_empty())
-	_check("Schleuse bleibt, nur gelöst", g.tiles[h] == ShipGrid.Tile.DOOR and g.devices.has(h) and g.devices[h].type == "dockport" and not g.linked.has(h))
+	_check("Luftschleuse bleibt, nur gelöst (Außentür ist der Port)", g.tiles[h] == ShipGrid.Tile.DOOR and root.get_node("AirlockSystem").is_lock_door(h) and not g.linked.has(h)
+		and g.get_tile(g.pos(h) + Vector2i(-1, 0)) == ShipGrid.Tile.SPACE)
 	var left := 0
 	for i in g.tiles.size():
 		if g.zone[i] == 3:
