@@ -209,7 +209,7 @@ func job_profile(job: Dictionary) -> Dictionary:
 
 ## Gerätekategorien in Worten (für Tooltips und Meldungen)
 const CATEGORY_NAMES := {"appliance": "Appliances", "control": "Controls", "furniture": "Furniture", "hvac": "Climate & Ventilation",
-	"misc": "Miscellaneous", "power": "Power", "propulsion": "Propulsion", "docking": "Docking", "water": "Water",
+	"misc": "Miscellaneous", "power": "Power Systems", "propulsion": "Propulsion", "docking": "Docking", "water": "Water",
 	"farming": "Farming", "production": "Production", "station": "Station", "sensor": "Sensors", "weapon": "Weapons"}
 
 func category_list(cats: PackedStringArray) -> String:

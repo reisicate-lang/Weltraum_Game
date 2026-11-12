@@ -304,6 +304,8 @@ func refresh_creation() -> void:
 		var gains: PackedStringArray = []
 		for s in k.skills:
 			gains.append(SkillSystem.skill(s).skill_name)
+		for s in k.get("grants", []):
+			gains.append(SkillSystem.skill(s).skill_name + " (acquired)")
 		creation_box.add_child(ui._row("%s (%d Jahre): %s" % [k.name, int(k.years), ", ".join(gains)],
 			[ui._button("Wählen", func():
 				CharacterSystem.apply_career(c, k.id)
@@ -311,7 +313,8 @@ func refresh_creation() -> void:
 	# Kurse: zählen erst beim Bestätigen (Los geht's), bis dahin nur im Vorschaualter
 	const COURSE_TEXT := {"business": "exact Item Value when trading", "civil": "+4 work value on appliances, controls, furniture, climate & ventilation, miscellaneous",
 		"combat_eng": "+4 work value on appliances, controls, furniture, climate & ventilation, sensors, weapons",
-		"construction": "faster building, sometimes saves material"}
+		"construction": "faster building, sometimes saves material",
+		"electrical": "+4 work value on appliances, controls, power systems, sensors"}
 	for id in CharacterSystem.course_ids():
 		var course := CharacterSystem.course_drafted(c, id)
 		var years := CharacterSystem.course_years(id)

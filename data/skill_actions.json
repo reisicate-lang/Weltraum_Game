@@ -613,5 +613,12 @@
   ],
   "difficulty": 0.4,
   "gain": 1.0
+ },
+ "electrical_work": {
+  "skills": [
+   "electrical"
+  ],
+  "difficulty": 0.4,
+  "gain": 1.0
  }
 }

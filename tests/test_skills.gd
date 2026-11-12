@@ -117,10 +117,10 @@ func _initialize() -> void:
 		is_equal_approx(SK.work_value(e2, bedjob) - SK.work_value(e1, bedjob), 4.0) and is_equal_approx(SK.work_speed(e2, job), SK.work_speed(e1, job)))
 	var eljob := {"kind": "device", "dev": "battery", "x": 0, "y": 0}
 	var el := _fresh()
-	SK.set_progress(el, "electrical", 80.0)
+	SK.set_progress(el, "electrical", 100.0)
 	var me := _fresh()
-	SK.set_progress(me, "mechanical", 80.0)
-	_check("Elektriker baut Batterien schneller als Mechaniker", SK.work_speed(el, eljob) > SK.work_speed(me, eljob))
+	SK.set_progress(me, "mechanical", 100.0)
+	_check("Electrical Engineering (erworben) baut Batterien schneller als Mechanik", SK.work_speed(el, eljob) > SK.work_speed(me, eljob))
 	var f_before: float = SK.pilot_fuel_factor()
 	SK.set_progress(mira, "pilot", 100.0)
 	_check("Pilot spart Treibstoff (%.2f -> %.2f)" % [f_before, SK.pilot_fuel_factor()], SK.pilot_fuel_factor() < f_before)

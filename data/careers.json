@@ -37,17 +37,19 @@
   },
   {
    "id": "electrician",
-   "name": "Bordelektrikerin",
+   "name": "Electrician Gig",
    "years": 3,
    "min_age": 17,
    "requires": [],
    "skills": {
-    "electrical": 30,
     "robotics": 10,
     "software": 8
    },
+   "grants": [
+    "electrical"
+   ],
    "credits": 400,
-   "text": "Verlegte Kabel und reparierte Steuerungen auf Frachtern."
+   "text": "Laid cables and repaired controls on freighters."
   },
   {
    "id": "military",

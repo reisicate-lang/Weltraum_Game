@@ -5,11 +5,14 @@
 [resource]
 script = ExtResource("1")
 skill_id = "electrical"
-skill_name = "Elektrotechnik"
-description = "Strom, Kabel, Batterien, Solarpanels, Elektronik. Reparaturen an elektrischen Geräten gehen schneller und präziser."
+skill_name = "Electrical Engineering"
+description = "Power, wiring and electronics: appliances, controls, power systems and sensors."
 category = "technik"
-learning_sources = PackedStringArray("Elektrische Geräte reparieren und einbauen", "Kabel verlegen", "Lehrbuch Elektrotechnik")
-training_actions = PackedStringArray("repair_electrical", "install_electrical", "lay_cable", "repair_nav", "install_sensor", "study_electrical")
+learning_sources = PackedStringArray("Practical work: building, installing, repairing or removing appliances, controls, power systems and sensors; repairing and installing electrical devices; laying cables", "Textbook: Electrical Engineering", "Life path: Electrician Gig (grants the skill directly)")
+training_actions = PackedStringArray("electrical_work", "repair_electrical", "install_electrical", "lay_cable", "repair_nav", "install_sensor", "study_electrical")
 required_skills = {}
-gameplay_effects = {"work_electrical": 0.8, "cable_speed": 0.5}
-mastery_text = "Meister: Batterien und Solarpanels nutzen sich halb so schnell ab."
+gameplay_effects = {}
+mastery_text = "Acquired (100 %): +4 work value on jobs at appliances, controls, power systems and sensors. Tools and materials are still required."
+course_years = 3
+work_value_bonus = 4.0
+work_categories = PackedStringArray("appliance", "control", "power", "sensor")

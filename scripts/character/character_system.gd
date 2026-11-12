@@ -74,8 +74,8 @@ func confirm(c: CrewMember) -> void:
 	var drafts: Array = _drafts(c)
 	c.set_meta("draft_courses", [])
 	for id in course_ids():   # feste Reihenfolge
-		if not id in drafts:
-			continue
+		if not id in drafts or SkillSystem.acquired(c, id):
+			continue   # schon erworben (z. B. durch eine Lebensstation): keine zweite Buchung
 		var years := course_years(id)
 		c.age += years
 		SkillSystem.set_progress(c, id, SkillSystem.ACQUIRED)
@@ -142,6 +142,20 @@ func apply_career(c: CrewMember, id: String) -> String:
 		var cur := SkillSystem.progress(c, s)
 		var gain := float(k.skills[s]) * factor * (0.7 if done.count(id) > 1 else 1.0)
 		SkillSystem.set_progress(c, s, minf(SkillSystem.cap(c, s) if cur < 40.0 else 100.0, cur + gain))
+	# Direkt vergebene Fähigkeiten ("grants"): erworben, ohne eigene Altersbuchung (die Station
+	# hat ihre Jahre schon gebucht). Schon erworben: nichts doppelt. Ein gewählter Kurs
+	# desselben Skills fällt aus dem Entwurf (sonst kämen seine Jahre dazu).
+	var granted: PackedStringArray = []
+	for gid in k.get("grants", []):
+		if SkillSystem.skill(gid) == null:
+			continue
+		if course_drafted(c, gid):
+			set_course(c, false, gid)
+		if SkillSystem.acquired(c, gid):
+			continue
+		SkillSystem.set_progress(c, gid, SkillSystem.ACQUIRED)
+		SkillSystem._entry(c, gid).unlocked = true
+		granted.append(SkillSystem.skill(gid).skill_name)
 	for t in k.get("traits_add", []):
 		TraitSystem.add(c, t)
 	c.set_meta("credits", int(c.get_meta("credits", 0)) + int(k.get("credits", 0)))
@@ -150,6 +164,8 @@ func apply_career(c: CrewMember, id: String) -> String:
 	if k.has("contact"):
 		c.contacts.append(k.contact)
 	var line := "%d–%d: %s. %s" % [c.age - int(k.years), c.age, k.name, k.text]
+	if not granted.is_empty():
+		line += " Acquired " + ", ".join(granted) + "."
 	if randf() < float(k.get("enemy_chance", 0.0)):
 		var enemy := "%s %s" % [FIRST_NAMES.pick_random(), LAST_NAMES.pick_random()]
 		c.enemies.append(enemy)

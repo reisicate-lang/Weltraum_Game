@@ -13,10 +13,10 @@ func step(dt: float) -> void:
 		var dev: Device = g.devices[i]
 		var running := (dev.needs_power() and dev.powered) or dev.producing
 		if dev.data().wears and running and not dev.broken:
-			# Meister in Elektrotechnik/Maschinenbau halbieren den Verschleiß
+			# Meister in Maschinenbau halbieren den Verschleiß mechanischer Geräte
 			var wear := Config.WEAR_PER_DAY
 			var tech := dev.data().tech
-			if (tech == "electrical" and SkillSystem.any_mastered("electrical")) or (tech == "mechanical" and SkillSystem.any_mastered("mechanical")):
+			if tech == "mechanical" and SkillSystem.any_mastered("mechanical"):
 				wear *= 0.5
 			dev.cond -= wear * dt / 1440.0
 			if dev.cond <= 0.0:
