@@ -132,7 +132,7 @@ func _unlock(c: CrewMember, id: String) -> void:
 	elif skill(id).work_value_bonus > 0.0:
 		GameState.toast("%s acquired %s: +%d work value on %s." % [c.display_name, skill(id).skill_name, int(skill(id).work_value_bonus), category_list(skill(id).work_categories)])
 	else:
-		GameState.toast("%s beherrscht jetzt %s vollständig!" % [c.display_name, skill(id).skill_name])
+		GameState.toast("%s acquired %s." % [c.display_name, skill(id).skill_name])
 
 func _add_history(e: Dictionary, action: String, delta: float) -> void:
 	var h: Array = e.hist
@@ -492,10 +492,42 @@ func skill_tooltip(c: CrewMember, id: String) -> String:
 	if s.work_value_bonus != 0.0:
 		lines.append("Bonus when acquired (100 %%): %+d work value." % int(s.work_value_bonus))
 		lines.append("Affected categories: %s." % category_list(s.work_categories))
-	lines.append("Ways to learn: " + "; ".join(s.learning_sources) + ".")
 	var p := progress(c, id) if c != null else 0.0
+	# Nur Wirkungen, die im Spiel tatsächlich verrechnet werden (gameplay_effects)
+	for e in s.gameplay_effects:
+		var full := float(s.gameplay_effects[e]) * (1.0 + MASTERY_BONUS)
+		var now := float(s.gameplay_effects[e]) * p / 100.0 + (float(s.gameplay_effects[e]) * MASTERY_BONUS if p >= ACQUIRED else 0.0)
+		if e in WORK_EFFECTS:
+			lines.append("Effect: %s %+.1f work value at 100 %% (now %+.1f, grows with progress)." % [EFFECT_NAMES_EN.get(e, e), full * WORK_VALUE_SCALE, now * WORK_VALUE_SCALE])
+		else:
+			lines.append("Effect: %s %+d %% at 100 %% (now %+d %%, grows with progress)." % [EFFECT_NAMES_EN.get(e, e), int(round(full * 100.0)), int(round(now * 100.0))])
+	if s.mastery_text != "":
+		lines.append(s.mastery_text if s.mastery_text.begins_with("Acquired") else "At 100 %: " + s.mastery_text)
+	lines.append("Ways to learn: " + "; ".join(s.learning_sources) + ".")
+	lines.append("Status: %s." % ("acquired" if p >= ACQUIRED else "not acquired (acquired at 100 %)"))
 	lines.append("Learning progress: %.1f %%%s" % [p, " (acquired)" if p >= ACQUIRED else ""])
 	return "\n".join(lines)
+
+## Tempo-Wirkungen (zählen als Arbeitswert ×10, siehe work_value)
+const WORK_EFFECTS := ["work_structure", "work_furniture", "work_build", "work_electrical", "cable_speed", "work_robotic",
+	"work_computer", "work_hull", "work_propulsion", "work_mechanical", "work_demolish"]
+
+## Englische Namen der Wirkungen für Tooltips
+const EFFECT_NAMES_EN := {
+	"work_structure": "Walls and floors", "work_furniture": "Furniture work", "work_build": "Building (walls, floors, cables, new devices, crafting, installing)",
+	"work_electrical": "Electrical work", "cable_speed": "Laying cables", "work_robotic": "Automation work", "work_computer": "Computer work",
+	"hack_assist": "Hacking assistance", "work_hull": "Hull repair", "work_propulsion": "Propulsion work", "work_mechanical": "Mechanical work",
+	"military_salvage": "Military salvage yield", "weapon_care": "Weapon care", "combat_armed": "Melee attack", "combat_unarmed": "Unarmed attack",
+	"combat_ranged": "Ranged attack", "defense": "Defense", "threat": "Intimidation", "suit_o2_saving": "Suit oxygen saved",
+	"eva_work": "Work speed in a suit", "hack_power": "Hacking", "sell_bonus": "Selling bonus", "buy_discount": "Buying discount",
+	"appraise": "Appraisal accuracy", "work_demolish": "Demolition", "demolish_yield": "Demolition yield", "fuel_saving": "Fuel saved",
+	"eva_speed": "Speed in vacuum", "bluff": "Bluffing", "perform_income": "Performance pay", "meal_bonus": "Meal satiation",
+	"meal_mood": "Mood from meals", "stress_relief": "Stress relief", "talk_folk": "Talking to common folk", "find_hidden": "Finding hidden stashes",
+	"damage_insight": "Reading damage causes", "gamble_edge": "Gambling edge", "talk_military": "Talking to the military",
+	"talk_oligarch": "Talking to the wealthy", "negotiate": "Negotiating", "calm": "Calming", "travel_saving": "Shorter fast travel",
+	"prediction": "Trajectory prediction", "stress_insight": "Reading stress", "counsel": "Counseling", "crew_mood": "Crew mood",
+	"smuggle": "Smuggling", "talk_street": "Talking to the underworld", "black_bonus": "Black market bonus",
+}
 
 func effect_lines(c: CrewMember, id: String) -> PackedStringArray:
 	var out: PackedStringArray = []

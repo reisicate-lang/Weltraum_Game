@@ -5,11 +5,12 @@
 [resource]
 script = ExtResource("1")
 skill_id = "construction"
-skill_name = "Montage"
-description = "Allgemeines Zusammenbauen und Aufstellen. Beschleunigt jeden Bauauftrag ein wenig."
+skill_name = "Construction"
+description = "General assembly and setup. Speeds up building work a little."
 category = "technik"
-learning_sources = PackedStringArray("Jeder Bauauftrag", "Möbel montieren und demontieren", "Lehrbuch Montage")
+learning_sources = PackedStringArray("Practical work: building walls and floors, building devices, repairing and removing furniture", "Textbook: Construction")
 training_actions = PackedStringArray("build_structure", "build_device", "repair_furniture", "deconstruct_furniture", "study_construction")
 required_skills = {}
 gameplay_effects = {"work_build": 0.4}
-mastery_text = "Meister: Bauen verbraucht manchmal weniger Material."
+mastery_text = "Acquired (100 %): building sometimes uses one part less material (25 % chance when a job needs more than one part)."
+course_years = 3
