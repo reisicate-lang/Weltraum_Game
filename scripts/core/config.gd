@@ -40,6 +40,8 @@ const TILE_COST := {1: {"plate": 1}, 2: {"plate": 2}, 3: {"plate": 2, "circuit":
 const TILE_MASS := {1: 0.05, 2: 0.05, 3: 0.05, 4: 0.05}
 const TILE_NAMES := {0: "Weltraum", 1: "Boden", 2: "Wand", 3: "Tür", 4: "Fenster"}
 const REMOVE_TIME := 1.5
+## Debuggen der Navigationskonsole (Spielminuten Arbeit)
+const DEBUG_TIME := 2.0
 const CABLE_TIME := 1.0
 const CABLE_COST := {"copper": 1}
 

@@ -624,7 +624,7 @@ func _pref_of(j: Dictionary) -> String:
 		"build", "cable", "device": return "build"
 		"tend", "harvest": return "refill"
 		"extinguish": return "repair"
-		"repair": return "repair"
+		"repair", "debug": return "repair"
 		"remove", "uninstall", "dismantle", "destroy": return "remove"
 		"install", "rotate": return "build"
 		"haul", "move": return "haul"

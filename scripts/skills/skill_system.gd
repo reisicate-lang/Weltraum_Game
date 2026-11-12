@@ -211,7 +211,7 @@ func job_profile(job: Dictionary) -> Dictionary:
 const CATEGORY_NAMES := {"appliance": "Appliances", "control": "Controls", "furniture": "Furniture", "hvac": "Climate & Ventilation",
 	"misc": "Miscellaneous", "power": "Power Systems", "propulsion": "Propulsion", "docking": "Docking", "water": "Water",
 	"farming": "Farming", "production": "Production", "station": "Station", "sensor": "Sensors", "weapon": "Weapons", "suit": "Suits",
-	"mining": "Mining"}
+	"mining": "Mining", "software": "Software (debugging the navigation console)"}
 
 func category_list(cats: PackedStringArray) -> String:
 	var names: PackedStringArray = []
@@ -242,6 +242,8 @@ func job_device_id(job: Dictionary) -> String:
 func job_category(job: Dictionary) -> String:
 	if is_mining(job):
 		return "mining"
+	if String(job.get("kind", "")) == "debug":
+		return "software"   # Softwarearbeit (nicht die Gerätekategorie der Konsole)
 	if String(job.get("kind", "")) == "craft":
 		var out: Array = EconomySystem.recipe(String(job.get("recipe", ""))).get("out", [])
 		return "weapon" if not out.is_empty() and ItemSystem.item(String(out[0])) != null and ItemSystem.item(String(out[0])).weapon != "" else ""
@@ -337,6 +339,8 @@ func _base_profile(job: Dictionary) -> Dictionary:
 			return {"actions": ["build_structure"], "effects": ["work_structure", "work_build"]}
 		"hack":
 			return {"actions": ["hack", "analyze_software"], "effects": ["hack_assist", "hack_power"], "fine": true}
+		"debug":
+			return {"actions": ["debug_software"], "effects": [], "fine": true}
 		"tend", "harvest":
 			return {"actions": ["cook"], "effects": ["meal_bonus"]}
 		"extinguish":
@@ -455,7 +459,7 @@ func train_all_at(device_type: String, action: String, amount: float) -> void:
 
 ## Hacken: Wert aus Hacken und Software. Stufe 1 geht immer, 2 ab 35, 3 ab 75.
 func hack_value(c: CrewMember) -> float:
-	return progress(c, "hacking") + 0.3 * progress(c, "software")
+	return progress(c, "hacking")
 
 func hack_needed(level: int) -> float:
 	return [0.0, 0.0, 35.0, 75.0][clampi(level, 0, 3)]

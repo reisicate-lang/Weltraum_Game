@@ -318,7 +318,8 @@ func refresh_creation() -> void:
 		"electrical": "+4 work value on appliances, controls, power systems, sensors",
 		"eva": "no EVA work penalty, +4 work value on suit equipment",
 		"excavation": "+4 work value on mining",
-		"robotics": "+4 work value on controls and sensors"}
+		"robotics": "+4 work value on controls and sensors",
+		"software": "+4 work value on software work (debugging)"}
 	for id in CharacterSystem.course_ids():
 		var course := CharacterSystem.course_drafted(c, id)
 		var years := CharacterSystem.course_years(id)

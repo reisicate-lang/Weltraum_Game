@@ -78,8 +78,6 @@ func sell_price(it: Dictionary) -> int:
 	var bonus := SkillSystem.effect(trader(), "sell_bonus")
 	if PhysicsSystem.station().get("black", false):
 		bonus += SkillSystem.effect(trader(), "black_bonus")
-	if it.type == "datachip" and SkillSystem.any_mastered("software"):
-		bonus += 0.25
 	return int(market_price(it.type) * Config.SELL_FACTOR * (0.2 + 0.8 * it.cond / 100.0) * it.qty * (1.0 + bonus) * negotiated_factor(true))
 
 ## Ausgehandelte bessere Preise (Überzeugen) gelten bis zum Ende des Tages

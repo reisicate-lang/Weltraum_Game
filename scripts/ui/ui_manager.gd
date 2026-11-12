@@ -1138,6 +1138,12 @@ func open_object_menu(p: Vector2i) -> bool:
 		object_menu.add_item("Drehen (90° im Uhrzeigersinn) – schiebt jetzt %s" % _push_name(rdev.push_dir()), menu_actions.size())
 		object_menu.set_item_disabled(object_menu.item_count - 1, not ShipConstructionSystem.can_place("rotate", p))
 		menu_actions.append({"kind": "rotate"})
+	# Navigationskonsole (Steuerpult): Debuggen als Arbeitsauftrag (Software Engineering)
+	var ndev := g.device_at(p)
+	if ndev != null and ndev.type in SkillSystem.NAV_STATIONS and not ndev.unknown and not g.foreign(g.idx(ndev.pos)):
+		object_menu.add_item("Debug navigation console (%.1f min)" % Config.DEBUG_TIME, menu_actions.size())
+		object_menu.set_item_disabled(object_menu.item_count - 1, not ShipConstructionSystem.can_place("debug", p))
+		menu_actions.append({"kind": "debug"})
 	# Türen: Lüftungsschlitz (geschlossene Tür lässt sonst etwas Luft durch)
 	if key == "tile:door" and not StationSystem.reserved(p):
 		var lock := AirlockSystem.is_lock_door(i) or StationSystem.is_hatch(i)
@@ -1224,6 +1230,11 @@ func _on_object_menu(id: int) -> void:
 		"rotate":
 			if ShipConstructionSystem.place("rotate", menu_pos):
 				GameState.toast("Auftrag: Gerät um 90° drehen.")
+		"debug":
+			if ShipConstructionSystem.place("debug", menu_pos):
+				GameState.toast("Task: debug the navigation console.")
+			else:
+				GameState.toast("The navigation console can't be debugged right now.")
 		"vent":
 			AtmosphereSystem.set_vent(g.idx(menu_pos), bool(a.closed))
 			GameState.toast("Lüftungsschlitz geschlossen: die Tür ist jetzt dicht." if a.closed else "Lüftungsschlitz offen: etwas Luft strömt durch die geschlossene Tür.")

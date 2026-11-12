@@ -46,6 +46,10 @@ func can_place(tool: String, p: Vector2i) -> bool:
 		"remove": return t != ShipGrid.Tile.SPACE
 		"cancel": return jobs.has(i)
 		"rotate": return has_dev and g.device_at(p).data().rotatable and g.device_at(p).data().length == 1 and not jobs.has(i) and not g.foreign(i)
+		"debug":
+			# Navigationskonsole (Steuerpult) des eigenen Schiffs debuggen
+			var dd = g.device_at(p)
+			return has_dev and dd.type in SkillSystem.NAV_STATIONS and not dd.unknown and not g.foreign(g.idx(dd.pos)) and not jobs.has(g.idx(dd.pos))
 	return false
 
 ## Grund, warum ein Mehrfeld-Gerät (Triebwerk 1×3) hier nicht gebaut werden kann ("" = geht).
@@ -100,6 +104,11 @@ func place(tool: String, p: Vector2i) -> bool:
 	if tool == "rotate":
 		jobs[ShipSystem.grid.idx(p)] = {"kind": "rotate", "x": p.x, "y": p.y, "progress": 0.0, "claimed_by": -1,
 			"retry_at": 0.0, "paid": true, "need": 1.0}
+		return true
+	if tool == "debug":
+		var dp := ShipSystem.grid.device_at(p).pos
+		jobs[ShipSystem.grid.idx(dp)] = {"kind": "debug", "x": dp.x, "y": dp.y, "progress": 0.0, "claimed_by": -1,
+			"retry_at": 0.0, "paid": true, "need": Config.DEBUG_TIME}
 		return true
 	var job := {"x": p.x, "y": p.y, "progress": 0.0, "claimed_by": -1, "retry_at": 0.0, "paid": false}
 	if tool == "extinguish":
@@ -285,6 +294,8 @@ func complete(job: Dictionary, worker_pos: Vector2i, worker: CrewMember = null) 
 			TemperatureSystem.extinguish(i)
 		"repair":
 			DamageSystem.repair(p)
+		"debug":
+			GameState.toast("Navigation console debugged.")
 		"refill":
 			var dev := g.device_at(p)
 			if dev != null:
@@ -404,6 +415,7 @@ func label(job: Dictionary) -> String:
 		"cable": return "Verlegt Kabel"
 		"device": return "Baut " + ItemSystem.device(job.dev).display_name
 		"rotate": return "Dreht Gerät"
+		"debug": return "Debugging the navigation console"
 		_: return "Baut " + Config.TILE_NAMES[int(job.tile)]
 
 func to_data() -> Array:

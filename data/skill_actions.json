@@ -627,5 +627,12 @@
   ],
   "difficulty": 0.4,
   "gain": 1.0
+ },
+ "debug_software": {
+  "skills": [
+   "software"
+  ],
+  "difficulty": 0.6,
+  "gain": 1.0
  }
 }

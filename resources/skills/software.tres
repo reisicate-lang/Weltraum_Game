@@ -5,11 +5,14 @@
 [resource]
 script = ExtResource("1")
 skill_id = "software"
-skill_name = "Softwaretechnik"
-description = "Programme, Steuerrechner, Datenauswertung. Hilft beim Hacken und bei Steuerpult und Terminal."
+skill_name = "Software Engineering"
+description = "Programs and control computers: debugging the navigation console."
 category = "technik"
-learning_sources = PackedStringArray("Software analysieren", "Terminals und Steuerpulte warten", "Datenchips auswerten", "Lehrbuch Programmierung")
-training_actions = PackedStringArray("analyze_software", "repair_computer", "study_software")
+learning_sources = PackedStringArray("Practical work: debugging the navigation console (right-click the helm, Debug navigation console)", "Analyzing software when hacking or installing computers", "Repairing computers", "Textbook: Software Engineering")
+training_actions = PackedStringArray("debug_software", "analyze_software", "repair_computer", "study_software")
 required_skills = {}
-gameplay_effects = {"work_computer": 0.6, "hack_assist": 0.3}
-mastery_text = "Meister: Datenchips lassen sich vor dem Verkauf aufwerten (+25 % Preis)."
+gameplay_effects = {}
+mastery_text = "Acquired (100 %): +4 work value on software work (debugging the navigation console). Mechanical and electrical work on the console gets no bonus from this skill."
+course_years = 1
+work_value_bonus = 4.0
+work_categories = PackedStringArray("software")
