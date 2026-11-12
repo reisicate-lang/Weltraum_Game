@@ -256,15 +256,14 @@ func salvage(p: Vector2i, worker: CrewMember = null) -> Array:
 	var t := g.tiles[i]
 	if g.cables[i] == 1 and t == ShipGrid.Tile.FLOOR:
 		return [["copper", 1, randf_range(50.0, 90.0)]]
-	# Abbau: bessere Ausbeute beim Abreißen von Wänden und Böden
+	# Ausbeute-Wirkung (demolish_yield), falls eine Fähigkeit sie hat
 	var yield_bonus := SkillSystem.effect(worker, "demolish_yield") if worker != null else 0.0
-	var full := worker != null and SkillSystem.mastered(worker, "excavation")
 	# Asteroid: Fels gibt Eis und Erz
 	if t == ShipGrid.Tile.WALL and g.zone[i] == 1 and SalvageSystem.is_asteroid():
 		out.append(["ice" if randf() < 0.55 else "ore", 1 + (1 if randf() < yield_bonus else 0), randf_range(70.0, 100.0)])
 		return out
 	match t:
-		ShipGrid.Tile.WALL: out.append(["plate", 2, 90.0 if full else minf(100.0, randf_range(40.0, 90.0) * g.cond[i] / 100.0 * (1.0 + yield_bonus))])
+		ShipGrid.Tile.WALL: out.append(["plate", 2, minf(100.0, randf_range(40.0, 90.0) * g.cond[i] / 100.0 * (1.0 + yield_bonus))])
 		ShipGrid.Tile.DOOR:
 			out.append(["plate", 2, randf_range(40.0, 90.0)])
 			if randf() < 0.6:

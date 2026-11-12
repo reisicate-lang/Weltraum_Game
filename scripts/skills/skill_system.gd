@@ -210,7 +210,8 @@ func job_profile(job: Dictionary) -> Dictionary:
 ## Gerätekategorien in Worten (für Tooltips und Meldungen)
 const CATEGORY_NAMES := {"appliance": "Appliances", "control": "Controls", "furniture": "Furniture", "hvac": "Climate & Ventilation",
 	"misc": "Miscellaneous", "power": "Power Systems", "propulsion": "Propulsion", "docking": "Docking", "water": "Water",
-	"farming": "Farming", "production": "Production", "station": "Station", "sensor": "Sensors", "weapon": "Weapons", "suit": "Suits"}
+	"farming": "Farming", "production": "Production", "station": "Station", "sensor": "Sensors", "weapon": "Weapons", "suit": "Suits",
+	"mining": "Mining"}
 
 func category_list(cats: PackedStringArray) -> String:
 	var names: PackedStringArray = []
@@ -239,6 +240,8 @@ func job_device_id(job: Dictionary) -> String:
 ## Kategorie eines Auftrags: Gerätekategorie, oder "weapon" für das Herstellen einer Waffe
 ## an der Werkbank ("" = nichts davon, z. B. Wand, Boden, Kabel, andere Rezepte)
 func job_category(job: Dictionary) -> String:
+	if is_mining(job):
+		return "mining"
 	if String(job.get("kind", "")) == "craft":
 		var out: Array = EconomySystem.recipe(String(job.get("recipe", ""))).get("out", [])
 		return "weapon" if not out.is_empty() and ItemSystem.item(String(out[0])) != null and ItemSystem.item(String(out[0])).weapon != "" else ""
@@ -246,6 +249,21 @@ func job_category(job: Dictionary) -> String:
 	if id == "" or ItemSystem.device(id) == null:
 		return ""
 	return ItemSystem.device(id).category
+
+## Bergbau: Abtragen von Asteroidenfels (Wand im fremden Bereich, solange ein Asteroid angedockt ist)
+const MINING_KINDS := ["remove", "uninstall", "dismantle", "destroy"]
+
+func is_mining(job: Dictionary) -> bool:
+	if not String(job.get("kind", "")) in MINING_KINDS or String(job.get("target", "")).begins_with("dev:"):
+		return false
+	var g := ShipSystem.grid
+	if g == null:
+		return false
+	var p := ShipConstructionSystem.pos_of(job)
+	if not g.in_bounds(p) or g.device_at(p) != null:
+		return false
+	var i := g.idx(p)
+	return g.tiles[i] == ShipGrid.Tile.WALL and g.zone[i] == 1 and SalvageSystem.is_asteroid()
 
 ## Alle Kategorien eines Auftrags: Hauptkategorie und Zusatzkategorien des Geräts (z. B. "suit")
 func job_categories(job: Dictionary) -> Array:

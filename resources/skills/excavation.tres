@@ -5,11 +5,14 @@
 [resource]
 script = ExtResource("1")
 skill_id = "excavation"
-skill_name = "Abbau"
-description = "Grobes Abtragen: Wände, Böden, Hüllenteile schneiden und zerlegen. Mehr Ausbeute beim Abreißen."
+skill_name = "Excavation"
+description = "Cutting and breaking rock: mining asteroids for ice and ore."
 category = "praxis"
-learning_sources = PackedStringArray("Wände und Böden abreißen", "Hüllenteile schneiden")
+learning_sources = PackedStringArray("Practical work: tearing down walls and floors, cutting hull parts, mining asteroid rock", "Textbook: Excavation")
 training_actions = PackedStringArray("deconstruct_structure", "study_excavation")
 required_skills = {}
-gameplay_effects = {"work_demolish": 0.8, "demolish_yield": 0.3}
-mastery_text = "Meister: Abgerissene Wände geben fast immer volle Platten zurück."
+gameplay_effects = {}
+mastery_text = "Acquired (100 %): +4 work value on mining (removing asteroid rock). Tools are still required."
+course_years = 3
+work_value_bonus = 4.0
+work_categories = PackedStringArray("mining")
