@@ -302,7 +302,11 @@ func _base_profile(job: Dictionary) -> Dictionary:
 			return {"actions": [_install_action(tech), "build_device"], "effects": [_work_effect(tech), "work_build"], "fine": tech in ["electrical", "computer", "robotic"]}
 		"repair":
 			if dev != null:
-				return {"actions": [_repair_action(tech)], "effects": [_work_effect(tech)], "fine": tech in ["electrical", "computer", "robotic"]}
+				var racts := [_repair_action(tech)]
+				# Navigationsstation (Steuerpult) reparieren: vorhandene Aktion repair_nav (Elektro + Robotik)
+				if dev.type in NAV_STATIONS:
+					racts.append("repair_nav")
+				return {"actions": racts, "effects": [_work_effect(tech)], "fine": tech in ["electrical", "computer", "robotic"]}
 			var hull := false
 			for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
 				if g.get_tile(p + d) == ShipGrid.Tile.SPACE:
@@ -338,6 +342,9 @@ func _base_profile(job: Dictionary) -> Dictionary:
 		"extinguish":
 			return {"actions": ["repair_structure"], "effects": ["work_structure"]}
 	return {"actions": [], "effects": []}
+
+## Geräte, die als Navigationsstation gelten
+const NAV_STATIONS := ["helm"]
 
 func _install_action(tech: String) -> String:
 	match tech:
@@ -536,7 +543,7 @@ func skill_tooltip(c: CrewMember, id: String) -> String:
 	var s: SkillData = skill(id)
 	var lines: PackedStringArray = [s.skill_name, s.description]
 	if s.course_years > 0:
-		lines.append("Character creation: costs %d years." % s.course_years)
+		lines.append("Character creation: costs %d %s." % [s.course_years, "year" if s.course_years == 1 else "years"])
 	if s.removes_eva_malus:
 		lines.append("Effect when acquired (100 %%): removes the EVA work penalty (without it, work in an EVA suit runs at %d %% of the normal rate)." % int(round(EVA_WORK_FACTOR * 100.0)))
 	if s.work_value_bonus != 0.0:

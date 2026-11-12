@@ -5,11 +5,14 @@
 [resource]
 script = ExtResource("1")
 skill_id = "robotics"
-skill_name = "Robotik"
-description = "Steuerungen, Antriebe mit Sensorik, automatische Systeme wie Auto-Dock und Schleusenpumpe."
+skill_name = "Robotics Engineering"
+description = "Controls, sensors and automated systems."
 category = "technik"
-learning_sources = PackedStringArray("Navigationscomputer reparieren", "Sensoren und Automatik einbauen", "Lehrbuch Robotik")
-training_actions = PackedStringArray("repair_nav", "install_sensor", "repair_robotic", "study_robotics")
-required_skills = {"electrical": 30}
-gameplay_effects = {"work_robotic": 0.8}
-mastery_text = "Meister: Auto-Dock braucht 30 % weniger Zeit."
+learning_sources = PackedStringArray("Practical work: building, installing, repairing or removing controls and sensors", "Repairing the helm (navigation station)", "Textbook: Robotics Engineering")
+training_actions = PackedStringArray("robotics_work", "repair_nav", "install_sensor", "repair_robotic", "study_robotics")
+required_skills = {}
+gameplay_effects = {}
+mastery_text = "Acquired (100 %): +4 work value on jobs at controls and sensors. Tools and materials are still required."
+course_years = 1
+work_value_bonus = 4.0
+work_categories = PackedStringArray("control", "sensor")

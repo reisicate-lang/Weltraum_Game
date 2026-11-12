@@ -750,7 +750,7 @@ func start_autodock() -> void:
 		GameState.toast("Nicht genug Treibstoff zum Andocken.", "bad")
 		return
 	use_fuel(need)
-	var t_dock: float = (300.0 + n.dist * 5.0) * (0.7 if SkillSystem.any_mastered("robotics") else 1.0)
+	var t_dock: float = 300.0 + n.dist * 5.0
 	autodock = {"to": n.id, "t0": secs(), "t1": secs() + t_dock, "hx": helm_at.x, "hy": helm_at.y}
 	GameState.toast("Auto-Dock läuft: " + loc(n.id).name)
 

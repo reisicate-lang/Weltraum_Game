@@ -285,7 +285,8 @@ func refresh_creation() -> void:
 	var picked: PackedStringArray = []
 	for id in CharacterSystem.course_ids():
 		if CharacterSystem.course_drafted(c, id):
-			picked.append("%s course +%d years" % [SkillSystem.skill(id).skill_name, CharacterSystem.course_years(id)])
+			var py := CharacterSystem.course_years(id)
+			picked.append("%s course +%d %s" % [SkillSystem.skill(id).skill_name, py, "year" if py == 1 else "years"])
 	creation_box.add_child(ui._label("Alter: %d%s · Startgeld aus dem Lebenslauf: %+d Cr" % [CharacterSystem.preview_age(c), " (incl. " + ", ".join(picked) + ")" if not picked.is_empty() else "", CharacterSystem.start_credits(c)], Color(0.87, 0.9, 0.94), 14))
 	var tr: PackedStringArray = []
 	for t in c.traits:
@@ -316,13 +317,14 @@ func refresh_creation() -> void:
 		"construction": "faster building, sometimes saves material",
 		"electrical": "+4 work value on appliances, controls, power systems, sensors",
 		"eva": "no EVA work penalty, +4 work value on suit equipment",
-		"excavation": "+4 work value on mining"}
+		"excavation": "+4 work value on mining",
+		"robotics": "+4 work value on controls and sensors"}
 	for id in CharacterSystem.course_ids():
 		var course := CharacterSystem.course_drafted(c, id)
 		var years := CharacterSystem.course_years(id)
 		if not course and (CharacterSystem.preview_age(c) + years > CharacterSystem.max_age or SkillSystem.acquired(c, id)):
 			continue
-		var crow: HBoxContainer = ui._row("%s course (%d years): %s%s" % [SkillSystem.skill(id).skill_name, years, COURSE_TEXT.get(id, SkillSystem.skill(id).description), " · selected" if course else ""],
+		var crow: HBoxContainer = ui._row("%s course (%d %s): %s%s" % [SkillSystem.skill(id).skill_name, years, "year" if years == 1 else "years", COURSE_TEXT.get(id, SkillSystem.skill(id).description), " · selected" if course else ""],
 			[ui._button("Remove" if course else "Add", func():
 				CharacterSystem.set_course(c, not course, id)
 				refresh_creation())])

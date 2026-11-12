@@ -620,5 +620,12 @@
   ],
   "difficulty": 0.4,
   "gain": 1.0
+ },
+ "robotics_work": {
+  "skills": [
+   "robotics"
+  ],
+  "difficulty": 0.4,
+  "gain": 1.0
  }
 }
