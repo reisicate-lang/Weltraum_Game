@@ -19,3 +19,4 @@ wears = false
 color = Color(0.29, 0.27, 0.21, 1)
 tech = "electrical"
 category = "misc"
+extra_categories = PackedStringArray("suit")

@@ -366,8 +366,7 @@ func _update_body(dt: float) -> void:
 	var sleeping: bool = activity != null and activity.get("need", "") == "sleep" and path.is_empty()
 	var in_suit := suit_ok()
 	if suit != null:
-		var bat_f := 0.7 if SkillSystem.mastered(self, "eva") else 1.0
-		suit.battery = maxf(0.0, suit.battery - Config.SUIT_BATTERY_USE * dt * bat_f)
+		suit.battery = maxf(0.0, suit.battery - Config.SUIT_BATTERY_USE * dt)
 		if in_suit:
 			suit.o2 = maxf(0.0, suit.o2 - Config.SUIT_O2_USE * dt * (1.0 - minf(0.5, SkillSystem.effect(self, "suit_o2_saving"))))
 	if in_suit:

@@ -101,7 +101,8 @@ func _initialize() -> void:
 	_check("Fortschritt nie über 100 %%", SK.progress(m, "eva") <= 100.0)
 	SK.set_progress(m, "eva", 100.0)
 	_check("Meisterschaft erkannt", SK.mastered(m, "eva"))
-	_check("Meisterbonus erhöht die Wirkung", SK.effect(m, "suit_o2_saving") > 0.35)
+	SK.set_progress(m, "mechanical", 100.0)
+	_check("Meisterbonus erhöht die Wirkung", SK.effect(m, "work_mechanical") > 0.8)
 
 	# 5) Wirkungen im Spiel
 	var mira = crew.player()
@@ -153,7 +154,7 @@ func _initialize() -> void:
 	for k in 600:
 		ev._update_body(1.0 / 60.0)
 		ev2._update_body(1.0 / 60.0)
-	_check("Raumanzugpraxis spart Sauerstoff (%.1f vs %.1f)" % [ev.suit.o2, ev2.suit.o2], ev.suit.o2 > ev2.suit.o2 + 1.0)
+	_check("EVA Suits hebt den Anzug-Malus auf (%.2f vs %.2f)" % [SK.eva_factor(ev), SK.eva_factor(ev2)], is_equal_approx(SK.eva_factor(ev), 1.0) and is_equal_approx(SK.eva_factor(ev2), 0.55))
 
 	# 6) Lehrbücher
 	var reader := _fresh()

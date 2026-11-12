@@ -130,7 +130,7 @@ func _unlock(c: CrewMember, id: String) -> void:
 	if id == BUSINESS:
 		GameState.toast("%s acquired Business Admin: exact Item Values are now shown." % c.display_name)
 	elif skill(id).work_value_bonus > 0.0:
-		GameState.toast("%s acquired %s: +%d work value on %s." % [c.display_name, skill(id).skill_name, int(skill(id).work_value_bonus), category_list(skill(id).work_categories)])
+		GameState.toast("%s acquired %s: %s+%d work value on %s." % [c.display_name, skill(id).skill_name, "no EVA work penalty, " if skill(id).removes_eva_malus else "", int(skill(id).work_value_bonus), category_list(skill(id).work_categories)])
 	else:
 		GameState.toast("%s acquired %s." % [c.display_name, skill(id).skill_name])
 
@@ -191,13 +191,13 @@ func any_mastered(id: String) -> bool:
 ## Aktion "<skill_id>_work" (z. B. civil_work), falls die übrigen Aktionen sie noch nicht trainieren.
 func job_profile(job: Dictionary) -> Dictionary:
 	var prof := _base_profile(job)
-	var cat := job_category(job)
-	if cat == "":
+	var cats := job_categories(job)
+	if cats.is_empty():
 		return prof
 	for id in skills:
 		var s: SkillData = skills[id]
 		var act: String = id + "_work"
-		if not cat in s.work_categories or not actions.has(act):
+		if not _overlaps(cats, s.work_categories) or not actions.has(act):
 			continue
 		var trained := false
 		for a in prof.actions:
@@ -210,7 +210,7 @@ func job_profile(job: Dictionary) -> Dictionary:
 ## Gerätekategorien in Worten (für Tooltips und Meldungen)
 const CATEGORY_NAMES := {"appliance": "Appliances", "control": "Controls", "furniture": "Furniture", "hvac": "Climate & Ventilation",
 	"misc": "Miscellaneous", "power": "Power Systems", "propulsion": "Propulsion", "docking": "Docking", "water": "Water",
-	"farming": "Farming", "production": "Production", "station": "Station", "sensor": "Sensors", "weapon": "Weapons"}
+	"farming": "Farming", "production": "Production", "station": "Station", "sensor": "Sensors", "weapon": "Weapons", "suit": "Suits"}
 
 func category_list(cats: PackedStringArray) -> String:
 	var names: PackedStringArray = []
@@ -246,6 +246,25 @@ func job_category(job: Dictionary) -> String:
 	if id == "" or ItemSystem.device(id) == null:
 		return ""
 	return ItemSystem.device(id).category
+
+## Alle Kategorien eines Auftrags: Hauptkategorie und Zusatzkategorien des Geräts (z. B. "suit")
+func job_categories(job: Dictionary) -> Array:
+	var cat := job_category(job)
+	if cat == "":
+		return []
+	var out: Array = [cat]
+	var id := job_device_id(job)
+	if id != "" and ItemSystem.device(id) != null:
+		for e in ItemSystem.device(id).extra_categories:
+			if not e in out:
+				out.append(e)
+	return out
+
+func _overlaps(cats: Array, wanted: PackedStringArray) -> bool:
+	for k in cats:
+		if k in wanted:
+			return true
+	return false
 
 func _base_profile(job: Dictionary) -> Dictionary:
 	var g := ShipSystem.grid
@@ -337,15 +356,27 @@ const BASE_WORK_VALUE := 7.0
 
 ## Additiver Arbeitswert aus erworbenen Fähigkeiten für die Gerätekategorie dieses Auftrags
 func work_value_bonus(c: CrewMember, job: Dictionary) -> float:
-	var cat := job_category(job)
-	if cat == "":
+	var cats := job_categories(job)
+	if cats.is_empty():
 		return 0.0
 	var total := 0.0
 	for id in skills:
 		var s: SkillData = skills[id]
-		if s.work_value_bonus != 0.0 and cat in s.work_categories and acquired(c, id):
+		if s.work_value_bonus != 0.0 and _overlaps(cats, s.work_categories) and acquired(c, id):
 			total += s.work_value_bonus
 	return total
+
+## EVA-Arbeitsmalus: Wer im Raumanzug arbeitet, schafft ohne erworbenen Skill (removes_eva_malus,
+## z. B. EVA Suits) nur 55 % der normalen Rate. Maßgeblich ist die Ausrüstung der Figur, nicht das Ziel.
+const EVA_WORK_FACTOR := 0.55
+
+func eva_factor(c: CrewMember) -> float:
+	if c == null or c.suit == null:
+		return 1.0
+	for id in skills:
+		if skills[id].removes_eva_malus and acquired(c, id):
+			return 1.0
+	return EVA_WORK_FACTOR
 
 ## Arbeitswert eines Charakters für einen Auftrag (vor Eigenschaften, Anzug und Stress)
 func work_value(c: CrewMember, job: Dictionary) -> float:
@@ -360,8 +391,7 @@ func work_speed(c: CrewMember, job: Dictionary) -> float:
 	var speed := work_value(c, job) / WORK_VALUE_SCALE * TraitSystem.factor(c, "work_speed")
 	if prof.get("fine", false):
 		speed *= TraitSystem.factor(c, "work_fine")
-	if c.suit != null:
-		speed *= 0.8 + effect(c, "eva_work") * 0.5
+	speed *= eva_factor(c)
 	if c.stress > 70.0:
 		speed *= 0.8
 	if job.kind == "extinguish" and not PhysicsSystem.ship_devices("extinguisher").is_empty():
@@ -489,6 +519,8 @@ func skill_tooltip(c: CrewMember, id: String) -> String:
 	var lines: PackedStringArray = [s.skill_name, s.description]
 	if s.course_years > 0:
 		lines.append("Character creation: costs %d years." % s.course_years)
+	if s.removes_eva_malus:
+		lines.append("Effect when acquired (100 %%): removes the EVA work penalty (without it, work in an EVA suit runs at %d %% of the normal rate)." % int(round(EVA_WORK_FACTOR * 100.0)))
 	if s.work_value_bonus != 0.0:
 		lines.append("Bonus when acquired (100 %%): %+d work value." % int(s.work_value_bonus))
 		lines.append("Affected categories: %s." % category_list(s.work_categories))

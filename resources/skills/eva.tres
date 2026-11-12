@@ -5,11 +5,15 @@
 [resource]
 script = ExtResource("1")
 skill_id = "eva"
-skill_name = "Raumanzugpraxis"
-description = "Arbeiten im Vakuum, Umgang mit Raumanzügen, sparsamer Sauerstoffverbrauch, Außenreparaturen."
+skill_name = "EVA Suits"
+description = "Working in an EVA suit and handling suit equipment."
 category = "praxis"
-learning_sources = PackedStringArray("Arbeit im Raumanzug", "Raumanzug warten", "Lehrbuch Außeneinsatz")
+learning_sources = PackedStringArray("Practical work: any job done while wearing an EVA suit", "Taking off and stowing a suit at a suit locker", "Textbook: EVA Suits")
 training_actions = PackedStringArray("eva_work", "suit_maintenance", "study_eva")
 required_skills = {}
-gameplay_effects = {"suit_o2_saving": 0.35, "eva_work": 0.4}
-mastery_text = "Meister: Anzug-Akku hält 30 % länger."
+gameplay_effects = {}
+mastery_text = "Acquired (100 %): no EVA work penalty, +4 work value on suit equipment (suit locker, portable charger)."
+course_years = 3
+work_value_bonus = 4.0
+work_categories = PackedStringArray("suit")
+removes_eva_malus = true

@@ -29,6 +29,8 @@ extends Resource
 ## "furniture" (Möbel), "hvac" (Klima und Lüftung), "misc" (Miscellaneous), "sensor" (Sensoren), "power", "propulsion",
 ## "docking", "water", "farming", "production", "station". Fähigkeiten können darauf wirken.
 @export var category: String = ""
+## Zusätzliche Kategorien (z. B. "suit" für Anzugschrank und Ladestation); Boni aller Kategorien zählen
+@export var extra_categories: PackedStringArray = []
 ## Schub in kN (nur Triebwerke)
 @export var thrust: float = 0.0
 ## Masse in Tonnen (für die Beschleunigung des Schiffs)

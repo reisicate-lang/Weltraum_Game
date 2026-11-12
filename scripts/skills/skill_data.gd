@@ -28,3 +28,5 @@ extends Resource
 ## (DeviceData.category). Arbeitswert = Arbeitstempo × 10, siehe SkillSystem.work_value().
 @export var work_value_bonus: float = 0.0
 @export var work_categories: PackedStringArray = []
+## Erworben: hebt den EVA-Arbeitsmalus auf (Arbeit im Raumanzug, siehe SkillSystem.EVA_WORK_FACTOR)
+@export var removes_eva_malus: bool = false

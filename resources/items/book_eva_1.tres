@@ -5,10 +5,10 @@
 [resource]
 script = ExtResource("1")
 id = "book_eva_1"
-display_name = "Lehrbuch: Raumanzugpraxis (Grundlagen)"
+display_name = "Textbook: EVA Suits (Basics)"
 weight = 0.8
 volume = 1.0
 value = 40
-description = "Bringt Raumanzugpraxis bis 40 %. Lesen in Ruhezeiten."
+description = "Brings EVA Suits to 40 %. Read during rest time."
 teaches = "eva"
 book_level = 1
