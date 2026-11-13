@@ -62,6 +62,8 @@ func set_extra_locations(extra: Array) -> void:
 	locations.append_array(extra)
 
 func reset() -> void:
+	ship_log.clear()
+	prox_muted = false
 	undock_lock_id = ""
 	undock_lock_until = 0.0
 	docked = "tycho"
@@ -83,6 +85,36 @@ func loc(id: String) -> Dictionary:
 		if l.id == id:
 			return l
 	return {}
+
+# ---------------- Nav-Konsole: PROX WARN und Ship logs (Ostranauts Flying 2.1) ----------------
+
+## Näher als das an einem anderen Objekt → PROX WARN (km)
+const PROX_KM := 5.0
+const LOG_MAX := 50
+var prox_muted := false
+## Ship logs: Andock- und Kollisionsereignisse [{t: Spielminuten, text}]
+var ship_log: Array = []
+
+func log_event(text: String) -> void:
+	ship_log.append({"t": GameState.time, "text": text})
+	if ship_log.size() > LOG_MAX:
+		ship_log = ship_log.slice(ship_log.size() - LOG_MAX)
+
+## Nächstes Objekt innerhalb von 5 km, solange nicht angedockt: {id, name, dist} oder leer
+func proximity() -> Dictionary:
+	if docked != "":
+		return {}
+	var n := nearest()
+	if n.is_empty() or float(n.dist) >= PROX_KM:
+		return {}
+	return {"id": n.id, "name": loc(n.id).name, "dist": float(n.dist)}
+
+## Warntext für die Konsole ("" = keine Warnung oder stummgeschaltet)
+func prox_warning() -> String:
+	if prox_muted:
+		return ""
+	var p := proximity()
+	return "" if p.is_empty() else "PROX WARN: %s, %.1f km" % [p.name, p.dist]
 
 func secs() -> float:
 	return GameState.time * 60.0
@@ -604,6 +636,7 @@ func _check_hazards() -> void:
 			var hits := mini(6, int(ceil(vel.distance_to(st.vel) / float(space.collide_speed))))
 			for k in hits:
 				DamageSystem.strike()
+			log_event("Collision with %s at %.0f m/s (%d hull hits)" % [l.name, vel.distance_to(st.vel) * 1000.0, hits])
 			vel = st.vel
 			GameState.toast("Zusammenstoß mit " + l.name + "! Die Hülle ist beschädigt.", "bad")
 
@@ -692,6 +725,7 @@ func dock(id: String, force: bool = false) -> bool:
 	FleetSystem.arrive(loc(id))
 	NPCSystem.on_docked(id)
 	SkillSystem.train_all_at("helm", "dock", 0.3 if force else 8.0)
+	log_event("Docked: " + loc(id).name)
 	GameState.toast("Angedockt: " + loc(id).name)
 	if String(loc(id).get("kind", "")) == "station" and not xpdr_faults().is_empty():
 		GameState.toast("Security Services (N.A.S.S.) take a closer look at your unidentified ship (%s)." % ", ".join(xpdr_faults()), "bad")
@@ -795,6 +829,7 @@ func undock() -> bool:
 	vel += Vector2.from_angle(angle + PI) * UNDOCK_PUSH
 	undock_lock_id = from
 	undock_lock_until = secs() + REDOCK_LOCK_SECS
+	log_event("Undocked: " + loc(from).name)
 	GameState.toast("Abgedockt von %s. Das Schiff treibt frei – Steuerung in der Navigation (WASD)." % loc(from).name)
 	return true
 
@@ -877,7 +912,8 @@ func station() -> Dictionary:
 func to_data() -> Dictionary:
 	return {"x": pos.x, "y": pos.y, "vx": vel.x, "vy": vel.y, "angle": angle, "docked": docked,
 		"travel": _travel_data(),
-		"autodock": autodock, "lock_id": undock_lock_id, "lock_until": undock_lock_until, "ang_vel": ang_vel, "target": target}
+		"autodock": autodock, "lock_id": undock_lock_id, "lock_until": undock_lock_until, "ang_vel": ang_vel, "target": target,
+		"ship_log": ship_log, "prox_muted": prox_muted}
 
 func _travel_data() -> Dictionary:
 	if travel.is_empty():
@@ -901,6 +937,8 @@ func from_data(d: Dictionary) -> void:
 	undock_lock_until = float(d.get("lock_until", 0.0))
 	ang_vel = float(d.get("ang_vel", 0.0))
 	target = String(d.get("target", ""))
+	ship_log.assign(d.get("ship_log", []))
+	prox_muted = bool(d.get("prox_muted", false))
 	stop_inputs()
 	helm_at = NO_HELM
 	crashed = false

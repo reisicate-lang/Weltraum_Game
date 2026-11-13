@@ -241,6 +241,7 @@ func _key(k: InputEventKey) -> void:
 		KEY_L: GameState.view = "normal" if GameState.view == "air" else "air"
 		KEY_P: GameState.view = "normal" if GameState.view == "power" else "power"
 		KEY_O: GameState.view = "normal" if GameState.view == "heat" else "heat"
+		KEY_U: GameState.view = "normal" if GameState.view == "damage" else "damage"
 		KEY_Z: UIManager.set_tool("window")
 		KEY_E: UIManager.interact()
 		KEY_H: UIManager.toggle_help()

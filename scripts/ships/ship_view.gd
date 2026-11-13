@@ -47,6 +47,8 @@ func _draw() -> void:
 		_draw_air(g, x0, y0, x1, y1)
 	if GameState.view == "heat":
 		_draw_heat(g, x0, y0, x1, y1)
+	if GameState.view == "damage":
+		_draw_damage(g, x0, y0, x1, y1)
 	_draw_fire(g, x0, y0, x1, y1)
 	_draw_jobs()
 	_draw_station()
@@ -293,6 +295,37 @@ func _draw_room_types(g: ShipGrid) -> void:
 		var col := Color(0.95, 0.93, 0.88, 0.9) if room.modifier > 1.0 else Color(0.75, 0.8, 0.86, 0.7)
 		draw_string(font, Vector2(r.position) * S + Vector2(2, 11), "%s ×%.2f" % [room.name, room.modifier],
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 10, col)
+
+## Schadensansicht (Ostranauts: Lecks finden): beschädigte Felder und Geräte rot, je
+## schlimmer desto kräftiger, mit „~“; Vakuumkanten (Leck ins All) als roter Rand
+func _draw_damage(g: ShipGrid, x0: int, y0: int, x1: int, y1: int) -> void:
+	var font := ThemeDB.fallback_font
+	var m := damage_marks(g, x0, y0, x1, y1)
+	for i in m.damaged:
+		var p := g.pos(i)
+		draw_rect(_rect(p), Color(0.9, 0.2, 0.18, 0.2 + 0.5 * (1.0 - float(m.damaged[i]) / 100.0)))
+		draw_string(font, Vector2(p) * S + Vector2(S * 0.22, S * 0.75), "~", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(1, 0.85, 0.8))
+	for i in m.leaks:
+		draw_rect(_rect(g.pos(i)), Color(1, 0.3, 0.25, 0.9), false, 2.0)
+
+## Was die Schadensansicht markiert: {damaged: {Feld: schlechtester Zustand}, leaks: [Felder mit Vakuumkante]}
+func damage_marks(g: ShipGrid, x0: int, y0: int, x1: int, y1: int) -> Dictionary:
+	var damaged := {}
+	var leaks: Array[int] = []
+	for y in range(y0, y1 + 1):
+		for x in range(x0, x1 + 1):
+			var i := g.idx(Vector2i(x, y))
+			if g.tiles[i] == ShipGrid.Tile.SPACE or g.foreign(i):
+				continue
+			var c := g.cond[i]
+			var dev = g.devices.get(i)
+			if dev != null:
+				c = minf(c, 0.0 if dev.broken else dev.cond)
+			if c < 100.0:
+				damaged[i] = c
+			if g.holds_air(i) and AtmosphereSystem.vacuum_edges(i) > 0:
+				leaks.append(i)
+	return {"damaged": damaged, "leaks": leaks}
 
 func _draw_heat(g: ShipGrid, x0: int, y0: int, x1: int, y1: int) -> void:
 	for y in range(y0, y1 + 1):

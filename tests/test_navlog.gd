@@ -1,0 +1,90 @@
+## Tests: Nav-Konsole PROX WARN (5 km, stummschaltbar) und Ship logs (Ostranauts Flying 2.1)
+##   godot --headless --path . --script res://tests/boot.gd -- test_navlog
+extends "res://tests/test_base.gd"
+
+var ok_count := 0
+var fail_count := 0
+
+func _check(name: String, ok: bool) -> void:
+	if ok:
+		ok_count += 1
+		print("OK      " + name)
+	else:
+		fail_count += 1
+		print("FEHLER  " + name)
+
+func _initialize() -> void:
+	await process_frame
+	await process_frame
+	var gs = root.get_node("GameState")
+	var SS = root.get_node("SaveSystem")
+	SS.slot = 954
+	root.get_node("Settings").meteors = false
+	gs.new_game()
+	root.get_node("TimeSystem").set_speed(0)
+	seat_pilot()
+	var P = root.get_node("PhysicsSystem")
+	root.get_node("ShipPowerSystem").step(0.01)
+
+	# 1) Angedockt: keine Warnung, Log leer
+	_check("Angedockt: keine PROX WARN, Log leer", P.prox_warning() == "" and P.proximity().is_empty() and P.ship_log.is_empty())
+
+	# 2) Abdocken: Log-Eintrag, Tycho in unter 5 km → PROX WARN
+	_check("Abdocken klappt", P.undock())
+	_check("Log: „Undocked: Tycho…“ (%s)" % str(P.ship_log), P.ship_log.size() == 1 and String(P.ship_log[0].text).begins_with("Undocked: Tycho"))
+	var w: String = P.prox_warning()
+	_check("PROX WARN nahe Tycho: %s" % w, w.begins_with("PROX WARN: Tycho") and w.ends_with("km"))
+	var ui = root.get_node("UIManager")
+	ui.nav_open = true
+	ui._last_nav = ""
+	ui._refresh_nav()
+	var texts := []
+	var mute: Button = null
+	for ch in ui.nav_side.get_children():
+		if ch.is_queued_for_deletion():
+			continue
+		for x in [ch] + ch.get_children():
+			if x is Label:
+				texts.append(x.text)
+			if x is Button and x.text == "Mute":
+				mute = x
+	_check("Cockpit zeigt PROX WARN mit „Mute“ und SHIP LOGS", texts.any(func(t): return String(t).contains("PROX WARN")) and mute != null and texts.has("SHIP LOGS"))
+	mute.pressed.emit()
+	ui.nav_open = false
+	_check("Mute-Knopf schaltet stumm", P.prox_muted)
+	P.prox_muted = true
+	_check("Stummgeschaltet: keine Warnung, Nähe bleibt bekannt", P.prox_warning() == "" and not P.proximity().is_empty())
+	P.prox_muted = false
+	# 3) Weit weg: keine Warnung
+	var home: Vector2 = P.pos
+	P.pos = home + Vector2(400.0, 400.0)
+	_check("Weit weg (%.0f km): keine Warnung" % P.nearest().dist, P.prox_warning() == "")
+	P.pos = home
+
+	# 4) Zusammenstoß: Log mit Geschwindigkeit
+	var st: Dictionary = P.loc_state(P.loc("tycho"), P.secs())
+	P.pos = st.pos
+	P.vel = st.vel + Vector2(0.05, 0.0)
+	P._check_hazards()
+	var last: Dictionary = P.ship_log[P.ship_log.size() - 1]
+	_check("Log: Zusammenstoß (%s)" % last.text, String(last.text).begins_with("Collision with Tycho") and String(last.text).contains("m/s"))
+
+	# 5) Andocken: Log
+	P.dock("tycho", true)
+	_check("Log: „Docked: Tycho…“", String(P.ship_log[P.ship_log.size() - 1].text).begins_with("Docked: Tycho"))
+
+	# 6) Höchstens 50 Einträge, Speichern/Laden
+	for k in 60:
+		P.log_event("Test %d" % k)
+	_check("Höchstens %d Einträge, älteste fallen weg" % P.LOG_MAX, P.ship_log.size() == P.LOG_MAX and P.ship_log[P.LOG_MAX - 1].text == "Test 59")
+	P.prox_muted = true
+	SS.save_game()
+	P.ship_log.clear()
+	P.prox_muted = false
+	SS.load_game(true)
+	_check("Speichern/Laden: Log und Stummschaltung bleiben", P.ship_log.size() == P.LOG_MAX and P.prox_muted)
+	gs.new_game()
+	_check("Neues Spiel: Log leer, Alarm an", P.ship_log.is_empty() and not P.prox_muted)
+
+	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	quit()

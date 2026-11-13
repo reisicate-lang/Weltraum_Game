@@ -257,6 +257,7 @@ func _build_bottom() -> void:
 	row.add_child(_button("Luft [L]", func(): GameState.view = "normal" if GameState.view == "air" else "air"))
 	row.add_child(_button("Strom [P]", func(): GameState.view = "normal" if GameState.view == "power" else "power"))
 	row.add_child(_button("Wärme [O]", func(): GameState.view = "normal" if GameState.view == "heat" else "heat"))
+	row.add_child(_button("Damage [U]", func(): GameState.view = "normal" if GameState.view == "damage" else "damage"))
 	_build_orders_bar(box)
 	power_label = _label("", COL_MUTED, 12)
 	box.add_child(power_label)
@@ -618,7 +619,7 @@ func _refresh_nav() -> void:
 	var P := PhysicsSystem
 	var e: Dictionary = P.space.earth
 	var alt := P.pos.distance_to(Vector2(e.x, e.y)) - float(e.r)
-	var rows: Array = [P.target, _flight_rows(), P.xpdr_faults(), P.helm_block_reason(P.operated_helm()), P.autodock_block_reason(),
+	var rows: Array = [P.target, _flight_rows(), P.xpdr_faults(), P.prox_warning(), P.prox_muted, P.ship_log.size(), P.helm_block_reason(P.operated_helm()), P.autodock_block_reason(),
 		P.operated_helm().inv.to_data() if P.operated_helm() != null and P.operated_helm().inv != null else [], int(ceil(P.redock_wait(P.undock_lock_id))), P.status(), _fmt_speed(P.vel.length()), _fmt_dist(alt), int(P.fuel()), P.max_thrust(), snappedf(P.mass(), 0.1)]
 	for l in P.locations:
 		var r := P.rel_to(l.id)
@@ -639,6 +640,11 @@ func _refresh_nav() -> void:
 	var faults: Array = P.xpdr_faults()
 	if not faults.is_empty():
 		nav_side.add_child(_label("⚠ " + " · ".join(faults) + " – some stations refuse docking", Color(0.9, 0.33, 0.29), 13))
+	var prox: String = P.prox_warning()
+	if prox != "":
+		nav_side.add_child(_row("⚠ " + prox, [_button("Mute", func(): P.prox_muted = true)], Color(0.95, 0.76, 0.31)))
+	elif P.prox_muted:
+		nav_side.add_child(_row("Proximity alarm muted", [_button("Unmute", func(): P.prox_muted = false)], COL_MUTED))
 	_build_flight_info()
 	nav_side.add_child(_row("Geschwindigkeit", [_label(_fmt_speed(P.vel.length()), COL_AMBER, 12)]))
 	nav_side.add_child(_row("Höhe über der Erde", [_label(_fmt_dist(alt), Color(0.9, 0.33, 0.29) if alt < float(P.space.warn_alt) else COL_AMBER, 12)]))
@@ -666,6 +672,12 @@ func _refresh_nav() -> void:
 		var mrow := _row("Module im Pult", [_label(", ".join(mods) if not mods.is_empty() else "keine", COL_AMBER if not mods.is_empty() else COL_MUTED, 12)])
 		mrow.add_child(_button("Modulfach [E]", func(): open_container(PhysicsSystem.operated_helm().pos)))
 		nav_side.add_child(mrow)
+	# Ship logs (Diagnostik): letzte Andock- und Kollisionsereignisse
+	if not P.ship_log.is_empty():
+		nav_side.add_child(_label("SHIP LOGS", COL_MUTED, 11))
+		for le in P.ship_log.slice(maxi(0, P.ship_log.size() - 4)):
+			var tm := float(le.t)
+			nav_side.add_child(_label("Day %d %02d:%02d · %s" % [int(tm / 1440.0) + 1, int(fmod(tm, 1440.0) / 60.0), int(fmod(tm, 60.0)), le.text], COL_MUTED, 11))
 	nav_side.add_child(_label("ZIELE", COL_MUTED, 11))
 	for l in P.locations:
 		var r := P.rel_to(l.id)
