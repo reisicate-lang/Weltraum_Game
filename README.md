@@ -102,6 +102,7 @@ godot --headless --path . --script res://tests/boot.gd -- test_aging
 | Kiste durchsuchen | `E` (daneben stehen) oder draufklicken |
 | Auf der Station reden | Klick auf eine Figur oder einen Tresen: deine Figur läuft hin, dann beginnt das Gespräch |
 | Luft- / Strom- / Wärme-Ansicht | `L` / `P` / `O` |
+| Strom (Ostranauts Power) | Batterietypen: Mini XS Ship Battery (5 kWh, Lade-/Entladegrenze 20 kW), Compact S Ship Battery (10 kWh, 40 kW), Ship Battery (20 kWh, 81 kW; die bisherige Batterie, alte Ladung über 20 wird gekappt). Eine Ship Battery versorgt das Startschiff ohne Generator gut 4 h. Zustand: nutzbare Kapazität = Nennkapazität × Zustand, kaputt = 0; unter 75 % Zustand kriecht die Ladung weg (bei 50 % ca. 0,7 kWh/h bei einer Ship Battery). Power Switch (Geräte-Menü, Kategorie Power): ein Kabelstück, Rechtsklick → „Turn power switch on/off“; aus trennt die Netze, auch mit Kabel darunter. Notstrom wie im Wiki: Mini XS hinter einem ausgeschalteten Schalter, reicht am Startschiff ca. 1 h. Die Statuszeile zeigt beim Entladen „Batterien reichen noch ca. X h“ (unter 1 h in Minuten) |
 | Fenster bauen | `Z` |
 | Zeit | `Leertaste` Pause, `1`–`5`: ×1 (Echtzeit), ×2, ×4, ×8, ×16 |
 | Charaktermenü (Fähigkeiten, Traits, Hobbys, Lebenslauf, Aufgaben) | `I` |

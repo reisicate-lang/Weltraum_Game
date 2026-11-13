@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "battery_compact"
+display_name = "Compact S Ship Battery"
+description = "Stores up to 10 kWh. Charges and discharges at up to 40 kW. A damaged battery stores less and slowly loses charge."
+power = 0.0
+build_time = 3.0
+cost = {"plate": 1, "cell": 2, "circuit": 1}
+stock = -1.0
+stock_unit = ""
+capacity = 10.0
+max_rate = 40.0
+storage = 0.0
+need = ""
+wears = false
+color = Color(0.24, 0.29, 0.27, 1)
+tech = "electrical"
+category = "power"

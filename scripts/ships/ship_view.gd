@@ -462,8 +462,13 @@ func _draw_icon(dev: Device, r: Rect2, a: float) -> void:
 			draw_circle(c, u * 0.3, Color(1, 0.7, 0.28, a) if dev.producing else Color(0.35, 0.27, 0.19, a))
 			if dev.producing:
 				draw_circle(c, u * (0.15 + sin(t * 4.0) * 0.03), Color(1, 0.95, 0.78, a))
-		"battery", "charger":
-			var cap := dev.data().capacity
+		"power_switch":
+			var col := Color(0.44, 0.81, 0.56, a) if dev.switch_on else Color(0.9, 0.33, 0.29, a)
+			draw_rect(Rect2(c - Vector2(u * 0.25, u * 0.25), Vector2(u * 0.5, u * 0.5)), Color(0.1, 0.13, 0.12, a))
+			var tip := c + (Vector2(0, -u * 0.2) if dev.switch_on else Vector2(u * 0.18, -u * 0.1))
+			draw_line(c + Vector2(0, u * 0.15), tip, col, 3.0)
+		"battery", "battery_mini", "battery_compact", "charger":
+			var cap := ShipPowerSystem.capacity_of(dev)
 			var f := dev.charge / cap if cap > 0.0 else 0.0
 			var br := Rect2(c - Vector2(u * 0.2, u * 0.3), Vector2(u * 0.4, u * 0.6))
 			draw_rect(br, Color(0.1, 0.13, 0.12, a))

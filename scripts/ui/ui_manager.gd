@@ -1144,6 +1144,10 @@ func open_object_menu(p: Vector2i) -> bool:
 		object_menu.add_item("Debug navigation console (%.1f min)" % Config.DEBUG_TIME, menu_actions.size())
 		object_menu.set_item_disabled(object_menu.item_count - 1, not ShipConstructionSystem.can_place("debug", p))
 		menu_actions.append({"kind": "debug"})
+	# Stromschalter: ein-/ausschalten (aus = trennt die Netze)
+	if ndev != null and ndev.type == "power_switch" and not g.foreign(g.idx(ndev.pos)):
+		object_menu.add_item("Turn power switch off" if ndev.switch_on else "Turn power switch on", menu_actions.size())
+		menu_actions.append({"kind": "switch", "dev": ndev})
 	# Türen: Lüftungsschlitz (geschlossene Tür lässt sonst etwas Luft durch)
 	if key == "tile:door" and not StationSystem.reserved(p):
 		var lock := AirlockSystem.is_lock_door(i) or StationSystem.is_hatch(i)
@@ -1238,6 +1242,9 @@ func _on_object_menu(id: int) -> void:
 		"vent":
 			AtmosphereSystem.set_vent(g.idx(menu_pos), bool(a.closed))
 			GameState.toast("Lüftungsschlitz geschlossen: die Tür ist jetzt dicht." if a.closed else "Lüftungsschlitz offen: etwas Luft strömt durch die geschlossene Tür.")
+		"switch":
+			ShipPowerSystem.toggle_switch(a.dev)
+			GameState.toast("Power switch on: the networks are connected." if a.dev.switch_on else "Power switch off: the network is split here.")
 		"cancel":
 			var job = ShipConstructionSystem.jobs.get(g.idx(menu_pos))
 			if job != null:
@@ -1444,8 +1451,8 @@ func _refresh() -> void:
 	if net.is_empty():
 		power_label.text = "⚡ Kein Stromnetz"
 	else:
-		power_label.text = "⚡ %.1f kW erzeugt · %.1f kW verbraucht · Batterie %.1f/%.0f kWh%s" % [
-			net.production, net.demand, net.charge, net.capacity, "" if net.ok else " · STROMAUSFALL"]
+		power_label.text = "⚡ %.1f kW erzeugt · %.1f kW verbraucht · Batterie %.1f/%.0f kWh%s%s" % [
+			net.production, net.demand, net.charge, net.capacity, runtime_text(net), "" if net.ok else " · STROMAUSFALL"]
 	money_label.text = "%d Cr · Schulden %d · %s · %d Baupläne" % [EconomySystem.credits, EconomySystem.debt,
 		"Raten pausiert" if Settings.debt_paused else "Rate in %.1f T" % maxf(0.0, (EconomySystem.next_payment - GameState.time) / 1440.0),
 		ShipConstructionSystem.jobs.size()]
@@ -1587,3 +1594,12 @@ func item_tooltip(it: Dictionary) -> String:
 	var text := ItemSystem.item(it.type).description
 	var v := EconomySystem.value_text(EconomySystem.trader(), it)
 	return text + ("\n" + v if v != "" else "")
+
+## Laufzeit beim aktuellen Verbrauch: "" wenn das Netz nicht entlädt
+func runtime_text(net: Dictionary) -> String:
+	var h: float = net.get("hours", INF)
+	if h == INF or net.charge <= 0.0:
+		return ""
+	if h < 1.0:
+		return " · Batterien reichen noch ca. %d min" % int(round(h * 60.0))
+	return " · Batterien reichen noch ca. %.1f h" % h

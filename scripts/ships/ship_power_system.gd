@@ -1,6 +1,13 @@
 ## Stromnetz: Kabel, die sich berühren, bilden ein Netz. Geräte auf
 ## einem Kabel hängen daran. Überschuss lädt Batterien, Mangel leert sie.
+## Stromschalter leiten nur eingeschaltet. Beschädigte Batterien speichern
+## weniger (Kapazität × Zustand) und verlieren unter LEAK_COND langsam Ladung.
 extends Node
+
+## Unter diesem Zustand (%) kriecht die Ladung einer Batterie weg
+const LEAK_COND := 75.0
+## Verlust pro Stunde bei Zustand 0, als Anteil der Nennkapazität
+const LEAK_PER_H := 0.1
 
 var nets: Array[Dictionary] = []
 var net_of := PackedInt32Array()
@@ -14,11 +21,17 @@ func _rebuild() -> void:
 	net_of.resize(g.tiles.size())
 	net_of.fill(-1)
 	nets.clear()
+	# Stromschalter: an = leitet (auch ohne Kabel), aus = trennt (auch mit Kabel)
+	var switches := {}
+	for i in g.devices:
+		if g.devices[i].type == "power_switch":
+			switches[i] = g.devices[i].switch_on
+	var conducts := func(j: int) -> bool: return bool(switches[j]) if switches.has(j) else g.cables[j] == 1
 	for start in g.tiles.size():
-		if g.cables[start] == 0 or net_of[start] != -1:
+		if not conducts.call(start) or net_of[start] != -1:
 			continue
 		var id := nets.size()
-		nets.append({"production": 0.0, "demand": 0.0, "charge": 0.0, "capacity": 0.0, "ok": true})
+		nets.append({"production": 0.0, "demand": 0.0, "charge": 0.0, "capacity": 0.0, "ok": true, "hours": INF})
 		var stack: Array[int] = [start]
 		net_of[start] = id
 		while not stack.is_empty():
@@ -29,7 +42,7 @@ func _rebuild() -> void:
 				if not g.in_bounds(q):
 					continue
 				var j := g.idx(q)
-				if g.cables[j] == 1 and net_of[j] == -1:
+				if net_of[j] == -1 and conducts.call(j):
 					net_of[j] = id
 					stack.append(j)
 	for i in g.devices:
@@ -73,28 +86,59 @@ func step(dt: float) -> void:
 					net.demand += -d.power
 				consumers.get_or_add(dev.net, []).append(dev)
 		if d.capacity > 0.0:
+			var cap := capacity_of(dev)
+			dev.charge = clampf(dev.charge, 0.0, cap)
+			if dev.cond < LEAK_COND:
+				dev.charge = maxf(0.0, dev.charge - d.capacity * LEAK_PER_H * (LEAK_COND - dev.cond) / LEAK_COND * dt / 60.0)
 			batteries.get_or_add(dev.net, []).append(dev)
 			net.charge += dev.charge
-			net.capacity += d.capacity
+			net.capacity += cap
 	for id in nets.size():
 		var net: Dictionary = nets[id]
 		var balance: float = net.production - net.demand
 		var energy := absf(balance) * dt / 60.0
+		var bats: Array = batteries.get(id, [])
+		net.hours = INF if balance >= 0.0 else net.charge / -balance
 		if balance >= 0.0:
 			net.ok = true
 			var left := energy
-			for b in batteries.get(id, []):
-				var add := minf(left, b.data().capacity - b.charge)
-				b.charge += add
-				left -= add
-		elif net.charge >= energy:
-			net.ok = true
-			for b in batteries.get(id, []):
-				b.charge -= energy * (b.charge / net.charge)
+			for b in bats:
+				var add := minf(minf(left, capacity_of(b) - b.charge), rate_limit(b, dt))
+				b.charge += maxf(0.0, add)
+				left -= maxf(0.0, add)
 		else:
-			net.ok = false
+			# Jede Batterie gibt höchstens ihre Entladegrenze (kW) ab
+			var avail := 0.0
+			var give := []
+			for b in bats:
+				var x := minf(b.charge, rate_limit(b, dt))
+				give.append(x)
+				avail += x
+			if avail >= energy and avail > 0.0:
+				net.ok = true
+				for k in bats.size():
+					bats[k].charge -= energy * (give[k] / avail)
+			else:
+				net.ok = false
 		for c in consumers.get(id, []):
 			c.powered = net.ok
+
+## Nutzbare Kapazität: Nennkapazität × Zustand, kaputt = 0
+func capacity_of(dev: Device) -> float:
+	if dev.broken:
+		return 0.0
+	return dev.data().capacity * clampf(dev.cond, 0.0, 100.0) / 100.0
+
+## Wie viel kWh eine Batterie in dt (Minuten) höchstens laden/abgeben kann
+func rate_limit(dev: Device, dt: float) -> float:
+	var r := dev.data().max_rate
+	return INF if r <= 0.0 else r * dt / 60.0
+
+## Stromschalter umlegen; Netze werden neu aufgebaut
+func toggle_switch(dev: Device) -> void:
+	dev.switch_on = not dev.switch_on
+	_dirty = true
+	EventBus.ship_changed.emit()
 
 func main_net() -> Dictionary:
 	var best := {}

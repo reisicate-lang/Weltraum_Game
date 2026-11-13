@@ -118,7 +118,7 @@ func _initialize() -> void:
 	var s3: String = await _rclick(bat)
 	var h3 := _menu_head()
 	_check("1: Rechtsklick 1 → Kabel (%s)" % h1, s1 == "cable" and "Ausgewählt: Kabel" in h1 and ui.object_menu.visible)
-	_check("1: Rechtsklick 2 → Gerät (%s)" % h2, s2 == "dev:battery" and "Ausgewählt: Batterie" in h2)
+	_check("1: Rechtsklick 2 → Gerät (%s)" % h2, s2 == "dev:battery" and "Ausgewählt: Ship Battery" in h2)
 	_check("1: Rechtsklick 3 → Boden (%s)" % h3, s3 == "tile:floor" and "Ausgewählt: Boden" in h3)
 	var s4: String = await _rclick(bat)
 	_check("1: Rechtsklick 4 → wieder Kabel", s4 == "cable")

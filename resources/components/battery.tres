@@ -5,14 +5,15 @@
 [resource]
 script = ExtResource("1")
 id = "battery"
-display_name = "Batterie"
-description = "Speichert bis zu 30 kWh überschüssigen Strom."
+display_name = "Ship Battery"
+description = "Stores up to 20 kWh. Charges and discharges at up to 81 kW. A damaged battery stores less and slowly loses charge."
 power = 0.0
 build_time = 4.0
 cost = {"plate": 2, "cell": 4, "circuit": 1}
 stock = -1.0
 stock_unit = ""
-capacity = 30.0
+capacity = 20.0
+max_rate = 81.0
 storage = 0.0
 need = ""
 wears = false

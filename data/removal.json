@@ -474,5 +474,43 @@
   ],
   "uninstall_time": 1.0,
   "uninstall_tool": ""
+ },
+ "battery_compact": {
+  "uninstall_time": 3.0,
+  "dismantle_time": 4.5,
+  "dismantle": {
+   "plate": 1,
+   "cell": 1,
+   "circuit": 1
+  },
+  "hp": 120,
+  "debris": {
+   "scrap": 2
+  },
+  "dismantle_tool": "crowbar"
+ },
+ "battery_mini": {
+  "uninstall_time": 2.0,
+  "dismantle_time": 3.0,
+  "dismantle": {
+   "cell": 1,
+   "circuit": 1
+  },
+  "hp": 80,
+  "debris": {
+   "scrap": 1
+  },
+  "dismantle_tool": "crowbar"
+ },
+ "power_switch": {
+  "uninstall_time": 1.5,
+  "dismantle_time": 2.0,
+  "dismantle": {
+   "copper": 1
+  },
+  "hp": 60,
+  "debris": {
+   "scrap": 1
+  }
  }
 }

@@ -17,6 +17,8 @@ extends Resource
 @export var stock_unit: String = ""
 ## Batteriekapazität in kWh (0 = keine Batterie)
 @export var capacity: float = 0.0
+## Lade-/Entladegrenze in kW (0 = unbegrenzt), z. B. Ship Battery 81 kW
+@export var max_rate: float = 0.0
 ## Lagerplatz in Litern (0 = kein Lager)
 @export var storage: float = 0.0
 ## Welches Bedürfnis das Gerät erfüllt ("food", "water", "sleep", "hygiene")

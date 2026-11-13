@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "power_switch"
+display_name = "Power Switch"
+description = "A conduit piece you can turn off (right-click). On: connects like a cable. Off: splits the power network, e.g. to keep a backup battery in reserve."
+power = 0.0
+build_time = 1.5
+cost = {"copper": 1, "circuit": 1}
+stock = -1.0
+stock_unit = ""
+capacity = 0.0
+storage = 0.0
+need = ""
+wears = false
+color = Color(0.55, 0.5, 0.2, 1)
+tech = "electrical"
+category = "power"
