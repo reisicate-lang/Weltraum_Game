@@ -1,26 +1,10 @@
 {
  "careers": [
   {
-   "id": "school",
-   "name": "Schule auf dem Mond",
-   "years": 4,
-   "min_age": 14,
-   "max_age": 18,
-   "requires": [],
-   "skills": {
-    "physics": 12,
-    "construction": 8,
-    "folk": 10
-   },
-   "credits": 0,
-   "hobby_choice": true,
-   "text": "Lernte in der Mondschule das Nötigste über Physik und Technik."
-  },
-  {
    "id": "shipyard",
    "name": "Shipyard Apprenticeship",
    "years": 3,
-   "min_age": 16,
+   "min_age": 18,
    "requires": [],
    "skills": {
     "construction": 25,
@@ -41,7 +25,7 @@
    "id": "electrician",
    "name": "Electrician Gig",
    "years": 3,
-   "min_age": 17,
+   "min_age": 18,
    "requires": [],
    "skills": {
     "robotics": 10,
@@ -82,7 +66,7 @@
    "id": "street",
    "name": "Jahre auf der Straße",
    "years": 3,
-   "min_age": 14,
+   "min_age": 18,
    "requires": [],
    "skills": {
     "street": 30,
@@ -103,9 +87,7 @@
    "name": "Universität: Physik",
    "years": 4,
    "min_age": 18,
-   "requires": [
-    "school"
-   ],
+   "requires": [],
    "skills": {
     "physics": 35,
     "software": 20,
@@ -137,7 +119,7 @@
    "id": "miner",
    "name": "Bergbaukolonie",
    "years": 3,
-   "min_age": 16,
+   "min_age": 18,
    "requires": [],
    "skills": {
     "excavation": 35,
@@ -156,9 +138,7 @@
    "name": "Pilotenschule",
    "years": 3,
    "min_age": 18,
-   "requires": [
-    "school"
-   ],
+   "requires": [],
    "skills": {
     "pilot": 35,
     "physics": 10,
@@ -189,7 +169,7 @@
    "id": "hacker",
    "name": "Datenhändlerin",
    "years": 3,
-   "min_age": 17,
+   "min_age": 18,
    "requires": [],
    "skills": {
     "software": 25,
@@ -205,7 +185,7 @@
    "id": "bar",
    "name": "Barmusikerin",
    "years": 2,
-   "min_age": 16,
+   "min_age": 18,
    "requires": [],
    "skills": {
     "song": 30,
@@ -224,7 +204,7 @@
    "id": "cook",
    "name": "Schiffsköchin",
    "years": 2,
-   "min_age": 16,
+   "min_age": 18,
    "requires": [],
    "skills": {
     "cooking": 35,
@@ -238,7 +218,7 @@
    "id": "salvager",
    "name": "Bergungscrew",
    "years": 3,
-   "min_age": 17,
+   "min_age": 18,
    "requires": [],
    "skills": {
     "excavation": 20,
@@ -311,6 +291,6 @@
    "item": "book"
   }
  ],
- "start_age": 14,
+ "start_age": 18,
  "max_age": 60
 }

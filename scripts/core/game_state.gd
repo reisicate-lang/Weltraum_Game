@@ -36,7 +36,6 @@ func new_game() -> void:
 	# Standard-Lebenslauf für Mira (im Startbildschirm änderbar)
 	var mira := CrewSystem.player()
 	CharacterSystem.begin(mira)
-	CharacterSystem.apply_career(mira, "school")
 	CharacterSystem.apply_career(mira, "shipyard")
 	CharacterSystem.choose_hobby(mira, "tinkering")
 	EconomySystem.credits += CharacterSystem.start_credits(mira)

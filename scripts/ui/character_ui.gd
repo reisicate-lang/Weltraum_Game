@@ -281,7 +281,7 @@ func refresh_creation() -> void:
 	_clear(creation_bottom)
 	_fit()
 	creation_box.add_child(ui._label("LEBENSLAUF: %s" % c.display_name, ui.COL_AMBER, 18))
-	creation_box.add_child(_wrap("Du bestimmst Miras Vergangenheit. Jede Station kostet Lebensjahre und prägt Fähigkeiten, Eigenschaften, Kontakte und Geld. Mit mindestens 18 Jahren kann es losgehen."))
+	creation_box.add_child(_wrap("Du bestimmst Miras Vergangenheit. Jede Station kostet Lebensjahre und prägt Fähigkeiten, Eigenschaften, Kontakte und Geld. Du beginnst mit 18 auf einem Asteroiden, mit schwachen Start-Traits (im Raster unten gegen Jahre entfernbar) und den Skills Spaceship Engineering und Zero-g Ops."))
 	var picked: PackedStringArray = []
 	for id in CharacterSystem.course_ids():
 		if CharacterSystem.course_drafted(c, id):

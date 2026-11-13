@@ -56,6 +56,7 @@ func _initialize() -> void:
 	root.get_node("Settings").meteors = false
 	root.get_node("EventBus").toast.connect(func(t, _k): toasts.append(String(t)))
 	gs.new_game()
+	root.get_node("CrewSystem").player().traits.clear()   # Flugphysik ohne Piloting aus Traits
 	root.get_node("TimeSystem").set_speed(0)
 	ui.char_ui.creation.visible = false
 	var mira = crew.player()

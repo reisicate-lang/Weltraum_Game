@@ -185,16 +185,14 @@ func _initialize() -> void:
 	# 8) Lebenslauf
 	var life := _fresh()
 	CH.begin(life)
+	_check("Start mit 18 (Asteroiden-Profil)", life.age == 18)
+	_check("Start-Traits und Start-Skills (%s)" % str(life.traits), life.traits.size() == 9 and "feeble" in life.traits and "visually_impaired" in life.traits and SK.acquired(life, "spaceship") and SK.acquired(life, "zerog"))
 	var avail_ids: Array = CH.available(life).map(func(k): return k.id)
-	_check("Mit 14 keine Universität (braucht Schule und Alter)", not "university" in avail_ids)
-	CH.apply_career(life, "school")
-	_check("Schule kostet 4 Jahre", life.age == 18)
-	avail_ids = CH.available(life).map(func(k): return k.id)
-	_check("Nach der Schule ist die Universität offen", "university" in avail_ids)
+	_check("Keine Schule mehr, Universität ab Start offen", not "school" in avail_ids and "university" in avail_ids)
 	CH.apply_career(life, "military")
 	_check("Militär bringt Fernkampf", SK.progress(life, "ranged") > 15.0)
 	_check("Militär gibt eine Bolzenpistole", life.inv.count("boltgun") == 1)
-	_check("Lebenslauf wird protokolliert", life.history.size() >= 3)
+	_check("Lebenslauf wird protokolliert", life.history.size() >= 2)
 	_check("Hobby wählbar", CH.choose_hobby(life, "chess") and "chess" in life.hobbies)
 
 	# 9) NPCs: eigene Fähigkeiten, lernen durch Arbeit

@@ -170,8 +170,16 @@ func career(id: String) -> Dictionary:
 			return c
 	return {}
 
-## Charakter auf den Anfang des Lebenslaufs setzen
-func begin(c: CrewMember) -> void:
+## Startprofil der Spielerfigur nach Ostranauts (Wiki 1.1): auf einem Asteroiden aufgewachsen,
+## mit 18 schon in schlechter Verfassung. Die negativen Traits lassen sich im Lebenslauf gegen Jahre
+## entfernen. „Youthful“ (ohne Wirkung) gibt es hier nicht.
+const START_TRAITS := ["feeble", "fragile", "micro_g_hypovolemic", "immunosuppressed", "insomniac",
+	"slow_metabolism", "sharp_hearing", "unfit", "visually_impaired"]
+const START_SKILLS := ["spaceship", "zerog"]
+
+## Charakter auf den Anfang des Lebenslaufs setzen. asteroid_start: Startprofil der Spielerfigur
+## (Start-Traits und Start-Skills); false für zufällige Figuren (ein zufälliger Geburts-Trait).
+func begin(c: CrewMember, asteroid_start: bool = true) -> void:
 	c.age = start_age
 	c.skills.clear()
 	c.traits.clear()
@@ -185,10 +193,20 @@ func begin(c: CrewMember) -> void:
 	c.set_meta("draft_courses", [])
 	c.set_meta("draft_trait_add", [])
 	c.set_meta("draft_trait_remove", [])
-	# Eine angeborene Eigenschaft
-	var ids := TraitSystem.traits.keys()
-	TraitSystem.add(c, ids.pick_random())
-	c.history.append("Geboren in einer Mondsiedlung.")
+	if asteroid_start:
+		for t in START_TRAITS:
+			if TraitSystem.get_trait(t) != null and not t in c.traits:
+				c.traits.append(t)
+		for s in START_SKILLS:
+			if SkillSystem.skill(s) != null:
+				SkillSystem.set_progress(c, s, SkillSystem.ACQUIRED)
+				SkillSystem._entry(c, s).unlocked = true
+		c.history.append("Grew up on an asteroid: starts at %d in poor shape, with Spaceship Engineering and Zero-g Ops." % start_age)
+	else:
+		# Zufällige Figur: eine angeborene Eigenschaft
+		var ids := TraitSystem.traits.keys()
+		TraitSystem.add(c, ids.pick_random())
+		c.history.append("Geboren in einer Mondsiedlung.")
 
 func done_careers(c: CrewMember) -> Array:
 	return c.get_meta("careers", [])
@@ -284,8 +302,8 @@ func choose_hobby(c: CrewMember, id: String) -> bool:
 	return true
 
 ## Zufälliger Lebenslauf bis zu einem Zielalter (für NPCs und "Zufall")
-func randomize_life(c: CrewMember, target_age: int) -> void:
-	begin(c)
+func randomize_life(c: CrewMember, target_age: int, asteroid_start: bool = true) -> void:
+	begin(c, asteroid_start)
 	var guard := 0
 	while c.age < target_age and guard < 20:
 		guard += 1
@@ -305,7 +323,7 @@ func generate_npc() -> CrewMember:
 	var name := "%s %s" % [FIRST_NAMES.pick_random(), LAST_NAMES.pick_random()]
 	var c := CrewMember.new(CrewSystem.next_id, name, Color(COLORS.pick_random()), Vector2i.ZERO)
 	CrewSystem.next_id += 1
-	randomize_life(c, randi_range(20, 45))
+	randomize_life(c, randi_range(20, 45), false)
 	var total := 0.0
 	for s in c.skills:
 		total += SkillSystem.progress(c, s)

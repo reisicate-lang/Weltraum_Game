@@ -86,7 +86,8 @@ func _initialize() -> void:
 	# 1) Charaktererstellung: ±1 Jahr
 	var cui = ui.char_ui
 	CHS.begin(mira)
-	CHS.apply_career(mira, "school")
+	_check("1: Zero-g Ops ist Start-Skill", SK.acquired(mira, "zerog"))
+	SK.set_progress(mira, "zerog", 0.0)   # für die Kursprüfung zurücksetzen
 	cui.open_creation()
 	await process_frame
 	var base: int = mira.age

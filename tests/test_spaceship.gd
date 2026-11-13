@@ -103,7 +103,7 @@ func _initialize() -> void:
 	# 1a) Manuell wählen und entfernen: ±3 Jahre
 	var cui = ui.char_ui
 	CHS.begin(mira)
-	CHS.apply_career(mira, "school")
+	SK.set_progress(mira, "spaceship", 0.0)   # Start-Skill: für die Kursprüfung zurücksetzen
 	cui.open_creation()
 	await process_frame
 	var base: int = mira.age
@@ -126,7 +126,8 @@ func _initialize() -> void:
 	for pre in [false, true]:
 		var c := CrewMember.new(980, "Profile Test", Color.WHITE, Vector2i.ZERO)
 		CHS.begin(c)
-		CHS.apply_career(c, "school")
+		_check("1: Start-Skill vorhanden (Asteroiden-Profil)", SK.acquired(c, "spaceship"))
+		SK.set_progress(c, "spaceship", 0.0)
 		if pre:
 			SK.set_progress(c, "spaceship", 100.0)
 		var a0: int = c.age
@@ -139,7 +140,7 @@ func _initialize() -> void:
 		_check("1: Profil (%s) ein zweites Mal: nichts doppelt" % label, line2 != "" and not "Acquired Spaceship Engineering" in line2 and c.skills.keys().count("spaceship") == 1)
 	var c2 := CrewMember.new(981, "Profile Course", Color.WHITE, Vector2i.ZERO)
 	CHS.begin(c2)
-	CHS.apply_career(c2, "school")
+	SK.set_progress(c2, "spaceship", 0.0)
 	CHS.set_course(c2, true, "spaceship")
 	var a2: int = c2.age
 	CHS.apply_career(c2, "shipyard")
