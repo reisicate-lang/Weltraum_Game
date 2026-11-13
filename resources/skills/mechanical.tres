@@ -5,11 +5,14 @@
 [resource]
 script = ExtResource("1")
 skill_id = "mechanical"
-skill_name = "Maschinenbau"
-description = "Motoren, Pumpen, Lüfter, Generatoren, Kühlschränke. Mechanische Reparaturen gehen schneller."
+skill_name = "Mechanical Engineering"
+description = "Engines, pumps, fans and household machines: appliances, controls, furniture, climate and ventilation, and miscellaneous equipment."
 category = "technik"
-learning_sources = PackedStringArray("Motoren, Pumpen und Generatoren reparieren", "Möbel demontieren", "Lehrbuch Mechanik")
-training_actions = PackedStringArray("repair_mechanical", "install_mechanical", "repair_furniture", "deconstruct_furniture", "study_mechanical")
+learning_sources = PackedStringArray("Practical work: building, installing, repairing or removing appliances, controls, furniture, climate & ventilation and miscellaneous devices; repairing and installing mechanical devices", "Textbook: Mechanical Engineering")
+training_actions = PackedStringArray("mechanical_work", "repair_mechanical", "install_mechanical", "repair_furniture", "deconstruct_furniture", "study_mechanical")
 required_skills = {}
-gameplay_effects = {"work_mechanical": 0.8}
-mastery_text = "Meister: Mechanische Geräte nutzen sich halb so schnell ab."
+gameplay_effects = {}
+mastery_text = "Acquired (100 %): +4 work value on jobs at appliances, controls, furniture, climate & ventilation and miscellaneous devices. Tools and materials are still required."
+course_years = 3
+work_value_bonus = 4.0
+work_categories = PackedStringArray("appliance", "control", "furniture", "hvac", "misc")

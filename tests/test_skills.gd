@@ -101,8 +101,8 @@ func _initialize() -> void:
 	_check("Fortschritt nie über 100 %%", SK.progress(m, "eva") <= 100.0)
 	SK.set_progress(m, "eva", 100.0)
 	_check("Meisterschaft erkannt", SK.mastered(m, "eva"))
-	SK.set_progress(m, "mechanical", 100.0)
-	_check("Meisterbonus erhöht die Wirkung", SK.effect(m, "work_mechanical") > 0.8)
+	SK.set_progress(m, "pilot", 100.0)
+	_check("Meisterbonus erhöht die Wirkung", SK.effect(m, "fuel_saving") > 0.25)
 
 	# 5) Wirkungen im Spiel
 	var mira = crew.player()

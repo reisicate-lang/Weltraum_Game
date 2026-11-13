@@ -5,10 +5,10 @@
 [resource]
 script = ExtResource("1")
 id = "book_mechanical_1"
-display_name = "Lehrbuch: Maschinenbau (Grundlagen)"
+display_name = "Textbook: Mechanical Engineering (Basics)"
 weight = 0.8
 volume = 1.0
 value = 40
-description = "Bringt Maschinenbau bis 40 %. Lesen in Ruhezeiten."
+description = "Brings Mechanical Engineering to 40 %. Read during rest time."
 teaches = "mechanical"
 book_level = 1

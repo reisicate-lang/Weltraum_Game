@@ -641,5 +641,12 @@
   ],
   "difficulty": 0.4,
   "gain": 1.0
+ },
+ "mechanical_work": {
+  "skills": [
+   "mechanical"
+  ],
+  "difficulty": 0.4,
+  "gain": 1.0
  }
 }
