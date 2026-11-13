@@ -89,14 +89,18 @@ func _initialize() -> void:
 	gs.selected = mira
 	var far := C(x0 + 1, y0 + 1)
 	R.order("dismantle", far)
-	_run(3)
+	# Die Figur sucht nur alle paar Spielsekunden nach Aufträgen: warten, bis sie losläuft
+	for k in 10:
+		_run(1)
+		if mira.job != null and not mira.path.is_empty():
+			break
 	_check("Auf dem Weg zum Bett", mira.job != null and not mira.path.is_empty())
-	var job_ref: Dictionary = mira.job
+	var job_ref = mira.job
 	ui.toggle_auto()
 	var stop_pos: Vector2 = mira.pos
 	_check("Knopf zeigt „Auto: AUS“", ui.auto_button.text == "Auto: AUS" and not mira.auto_mode)
 	_check("Ziel und Laufweg verworfen", mira.job == null and mira.path.is_empty() and mira.order == null)
-	_check("Auftrag bleibt offen und frei", CS.jobs.has(g.idx(far)) and job_ref.claimed_by == -1)
+	_check("Auftrag bleibt offen und frei", CS.jobs.has(g.idx(far)) and job_ref != null and job_ref.claimed_by == -1)
 	_run(20)
 	_check("Steht still (%.3f Felder bewegt)" % mira.pos.distance_to(stop_pos), mira.pos.distance_to(stop_pos) < 0.01)
 	_check("Beginnt nichts Neues (%s)" % mira.task, mira.job == null and mira.activity == null and mira.task.contains("Auto-Modus aus"))

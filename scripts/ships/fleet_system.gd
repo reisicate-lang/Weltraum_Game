@@ -326,6 +326,10 @@ func ships_here() -> Array:
 	return ships.filter(func(s): return s.location == here())
 
 func switch_to(id: int) -> void:
+	# Schiffe wechseln geht nur angedockt (dort liegen die anderen Schiffe)
+	if here() == "":
+		GameState.toast("Schiff wechseln geht nur angedockt.")
+		return
 	var target: Dictionary = {}
 	for s in ships:
 		if s.id == id:
