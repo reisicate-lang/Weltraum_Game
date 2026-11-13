@@ -1008,7 +1008,7 @@ func _refresh_window() -> void:
 		"ships":
 			var F := FleetSystem
 			window_box.add_child(_row("Aktuelles Schiff", [_label(F.current_name, COL_AMBER, 13)]))
-			var reg_txt := "Registered as %s" % F.registered_name + ("" if F.registered_name == F.current_name else " (new name not registered yet)")
+			var reg_txt := "Hull ID %s · Registered as %s" % [F.registry_id, F.registered_name] + ("" if F.registered_name == F.current_name else " (new name not registered yet)")
 			var reg_btns: Array = []
 			if st.get("shipyard", false):
 				reg_btns.append(_button("Ship Rating service", func():
@@ -1030,7 +1030,7 @@ func _refresh_window() -> void:
 					if st.get("shipyard", false):
 						b.append(_button("Verkaufen", F.sell.bind(int(s.id))))
 				var sg := ShipGrid.from_data(s.data)
-				window_box.add_child(_row("%s · liegt bei %s · Ship Rating %s · Verkaufswert %d Cr" % [s.name, PhysicsSystem.loc(s.location).name,
+				window_box.add_child(_row("%s (%s) · liegt bei %s · Ship Rating %s · Verkaufswert %d Cr" % [s.name, String(s.get("registry", "")), PhysicsSystem.loc(s.location).name,
 					ShipRating.rating(sg), int(F.ship_value(sg) * 0.6)], b))
 			if SalvageSystem.wreck_name != "" and not st.is_empty():
 				window_box.add_child(_button("Wrack „%s“ als Schiff anmelden (%d Cr)" % [SalvageSystem.wreck_name, F.REGISTER_FEE], F.register_wreck))

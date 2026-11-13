@@ -17,6 +17,8 @@ var current_name := "Rostlaube"
 ## Name im öffentlichen Register (Ostranauts: Ogiso's Register). Umbenennen an der
 ## Navigationskonsole ändert erst den Schiffsnamen; eingetragen wird er beim Ship-Rating-Service der Werft.
 var registered_name := "Rostlaube"
+## Hull registry ID (Ostranauts Ship Building 2), z. B. „J-YV16“: fest, auch beim Umbenennen
+var registry_id := ""
 var current_id := 1
 var next_id := 2
 
@@ -25,6 +27,7 @@ func reset() -> void:
 	places.clear()
 	current_name = "Rostlaube"
 	registered_name = "Rostlaube"
+	registry_id = new_registry_id()
 	current_id = 1
 	next_id = 2
 	sites.clear()
@@ -354,7 +357,7 @@ func switch_to(id: int) -> void:
 		c.release_job()
 		c.stop_activity()
 		c.order = null
-	ships.append({"id": current_id, "name": current_name, "registered": registered_name, "location": l.id, "data": ShipSystem.grid.to_data()})
+	ships.append({"id": current_id, "name": current_name, "registered": registered_name, "registry": registry_id, "location": l.id, "data": ShipSystem.grid.to_data()})
 	ships = ships.filter(func(s): return s.id != id)
 	ShipSystem.grid = ShipGrid.from_data(target.data)
 	ShipSystem.retire_legacy_ports()
@@ -362,6 +365,9 @@ func switch_to(id: int) -> void:
 	current_id = target.id
 	current_name = target.name
 	registered_name = String(target.get("registered", target.name))
+	registry_id = String(target.get("registry", ""))
+	if registry_id == "":
+		registry_id = new_registry_id()
 	EventBus.ship_changed.emit()
 	ShipPowerSystem.step(0.0)
 	_place_crew()
@@ -400,6 +406,19 @@ func ship_value(g: ShipGrid) -> int:
 # ---------------- Schiffsname (Ostranauts Ship Building 1.4) ----------------
 
 const NAME_MAX := 32
+const REG_LETTERS := "ABCDEFGHJKLMNPRSTUVWXYZ"
+
+## Neue Rumpfkennung wie „J-YV16“ (Buchstabe, Bindestrich, zwei Buchstaben, zwei Ziffern), eindeutig
+func new_registry_id() -> String:
+	var used := {registry_id: true}
+	for s in ships:
+		used[String(s.get("registry", ""))] = true
+	while true:
+		var L := func() -> String: return REG_LETTERS[randi() % REG_LETTERS.length()]
+		var id := "%s-%s%s%02d" % [L.call(), L.call(), L.call(), randi() % 100]
+		if not used.has(id):
+			return id
+	return ""
 
 ## Grund gegen das Umbenennen ("" = möglich): braucht ein eigenes Steuerpult mit Strom
 func rename_block_reason() -> String:
@@ -457,7 +476,7 @@ func register_wreck() -> void:
 			nw.devices[i] = g.devices[i]
 		if g.piles.has(i):
 			nw.piles[i] = g.piles[i]
-	ships.append({"id": next_id, "name": SalvageSystem.wreck_name, "location": here(), "data": nw.to_data()})
+	ships.append({"id": next_id, "name": SalvageSystem.wreck_name, "registry": new_registry_id(), "location": here(), "data": nw.to_data()})
 	next_id += 1
 	SalvageSystem.clear()
 	GameState.toast("Angemeldet! Im Handelsterminal unter „Schiffe“ kannst du an Bord wechseln.")
@@ -482,7 +501,7 @@ func buy(kind: String, on_credit: bool = false) -> void:
 		EconomySystem.credits -= int(t.price)
 		EconomySystem.book("Schiff gekauft: " + t.name, -int(t.price))
 	var g := build_template(t)
-	ships.append({"id": next_id, "name": t.name, "location": here(), "data": g.to_data()})
+	ships.append({"id": next_id, "name": t.name, "registry": new_registry_id(), "location": here(), "data": g.to_data()})
 	next_id += 1
 	GameState.toast(t.name + " gehört jetzt dir. Wechseln unter „Schiffe“.")
 
@@ -555,7 +574,7 @@ func _build_template(g: ShipGrid, t: Dictionary) -> void:
 			break
 
 func to_data() -> Dictionary:
-	return {"ships": ships, "places": places, "current_name": current_name, "registered_name": registered_name, "current_id": current_id, "next_id": next_id,
+	return {"ships": ships, "places": places, "current_name": current_name, "registered_name": registered_name, "registry_id": registry_id, "current_id": current_id, "next_id": next_id,
 		"sites": sites, "next_site": next_site}
 
 func from_data(d: Dictionary) -> void:
@@ -566,5 +585,11 @@ func from_data(d: Dictionary) -> void:
 	PhysicsSystem.set_extra_locations(sites)
 	current_name = String(d.current_name)
 	registered_name = String(d.get("registered_name", current_name))
+	registry_id = String(d.get("registry_id", ""))
+	if registry_id == "":
+		registry_id = new_registry_id()
+	for s in ships:
+		if String(s.get("registry", "")) == "":
+			s.registry = new_registry_id()
 	current_id = int(d.current_id)
 	next_id = int(d.next_id)

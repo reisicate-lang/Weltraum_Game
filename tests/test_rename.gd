@@ -68,9 +68,26 @@ func _initialize() -> void:
 
 	# 4) Speichern/Laden
 	F.rename("Dawn")
+	var rid: String = F.registry_id
 	SS.save_game()
 	SS.load_game(true)
 	_check("Speichern/Laden: Name und Registereintrag bleiben", F.current_name == "Dawn" and F.registered_name == "Kestrel")
+
+	# 5) Hull registry ID: Format wie „J-YV16“, fest
+	var re := RegEx.new()
+	re.compile("^[A-Z]-[A-Z]{2}[0-9]{2}$")
+	_check("Rumpfkennung %s im Format X-XX00" % rid, re.search(rid) != null)
+	_check("Umbenennen und Registrieren ändern sie nicht, Laden auch nicht", F.registry_id == rid)
+	F.ships.append({"id": 99, "name": "Old", "location": "tycho", "data": g.to_data()})
+	var fd: Dictionary = F.to_data()
+	fd.erase("registry_id")
+	F.from_data(fd)
+	var other: String = String(F.ships[F.ships.size() - 1].get("registry", ""))
+	_check("Altstand ohne Kennung: neue für aktuelles und gespeichertes Schiff (%s, %s)" % [F.registry_id, other], re.search(F.registry_id) != null and re.search(other) != null and other != F.registry_id)
+	var ids := {}
+	for n in 30:
+		ids[F.new_registry_id()] = true
+	_check("Neue Kennungen weichen von vorhandenen ab", not ids.has(F.registry_id) and not ids.has(other))
 
 	print("%d OK, %d Fehler" % [ok_count, fail_count])
 	quit()
