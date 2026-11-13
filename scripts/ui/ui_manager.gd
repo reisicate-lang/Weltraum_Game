@@ -14,6 +14,7 @@ const TOOLS := [
 	["repair", "Reparieren", "R", "Auf Beschädigtes klicken. Stark Beschädigtes wird automatisch repariert."],
 	["remove", "Abreißen", "X", "Schicht für Schicht: Gerät, Kabel, Wand/Tür, Boden. Gibt Teile zurück."],
 	["cancel", "Plan löschen", "C", "Entfernt Baupläne. Rechtsklick geht auch."],
+	["orders", "Orders", "Y", "Pick an action and filters below, then click a tile or drag over an area. Only objects matching an active filter get the order."],
 ]
 const COL_PANEL := Color(0.05, 0.07, 0.106, 0.92)
 const COL_AMBER := Color(0.95, 0.64, 0.23)
@@ -256,6 +257,7 @@ func _build_bottom() -> void:
 	row.add_child(_button("Luft [L]", func(): GameState.view = "normal" if GameState.view == "air" else "air"))
 	row.add_child(_button("Strom [P]", func(): GameState.view = "normal" if GameState.view == "power" else "power"))
 	row.add_child(_button("Wärme [O]", func(): GameState.view = "normal" if GameState.view == "heat" else "heat"))
+	_build_orders_bar(box)
 	power_label = _label("", COL_MUTED, 12)
 	box.add_child(power_label)
 	var info := HBoxContainer.new()
@@ -1295,6 +1297,8 @@ func set_tool(tool: String) -> void:
 	if not c.is_empty():
 		hint += "  " + ItemSystem.cost_text(c)
 	hint_label.text = hint
+	if orders_bar != null:
+		orders_bar.visible = tool == "orders"
 	EventBus.tool_changed.emit(tool)
 
 func toggle_help() -> void:
@@ -1621,3 +1625,45 @@ func rooms_text(g: ShipGrid) -> String:
 	for room in RoomTypes.classify(g):
 		parts.append("%s ×%.2f (%d tiles)" % [room.name, room.modifier, room.size])
 	return "Rooms: " + (", ".join(parts) if not parts.is_empty() else "none enclosed")
+
+# ---------------- Orders-Menü (Ostranauts Orders 4): Aktion + Filter ----------------
+var orders_bar: HBoxContainer
+var order_buttons := {}
+var filter_buttons := {}
+
+func _build_orders_bar(box: Container) -> void:
+	orders_bar = HBoxContainer.new()
+	orders_bar.visible = false
+	box.add_child(orders_bar)
+	orders_bar.add_child(_label("Action:", COL_MUTED, 12))
+	for a in Orders.ACTIONS:
+		var b := _button(a, set_order_action.bind(a))
+		b.toggle_mode = true
+		b.tooltip_text = Orders.ACTION_HINTS[a]
+		b.add_theme_font_size_override("font_size", 12)
+		b.disabled = a == "LOAD"
+		order_buttons[a] = b
+		orders_bar.add_child(b)
+	orders_bar.add_child(_label("  Filter:", COL_MUTED, 12))
+	for f in Orders.FILTERS:
+		var b := _button(f, toggle_order_filter.bind(f))
+		b.toggle_mode = true
+		b.tooltip_text = Orders.FILTER_HINTS[f]
+		b.add_theme_font_size_override("font_size", 12)
+		filter_buttons[f] = b
+		orders_bar.add_child(b)
+	_sync_orders_bar()
+
+func set_order_action(a: String) -> void:
+	Orders.action = a
+	_sync_orders_bar()
+
+func toggle_order_filter(f: String) -> void:
+	Orders.filters[f] = not bool(Orders.filters[f])
+	_sync_orders_bar()
+
+func _sync_orders_bar() -> void:
+	for a in order_buttons:
+		order_buttons[a].set_pressed_no_signal(a == Orders.action)
+	for f in filter_buttons:
+		filter_buttons[f].set_pressed_no_signal(bool(Orders.filters[f]))

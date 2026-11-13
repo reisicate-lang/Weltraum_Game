@@ -237,6 +237,7 @@ func _key(k: InputEventKey) -> void:
 		KEY_Q: UIManager.set_tool("haul")
 		KEY_R: UIManager.set_tool("repair")
 		KEY_C: UIManager.set_tool("cancel")
+		KEY_Y: UIManager.set_tool("orders")
 		KEY_L: GameState.view = "normal" if GameState.view == "air" else "air"
 		KEY_P: GameState.view = "normal" if GameState.view == "power" else "power"
 		KEY_O: GameState.view = "normal" if GameState.view == "heat" else "heat"
