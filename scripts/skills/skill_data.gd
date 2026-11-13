@@ -30,3 +30,5 @@ extends Resource
 @export var work_categories: PackedStringArray = []
 ## Erworben: hebt den EVA-Arbeitsmalus auf (Arbeit im Raumanzug, siehe SkillSystem.EVA_WORK_FACTOR)
 @export var removes_eva_malus: bool = false
+## Erworben: erhöht den Piloting-Wert der Figur am Steuerpult (siehe SkillSystem.piloting)
+@export var piloting_bonus: float = 0.0

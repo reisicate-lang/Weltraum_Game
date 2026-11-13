@@ -5,10 +5,10 @@
 [resource]
 script = ExtResource("1")
 id = "book_pilot_1"
-display_name = "Lehrbuch: Raumschiffsteuerung (Grundlagen)"
+display_name = "Textbook: Spaceship Piloting (Basics)"
 weight = 0.8
 volume = 1.0
 value = 40
-description = "Bringt Raumschiffsteuerung bis 40 %. Lesen in Ruhezeiten."
+description = "Brings Spaceship Piloting to 40 %. Read during rest time."
 teaches = "pilot"
 book_level = 1

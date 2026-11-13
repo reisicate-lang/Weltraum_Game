@@ -5,11 +5,13 @@
 [resource]
 script = ExtResource("1")
 skill_id = "pilot"
-skill_name = "Raumschiffsteuerung"
-description = "Fliegen, Andocken, Navigation und sparsamer Treibstoffverbrauch."
+skill_name = "Spaceship Piloting"
+description = "Flying the ship from the helm: maneuvering and docking."
 category = "praxis"
-learning_sources = PackedStringArray("Fliegen am Steuerpult", "Andocken", "Lehrbuch Navigation")
+learning_sources = PackedStringArray("Practical work: flying the ship at the helm (thrusters, fast travel)", "Docking at the helm", "Textbook: Spaceship Piloting")
 training_actions = PackedStringArray("pilot", "dock", "study_pilot")
 required_skills = {}
-gameplay_effects = {"fuel_saving": 0.25}
-mastery_text = "Meister: Andocken klappt auch bis 15 m/s und 600 m Abstand."
+gameplay_effects = {}
+mastery_text = "Acquired (100 %): Piloting +0.5 while flying at the helm. Piloting raises the docking limits (distance and speed) and the RCS thrust and turn rate by (1 + Piloting)."
+course_years = 3
+piloting_bonus = 0.5

@@ -229,7 +229,7 @@ func firing(d: Vector2i) -> bool:
 ## Lagedüsen (RCS): jedes Schiff hat sie, solange das Steuerpult Strom hat
 ## (Ostranauts: alle Schiffe haben RCS, manche zusätzlich ein Haupttriebwerk).
 func rcs_thrust() -> float:
-	return float(space.rcs_thrust) if helm_ok() else 0.0
+	return float(space.rcs_thrust) * pilot_factor() if helm_ok() else 0.0
 
 ## Beschleunigungen in km/s² (Haupttriebwerk, Lagedüsen) = Schub (kN) ÷ Masse (t) ÷ 1000
 func main_accel() -> float:
@@ -276,6 +276,31 @@ func operated_helm() -> Device:
 	if d == null or d.type != "helm" or d.unknown or g.foreign(g.idx(helm_at)):
 		return null
 	return d
+
+## Wer fliegt gerade? Die Figur am bedienten Steuerpult (deine Figur zuerst), sonst null
+func pilot_crew() -> CrewMember:
+	var h := operated_helm()
+	if h == null:
+		return null
+	var p := CrewSystem.player()
+	if p != null and not p.unconscious and p.can_reach(h.pos):
+		return p
+	for c in CrewSystem.crew:
+		if not c.unconscious and c.can_reach(h.pos):
+			return c
+	return null
+
+## Piloting-Faktor (1 + Piloting der fliegenden Figur): Andockgrenzen, Lagedüsenschub, Drehung
+func pilot_factor() -> float:
+	return 1.0 + SkillSystem.piloting(pilot_crew())
+
+## Drehbeschleunigung beim Steuern (mit Piloting-Faktor); 0 ohne bedientes, intaktes Pult
+func rot_accel() -> float:
+	return float(space.rot_accel) * pilot_factor() if manual_ok() else 0.0
+
+## Andockgrenzen (Abstand, Geschwindigkeit) mit dem Piloting-Faktor
+func dock_factor() -> float:
+	return pilot_factor()
 
 ## Warum ein Steuerpult nicht geflogen werden kann ("" = es geht)
 func helm_block_reason(h: Device) -> String:
@@ -493,7 +518,7 @@ func _match_input(s: float) -> Vector2:
 ## Drehung mit Schwung: Drehschub beschleunigt die Drehung, ohne Gegenschub dreht
 ## das Schiff weiter. R bremst die Drehung. Eine Drehung ändert die Flugrichtung nicht.
 func _rotate(s: float, dt: float) -> void:
-	var acc := float(space.rot_accel) if manual_ok() else 0.0
+	var acc := rot_accel()
 	var want := ang_vel
 	var settle := false
 	if rot_input != 0.0 or rot_stop:
@@ -612,7 +637,7 @@ func dock_block_reason(id: String) -> String:
 	if redock_locked(id):
 		return "Gerade erst abgedockt. Andocken an %s ist in %d s wieder möglich." % [loc(id).name, int(ceil(redock_wait(id)))]
 	var r := rel_to(id)
-	var m := 2.5 if SkillSystem.any_mastered("pilot") else 1.0
+	var m := dock_factor()
 	if r.dist >= float(space.dock_dist) * m:
 		return "Zu weit weg zum Andocken (%d m, nötig unter %d m)." % [int(r.dist * 1000.0), int(float(space.dock_dist) * m * 1000.0)]
 	if r.speed >= float(space.dock_speed) * m:
@@ -628,10 +653,8 @@ func can_dock(id: String) -> bool:
 	if pilot_block_reason() != "" or redock_locked(id):
 		return false
 	var r := rel_to(id)
-	# Meister der Raumschiffsteuerung docken auch aus mehr Abstand und schneller an
-	var m := 1.0
-	if SkillSystem.any_mastered("pilot"):
-		m = 2.5
+	# Piloting (Spaceship Piloting): größere Andockgrenzen
+	var m := dock_factor()
 	if not (r.dist < float(space.dock_dist) * m and r.speed < float(space.dock_speed) * m):
 		return false
 	# Schleuse muss zum Ziel zeigen (Ostranauts: Andockringe ausrichten)

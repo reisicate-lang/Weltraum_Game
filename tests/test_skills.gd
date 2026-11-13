@@ -46,7 +46,7 @@ func _initialize() -> void:
 	_check("32 Fähigkeiten geladen", SK.skills.size() == 32)
 	for id in SK.skills:
 		var s: SkillData = SK.skill(id)
-		_check(id + ": hat Trainingsaktionen, Name, Beschreibung, Wirkungen", s.training_actions.size() > 0 and s.skill_name != "" and s.description != "" and (not s.gameplay_effects.is_empty() or s.work_value_bonus != 0.0))
+		_check(id + ": hat Trainingsaktionen, Name, Beschreibung, Wirkungen", s.training_actions.size() > 0 and s.skill_name != "" and s.description != "" and (not s.gameplay_effects.is_empty() or s.work_value_bonus != 0.0 or s.piloting_bonus != 0.0))
 		var c := _fresh()
 		for r in s.required_skills:
 			SK.set_progress(c, r, 100.0)
@@ -101,8 +101,8 @@ func _initialize() -> void:
 	_check("Fortschritt nie über 100 %%", SK.progress(m, "eva") <= 100.0)
 	SK.set_progress(m, "eva", 100.0)
 	_check("Meisterschaft erkannt", SK.mastered(m, "eva"))
-	SK.set_progress(m, "pilot", 100.0)
-	_check("Meisterbonus erhöht die Wirkung", SK.effect(m, "fuel_saving") > 0.25)
+	SK.set_progress(m, "cooking", 100.0)
+	_check("Meisterbonus erhöht die Wirkung", SK.effect(m, "meal_bonus") > 0.6)
 
 	# 5) Wirkungen im Spiel
 	var mira = crew.player()
@@ -122,9 +122,9 @@ func _initialize() -> void:
 	var me := _fresh()
 	SK.set_progress(me, "mechanical", 100.0)
 	_check("Electrical Engineering (erworben) baut Batterien schneller als Mechanik", SK.work_speed(el, eljob) > SK.work_speed(me, eljob))
-	var f_before: float = SK.pilot_fuel_factor()
+	var pl_before: float = SK.piloting(mira)
 	SK.set_progress(mira, "pilot", 100.0)
-	_check("Pilot spart Treibstoff (%.2f -> %.2f)" % [f_before, SK.pilot_fuel_factor()], SK.pilot_fuel_factor() < f_before)
+	_check("Spaceship Piloting gibt Piloting +0,5 (%.2f -> %.2f)" % [pl_before, SK.piloting(mira)], is_equal_approx(SK.piloting(mira) - pl_before, 0.5))
 	SK.set_progress(mira, "physics", 100.0)
 	_check("Physik verkürzt Schnellreisen", SK.travel_factor() < 1.0)
 	gs.selected = mira

@@ -555,7 +555,7 @@ func _build_flight_info() -> void:
 			elif ap.brake_rcs >= ap.dist * 0.9:
 				nav_side.add_child(_label("Jetzt bremsen (wenden und W, oder S halten).", COL_AMBER, 13))
 		# Andock-Ampel
-		var m := 2.5 if SkillSystem.any_mastered("pilot") else 1.0
+		var m := P.dock_factor()
 		var al: Dictionary = P.dock_alignment(P.target)
 		var lights := HBoxContainer.new()
 		lights.add_child(_label("ANDOCKEN ", COL_MUTED, 11))

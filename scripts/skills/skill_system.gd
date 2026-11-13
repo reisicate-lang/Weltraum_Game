@@ -132,6 +132,8 @@ func _unlock(c: CrewMember, id: String) -> void:
 	e.unlocked = true
 	if id == BUSINESS:
 		GameState.toast("%s acquired Business Admin: exact Item Values are now shown." % c.display_name)
+	elif skill(id).piloting_bonus != 0.0:
+		GameState.toast("%s acquired %s: Piloting %+.1f at the helm." % [c.display_name, skill(id).skill_name, skill(id).piloting_bonus])
 	elif skill(id).work_value_bonus > 0.0:
 		GameState.toast("%s acquired %s: %s+%d work value on %s." % [c.display_name, skill(id).skill_name, "no EVA work penalty, " if skill(id).removes_eva_malus else "", int(skill(id).work_value_bonus), category_list(skill(id).work_categories)])
 	else:
@@ -446,7 +448,18 @@ func train_job(c: CrewMember, job: Dictionary, minutes: float) -> void:
 	if c.suit != null:
 		train(c, "eva_work", minutes)
 
-## Pilot spart Treibstoff (bester an Bord zählt)
+## Piloting-Wert einer Figur: Summe der piloting_bonus erworbener Fähigkeiten (z. B. Spaceship
+## Piloting +0,5). Später können Eigenschaften hier dazukommen. Nie unter −0,9.
+func piloting(c: CrewMember) -> float:
+	if c == null:
+		return 0.0
+	var v := 0.0
+	for id in skills:
+		if skills[id].piloting_bonus != 0.0 and acquired(c, id):
+			v += skills[id].piloting_bonus
+	return maxf(-0.9, v)
+
+## Treibstoffersparnis (bester an Bord zählt; derzeit hat keine Fähigkeit diese Wirkung)
 func pilot_fuel_factor() -> float:
 	return 1.0 - minf(0.35, best_effect("fuel_saving"))
 
@@ -557,6 +570,8 @@ func skill_tooltip(c: CrewMember, id: String) -> String:
 	var lines: PackedStringArray = [s.skill_name, s.description]
 	if s.course_years > 0:
 		lines.append("Character creation: costs %d %s." % [s.course_years, "year" if s.course_years == 1 else "years"])
+	if s.piloting_bonus != 0.0:
+		lines.append("Effect when acquired (100 %%): Piloting %+.1f while flying at the helm (docking limits, RCS thrust and turn rate ×(1 + Piloting))." % s.piloting_bonus)
 	if s.removes_eva_malus:
 		lines.append("Effect when acquired (100 %%): removes the EVA work penalty (without it, work in an EVA suit runs at %d %% of the normal rate)." % int(round(EVA_WORK_FACTOR * 100.0)))
 	if s.work_value_bonus != 0.0:
