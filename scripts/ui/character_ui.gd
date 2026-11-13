@@ -331,6 +331,13 @@ func refresh_creation() -> void:
 		adv.disabled = why_adv != ""
 		adv.tooltip_text = why_adv if why_adv != "" else "A random life encounter. Some answers need skills or traits; RISK answers can fail."
 		creation_box.add_child(adv)
+		var sav: Button = ui._button("Save Some Money (1 year)", func():
+			CharacterSystem.save_money(c)
+			refresh_creation())
+		sav.set_meta("save_money", true)
+		sav.disabled = why_adv != ""
+		sav.tooltip_text = why_adv if why_adv != "" else "Work and save for a year: about %d–%d Cr start money. Reliable, but little." % [CharacterSystem.SAVE_MONEY_MIN, CharacterSystem.SAVE_MONEY_MAX]
+		creation_box.add_child(sav)
 	creation_box.add_child(ui._label("NÄCHSTE LEBENSSTATION", ui.COL_MUTED, 11))
 	for k in CharacterSystem.available(c):
 		var gains: PackedStringArray = []

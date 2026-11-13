@@ -996,6 +996,15 @@ func _refresh_window() -> void:
 		"ships":
 			var F := FleetSystem
 			window_box.add_child(_row("Aktuelles Schiff", [_label(F.current_name, COL_AMBER, 13)]))
+			var reg_txt := "Registered as %s" % F.registered_name + ("" if F.registered_name == F.current_name else " (new name not registered yet)")
+			var reg_btns: Array = []
+			if st.get("shipyard", false):
+				reg_btns.append(_button("Ship Rating service", func():
+					var w := F.register_name()
+					if w != "":
+						GameState.toast(w)
+					_last_window = ""))
+			window_box.add_child(_row(reg_txt, reg_btns, COL_MUTED))
 			var cg := ShipSystem.grid
 			window_box.add_child(_label(ship_rating_text(cg, PhysicsSystem.mass() * 1000.0), COL_MUTED, 12))
 			window_box.add_child(_label(rooms_text(cg), COL_MUTED, 12))
@@ -1158,6 +1167,12 @@ func open_object_menu(p: Vector2i) -> bool:
 	if ndev != null and ndev.type == "power_switch" and not g.foreign(g.idx(ndev.pos)):
 		object_menu.add_item("Turn power switch off" if ndev.switch_on else "Turn power switch on", menu_actions.size())
 		menu_actions.append({"kind": "switch", "dev": ndev})
+	# Navigationskonsole: Schiff umbenennen (Ostranauts Ship Building 1.4)
+	if ndev != null and ndev.type == "helm" and not ndev.unknown and not g.foreign(g.idx(ndev.pos)):
+		object_menu.add_item("Rename vessel…", menu_actions.size())
+		object_menu.set_item_disabled(object_menu.item_count - 1, FleetSystem.rename_block_reason() != "")
+		object_menu.set_item_tooltip(object_menu.item_count - 1, FleetSystem.rename_block_reason())
+		menu_actions.append({"kind": "rename"})
 	# Türen: Lüftungsschlitz (geschlossene Tür lässt sonst etwas Luft durch)
 	if key == "tile:door" and not StationSystem.reserved(p):
 		var lock := AirlockSystem.is_lock_door(i) or StationSystem.is_hatch(i)
@@ -1252,6 +1267,8 @@ func _on_object_menu(id: int) -> void:
 		"vent":
 			AtmosphereSystem.set_vent(g.idx(menu_pos), bool(a.closed))
 			GameState.toast("Lüftungsschlitz geschlossen: die Tür ist jetzt dicht." if a.closed else "Lüftungsschlitz offen: etwas Luft strömt durch die geschlossene Tür.")
+		"rename":
+			open_rename_dialog()
 		"switch":
 			ShipPowerSystem.toggle_switch(a.dev)
 			GameState.toast("Power switch on: the networks are connected." if a.dev.switch_on else "Power switch off: the network is split here.")
@@ -1670,3 +1687,26 @@ func _sync_orders_bar() -> void:
 		order_buttons[a].set_pressed_no_signal(a == Orders.action)
 	for f in filter_buttons:
 		filter_buttons[f].set_pressed_no_signal(bool(Orders.filters[f]))
+
+# ---------------- Schiff umbenennen ----------------
+var rename_dialog: ConfirmationDialog
+var rename_edit: LineEdit
+
+func open_rename_dialog() -> void:
+	if rename_dialog == null:
+		rename_dialog = ConfirmationDialog.new()
+		rename_dialog.title = "Rename vessel"
+		rename_edit = LineEdit.new()
+		rename_edit.max_length = FleetSystem.NAME_MAX
+		rename_edit.custom_minimum_size = Vector2(260, 0)
+		rename_dialog.add_child(rename_edit)
+		rename_dialog.register_text_enter(rename_edit)
+		rename_dialog.confirmed.connect(func():
+			var why := FleetSystem.rename(rename_edit.text)
+			if why != "":
+				GameState.toast(why, "bad"))
+		layer.add_child(rename_dialog)
+	rename_edit.text = FleetSystem.current_name
+	rename_dialog.popup_centered()
+	rename_edit.grab_focus()
+	rename_edit.select_all()

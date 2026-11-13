@@ -14,6 +14,9 @@ var sites: Array = []
 var next_site := 1
 const WRECK_KINDS := ["wreck", "debris", "outpost", "asteroid"]
 var current_name := "Rostlaube"
+## Name im öffentlichen Register (Ostranauts: Ogiso's Register). Umbenennen an der
+## Navigationskonsole ändert erst den Schiffsnamen; eingetragen wird er beim Ship-Rating-Service der Werft.
+var registered_name := "Rostlaube"
 var current_id := 1
 var next_id := 2
 
@@ -21,6 +24,7 @@ func reset() -> void:
 	ships.clear()
 	places.clear()
 	current_name = "Rostlaube"
+	registered_name = "Rostlaube"
 	current_id = 1
 	next_id = 2
 	sites.clear()
@@ -350,13 +354,14 @@ func switch_to(id: int) -> void:
 		c.release_job()
 		c.stop_activity()
 		c.order = null
-	ships.append({"id": current_id, "name": current_name, "location": l.id, "data": ShipSystem.grid.to_data()})
+	ships.append({"id": current_id, "name": current_name, "registered": registered_name, "location": l.id, "data": ShipSystem.grid.to_data()})
 	ships = ships.filter(func(s): return s.id != id)
 	ShipSystem.grid = ShipGrid.from_data(target.data)
 	ShipSystem.retire_legacy_ports()
 	ShipConstructionSystem.jobs.clear()
 	current_id = target.id
 	current_name = target.name
+	registered_name = String(target.get("registered", target.name))
 	EventBus.ship_changed.emit()
 	ShipPowerSystem.step(0.0)
 	_place_crew()
@@ -391,6 +396,38 @@ func ship_value(g: ShipGrid) -> int:
 		if not g.foreign(i):
 			v += SalvageSystem.device_value(g.devices[i]) * 1.5 * float(mods.get(i, 1.0))
 	return int(v)
+
+# ---------------- Schiffsname (Ostranauts Ship Building 1.4) ----------------
+
+const NAME_MAX := 32
+
+## Grund gegen das Umbenennen ("" = möglich): braucht ein eigenes Steuerpult mit Strom
+func rename_block_reason() -> String:
+	for d in PhysicsSystem.ship_devices("helm"):
+		if not d.broken and d.powered and not d.unknown:
+			return ""
+	return "Renaming needs a powered navigation console aboard."
+
+## Schiffsnamen an der Navigationskonsole ändern. Gibt "" bei Erfolg zurück, sonst den Grund.
+func rename(new_name: String) -> String:
+	var n := new_name.strip_edges().substr(0, NAME_MAX)
+	if n == "":
+		return "The name must not be empty."
+	var why := rename_block_reason()
+	if why != "":
+		return why
+	current_name = n
+	GameState.toast("Vessel renamed to %s. Register the new name with the Ship Rating service at a shipyard." % n if n != registered_name else "Vessel name: %s." % n)
+	return ""
+
+## Ship-Rating-Service der Werft: neue Bewertung und Name ins Register. "" = erledigt.
+func register_name() -> String:
+	var st := PhysicsSystem.station()
+	if st.is_empty() or not st.get("shipyard", false):
+		return "The Ship Rating service is only available at a shipyard."
+	registered_name = current_name
+	GameState.toast("Ship Rating %s accepted. %s is now registered." % [ShipRating.rating(ShipSystem.grid, PhysicsSystem.mass() * 1000.0), current_name])
+	return ""
 
 func register_wreck() -> void:
 	var g := ShipSystem.grid
@@ -518,7 +555,7 @@ func _build_template(g: ShipGrid, t: Dictionary) -> void:
 			break
 
 func to_data() -> Dictionary:
-	return {"ships": ships, "places": places, "current_name": current_name, "current_id": current_id, "next_id": next_id,
+	return {"ships": ships, "places": places, "current_name": current_name, "registered_name": registered_name, "current_id": current_id, "next_id": next_id,
 		"sites": sites, "next_site": next_site}
 
 func from_data(d: Dictionary) -> void:
@@ -528,5 +565,6 @@ func from_data(d: Dictionary) -> void:
 	next_site = int(d.get("next_site", sites.size() + 1))
 	PhysicsSystem.set_extra_locations(sites)
 	current_name = String(d.current_name)
+	registered_name = String(d.get("registered_name", current_name))
 	current_id = int(d.current_id)
 	next_id = int(d.next_id)

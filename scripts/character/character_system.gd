@@ -346,6 +346,9 @@ func pending_encounter(c: CrewMember) -> String:
 	return String(c.get_meta("pending_encounter", ""))
 
 ## Warum gerade kein Ereignis möglich ist ("" = geht)
+const SAVE_MONEY_MIN := 300
+const SAVE_MONEY_MAX := 600
+
 func adventure_block_reason(c: CrewMember) -> String:
 	if pending_encounter(c) != "":
 		return "Choose an answer for the current encounter first."
@@ -354,6 +357,21 @@ func adventure_block_reason(c: CrewMember) -> String:
 	if preview_age(c) + int(enc_cfg.get("years", 1)) > max_age:
 		return "Too old for that."
 	return ""
+
+## Save Some Money (Ostranauts 2.3): 1 Jahr arbeiten und sparen, etwa 300–600 Cr Startgeld.
+## amount < 0: zufällig; sonst fester Betrag (Tests). Gibt die Lebenslaufzeile zurück ("" = nicht möglich).
+func save_money(c: CrewMember, amount: int = -1) -> String:
+	if adventure_block_reason(c) != "":
+		return ""
+	var cash := randi_range(SAVE_MONEY_MIN, SAVE_MONEY_MAX) if amount < 0 else amount
+	var age0 := c.age
+	c.age += 1
+	c.set_meta("credits", int(c.get_meta("credits", 0)) + cash)
+	var line := "%d–%d: Saved some money (+%d Cr)." % [age0, c.age, cash]
+	c.history.append(line)
+	_age_check(c, age0)
+	_sanitize_drafts(c)
+	return line
 
 ## Ereignis beginnen (zufällig oder mit id). token_roll < 0: zufällig; sonst fester Wurf (Tests).
 func start_encounter(c: CrewMember, id: String = "", token_roll: float = -1.0) -> String:

@@ -17,6 +17,7 @@ func _initialize() -> void:
 	await process_frame
 	await process_frame
 	var gs = root.get_node("GameState")
+	root.get_node("SaveSystem").slot = 951
 	root.get_node("Settings").meteors = false
 	gs.new_game()
 	root.get_node("TimeSystem").set_speed(0)
