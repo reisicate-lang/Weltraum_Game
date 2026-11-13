@@ -1,12 +1,11 @@
-## Charaktererstellung mit Lebenslauf. Man beginnt mit 14 Jahren und
-## wählt Lebensstationen (Schule, Lehre, Militär, Straße ...). Jede kostet
-## Lebensjahre und bringt Fähigkeiten, Eigenschaften, Kontakte, Feinde,
-## Geld oder Gegenstände. Zufällige Lebensereignisse kommen dazu.
-## Daten: res://data/careers.json
+## Charaktererstellung mit Lebenslauf. Man beginnt mit 18 Jahren (Ostranauts-Startprofil) und
+## wählt Lebensstationen (Lehre, Militär, Straße ...), Kurse, Traits und Lebensereignisse
+## („Seek Adventure“, Ostranauts 2.1). Daten: res://data/careers.json, res://data/encounters.json
 extends Node
 
 var careers: Array = []
-var events: Array = []
+var encounters: Array = []
+var enc_cfg: Dictionary = {}
 var start_age := 14
 var max_age := 60
 
@@ -18,9 +17,11 @@ func _ready() -> void:
 	var f := FileAccess.open("res://data/careers.json", FileAccess.READ)
 	var d: Dictionary = JSON.parse_string(f.get_as_text())
 	careers = d.careers
-	events = d.events
 	start_age = int(d.start_age)
 	max_age = int(d.max_age)
+	var ef := FileAccess.open("res://data/encounters.json", FileAccess.READ)
+	enc_cfg = JSON.parse_string(ef.get_as_text())
+	encounters = enc_cfg.encounters
 
 # ---------------- Kurse (Entwurf bis zur Bestätigung) ----------------
 # Jede Fähigkeit mit course_years > 0 (z. B. Business Admin 2, Civil Engineering 3) ist im
@@ -133,7 +134,7 @@ func toggle_trait(c: CrewMember, id: String) -> String:
 ## Lebenslauf bestätigen: gewählte Kurse und Traits (Alter und Wirkung) genau einmal übernehmen.
 ## Eine negative Bilanz wird nicht übernommen (false).
 func confirm(c: CrewMember) -> bool:
-	if draft_balance(c) < 0:
+	if draft_balance(c) < 0 or pending_encounter(c) != "":
 		return false
 	var drafts: Array = _drafts(c)
 	c.set_meta("draft_courses", [])
@@ -193,6 +194,8 @@ func begin(c: CrewMember, asteroid_start: bool = true) -> void:
 	c.set_meta("draft_courses", [])
 	c.set_meta("draft_trait_add", [])
 	c.set_meta("draft_trait_remove", [])
+	c.set_meta("pending_encounter", "")
+	c.set_meta("risk_tokens", {})
 	if asteroid_start:
 		for t in START_TRAITS:
 			if TraitSystem.get_trait(t) != null and not t in c.traits:
@@ -233,7 +236,7 @@ func available(c: CrewMember) -> Array:
 ## Eine Lebensstation durchlaufen. Gibt den Text fürs Protokoll zurück.
 func apply_career(c: CrewMember, id: String) -> String:
 	var k := career(id)
-	if k.is_empty() or not k in available(c):
+	if k.is_empty() or not k in available(c) or pending_encounter(c) != "":
 		return ""
 	c.age += int(k.years)
 	var done := done_careers(c)
@@ -273,26 +276,164 @@ func apply_career(c: CrewMember, id: String) -> String:
 		c.enemies.append(enemy)
 		line += " Machte sich %s zum Feind." % enemy
 	c.history.append(line)
-	# Zufälliges Lebensereignis
-	if randf() < 0.4:
-		c.history.append("   Ereignis: " + _event(c, events.pick_random()))
+	_sanitize_drafts(c)
 	return line
 
-func _event(c: CrewMember, e: Dictionary) -> String:
-	for t in e.get("traits_remove", []):
-		TraitSystem.remove(c, t)
-	for t in e.get("traits_add", []):
-		TraitSystem.add(c, t)
-	c.set_meta("credits", int(c.get_meta("credits", 0)) + int(e.get("credits", 0)))
-	if e.get("enemy", false):
-		c.enemies.append("%s %s" % [FIRST_NAMES.pick_random(), LAST_NAMES.pick_random()])
-	if e.has("learn"):
-		for s in c.skills.keys():
-			SkillSystem.set_progress(c, s, minf(SkillSystem.cap(c, s), SkillSystem.progress(c, s) + float(e.learn) * 0.3))
-	if e.get("item", "") == "book":
-		var ids := SkillSystem.skills.keys()
-		c.inv.add("book_%s_1" % ids.pick_random(), 1, 70.0)
-	return e.text
+# ---------------- Lebensereignisse („Seek Adventure“, Ostranauts 2.1) ----------------
+# Ein Ereignis kostet 1 Jahr. Man wählt eine von mehreren Antworten; manche brauchen einen Skill
+# oder Trait. RISK-Antworten: Beim Beginn eines Ereignisses kommt mit 50 % ein verdeckter
+# Fehlschlag-Token dazu. Die RISK-Antwort scheitert, solange ein Token da ist, und entfernt dabei
+# genau einen. Andere Antworten entfernen keinen, Tokens sammeln sich an (wie im Spiel v1.0.0.17).
+# Belohnungen ohne Entsprechung im Spiel entfallen und stehen als „Not in game“ im Lebenslauf.
+
+func encounter(id: String) -> Dictionary:
+	for e in encounters:
+		if e.id == id:
+			return e
+	return {}
+
+func encounter_choice(e: Dictionary, choice_id: String) -> Dictionary:
+	for ch in e.get("choices", []):
+		if ch.id == choice_id:
+			return ch
+	return {}
+
+func risk_tokens(c: CrewMember) -> Dictionary:
+	if not c.has_meta("risk_tokens"):
+		c.set_meta("risk_tokens", {})
+	return c.get_meta("risk_tokens")
+
+func pending_encounter(c: CrewMember) -> String:
+	return String(c.get_meta("pending_encounter", ""))
+
+## Warum gerade kein Ereignis möglich ist ("" = geht)
+func adventure_block_reason(c: CrewMember) -> String:
+	if pending_encounter(c) != "":
+		return "Choose an answer for the current encounter first."
+	if preview_age(c) + int(enc_cfg.get("years", 1)) > max_age:
+		return "Too old for that."
+	return ""
+
+## Ereignis beginnen (zufällig oder mit id). token_roll < 0: zufällig; sonst fester Wurf (Tests).
+func start_encounter(c: CrewMember, id: String = "", token_roll: float = -1.0) -> String:
+	if pending_encounter(c) != "":
+		return pending_encounter(c)
+	if adventure_block_reason(c) != "":
+		return ""
+	var e: Dictionary = encounter(id) if id != "" else encounters.pick_random()
+	if e.is_empty():
+		return ""
+	c.set_meta("pending_encounter", e.id)
+	var tok := String(e.get("risk_token", ""))
+	if tok != "":
+		var roll := randf() if token_roll < 0.0 else token_roll
+		if roll < float(enc_cfg.get("risk_add_chance", 0.5)):
+			var tokens := risk_tokens(c)
+			tokens[tok] = int(tokens.get(tok, 0)) + 1
+	return e.id
+
+## Warum eine Antwort nicht wählbar ist ("" = geht)
+func choice_block_reason(c: CrewMember, ch: Dictionary) -> String:
+	var req: Dictionary = ch.get("req", {})
+	if req.has("skill") and not SkillSystem.acquired(c, String(req.skill)):
+		return "Needs %s." % SkillSystem.skill(String(req.skill)).skill_name
+	if req.has("trait") and not String(req.trait) in c.traits:
+		return "Needs %s." % TraitSystem.get_trait(String(req.trait)).trait_name
+	return ""
+
+## Antwort wählen: 1 Jahr, Belohnungen, ggf. RISK und Brig. Gibt den Lebenslauf-Eintrag zurück.
+func resolve_encounter(c: CrewMember, choice_id: String) -> String:
+	var e := encounter(pending_encounter(c))
+	var ch := encounter_choice(e, choice_id)
+	if e.is_empty() or ch.is_empty() or choice_block_reason(c, ch) != "":
+		return ""
+	var age0 := c.age
+	c.age += int(enc_cfg.get("years", 1))
+	var parts: PackedStringArray = []
+	var missing: PackedStringArray = []
+	_apply_reward(c, ch, parts, missing)
+	var label := String(ch.label)
+	if ch.get("risk", false):
+		var tok := String(e.risk_token)
+		var tokens := risk_tokens(c)
+		var failed := int(tokens.get(tok, 0)) > 0
+		if failed:
+			tokens[tok] = int(tokens[tok]) - 1
+		label = "RISK: %s – %s" % [label, "failure" if failed else "success"]
+		_apply_reward(c, ch.get("failure" if failed else "success", {}), parts, missing)
+	c.set_meta("pending_encounter", "")
+	var line := "%d–%d: %s – %s." % [age0, c.age, e.name, label]
+	if not parts.is_empty():
+		line += " " + ", ".join(parts) + "."
+	if not missing.is_empty():
+		line += " (Not in game: " + "; ".join(missing) + ")"
+	c.history.append(line)
+	_sanitize_drafts(c)
+	return line
+
+func _apply_reward(c: CrewMember, d: Dictionary, parts: PackedStringArray, missing: PackedStringArray) -> void:
+	var cash := int(d.get("cash", 0))
+	if cash != 0:
+		c.set_meta("credits", int(c.get_meta("credits", 0)) + cash)
+		parts.append("%+d Cr" % cash)
+	for s in d.get("skills", []):
+		_grant_skill(c, String(s), parts)
+	for t in d.get("traits", []):
+		_gain_trait(c, String(t), parts)
+	for r in d.get("chance", []):
+		if randf() >= float(r.p):
+			continue
+		if r.has("skill"):
+			_grant_skill(c, String(r.skill), parts)
+		elif r.has("trait"):
+			_gain_trait(c, String(r.trait), parts)
+		elif r.has("item"):
+			c.inv.add(String(r.item), 1, 70.0)
+			parts.append(ItemSystem.item(String(r.item)).display_name)
+	for x in d.get("contacts", []):
+		c.contacts.append(String(x))
+		parts.append("contact: " + String(x))
+	for x in d.get("enemies", []):
+		c.enemies.append(String(x))
+		parts.append("enemy: " + String(x))
+	if d.has("omitted"):
+		missing.append(String(d.omitted))
+	if d.get("brig", false):
+		var b: Dictionary = enc_cfg.brig
+		var years := randi_range(int(b.years_min), int(b.years_max))
+		c.age += years
+		parts.append("Time in the Brig (+%d %s)" % [years, "year" if years == 1 else "years"])
+		_apply_reward(c, {"skills": b.skills, "contacts": b.contacts, "enemies": b.enemies, "omitted": b.omitted}, parts, missing)
+
+## Skill durch ein Ereignis: erworben (100 %); schon erworben = nichts doppelt
+func _grant_skill(c: CrewMember, id: String, parts: PackedStringArray) -> void:
+	if SkillSystem.skill(id) == null or SkillSystem.acquired(c, id):
+		return
+	SkillSystem.set_progress(c, id, SkillSystem.ACQUIRED)
+	SkillSystem._entry(c, id).unlocked = true
+	parts.append(SkillSystem.skill(id).skill_name)
+
+## Trait durch ein Ereignis (Regel: positiver Trait löst negatives Gegenstück ab)
+func _gain_trait(c: CrewMember, id: String, parts: PackedStringArray) -> void:
+	var t: TraitData = TraitSystem.get_trait(id)
+	if t == null:
+		return
+	var opp := TraitSystem.held_opposite(c, id)
+	if TraitSystem.add(c, id):
+		if opp != "" and not opp in c.traits:
+			parts.append("lost " + TraitSystem.get_trait(opp).trait_name)
+		else:
+			parts.append(t.trait_name)
+
+## Entwurf nach einer Station oder einem Ereignis bereinigen (schon erworbene Kurse, Traits)
+func _sanitize_drafts(c: CrewMember) -> void:
+	for id in _drafts(c).duplicate():
+		if SkillSystem.acquired(c, id):
+			set_course(c, false, id)
+	var adds: Array = trait_adds(c).filter(func(t): return not t in c.traits and TraitSystem.held_opposite(c, t) == "")
+	var rems: Array = trait_removes(c).filter(func(t): return t in c.traits)
+	c.set_meta("draft_trait_add", adds)
+	c.set_meta("draft_trait_remove", rems)
 
 func choose_hobby(c: CrewMember, id: String) -> bool:
 	if id in c.hobbies or c.hobbies.size() >= 2:

@@ -108,7 +108,7 @@ func _initialize() -> void:
 	_check("Alter Trait nimble ist jetzt Coordinated (%s)" % str(mira.traits), mira.traits == ["coordinated"] and is_equal_approx(TS.sum(mira, "piloting"), 0.1) and is_equal_approx(TS.factor(mira, "work_fine"), 1.2))
 	var unknown := []
 	var careers: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/careers.json"))
-	for coll in [careers.careers, careers.events]:
+	for coll in [careers.careers, careers.get("events", [])]:
 		for e in coll:
 			for k in ["traits_add", "traits_remove"]:
 				for t in e.get(k, []):

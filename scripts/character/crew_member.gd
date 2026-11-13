@@ -1084,7 +1084,7 @@ func to_data() -> Dictionary:
 		"is_player": is_player, "items": inv.to_data(), "suit": suit,
 		"skills": skills, "traits": traits, "hobbies": hobbies, "stress": stress, "age": age, "history": history,
 		"contacts": contacts, "enemies": enemies, "salary": salary, "work_prefs": work_prefs, "last_trained": last_trained,
-		"careers": get_meta("careers", []), "body_temp": body_temp, "relations": relations, "auto": auto_mode}
+		"careers": get_meta("careers", []), "risk_tokens": get_meta("risk_tokens", {}), "body_temp": body_temp, "relations": relations, "auto": auto_mode}
 
 static func from_data(d: Dictionary) -> CrewMember:
 	var c := CrewMember.new(int(d.id), String(d.name), Color.html(String(d.color)), Vector2i.ZERO)
@@ -1103,6 +1103,7 @@ static func from_data(d: Dictionary) -> CrewMember:
 	c.age = int(d.get("age", 18))
 	c.history.assign(d.get("history", []))
 	c.contacts.assign(d.get("contacts", []))
+	c.set_meta("risk_tokens", d.get("risk_tokens", {}))
 	c.enemies.assign(d.get("enemies", []))
 	c.salary = int(d.get("salary", 0))
 	c.last_trained = String(d.get("last_trained", ""))

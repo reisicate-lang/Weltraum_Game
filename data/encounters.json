@@ -1,0 +1,751 @@
+{
+ "years": 1,
+ "risk_add_chance": 0.5,
+ "brig": {
+  "years_min": 1,
+  "years_max": 3,
+  "skills": [
+   "excavation"
+  ],
+  "enemies": [
+   "Law enforcement",
+   "Criminal"
+  ],
+  "contacts": [
+   "Prisoner friend",
+   "Criminal contact"
+  ],
+  "omitted": "Past Fight injuries, Handcuff Scar, further random skill/trait/scar rolls"
+ },
+ "encounters": [
+  {
+   "id": "king",
+   "name": "King/Queen/Majesty Incognito",
+   "risk_token": "IsEncRichHackFailChance",
+   "intro": "A rich visitor is slumming it in your bar, incognito but obviously loaded. Everyone has noticed.",
+   "choices": [
+    {
+     "id": "riot",
+     "label": "Start a Riot",
+     "cash": 246,
+     "skills": [
+      "folk",
+      "unarmed",
+      "persuasion"
+     ],
+     "traits": [
+      "charismatic",
+      "leader"
+     ],
+     "enemies": [
+      "Bartender",
+      "Manager"
+     ],
+     "omitted": "1 Past Fight injury roll"
+    },
+    {
+     "id": "pocket",
+     "label": "Pick their Pocket",
+     "cash": 250,
+     "skills": [
+      "stealth"
+     ],
+     "chance": [
+      {
+       "trait": "observant",
+       "p": 0.5
+      },
+      {
+       "trait": "patient",
+       "p": 0.5
+      },
+      {
+       "trait": "selfish",
+       "p": 0.5
+      }
+     ],
+     "omitted": "25% Tracking (skill not in game)"
+    },
+    {
+     "id": "mug",
+     "label": "Just Mug Them",
+     "cash": 246,
+     "traits": [
+      "strong"
+     ],
+     "chance": [
+      {
+       "skill": "armed_melee",
+       "p": 0.65
+      },
+      {
+       "skill": "unarmed",
+       "p": 0.65
+      },
+      {
+       "skill": "ranged",
+       "p": 0.65
+      },
+      {
+       "trait": "brave",
+       "p": 0.2
+      },
+      {
+       "trait": "cruel",
+       "p": 0.2
+      },
+      {
+       "trait": "impatient",
+       "p": 0.2
+      }
+     ],
+     "enemies": [
+      "Manager",
+      "Bartender"
+     ],
+     "brig": true
+    },
+    {
+     "id": "seduce",
+     "label": "Seduce Them",
+     "cash": 0,
+     "skills": [
+      "cooking",
+      "dance"
+     ],
+     "traits": [
+      "charismatic",
+      "beautiful"
+     ],
+     "chance": [
+      {
+       "skill": "oligarch_et",
+       "p": 0.4
+      }
+     ],
+     "contacts": [
+      "Manager (ex-lover)"
+     ],
+     "omitted": "attraction check (no attraction system)"
+    },
+    {
+     "id": "drunk",
+     "label": "Get Them Drunk",
+     "cash": 850,
+     "skills": [
+      "song"
+     ],
+     "traits": [
+      "liar",
+      "slovenly"
+     ],
+     "contacts": [
+      "Manager"
+     ]
+    },
+    {
+     "id": "hack",
+     "label": "Hack Them",
+     "req": {
+      "skill": "hacking"
+     },
+     "risk": true,
+     "cash": 2850,
+     "enemies": [
+      "Manager"
+     ],
+     "success": {
+      "skills": [
+       "software"
+      ],
+      "chance": [
+       {
+        "skill": "street",
+        "p": 0.35
+       },
+       {
+        "skill": "hacking",
+        "p": 0.5
+       },
+       {
+        "skill": "stealth",
+        "p": 0.35
+       },
+       {
+        "trait": "ambitious",
+        "p": 0.4
+       },
+       {
+        "trait": "diligent",
+        "p": 0.4
+       },
+       {
+        "trait": "genius",
+        "p": 0.4
+       },
+       {
+        "trait": "observant",
+        "p": 0.4
+       },
+       {
+        "trait": "shy",
+        "p": 0.4
+       }
+      ]
+     },
+     "failure": {
+      "traits": [
+       "ambitious",
+       "brave"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "crackdown",
+   "name": "Crackdown",
+   "risk_token": "IsEncHeroFailChance",
+   "intro": "Security sweeps through the hab looking for someone to make an example of.",
+   "choices": [
+    {
+     "id": "vent",
+     "label": "Hide In An Air Vent",
+     "cash": 246,
+     "skills": [
+      "stealth"
+     ],
+     "traits": [
+      "craven"
+     ],
+     "contacts": [
+      "Random adult friend"
+     ],
+     "omitted": "Intrusion (skill not in game)"
+    },
+    {
+     "id": "bluff",
+     "label": "Bluff",
+     "cash": 500,
+     "skills": [
+      "acting"
+     ],
+     "omitted": "Forgery (skill not in game)"
+    },
+    {
+     "id": "nothing",
+     "label": "Have Nothing To Hide",
+     "cash": 0,
+     "skills": [
+      "street"
+     ],
+     "traits": [
+      "honest",
+      "arrogant"
+     ],
+     "contacts": [
+      "Law enforcement friend"
+     ]
+    },
+    {
+     "id": "alarm",
+     "label": "Fake A Pressure Alarm",
+     "cash": 0,
+     "skills": [
+      "hacking"
+     ],
+     "traits": [
+      "genius"
+     ]
+    },
+    {
+     "id": "hero",
+     "label": "Be A Hero",
+     "req": {
+      "skill": "unarmed"
+     },
+     "risk": true,
+     "cash": 0,
+     "success": {
+      "cash": 1750,
+      "traits": [
+       "brave"
+      ],
+      "enemies": [
+       "Law enforcement"
+      ],
+      "omitted": "Ranged Archery (skill not in game), 1 Past Fight injury roll"
+     },
+     "failure": {
+      "brig": true
+     }
+    }
+   ]
+  },
+  {
+   "id": "hazard",
+   "name": "Occupational Hazard",
+   "risk_token": "IsEncPodDisasterFailChance",
+   "intro": "An engine emergency on the work barge: alarms everywhere, people heading for the pods.",
+   "choices": [
+    {
+     "id": "hack_engine",
+     "label": "Hack Engine",
+     "cash": 0,
+     "skills": [
+      "hacking"
+     ],
+     "traits": [
+      "genius"
+     ],
+     "contacts": [
+      "Criminal contact"
+     ]
+    },
+    {
+     "id": "stick",
+     "label": "Take the Stick",
+     "cash": 0,
+     "skills": [
+      "pilot",
+      "eva"
+     ],
+     "contacts": [
+      "Random adult friend"
+     ],
+     "omitted": "1 roll on the Leg Injury Table"
+    },
+    {
+     "id": "jury",
+     "label": "Jury Rig Engine",
+     "cash": -150,
+     "skills": [
+      "mechanical"
+     ],
+     "traits": [
+      "brave",
+      "coordinated"
+     ]
+    },
+    {
+     "id": "troubleshoot",
+     "label": "Troubleshoot Engine",
+     "cash": 850,
+     "skills": [
+      "pilot"
+     ]
+    },
+    {
+     "id": "abandon",
+     "label": "Abandon Ship!",
+     "req": {
+      "skill": "eva"
+     },
+     "risk": true,
+     "cash": 0,
+     "success": {
+      "omitted": "Bingham-12 EVA Suit, Helmet, EVA Battery, O2 Bottle, CO2 Filter (items not in game)"
+     },
+     "failure": {
+      "cash": -1050,
+      "omitted": "Scar: Severe Burn"
+     }
+    }
+   ]
+  },
+  {
+   "id": "grind",
+   "name": "Daily Grind",
+   "risk_token": "",
+   "intro": "Another year of shifts. What do you do with your off-hours?",
+   "choices": [
+    {
+     "id": "hacking",
+     "label": "Hacking",
+     "cash": 0,
+     "skills": [
+      "hacking"
+     ],
+     "enemies": [
+      "Law enforcement"
+     ],
+     "omitted": "Components: Motherboard, Heat Sink (items not in game)"
+    },
+    {
+     "id": "movies",
+     "label": "Watch Old Movies",
+     "cash": 0,
+     "skills": [
+      "acting"
+     ],
+     "traits": [
+      "observant"
+     ],
+     "contacts": [
+      "Manager friend"
+     ]
+    },
+    {
+     "id": "suit",
+     "label": "Suit Maintenance",
+     "cash": 0,
+     "skills": [
+      "eva",
+      "physics"
+     ],
+     "traits": [
+      "patient",
+      "finicky"
+     ]
+    },
+    {
+     "id": "fight",
+     "label": "Fight Club",
+     "cash": 0,
+     "skills": [
+      "unarmed"
+     ],
+     "traits": [
+      "brave",
+      "masochist"
+     ],
+     "contacts": [
+      "Law enforcement friend"
+     ],
+     "omitted": "Name Drop: Law Enforcement Officer, 1 Past Fight injury roll"
+    },
+    {
+     "id": "shipspot",
+     "label": "Go Shipspotting",
+     "cash": 650,
+     "traits": [
+      "complacent",
+      "shy"
+     ],
+     "omitted": "Sensor Ops (skill not in game)"
+    },
+    {
+     "id": "electrician",
+     "label": "Electrician Gig",
+     "cash": 200,
+     "skills": [
+      "electrical"
+     ],
+     "traits": [
+      "patient"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "salvage",
+   "name": "Rare Salvage",
+   "risk_token": "IsEncStealFailChance",
+   "intro": "Your crew pulls something valuable out of a derelict. Nobody else has seen it yet.",
+   "choices": [
+    {
+     "id": "notify",
+     "label": "Notify Ayotimiwa Corporate",
+     "cash": 0,
+     "skills": [
+      "business"
+     ],
+     "traits": [
+      "follower"
+     ],
+     "contacts": [
+      "Manager"
+     ],
+     "omitted": "Ayotimiwa T-shirt"
+    },
+    {
+     "id": "smuggle",
+     "label": "Smuggle It Through the Blackmarket",
+     "cash": 200,
+     "skills": [
+      "street"
+     ],
+     "contacts": [
+      "Criminal contact"
+     ],
+     "enemies": [
+      "Law enforcement"
+     ],
+     "omitted": "Name Drop: Criminal"
+    },
+    {
+     "id": "bribe",
+     "label": "Bribe Your Boss and Split the Profits",
+     "cash": 750,
+     "skills": [
+      "oligarch_et"
+     ],
+     "enemies": [
+      "Law enforcement"
+     ],
+     "omitted": "Name Drop: Corporate Manager"
+    },
+    {
+     "id": "smash",
+     "label": "Smash It and Feel Alive",
+     "cash": 0,
+     "skills": [
+      "armed_melee"
+     ],
+     "traits": [
+      "cruel",
+      "pessimist",
+      "strong"
+     ],
+     "chance": [
+      {
+       "item": "motor",
+       "p": 0.5
+      }
+     ],
+     "omitted": "Scar: Cargo Accident, 1–2 Small Mechanical Parts, 50% Heat Sink (not in game)"
+    },
+    {
+     "id": "take",
+     "label": "Take It For Yourself",
+     "req": {
+      "trait": "patient"
+     },
+     "risk": true,
+     "cash": 0,
+     "success": {
+      "omitted": "Miura 'Hydra' RCS Intake Regulator (item not in game)"
+     },
+     "failure": {
+      "brig": true
+     }
+    }
+   ]
+  },
+  {
+   "id": "locker",
+   "name": "Labor Barge Locker",
+   "risk_token": "IsEncLockFailChance",
+   "intro": "A locked crate on the labor barge, unclaimed for weeks. The lock looks weak.",
+   "choices": [
+    {
+     "id": "force",
+     "label": "Force the Lock",
+     "req": {
+      "trait": "strong"
+     },
+     "risk": true,
+     "cash": 0,
+     "success": {
+      "cash": -200,
+      "contacts": [
+       "Shipbreaker friend"
+      ],
+      "omitted": "Laser Torch (item not in game)"
+     },
+     "failure": {
+      "cash": -2300
+     }
+    },
+    {
+     "id": "hack_lock",
+     "label": "Hack the Lock",
+     "cash": 0,
+     "skills": [
+      "hacking"
+     ],
+     "traits": [
+      "leader"
+     ],
+     "contacts": [
+      "Shipbreaker friend"
+     ]
+    },
+    {
+     "id": "cut",
+     "label": "Cut Hole in Crate",
+     "cash": 700,
+     "omitted": "Severe Burns, later a permanent Severe Burn scar"
+    },
+    {
+     "id": "mislabel",
+     "label": "Mislabel Crate",
+     "cash": 0,
+     "skills": [
+      "street"
+     ],
+     "traits": [
+      "leader"
+     ],
+     "contacts": [
+      "Shipbreaker friend",
+      "Random adult friend"
+     ]
+    },
+    {
+     "id": "report",
+     "label": "Report Poor Security",
+     "cash": 0,
+     "skills": [
+      "business"
+     ],
+     "traits": [
+      "loyal"
+     ],
+     "contacts": [
+      "Manager"
+     ],
+     "omitted": "Ayotimiwa shoulder bag"
+    }
+   ]
+  },
+  {
+   "id": "poker",
+   "name": "Poker Game",
+   "risk_token": "IsEncPokerFailChance",
+   "intro": "A high-stakes game. Someone just bet the keys to a ship called the Volatile.",
+   "choices": [
+    {
+     "id": "call",
+     "label": "Call the Bluff",
+     "req": {
+      "skill": "gambling"
+     },
+     "risk": true,
+     "cash": 0,
+     "success": {
+      "skills": [
+       "gambling"
+      ],
+      "omitted": "the ship Volatile (ships are not part of character creation here)"
+     },
+     "failure": {
+      "cash": -9000,
+      "skills": [
+       "gambling"
+      ]
+     }
+    },
+    {
+     "id": "fold",
+     "label": "No Thanks...Fold",
+     "cash": 900,
+     "skills": [
+      "gambling"
+     ]
+    },
+    {
+     "id": "cheat",
+     "label": "Cheat",
+     "cash": 1500,
+     "skills": [
+      "hacking"
+     ],
+     "enemies": [
+      "Law enforcement"
+     ],
+     "omitted": "1 Past Fight injury roll"
+    },
+    {
+     "id": "grab",
+     "label": "Grab the Key and Run",
+     "cash": -6500,
+     "enemies": [
+      "Criminal",
+      "Random",
+      "Random"
+     ],
+     "omitted": "the stolen ship Volatile (ships are not part of character creation here)"
+    },
+    {
+     "id": "technicality",
+     "label": "Call Him On A Technicality",
+     "cash": 300,
+     "skills": [
+      "gambling"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "shady",
+   "name": "Shady Deal",
+   "risk_token": "IsEncShadyDealFailChance",
+   "intro": "Some old acquaintances have a scheme and want you in on it.",
+   "choices": [
+    {
+     "id": "join",
+     "label": "Join the Scheme",
+     "req": {
+      "skill": "street"
+     },
+     "risk": true,
+     "cash": 0,
+     "success": {
+      "cash": 4500
+     },
+     "failure": {
+      "brig": true,
+      "enemies": [
+       "Random"
+      ]
+     }
+    },
+    {
+     "id": "intel",
+     "label": "Gather Intel for Cops",
+     "cash": 0,
+     "skills": [
+      "street"
+     ],
+     "traits": [
+      "honest"
+     ],
+     "contacts": [
+      "Law enforcement friend"
+     ]
+    },
+    {
+     "id": "backstab",
+     "label": "Backstab Them",
+     "cash": 900,
+     "traits": [
+      "treacherous"
+     ],
+     "enemies": [
+      "Criminal"
+     ]
+    },
+    {
+     "id": "report",
+     "label": "Report to Ayotimiwa",
+     "cash": 900,
+     "traits": [
+      "selfish"
+     ],
+     "contacts": [
+      "Manager",
+      "Law enforcement friend"
+     ],
+     "omitted": "Ayotimiwa hoodie"
+    },
+    {
+     "id": "violence",
+     "label": "Instigate Violence",
+     "cash": 900,
+     "skills": [
+      "armed_melee",
+      "unarmed"
+     ],
+     "traits": [
+      "tough"
+     ],
+     "enemies": [
+      "Criminal"
+     ],
+     "omitted": "1 Past Fight injury roll"
+    }
+   ]
+  }
+ ]
+}

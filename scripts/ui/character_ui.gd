@@ -300,6 +300,35 @@ func refresh_creation() -> void:
 	creation_box.add_child(_wrap("Beste Fähigkeiten: " + ", ".join(sk)))
 	for line in c.history:
 		creation_box.add_child(ui._label(line, ui.COL_MUTED, 11))
+	# Lebensereignis (Seek Adventure, 1 Jahr): offenes Ereignis mit Antworten, sonst Knopf
+	var pend := CharacterSystem.pending_encounter(c)
+	if pend != "":
+		var ev: Dictionary = CharacterSystem.encounter(pend)
+		creation_box.add_child(ui._label("ENCOUNTER: " + String(ev.name).to_upper(), ui.COL_AMBER, 13))
+		creation_box.add_child(_wrap(String(ev.intro)))
+		for chv in ev.choices:
+			var ch: Dictionary = chv
+			var why := CharacterSystem.choice_block_reason(c, ch)
+			var txt := ("RISK: " if ch.get("risk", false) else "") + String(ch.label)
+			if int(ch.get("cash", 0)) != 0:
+				txt += " (%+d Cr)" % int(ch.cash)
+			var cid := String(ch.id)
+			var cb: Button = ui._button(txt, func():
+				CharacterSystem.resolve_encounter(c, cid)
+				refresh_creation())
+			cb.set_meta("choice", cid)
+			cb.disabled = why != ""
+			cb.tooltip_text = why if why != "" else "1 year."
+			creation_box.add_child(cb)
+	else:
+		var why_adv := CharacterSystem.adventure_block_reason(c)
+		var adv: Button = ui._button("Seek Adventure (1 year)", func():
+			CharacterSystem.start_encounter(c)
+			refresh_creation())
+		adv.set_meta("adventure", true)
+		adv.disabled = why_adv != ""
+		adv.tooltip_text = why_adv if why_adv != "" else "A random life encounter. Some answers need skills or traits; RISK answers can fail."
+		creation_box.add_child(adv)
 	creation_box.add_child(ui._label("NÄCHSTE LEBENSSTATION", ui.COL_MUTED, 11))
 	for k in CharacterSystem.available(c):
 		var gains: PackedStringArray = []
@@ -307,10 +336,11 @@ func refresh_creation() -> void:
 			gains.append(SkillSystem.skill(s).skill_name)
 		for s in k.get("grants", []):
 			gains.append(SkillSystem.skill(s).skill_name + " (acquired)")
-		creation_box.add_child(ui._row("%s (%d Jahre): %s" % [k.name, int(k.years), ", ".join(gains)],
-			[ui._button("Wählen", func():
-				CharacterSystem.apply_career(c, k.id)
-				refresh_creation())]))
+		var kb: Button = ui._button("Wählen", func():
+			CharacterSystem.apply_career(c, k.id)
+			refresh_creation())
+		kb.disabled = pend != ""
+		creation_box.add_child(ui._row("%s (%d Jahre): %s" % [k.name, int(k.years), ", ".join(gains)], [kb]))
 	# Kurse: zählen erst beim Bestätigen (Los geht's), bis dahin nur im Vorschaualter
 	const COURSE_TEXT := {"business": "exact Item Value when trading", "civil": "+4 work value on appliances, controls, furniture, climate & ventilation, miscellaneous",
 		"combat_eng": "+4 work value on appliances, controls, furniture, climate & ventilation, sensors, weapons",
@@ -390,7 +420,7 @@ func refresh_creation() -> void:
 		creation.visible = false
 		ui.show_help()
 		TimeSystem.set_speed(1))
-	go.disabled = CharacterSystem.preview_age(c) < 18 or CharacterSystem.draft_balance(c) < 0
+	go.disabled = CharacterSystem.preview_age(c) < 18 or CharacterSystem.draft_balance(c) < 0 or CharacterSystem.pending_encounter(c) != ""
 	bottom.add_child(go)
 
 # ---------------- Begegnung mit Plünderern ----------------

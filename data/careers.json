@@ -231,66 +231,6 @@
    "text": "Schlachtete Wracks im Trümmerfeld aus."
   }
  ],
- "events": [
-  {
-   "text": "Ein schwerer Unfall: monatelang im Krankenhaus.",
-   "traits_add": [
-    "fragile"
-   ],
-   "credits": -200
-  },
-  {
-   "text": "Glück im Spiel: ein großer Gewinn.",
-   "credits": 600
-  },
-  {
-   "text": "Verlor alles bei einem Betrug.",
-   "credits": -500
-  },
-  {
-   "text": "Machte sich einen gefährlichen Feind.",
-   "enemy": true
-  },
-  {
-   "text": "Fand einen Mentor, der viel beibrachte.",
-   "learn": 10
-  },
-  {
-   "text": "Hielt durch harte Zeiten durch und wurde zäher.",
-   "traits_add": [
-    "tough"
-   ],
-   "traits_remove": [
-    "fragile"
-   ]
-  },
-  {
-   "text": "Wurde durch die Arbeit bequem.",
-   "traits_add": [
-    "complacent"
-   ],
-   "traits_remove": [
-    "ambitious"
-   ]
-  },
-  {
-   "text": "Packte der Ehrgeiz.",
-   "traits_add": [
-    "ambitious"
-   ],
-   "traits_remove": [
-    "complacent"
-   ]
-  },
-  {
-   "text": "Ruhige Jahre, nichts Besonderes.",
-   "credits": 100
-  },
-  {
-   "text": "Erbte ein altes Lehrbuch.",
-   "item": "book"
-  }
- ],
  "start_age": 18,
  "max_age": 60
 }
