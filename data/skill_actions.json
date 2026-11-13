@@ -634,5 +634,12 @@
   ],
   "difficulty": 0.6,
   "gain": 1.0
+ },
+ "spaceship_work": {
+  "skills": [
+   "spaceship"
+  ],
+  "difficulty": 0.4,
+  "gain": 1.0
  }
 }

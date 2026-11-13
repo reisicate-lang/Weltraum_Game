@@ -5,11 +5,14 @@
 [resource]
 script = ExtResource("1")
 skill_id = "spaceship"
-skill_name = "Raumschifftechnik"
-description = "Rumpf, Triebwerke, Tanks und Druckhülle. Hüllenbrüche und Triebwerke werden schneller repariert."
+skill_name = "Spaceship Engineering"
+description = "Ship structure: walls, floors, doors, windows and the pressure hull."
 category = "technik"
-learning_sources = PackedStringArray("Schiffsstruktur reparieren", "Triebwerke und Tanks warten", "Lehrbuch Raumschiffbau")
-training_actions = PackedStringArray("repair_hull", "repair_propulsion", "install_propulsion", "study_spaceship")
-required_skills = {"civil": 20, "mechanical": 20}
-gameplay_effects = {"work_hull": 0.7, "work_propulsion": 0.7}
-mastery_text = "Meister: Triebwerke verbrauchen 10 % weniger Treibstoff."
+learning_sources = PackedStringArray("Practical work on the ship structure: building and installing walls, floors, doors and windows, repairing walls, floors and hull breaches, putting out fires", "Repairing and installing propulsion", "Life path: Shipyard Apprenticeship (grants the skill directly)", "Textbook: Spaceship Engineering")
+training_actions = PackedStringArray("spaceship_work", "repair_hull", "repair_propulsion", "install_propulsion", "study_spaceship")
+required_skills = {}
+gameplay_effects = {}
+mastery_text = "Acquired (100 %): +4 work value on ship structure work. Device jobs get it only if they count as structure work. Tools and materials are still required."
+course_years = 3
+work_value_bonus = 4.0
+work_categories = PackedStringArray("structure")

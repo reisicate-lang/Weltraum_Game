@@ -87,13 +87,12 @@ func _initialize() -> void:
 	# 3) Voraussetzungen
 	var rob := _fresh()
 	for k in 200:
-		SK.train(rob, "repair_hull", 30.0)
+		SK.train(rob, "hack", 30.0)
 		rob.recent_actions.clear()
-	_check("Raumschifftechnik bleibt ohne Voraussetzungen bei 40 %% (%.1f)" % SK.progress(rob, "spaceship"), SK.progress(rob, "spaceship") <= 40.0)
-	SK.set_progress(rob, "civil", 25.0)
-	SK.set_progress(rob, "mechanical", 25.0)
-	SK.train(rob, "repair_hull", 30.0)
-	_check("Mit Civil und Mechanik geht es weiter", SK.progress(rob, "spaceship") > 40.0)
+	_check("Hacken bleibt ohne Software bei 40 %% (%.1f)" % SK.progress(rob, "hacking"), SK.progress(rob, "hacking") <= 40.0)
+	SK.set_progress(rob, "software", 30.0)
+	SK.train(rob, "hack", 30.0)
+	_check("Mit Software geht es weiter", SK.progress(rob, "hacking") > 40.0)
 
 	# 4) 100 % und Meisterschaft
 	var m := _fresh()

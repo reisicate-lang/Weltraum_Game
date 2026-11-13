@@ -57,7 +57,10 @@ func progress(c: CrewMember, id: String) -> float:
 	return float(c.skills[id].p) if c.skills.has(id) else 0.0
 
 func set_progress(c: CrewMember, id: String, value: float) -> void:
-	_entry(c, id).p = clampf(value, 0.0, 100.0)
+	var e := _entry(c, id)
+	e.p = clampf(value, 0.0, 100.0)
+	if e.p < ACQUIRED:
+		e.erase("unlocked")   # Freischaltung gilt nur, solange 100 % erreicht sind
 
 ## Sind die Voraussetzungen erfüllt?
 func requirements_met(c: CrewMember, id: String) -> bool:
@@ -211,7 +214,7 @@ func job_profile(job: Dictionary) -> Dictionary:
 const CATEGORY_NAMES := {"appliance": "Appliances", "control": "Controls", "furniture": "Furniture", "hvac": "Climate & Ventilation",
 	"misc": "Miscellaneous", "power": "Power Systems", "propulsion": "Propulsion", "docking": "Docking", "water": "Water",
 	"farming": "Farming", "production": "Production", "station": "Station", "sensor": "Sensors", "weapon": "Weapons", "suit": "Suits",
-	"mining": "Mining", "software": "Software (debugging the navigation console)"}
+	"mining": "Mining", "software": "Software (debugging the navigation console)", "structure": "Ship Structure"}
 
 func category_list(cats: PackedStringArray) -> String:
 	var names: PackedStringArray = []
@@ -244,6 +247,8 @@ func job_category(job: Dictionary) -> String:
 		return "mining"
 	if String(job.get("kind", "")) == "debug":
 		return "software"   # Softwarearbeit (nicht die Gerätekategorie der Konsole)
+	if is_structure(job):
+		return "structure"
 	if String(job.get("kind", "")) == "craft":
 		var out: Array = EconomySystem.recipe(String(job.get("recipe", ""))).get("out", [])
 		return "weapon" if not out.is_empty() and ItemSystem.item(String(out[0])) != null and ItemSystem.item(String(out[0])).weapon != "" else ""
@@ -251,6 +256,13 @@ func job_category(job: Dictionary) -> String:
 	if id == "" or ItemSystem.device(id) == null:
 		return ""
 	return ItemSystem.device(id).category
+
+## Strukturarbeit: Aufträge, die die vorhandenen Struktur-Wirkungen (work_structure, work_hull)
+## bekommen – Wände, Böden, Türen, Fenster bauen oder einbauen, Wände/Böden und Hülle reparieren,
+## Feuer löschen. Geräteaufträge zählen nur, wenn ihr Profil so klassifiziert ist (derzeit keiner).
+func is_structure(job: Dictionary) -> bool:
+	var effs: Array = _base_profile(job).effects
+	return "work_structure" in effs or "work_hull" in effs
 
 ## Bergbau: Abtragen von Asteroidenfels (Wand im fremden Bereich, solange ein Asteroid angedockt ist)
 const MINING_KINDS := ["remove", "uninstall", "dismantle", "destroy"]
@@ -434,12 +446,9 @@ func train_job(c: CrewMember, job: Dictionary, minutes: float) -> void:
 	if c.suit != null:
 		train(c, "eva_work", minutes)
 
-## Pilot und Raumschifftechnik sparen Treibstoff (bester an Bord zählt)
+## Pilot spart Treibstoff (bester an Bord zählt)
 func pilot_fuel_factor() -> float:
-	var f := 1.0 - minf(0.35, best_effect("fuel_saving"))
-	if any_mastered("spaceship"):
-		f *= 0.9
-	return f
+	return 1.0 - minf(0.35, best_effect("fuel_saving"))
 
 ## Physik verkürzt Schnellreisen
 func travel_factor() -> float:

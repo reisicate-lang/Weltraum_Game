@@ -18,7 +18,7 @@
   },
   {
    "id": "shipyard",
-   "name": "Werftlehre",
+   "name": "Shipyard Apprenticeship",
    "years": 3,
    "min_age": 16,
    "requires": [],
@@ -26,14 +26,16 @@
     "construction": 25,
     "civil": 18,
     "mechanical": 15,
-    "spaceship": 10,
     "eva": 10
    },
+   "grants": [
+    "spaceship"
+   ],
    "credits": 300,
    "items": [
     "crowbar"
    ],
-   "text": "Lehre in einer Mondwerft: schweißen, montieren, Hüllen flicken."
+   "text": "Apprenticed at a lunar shipyard: welding, assembling, patching hulls."
   },
   {
    "id": "electrician",
