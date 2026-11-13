@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "table"
+display_name = "Table"
+description = "A table. Needed for a Galley or Recreational Room."
+power = 0.0
+build_time = 2.5
+cost = {"plate": 2}
+stock = -1.0
+stock_unit = ""
+capacity = 0.0
+storage = 0.0
+need = ""
+wears = false
+color = Color(0.48, 0.4, 0.3, 1)
+tech = "furniture"
+category = "furniture"

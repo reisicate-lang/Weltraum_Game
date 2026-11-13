@@ -385,9 +385,11 @@ func ship_value(g: ShipGrid) -> int:
 		if g.tiles[i] == 0 or g.foreign(i):
 			continue
 		v += 25.0 if g.tiles[i] == ShipGrid.Tile.FLOOR else 45.0
+	# Raumtypen (Ostranauts Rooms) multiplizieren den Wert der darin eingebauten Geräte
+	var mods := RoomTypes.modifiers(g)
 	for i in g.devices:
 		if not g.foreign(i):
-			v += SalvageSystem.device_value(g.devices[i]) * 1.5
+			v += SalvageSystem.device_value(g.devices[i]) * 1.5 * float(mods.get(i, 1.0))
 	return int(v)
 
 func register_wreck() -> void:

@@ -512,5 +512,50 @@
   "debris": {
    "scrap": 1
   }
+ },
+ "chair": {
+  "uninstall_time": 1.5,
+  "dismantle_time": 2.0,
+  "dismantle": {
+   "plate": 1
+  },
+  "hp": 60,
+  "debris": {
+   "scrap": 1
+  }
+ },
+ "table": {
+  "uninstall_time": 2.0,
+  "dismantle_time": 2.5,
+  "dismantle": {
+   "plate": 1
+  },
+  "hp": 80,
+  "debris": {
+   "scrap": 1
+  }
+ },
+ "toilet": {
+  "uninstall_time": 3.0,
+  "dismantle_time": 4.0,
+  "dismantle": {
+   "plate": 1,
+   "pipe": 1
+  },
+  "hp": 120,
+  "debris": {
+   "scrap": 2
+  }
+ },
+ "light": {
+  "uninstall_time": 1.0,
+  "dismantle_time": 1.5,
+  "dismantle": {
+   "glass": 1
+  },
+  "hp": 30,
+  "debris": {
+   "scrap": 1
+  }
  }
 }

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "chair"
+display_name = "Chair"
+description = "A simple chair. Counts toward Galley, Luxury Quarters and Passenger Rooms."
+power = 0.0
+build_time = 2.0
+cost = {"plate": 1, "fabric": 1}
+stock = -1.0
+stock_unit = ""
+capacity = 0.0
+storage = 0.0
+need = ""
+wears = false
+color = Color(0.42, 0.36, 0.3, 1)
+tech = "furniture"
+category = "furniture"

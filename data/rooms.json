@@ -1,0 +1,321 @@
+{
+ "_comment": "Ostranauts Rooms (docs/ostranauts/ostranauts-rooms.md). Checked in this order, first match wins. requires/forbidden use the tags below; size = enclosed floor tiles.",
+ "pressurized_kpa": 50.0,
+ "tags": {
+  "generator": [
+   "reactor"
+  ],
+  "helm": [
+   "nav"
+  ],
+  "dockport": [
+   "docking"
+  ],
+  "pump": [
+   "docking"
+  ],
+  "airtank": [
+   "canister",
+   "engineering"
+  ],
+  "fueltank": [
+   "canister",
+   "engineering"
+  ],
+  "charger": [
+   "charger",
+   "engineering"
+  ],
+  "battery": [
+   "battery",
+   "engineering"
+  ],
+  "battery_compact": [
+   "battery",
+   "engineering"
+  ],
+  "battery_mini": [
+   "battery",
+   "engineering"
+  ],
+  "food": [
+   "fridge",
+   "wellness"
+  ],
+  "sink": [
+   "sink",
+   "wellness"
+  ],
+  "trainer": [
+   "wellness"
+  ],
+  "terminal": [
+   "recreation"
+  ],
+  "bed": [
+   "bed"
+  ],
+  "crate": [
+   "storage_bin",
+   "cargo_container",
+   "exterior_cargo"
+  ],
+  "table": [
+   "table"
+  ],
+  "chair": [
+   "chair"
+  ],
+  "toilet": [
+   "toilet"
+  ],
+  "light": [
+   "light"
+  ]
+ },
+ "types": [
+  {
+   "id": "reactor_room",
+   "name": "Reactor Room",
+   "requires": {
+    "reactor": 1
+   },
+   "forbidden": [],
+   "pressurized": true,
+   "min_size": 4,
+   "modifier": 1.6
+  },
+  {
+   "id": "bridge_closed",
+   "name": "Bridge (Closed)",
+   "requires": {
+    "nav": 1
+   },
+   "forbidden": [
+    "rcs_distributor",
+    "recreation",
+    "wellness",
+    "toilet",
+    "reactor",
+    "bed"
+   ],
+   "pressurized": true,
+   "min_size": 4,
+   "modifier": 1.5
+  },
+  {
+   "id": "towing_room",
+   "name": "Towing Room",
+   "requires": {
+    "towing_brace": 1
+   },
+   "forbidden": [],
+   "pressurized": true,
+   "min_size": 2,
+   "modifier": 1.6
+  },
+  {
+   "id": "bridge_open",
+   "name": "Bridge (Open)",
+   "requires": {
+    "nav": 1
+   },
+   "forbidden": [],
+   "pressurized": true,
+   "min_size": 4,
+   "modifier": 1.3
+  },
+  {
+   "id": "airlock",
+   "name": "Airlock",
+   "requires": {
+    "docking": 1
+   },
+   "forbidden": [
+    "rcs_distributor",
+    "battery",
+    "recreation",
+    "wellness",
+    "toilet",
+    "reactor",
+    "nav",
+    "bed"
+   ],
+   "pressurized": true,
+   "min_size": 3,
+   "modifier": 1.5
+  },
+  {
+   "id": "engineering",
+   "name": "Engineering",
+   "requires": {
+    "engineering": 1
+   },
+   "forbidden": [],
+   "pressurized": true,
+   "min_size": 4,
+   "modifier": 1.4
+  },
+  {
+   "id": "wellness",
+   "name": "Wellness Room",
+   "requires": {
+    "wellness": 2
+   },
+   "forbidden": [
+    "toilet",
+    "reactor",
+    "bed"
+   ],
+   "pressurized": true,
+   "min_size": 4,
+   "modifier": 1.9
+  },
+  {
+   "id": "recreational",
+   "name": "Recreational Room",
+   "requires": {
+    "table": 1,
+    "fridge": 1,
+    "recreation": 1
+   },
+   "forbidden": [
+    "reactor"
+   ],
+   "pressurized": true,
+   "min_size": 10,
+   "modifier": 1.9
+  },
+  {
+   "id": "luxury_quarters",
+   "name": "Luxury Quarters",
+   "requires": {
+    "bed": 1,
+    "storage_bin": 2,
+    "light": 1,
+    "chair": 1
+   },
+   "forbidden": [
+    "toilet",
+    "reactor",
+    "canister",
+    "battery",
+    "hatch"
+   ],
+   "pressurized": true,
+   "min_size": 12,
+   "modifier": 2.0
+  },
+  {
+   "id": "bathroom",
+   "name": "Bathroom",
+   "requires": {
+    "toilet": 1,
+    "sink": 1
+   },
+   "forbidden": [],
+   "pressurized": true,
+   "min_size": 4,
+   "modifier": 1.8
+  },
+  {
+   "id": "galley",
+   "name": "Galley",
+   "requires": {
+    "table": 1,
+    "chair": 4,
+    "fridge": 1
+   },
+   "forbidden": [
+    "toilet",
+    "reactor",
+    "bed"
+   ],
+   "pressurized": true,
+   "min_size": 6,
+   "modifier": 1.8
+  },
+  {
+   "id": "basic_quarters",
+   "name": "Basic Quarters",
+   "requires": {
+    "bed": 1,
+    "storage_bin": 1,
+    "light": 1
+   },
+   "forbidden": [
+    "toilet",
+    "reactor",
+    "canister"
+   ],
+   "pressurized": true,
+   "min_size": 8,
+   "modifier": 1.8
+  },
+  {
+   "id": "passenger_medium",
+   "name": "Passenger Room (Medium)",
+   "requires": {
+    "chair": 8
+   },
+   "forbidden": [
+    "toilet",
+    "sink",
+    "reactor",
+    "canister"
+   ],
+   "pressurized": true,
+   "min_size": 32,
+   "modifier": 1.6
+  },
+  {
+   "id": "passenger_small",
+   "name": "Passenger Room (Small)",
+   "requires": {
+    "chair": 4
+   },
+   "forbidden": [
+    "toilet",
+    "sink",
+    "reactor",
+    "canister"
+   ],
+   "pressurized": true,
+   "min_size": 16,
+   "modifier": 1.4
+  },
+  {
+   "id": "gas_cargo",
+   "name": "Gas Cargo Room",
+   "requires": {
+    "canister": 6
+   },
+   "forbidden": [],
+   "pressurized": true,
+   "min_size": 12,
+   "modifier": 1.2
+  },
+  {
+   "id": "cargo",
+   "name": "Cargo Room",
+   "requires": {
+    "cargo_container": 6
+   },
+   "forbidden": [],
+   "pressurized": true,
+   "min_size": 6,
+   "modifier": 1.2
+  },
+  {
+   "id": "cargo_exterior",
+   "name": "Cargo Space (Exterior)",
+   "requires": {
+    "exterior_cargo": 6
+   },
+   "forbidden": [],
+   "pressurized": false,
+   "min_size": 6,
+   "modifier": 1.05
+  }
+ ]
+}

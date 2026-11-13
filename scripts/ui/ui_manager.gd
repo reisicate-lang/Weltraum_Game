@@ -991,6 +991,9 @@ func _refresh_window() -> void:
 		"ships":
 			var F := FleetSystem
 			window_box.add_child(_row("Aktuelles Schiff", [_label(F.current_name, COL_AMBER, 13)]))
+			var cg := ShipSystem.grid
+			window_box.add_child(_label(ship_rating_text(cg, PhysicsSystem.mass() * 1000.0), COL_MUTED, 12))
+			window_box.add_child(_label(rooms_text(cg), COL_MUTED, 12))
 			window_box.add_child(_label("Deine anderen Schiffe", COL_MUTED, 11))
 			if F.ships.is_empty():
 				window_box.add_child(_label("Keine weiteren Schiffe.", COL_MUTED, 12))
@@ -1000,7 +1003,9 @@ func _refresh_window() -> void:
 					b.append(_button("An Bord gehen", F.switch_to.bind(int(s.id))))
 					if st.get("shipyard", false):
 						b.append(_button("Verkaufen", F.sell.bind(int(s.id))))
-				window_box.add_child(_row("%s · liegt bei %s" % [s.name, PhysicsSystem.loc(s.location).name], b))
+				var sg := ShipGrid.from_data(s.data)
+				window_box.add_child(_row("%s · liegt bei %s · Ship Rating %s · Verkaufswert %d Cr" % [s.name, PhysicsSystem.loc(s.location).name,
+					ShipRating.rating(sg), int(F.ship_value(sg) * 0.6)], b))
 			if SalvageSystem.wreck_name != "" and not st.is_empty():
 				window_box.add_child(_button("Wrack „%s“ als Schiff anmelden (%d Cr)" % [SalvageSystem.wreck_name, F.REGISTER_FEE], F.register_wreck))
 			if st.get("shipyard", false):
@@ -1603,3 +1608,16 @@ func runtime_text(net: Dictionary) -> String:
 	if h < 1.0:
 		return " · Batterien reichen noch ca. %d min" % int(round(h * 60.0))
 	return " · Batterien reichen noch ca. %.1f h" % h
+
+## Schiffsbewertung W-X-Y-ZZZZ mit Erklärung (Ostranauts Ship Rating)
+func ship_rating_text(g: ShipGrid, mass_kg: float) -> String:
+	var r := ShipRating.rating(g, mass_kg)
+	return "Ship Rating %s (condition %d %%, %d unique rooms, thrust class %s, %s) · Ship value %d Cr" % [r,
+		int(ShipRating.condition(g)), RoomTypes.unique_count(g), r.split("-")[2], ShipRating.size_class(ShipRating.area(g)), FleetSystem.ship_value(g)]
+
+## Raumliste des Schiffs: Typ ×Wertfaktor (Ostranauts Rooms)
+func rooms_text(g: ShipGrid) -> String:
+	var parts: PackedStringArray = []
+	for room in RoomTypes.classify(g):
+		parts.append("%s ×%.2f (%d tiles)" % [room.name, room.modifier, room.size])
+	return "Rooms: " + (", ".join(parts) if not parts.is_empty() else "none enclosed")
