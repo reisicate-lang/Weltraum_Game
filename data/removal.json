@@ -557,5 +557,29 @@
   "debris": {
    "scrap": 1
   }
+ },
+ "transponder": {
+  "uninstall_time": 3.0,
+  "dismantle_time": 4.0,
+  "dismantle": {
+   "circuit": 1,
+   "copper": 1
+  },
+  "hp": 80,
+  "debris": {
+   "scrap": 1
+  }
+ },
+ "antenna": {
+  "uninstall_time": 2.5,
+  "dismantle_time": 3.5,
+  "dismantle": {
+   "plate": 1,
+   "copper": 1
+  },
+  "hp": 100,
+  "debris": {
+   "scrap": 1
+  }
  }
 }

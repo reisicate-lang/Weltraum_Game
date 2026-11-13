@@ -54,6 +54,9 @@ func create_start_ship() -> void:
 	grid.place_device("airtank", Vector2i(x0 + 7, y0 + 5))
 	# Flugsystem
 	grid.place_device("helm", Vector2i(x0 + 14, y0 + 1))
+	# Transponder und Antenne an der Steuerpult-Leitung (Ostranauts Ship Ownership)
+	grid.place_device("transponder", Vector2i(x0 + 14, y0 + 3))
+	grid.place_device("antenna", Vector2i(x0 + 14, y0 + 4))
 	grid.place_device("fueltank", Vector2i(x0 + 11, y0 + 1))
 	# Zwei Triebwerke (1×3) durch die hintere Außenwand: innen in der Wohnkabine,
 	# Düse hinten ins All, Schub nach vorn

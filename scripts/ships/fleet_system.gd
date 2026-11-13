@@ -485,7 +485,8 @@ func _build_template(g: ShipGrid, t: Dictionary) -> void:
 	var list := [["generator", x0 + 1, y0 + 1], ["battery", x0 + 2, y0 + 1], ["o2gen", x0 + 3, y0 + 1], ["scrubber", x0 + 1, y0 + h - 2],
 		["airtank", x0 + 2, y0 + h - 2], ["bed", x0 + 3, y0 + h - 2], ["locker", x0 + 4, y0 + 1], ["helm", x0 + w - 2, y0 + 1],
 		["fueltank", mid + 1, y0 + 1], ["thruster", x0 + 1, y0 + 2], ["crate", mid + 1, y0 + h - 2],
-		["terminal", mid + 2, y0 + 1], ["food", mid + 2, y0 + h - 2]]
+		["terminal", mid + 2, y0 + 1], ["food", mid + 2, y0 + h - 2],
+		["transponder", x0 + 4, y0 + h - 2], ["antenna", x0 + w - 2, y0 + h - 2]]
 	if t.id == "bairn":
 		list.append_array([["thruster", x0 + 1, y0 + 3], ["thruster", x0 + 1, y0 + 4], ["crate", mid + 3, y0 + h - 2],
 			["crate", mid + 4, y0 + h - 2], ["bed", x0 + 5, y0 + h - 2], ["water", x0 + 5, y0 + 1]])

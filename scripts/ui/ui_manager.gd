@@ -618,7 +618,7 @@ func _refresh_nav() -> void:
 	var P := PhysicsSystem
 	var e: Dictionary = P.space.earth
 	var alt := P.pos.distance_to(Vector2(e.x, e.y)) - float(e.r)
-	var rows: Array = [P.target, _flight_rows(), P.helm_block_reason(P.operated_helm()), P.autodock_block_reason(),
+	var rows: Array = [P.target, _flight_rows(), P.xpdr_faults(), P.helm_block_reason(P.operated_helm()), P.autodock_block_reason(),
 		P.operated_helm().inv.to_data() if P.operated_helm() != null and P.operated_helm().inv != null else [], int(ceil(P.redock_wait(P.undock_lock_id))), P.status(), _fmt_speed(P.vel.length()), _fmt_dist(alt), int(P.fuel()), P.max_thrust(), snappedf(P.mass(), 0.1)]
 	for l in P.locations:
 		var r := P.rel_to(l.id)
@@ -636,6 +636,9 @@ func _refresh_nav() -> void:
 	head.add_child(_button("Verlassen [Esc]", toggle_nav.bind(false)))
 	nav_side.add_child(head)
 	nav_side.add_child(_label(P.status(), COL_AMBER, 14))
+	var faults: Array = P.xpdr_faults()
+	if not faults.is_empty():
+		nav_side.add_child(_label("⚠ " + " · ".join(faults) + " – some stations refuse docking", Color(0.9, 0.33, 0.29), 13))
 	_build_flight_info()
 	nav_side.add_child(_row("Geschwindigkeit", [_label(_fmt_speed(P.vel.length()), COL_AMBER, 12)]))
 	nav_side.add_child(_row("Höhe über der Erde", [_label(_fmt_dist(alt), Color(0.9, 0.33, 0.29) if alt < float(P.space.warn_alt) else COL_AMBER, 12)]))

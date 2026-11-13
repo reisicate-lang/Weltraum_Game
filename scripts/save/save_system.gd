@@ -35,6 +35,7 @@ func save_game(silent: bool = false) -> bool:
 		"physics": PhysicsSystem.to_data(),
 		"fleet": FleetSystem.to_data(),
 		"wastewater": WaterSystem.wastewater,
+		"xpdr": true,
 		"quests": QuestSystem.to_data(),
 		"goals": GoalSystem.to_data(),
 		"station": StationSystem.to_data(),
@@ -112,6 +113,8 @@ func load_game(silent: bool = false) -> bool:
 		GoalSystem.from_data(data.goals)
 	SalvageSystem.from_data(data.get("salvage", {}))
 	FleetSystem.migrate_docking()
+	if not bool(data.get("xpdr", false)):
+		_migrate_xpdr()
 	StationSystem.from_data(data.get("station", {}))
 	GameState.selected = CrewSystem.player()
 	EventBus.game_loaded.emit()
@@ -119,3 +122,15 @@ func load_game(silent: bool = false) -> bool:
 	if not silent:
 		GameState.toast("Spielstand geladen.")
 	return true
+
+## Ältere Spielstände: Transponder und Antenne gab es noch nicht. Fehlen sie am eigenen Schiff,
+## liegen beide als einbaubare Teile an Bord (Ostranauts Ship Ownership: manche Stationen
+## lassen nur Schiffe mit beidem andocken).
+func _migrate_xpdr() -> void:
+	var missing: PackedStringArray = []
+	for t in ["transponder", "antenna"]:
+		if PhysicsSystem.ship_devices(t).is_empty():
+			ShipSystem.grid.drop_items(ShipSystem.spawn_point(), "pk_" + t, 1, 100.0)
+			missing.append(ItemSystem.device(t).display_name)
+	if not missing.is_empty():
+		GameState.toast("New: %s are on board as parts. Install them (right-click a cabled floor tile) – some stations only accept ships with both." % " and ".join(missing))

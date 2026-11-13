@@ -415,8 +415,8 @@ func step(dt: float) -> void:
 		if f >= 1.0:
 			var dest: String = travel.to
 			travel = {}
-			dock(dest, true)
 			GameState.toast("Angekommen: " + loc(dest).name)
+			dock(dest, true)
 		return
 	if not autodock.is_empty():
 		var st := loc_state(loc(autodock.to), t)
@@ -634,6 +634,9 @@ func dock_block_reason(id: String) -> String:
 	var why := pilot_block_reason()
 	if why != "":
 		return why
+	why = xpdr_dock_reason(id)
+	if why != "":
+		return why
 	if redock_locked(id):
 		return "Gerade erst abgedockt. Andocken an %s ist in %d s wieder möglich." % [loc(id).name, int(ceil(redock_wait(id)))]
 	var r := rel_to(id)
@@ -650,7 +653,7 @@ func dock_block_reason(id: String) -> String:
 	return ""
 
 func can_dock(id: String) -> bool:
-	if pilot_block_reason() != "" or redock_locked(id):
+	if pilot_block_reason() != "" or redock_locked(id) or xpdr_dock_reason(id) != "":
 		return false
 	var r := rel_to(id)
 	# Piloting (Spaceship Piloting): größere Andockgrenzen
@@ -665,6 +668,11 @@ func dock(id: String, force: bool = false) -> bool:
 		return false
 	if docked == id:
 		return true
+	# Manche Stationen nehmen nur Schiffe mit Transponder und Antenne an (Ostranauts Ship Ownership)
+	var xwhy := xpdr_dock_reason(id)
+	if xwhy != "":
+		GameState.toast(xwhy, "bad")
+		return false
 	# Andocken nur mit Andockschleuse (Tür an Tür, keine Gänge)
 	if ShipSystem.ports().is_empty():
 		GameState.toast("Kein Andockport: Angedockt wird an der Außentür einer Luftschleuse (Raum mit Pumpe, Tür ins All).", "bad")
@@ -685,7 +693,47 @@ func dock(id: String, force: bool = false) -> bool:
 	NPCSystem.on_docked(id)
 	SkillSystem.train_all_at("helm", "dock", 0.3 if force else 8.0)
 	GameState.toast("Angedockt: " + loc(id).name)
+	if String(loc(id).get("kind", "")) == "station" and not xpdr_faults().is_empty():
+		GameState.toast("Security Services (N.A.S.S.) take a closer look at your unidentified ship (%s)." % ", ".join(xpdr_faults()), "bad")
 	return true
+
+# ---------------- Transponder und Antenne (Ostranauts Ship Ownership) ----------------
+
+## Zustand eines Teils: "" = in Ordnung, sonst "missing", "damaged" oder "unpowered"
+func _part_fault(type: String) -> String:
+	var best := "missing"
+	for d in ship_devices(type):
+		if d.broken:
+			best = "damaged" if best == "missing" else best
+		elif not d.powered:
+			best = "unpowered"
+		else:
+			return ""
+	return best
+
+## Warnungen der Navigationskonsole: ["XPDR FAULT", "ANT FAULT"] (leer = alles in Ordnung)
+func xpdr_faults() -> Array:
+	var out: Array = []
+	if _part_fault("transponder") != "":
+		out.append("XPDR FAULT")
+	if _part_fault("antenna") != "":
+		out.append("ANT FAULT")
+	return out
+
+## Grund, warum diese Station das Andocken ablehnt ("" = erlaubt)
+func xpdr_dock_reason(id: String) -> String:
+	if not bool(loc(id).get("requires_xpdr", false)):
+		return ""
+	var x := _part_fault("transponder")
+	var a := _part_fault("antenna")
+	if x == "" and a == "":
+		return ""
+	var parts: PackedStringArray = []
+	if x != "":
+		parts.append("transponder %s" % x)
+	if a != "":
+		parts.append("antenna %s" % a)
+	return "%s only accepts ships with a working transponder and antenna (%s)." % [loc(id).name, ", ".join(parts)]
 
 ## Grund, der das Abdocken verhindert ("" = Abdocken möglich)
 func undock_block_reason() -> String:
@@ -765,6 +813,9 @@ func start_autodock() -> void:
 	if redock_locked(n.id):
 		GameState.toast(dock_block_reason(n.id))
 		return
+	if xpdr_dock_reason(n.id) != "":
+		GameState.toast(xpdr_dock_reason(n.id), "bad")
+		return
 	if n.dist > float(space.autodock_dist) or n.speed > float(space.autodock_speed):
 		GameState.toast("Zu weit weg oder zu schnell für das Auto-Dock.")
 		return
@@ -788,6 +839,9 @@ func travel_to(id: String) -> void:
 		GameState.toast(why, "bad")
 		return
 	if docked == id:
+		return
+	if xpdr_dock_reason(id) != "":
+		GameState.toast(xpdr_dock_reason(id), "bad")
 		return
 	var info := travel_info(id)
 	if max_thrust() <= 0.0:
