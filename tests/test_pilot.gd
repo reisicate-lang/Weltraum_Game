@@ -112,6 +112,7 @@ func _initialize() -> void:
 	mira = root.get_node("CrewSystem").player()
 	mira.needs = {"food": 100.0, "water": 100.0, "sleep": 100.0, "hygiene": 100.0, "air": 100.0}
 	mira.auto_mode = false
+	mira.traits.clear()   # Traits wie Coordinated ändern Piloting; hier nur der Skill
 	SK.set_progress(mira, "pilot", 0.0)
 	_run(3)
 	_sit(mira)
@@ -220,7 +221,8 @@ func _initialize() -> void:
 	fleet.switch_to(old_id)
 	_run(3)
 	_sit(mira)
-	_check("4: Piloting +0,5 ohne erneutes Training, am Pult Faktor 1,5 (%.2f)" % P.pilot_factor(), SK.acquired(mira, "pilot") and is_equal_approx(SK.piloting(mira), 0.5) and is_equal_approx(P.pilot_factor(), 1.5) and SK.effect(mira, "fuel_saving") == 0.0)
+	var tp: float = root.get_node("TraitSystem").sum(mira, "piloting")
+	_check("4: Piloting +0,5 ohne erneutes Training (Traits %+.2f), am Pult Faktor %.2f" % [tp, P.pilot_factor()], SK.acquired(mira, "pilot") and is_equal_approx(SK.piloting(mira), 0.5 + tp) and is_equal_approx(P.pilot_factor(), 1.5 + tp) and SK.effect(mira, "fuel_saving") == 0.0)
 
 	print("%d OK, %d Fehler" % [ok_count, fail_count])
 	quit()

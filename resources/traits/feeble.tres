@@ -4,9 +4,12 @@
 
 [resource]
 script = ExtResource("1")
-trait_id = "weak"
-trait_name = "Schwach"
-description = "Wenig Kraft. Trägt weniger, kämpft schlechter."
+trait_id = "feeble"
+trait_name = "Feeble"
+description = "G-tol -12.5%, Encumbrance thr -20%, Attack dmg -25%, Security thr -10%, Threat -12, Body mass -10 kg"
 positive = false
-modifiers = {"carry": 0.75, "combat": 0.8}
+modifiers = {"combat": 0.8}
 conflicts = PackedStringArray("strong")
+cost = -2
+opposite = "strong"
+order = 61

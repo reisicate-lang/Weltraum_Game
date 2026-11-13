@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TraitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/traits/trait_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trait_id = "kind"
+trait_name = "Kind"
+description = "Altruism thr -20%"
+positive = true
+modifiers = {}
+conflicts = PackedStringArray("cruel")
+cost = 3
+opposite = "cruel"
+order = 38

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TraitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/traits/trait_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trait_id = "fast_metabolism"
+trait_name = "Fast Metabolism"
+description = "Food/Hydration consumption +25%"
+positive = false
+modifiers = {"hunger": 1.25, "thirst": 1.25}
+conflicts = PackedStringArray("slow_metabolism")
+cost = -1
+opposite = "slow_metabolism"
+order = 58

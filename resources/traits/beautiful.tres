@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TraitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/traits/trait_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trait_id = "beautiful"
+trait_name = "Beautiful"
+description = "Flag only"
+positive = true
+modifiers = {}
+conflicts = PackedStringArray("ugly")
+cost = 1
+opposite = "ugly"
+order = 4

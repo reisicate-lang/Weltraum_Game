@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TraitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/traits/trait_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trait_id = "micro_g_hypovolemic"
+trait_name = "Micro-g Hypovolemic"
+description = "Blood heal -0.0044, Wound heal -0.005, Infection heal -0.0005, Fatigue gain coeff +0.5, Min safe temp +2.78°C, Passive rewarm -0.56, Encumbrance thr -12.5%, Food & Hydration consumption +15%"
+positive = false
+modifiers = {"hunger": 1.15, "thirst": 1.15}
+conflicts = PackedStringArray()
+cost = -1
+opposite = ""
+order = 46

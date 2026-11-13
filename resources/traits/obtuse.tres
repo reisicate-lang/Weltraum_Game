@@ -4,9 +4,12 @@
 
 [resource]
 script = ExtResource("1")
-trait_id = "distracted"
-trait_name = "Unkonzentriert"
-description = "Kann sich schlecht konzentrieren. Lernt langsamer, macht Fehler bei Arbeiten."
+trait_id = "obtuse"
+trait_name = "Obtuse"
+description = "Flag only"
 positive = false
 modifiers = {"learn_speed": 0.8, "work_speed": 0.9, "book_speed": 0.7}
-conflicts = PackedStringArray("smart")
+conflicts = PackedStringArray("genius")
+cost = -3
+opposite = "genius"
+order = 25

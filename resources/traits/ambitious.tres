@@ -5,8 +5,11 @@
 [resource]
 script = ExtResource("1")
 trait_id = "ambitious"
-trait_name = "Ehrgeizig"
-description = "Will vorankommen. Lernt schneller, arbeitet etwas schneller, verträgt aber Misserfolge schlecht."
+trait_name = "Ambitious"
+description = "Achievement thr -20%"
 positive = true
 modifiers = {"learn_speed": 1.3, "work_speed": 1.05, "stress_resist": 0.9}
-conflicts = PackedStringArray("lazy")
+conflicts = PackedStringArray("complacent")
+cost = 1
+opposite = "complacent"
+order = 0

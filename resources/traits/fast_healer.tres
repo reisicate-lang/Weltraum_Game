@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TraitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/traits/trait_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trait_id = "fast_healer"
+trait_name = "Fast Healer"
+description = "Wound heal +0.025, Blood heal +0.0089, Infection heal +0.2"
+positive = true
+modifiers = {"recovery": 1.25}
+conflicts = PackedStringArray("slow_healer")
+cost = 1
+opposite = "slow_healer"
+order = 18

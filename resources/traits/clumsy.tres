@@ -5,8 +5,11 @@
 [resource]
 script = ExtResource("1")
 trait_id = "clumsy"
-trait_name = "Ungeschickt"
-description = "Zwei linke Hände. Feinarbeiten dauern länger."
+trait_name = "Clumsy"
+description = "Defense -0.25, Threat -3, Piloting -0.025"
 positive = false
-modifiers = {"work_fine": 0.8}
-conflicts = PackedStringArray("nimble")
+modifiers = {"work_fine": 0.8, "piloting": -0.025}
+conflicts = PackedStringArray("coordinated")
+cost = -1
+opposite = "coordinated"
+order = 15

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TraitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/traits/trait_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trait_id = "finicky"
+trait_name = "Finicky"
+description = "Achievement/Altruism/Autonomy/Contact/Respect/Family/Intimacy/Meaning/Privacy/Satiety/Security/Self Worth/Weird thr -10%; Sleep Comfort thr +25%"
+positive = false
+modifiers = {}
+conflicts = PackedStringArray("apathetic")
+cost = -2
+opposite = "apathetic"
+order = 3

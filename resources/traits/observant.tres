@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TraitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/traits/trait_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trait_id = "observant"
+trait_name = "Observant"
+description = "Defense +0.06, Piloting +0.05"
+positive = true
+modifiers = {"piloting": 0.05}
+conflicts = PackedStringArray("oblivious")
+cost = 3
+opposite = "oblivious"
+order = 47

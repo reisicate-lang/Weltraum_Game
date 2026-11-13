@@ -4,9 +4,12 @@
 
 [resource]
 script = ExtResource("1")
-trait_id = "lazy"
-trait_name = "Bequem"
-description = "Macht es sich gern leicht. Lernt und arbeitet langsamer, erholt sich aber gut."
+trait_id = "complacent"
+trait_name = "Complacent"
+description = "Achievement thr +20%, Respect thr +20%"
 positive = false
 modifiers = {"learn_speed": 0.75, "work_speed": 0.85, "recovery": 1.2}
 conflicts = PackedStringArray("ambitious")
+cost = -1
+opposite = "ambitious"
+order = 1

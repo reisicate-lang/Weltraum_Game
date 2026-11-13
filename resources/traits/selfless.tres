@@ -4,9 +4,12 @@
 
 [resource]
 script = ExtResource("1")
-trait_id = "hardy"
-trait_name = "Belastbar"
-description = "Steckt viel weg: Hunger, Kälte, Verletzungen."
+trait_id = "selfless"
+trait_name = "Selfless"
+description = "Altruism thr -20%"
 positive = true
-modifiers = {"toughness": 1.35, "stress_resist": 1.15}
-conflicts = PackedStringArray("fragile")
+modifiers = {}
+conflicts = PackedStringArray("selfish")
+cost = 1
+opposite = "selfish"
+order = 53

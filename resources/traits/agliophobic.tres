@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TraitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/traits/trait_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trait_id = "agliophobic"
+trait_name = "Agliophobic"
+description = "Pain tol -25%"
+positive = false
+modifiers = {}
+conflicts = PackedStringArray("masochist")
+cost = -1
+opposite = "masochist"
+order = 45

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TraitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/traits/trait_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trait_id = "light_sleeper"
+trait_name = "Light Sleeper"
+description = "Sleep Comfort -2"
+positive = false
+modifiers = {"sleep_gain": 0.85}
+conflicts = PackedStringArray("heavy_sleeper")
+cost = -1
+opposite = "heavy_sleeper"
+order = 29

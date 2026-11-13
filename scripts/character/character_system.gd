@@ -62,15 +62,79 @@ func set_course(c: CrewMember, on: bool, id: String = SkillSystem.BUSINESS) -> b
 	c.set_meta("draft_courses", drafts)
 	return true
 
-## Alter mit allem, was im Entwurf gewählt ist
+## Alter mit allem, was im Entwurf gewählt ist (Kurse und Traits)
 func preview_age(c: CrewMember) -> int:
 	var age := c.age
 	for id in _drafts(c):
 		age += course_years(id)
-	return age
+	return age + trait_delta(c)
 
-## Lebenslauf bestätigen: gewählte Kurse (Alter und Fähigkeit) genau einmal übernehmen
-func confirm(c: CrewMember) -> void:
+# ---------------- Traits anpassen (Entwurf, Ostranauts „Tweak Skills & Traits“) ----------------
+# Positiver Trait: kostet Jahre; negativer: gibt Jahre zurück. Entfernen kehrt die Buchung um
+# (einen negativen Trait loswerden kostet seine Jahre). Das Gegenstück muss erst weg.
+# Die Bilanz des Entwurfs darf beim Bestätigen nicht negativ sein.
+
+func trait_adds(c: CrewMember) -> Array:
+	return c.get_meta("draft_trait_add", [])
+
+func trait_removes(c: CrewMember) -> Array:
+	return c.get_meta("draft_trait_remove", [])
+
+## Jahre, die die Trait-Auswahl im Entwurf bucht
+func trait_delta(c: CrewMember) -> int:
+	var d := 0
+	for id in trait_adds(c):
+		d += TraitSystem.get_trait(id).cost
+	for id in trait_removes(c):
+		d -= TraitSystem.get_trait(id).cost
+	return d
+
+## Bilanz des ganzen Entwurfs (Kurse + Traits) in Jahren; darf beim Bestätigen nicht negativ sein
+func draft_balance(c: CrewMember) -> int:
+	return preview_age(c) - c.age
+
+## Hat die Figur den Trait nach dem Entwurf?
+func trait_preview(c: CrewMember, id: String) -> bool:
+	return (id in c.traits and not id in trait_removes(c)) or id in trait_adds(c)
+
+## Warum sich der Trait gerade nicht umschalten lässt ("" = geht)
+func trait_block_reason(c: CrewMember, id: String) -> String:
+	var t: TraitData = TraitSystem.get_trait(id)
+	if t == null:
+		return "Unknown trait."
+	if id in trait_adds(c) or id in trait_removes(c) or id in c.traits:
+		return ""   # Rückgängig machen bzw. entfernen geht immer
+	var opp := t.opposite
+	if opp != "" and trait_preview(c, opp):
+		return "Remove %s first." % TraitSystem.get_trait(opp).trait_name
+	if preview_age(c) + t.cost > max_age:
+		return "Too old for that."
+	return ""
+
+## Trait im Entwurf umschalten (hinzufügen, entfernen, rückgängig). Gibt den Grund zurück, falls nicht.
+func toggle_trait(c: CrewMember, id: String) -> String:
+	var why := trait_block_reason(c, id)
+	if why != "":
+		return why
+	var adds: Array = trait_adds(c).duplicate()
+	var rems: Array = trait_removes(c).duplicate()
+	if id in adds:
+		adds.erase(id)
+	elif id in rems:
+		rems.erase(id)
+	elif id in c.traits:
+		rems.append(id)
+	else:
+		adds.append(id)
+	c.set_meta("draft_trait_add", adds)
+	c.set_meta("draft_trait_remove", rems)
+	return ""
+
+## Lebenslauf bestätigen: gewählte Kurse und Traits (Alter und Wirkung) genau einmal übernehmen.
+## Eine negative Bilanz wird nicht übernommen (false).
+func confirm(c: CrewMember) -> bool:
+	if draft_balance(c) < 0:
+		return false
 	var drafts: Array = _drafts(c)
 	c.set_meta("draft_courses", [])
 	for id in course_ids():   # feste Reihenfolge
@@ -81,6 +145,24 @@ func confirm(c: CrewMember) -> void:
 		SkillSystem.set_progress(c, id, SkillSystem.ACQUIRED)
 		SkillSystem._entry(c, id).unlocked = true
 		c.history.append("%d–%d: %s course." % [c.age - years, c.age, SkillSystem.skill(id).skill_name])
+	# Traits
+	var adds: Array = trait_adds(c)
+	var rems: Array = trait_removes(c)
+	if not adds.is_empty() or not rems.is_empty():
+		var delta := trait_delta(c)
+		var parts: PackedStringArray = []
+		for id in rems:
+			c.traits.erase(id)
+			parts.append("−" + TraitSystem.get_trait(id).trait_name)
+		for id in adds:
+			if not id in c.traits:
+				c.traits.append(id)
+			parts.append("+" + TraitSystem.get_trait(id).trait_name)
+		c.age += delta
+		c.history.append("Traits: %s (%+d %s)." % [", ".join(parts), delta, "year" if absi(delta) == 1 else "years"])
+	c.set_meta("draft_trait_add", [])
+	c.set_meta("draft_trait_remove", [])
+	return true
 
 func career(id: String) -> Dictionary:
 	for c in careers:
@@ -101,6 +183,8 @@ func begin(c: CrewMember) -> void:
 	c.set_meta("careers", [])
 	c.set_meta("credits", 0)
 	c.set_meta("draft_courses", [])
+	c.set_meta("draft_trait_add", [])
+	c.set_meta("draft_trait_remove", [])
 	# Eine angeborene Eigenschaft
 	var ids := TraitSystem.traits.keys()
 	TraitSystem.add(c, ids.pick_random())

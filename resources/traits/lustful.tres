@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TraitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/traits/trait_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trait_id = "lustful"
+trait_name = "Lustful"
+description = "Intimacy thr -20%; affects romance"
+positive = false
+modifiers = {}
+conflicts = PackedStringArray("chaste")
+cost = -2
+opposite = "chaste"
+order = 11

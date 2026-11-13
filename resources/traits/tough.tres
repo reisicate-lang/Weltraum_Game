@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TraitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/traits/trait_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trait_id = "tough"
+trait_name = "Tough"
+description = "G-tol +12.5%, Wound threshold/resistance +20%, Pain tol +20%, Security thr +10%, Threat +6"
+positive = true
+modifiers = {"toughness": 1.35, "stress_resist": 1.15}
+conflicts = PackedStringArray("fragile")
+cost = 1
+opposite = "fragile"
+order = 68

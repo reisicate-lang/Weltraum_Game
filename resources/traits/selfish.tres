@@ -4,9 +4,12 @@
 
 [resource]
 script = ExtResource("1")
-trait_id = "nervous"
-trait_name = "Nervös"
-description = "Schnell gestresst, besonders in Gefahr."
+trait_id = "selfish"
+trait_name = "Selfish"
+description = "Altruism thr +20%"
 positive = false
-modifiers = {"stress_resist": 0.7, "combat": 0.85}
-conflicts = PackedStringArray("calm")
+modifiers = {}
+conflicts = PackedStringArray("selfless")
+cost = -1
+opposite = "selfless"
+order = 54

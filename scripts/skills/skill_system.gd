@@ -453,7 +453,7 @@ func train_job(c: CrewMember, job: Dictionary, minutes: float) -> void:
 func piloting(c: CrewMember) -> float:
 	if c == null:
 		return 0.0
-	var v := 0.0
+	var v := TraitSystem.sum(c, "piloting")   # Traits (z. B. Coordinated +0,1, Visually Impaired −0,2)
 	for id in skills:
 		if skills[id].piloting_bonus != 0.0 and acquired(c, id):
 			v += skills[id].piloting_bonus

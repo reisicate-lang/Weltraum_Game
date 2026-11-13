@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TraitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/traits/trait_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trait_id = "sharp_hearing"
+trait_name = "Sharp Hearing"
+description = "Defense +0.03"
+positive = true
+modifiers = {}
+conflicts = PackedStringArray("poor_hearing")
+cost = 1
+opposite = "poor_hearing"
+order = 55

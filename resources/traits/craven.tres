@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TraitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/traits/trait_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trait_id = "craven"
+trait_name = "Craven"
+description = "Security thr -20%, Threat -6"
+positive = false
+modifiers = {"stress_resist": 0.7, "combat": 0.85}
+conflicts = PackedStringArray("brave")
+cost = -2
+opposite = "brave"
+order = 7

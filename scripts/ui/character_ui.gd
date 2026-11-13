@@ -336,6 +336,29 @@ func refresh_creation() -> void:
 		crow.set_meta("course", id)
 		crow.tooltip_text = SkillSystem.skill_tooltip(c, id)
 		creation_box.add_child(crow)
+	# Traits anpassen (Ostranauts „Tweak Skills & Traits“): positive kosten Jahre, negative geben Jahre zurück
+	var bal := CharacterSystem.draft_balance(c)
+	creation_box.add_child(ui._label("TRAITS · draft balance %+d %s%s" % [bal, "year" if absi(bal) == 1 else "years", " – must not be negative" if bal < 0 else ""],
+		Color(0.9, 0.33, 0.29) if bal < 0 else ui.COL_MUTED, 11))
+	var tflow := HFlowContainer.new()
+	tflow.set_meta("traits", true)
+	for tv in TraitSystem.ordered_ids():
+		var tid: String = tv
+		var td: TraitData = TraitSystem.get_trait(tid)
+		var have: bool = tid in c.traits
+		var adding: bool = tid in CharacterSystem.trait_adds(c)
+		var removing: bool = tid in CharacterSystem.trait_removes(c)
+		var label := ("✔ " if have and not removing else ("+ " if adding else ("✘ " if removing else ""))) + td.trait_name + " (%+d)" % td.cost
+		var why := CharacterSystem.trait_block_reason(c, tid)
+		var tb: Button = ui._button(label, func():
+			CharacterSystem.toggle_trait(c, tid)
+			refresh_creation())
+		tb.set_meta("trait", tid)
+		tb.add_theme_font_size_override("font_size", 11)
+		tb.disabled = why != ""
+		tb.tooltip_text = TraitSystem.tooltip(tid) + ("\n" + why if why != "" else "")
+		tflow.add_child(tb)
+	creation_box.add_child(tflow)
 	if c.hobbies.size() < 2:
 		var row := HFlowContainer.new()
 		row.add_child(ui._label("Hobby wählen: ", ui.COL_MUTED, 12))
@@ -367,7 +390,7 @@ func refresh_creation() -> void:
 		creation.visible = false
 		ui.show_help()
 		TimeSystem.set_speed(1))
-	go.disabled = CharacterSystem.preview_age(c) < 18
+	go.disabled = CharacterSystem.preview_age(c) < 18 or CharacterSystem.draft_balance(c) < 0
 	bottom.add_child(go)
 
 # ---------------- Begegnung mit Plünderern ----------------

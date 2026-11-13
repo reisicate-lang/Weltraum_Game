@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TraitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/traits/trait_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trait_id = "pessimist"
+trait_name = "Pessimist"
+description = "same needs thr -10%; Sleep Comfort thr +25%"
+positive = false
+modifiers = {}
+conflicts = PackedStringArray("optimist")
+cost = -1
+opposite = "optimist"
+order = 50

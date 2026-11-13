@@ -4,9 +4,12 @@
 
 [resource]
 script = ExtResource("1")
-trait_id = "frugal"
-trait_name = "Sparsam"
-description = "Isst wenig, verschwendet nichts."
-positive = true
-modifiers = {"hunger": 0.8}
-conflicts = PackedStringArray("glutton")
+trait_id = "follower"
+trait_name = "Follower"
+description = "Autonomy thr +20%"
+positive = false
+modifiers = {}
+conflicts = PackedStringArray("leader")
+cost = -3
+opposite = "leader"
+order = 41

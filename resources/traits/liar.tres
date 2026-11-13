@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TraitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/traits/trait_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trait_id = "liar"
+trait_name = "Liar"
+description = "Altruism/Meaning/Self Worth thr +10%"
+positive = false
+modifiers = {}
+conflicts = PackedStringArray("honest")
+cost = -1
+opposite = "honest"
+order = 31

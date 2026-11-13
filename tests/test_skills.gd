@@ -171,13 +171,13 @@ func _initialize() -> void:
 
 	# 7) Traits beeinflussen das Lernen
 	var smart := _fresh()
-	TS.add(smart, "smart")
+	TS.add(smart, "genius")
 	var dumb := _fresh()
-	TS.add(dumb, "distracted")
+	TS.add(dumb, "obtuse")
 	SK.train(smart, "repair_mechanical", 20.0)
 	SK.train(dumb, "repair_mechanical", 20.0)
-	_check("Intelligent lernt schneller als unkonzentriert", SK.progress(smart, "mechanical") > SK.progress(dumb, "mechanical") * 1.4)
-	_check("Gegensätzliche Traits schließen sich aus", not TS.add(smart, "distracted"))
+	_check("Genius lernt schneller als Obtuse", SK.progress(smart, "mechanical") > SK.progress(dumb, "mechanical") * 1.4)
+	_check("Gegensätzliche Traits schließen sich aus", not TS.add(smart, "obtuse"))
 	var before_traits := smart.traits.size()
 	SK.train(smart, "repair_mechanical", 500.0)
 	_check("Training ändert keine Traits", smart.traits.size() == before_traits)

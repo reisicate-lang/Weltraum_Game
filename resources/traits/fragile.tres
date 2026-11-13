@@ -5,8 +5,11 @@
 [resource]
 script = ExtResource("1")
 trait_id = "fragile"
-trait_name = "Zerbrechlich"
-description = "Wird schnell krank und verletzt."
+trait_name = "Fragile"
+description = "G-tol -12.5%, Wound threshold/resistance -20%, Pain tol -20%, Security thr -5%, Threat -6"
 positive = false
 modifiers = {"toughness": 0.7}
-conflicts = PackedStringArray("hardy")
+conflicts = PackedStringArray("tough")
+cost = -1
+opposite = "tough"
+order = 69

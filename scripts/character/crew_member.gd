@@ -385,7 +385,8 @@ func _update_body(dt: float) -> void:
 	var h := dt / 60.0
 	var slow := 0.5 if sleeping else 1.0
 	for k in ["food", "water", "hygiene"]:
-		needs[k] -= Config.NEEDS[k].decay * h * slow * (TraitSystem.factor(self, "hunger") if k == "food" else 1.0)
+		var tf := TraitSystem.factor(self, "hunger") if k == "food" else (TraitSystem.factor(self, "thirst") if k == "water" else 1.0)
+		needs[k] -= Config.NEEDS[k].decay * h * slow * tf
 	if not sleeping:
 		needs.sleep -= Config.NEEDS.sleep.decay * h
 	for k in needs:
@@ -1034,7 +1035,7 @@ func _do_activity(dt: float) -> void:
 	task = def.verb
 	activity.timer += dt
 	if need == "sleep":
-		needs.sleep = minf(100.0, needs.sleep + def.gain / 60.0 * dt)
+		needs.sleep = minf(100.0, needs.sleep + def.gain / 60.0 * dt * TraitSystem.factor(self, "sleep_gain"))
 		if needs.sleep >= 100.0:
 			stop_activity()
 		return
@@ -1096,7 +1097,7 @@ static func from_data(d: Dictionary) -> CrewMember:
 	c.inv.from_data(d.items)
 	c.suit = d.get("suit")
 	c.skills = d.get("skills", {})
-	c.traits.assign(d.get("traits", []))
+	c.traits.assign(TraitSystem.migrate(d.get("traits", [])))
 	c.hobbies.assign(d.get("hobbies", []))
 	c.stress = float(d.get("stress", 10.0))
 	c.age = int(d.get("age", 18))

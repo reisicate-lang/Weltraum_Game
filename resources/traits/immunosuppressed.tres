@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TraitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/traits/trait_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trait_id = "immunosuppressed"
+trait_name = "Immunosuppressed"
+description = "Infection heal rate -0.2"
+positive = false
+modifiers = {}
+conflicts = PackedStringArray()
+cost = -1
+opposite = ""
+order = 34

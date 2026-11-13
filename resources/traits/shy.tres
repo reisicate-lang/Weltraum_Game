@@ -4,9 +4,12 @@
 
 [resource]
 script = ExtResource("1")
-trait_id = "introvert"
-trait_name = "Introvertiert"
-description = "Braucht Ruhe. Gespräche fallen schwerer, dafür konzentriert beim Lernen allein."
+trait_id = "shy"
+trait_name = "Shy"
+description = "Contact thr +20%, Privacy thr -20%"
 positive = false
 modifiers = {"social": 0.8, "book_speed": 1.15}
-conflicts = PackedStringArray("social")
+conflicts = PackedStringArray("gregarious")
+cost = -3
+opposite = "gregarious"
+order = 27

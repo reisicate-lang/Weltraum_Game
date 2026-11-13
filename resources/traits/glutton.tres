@@ -5,8 +5,11 @@
 [resource]
 script = ExtResource("1")
 trait_id = "glutton"
-trait_name = "Vielfraß"
-description = "Hat ständig Hunger."
+trait_name = "Glutton"
+description = "Satiety thr +50%, Sleep thr -20%"
 positive = false
 modifiers = {"hunger": 1.3}
-conflicts = PackedStringArray("frugal")
+conflicts = PackedStringArray("temperate")
+cost = -2
+opposite = "temperate"
+order = 65

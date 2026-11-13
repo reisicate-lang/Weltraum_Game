@@ -73,7 +73,7 @@
     "boltgun"
    ],
    "traits_add": [
-    "hardy"
+    "tough"
    ],
    "enemy_chance": 0.4,
    "text": "Diente im Krieg auf einer Fregatte. Sah mehr, als ihr lieb war."
@@ -93,7 +93,7 @@
    },
    "credits": -100,
    "traits_add": [
-    "nervous"
+    "craven"
    ],
    "contact": "Schieberin Vex (Habitat L4)",
    "text": "Schlug sich in den Gängen von L4 durch."
@@ -114,7 +114,7 @@
    },
    "credits": -400,
    "traits_add": [
-    "smart"
+    "genius"
    ],
    "text": "Studierte Bahnmechanik am Kármán-Ring. Hat noch Studienschulden."
   },
@@ -181,7 +181,7 @@
    },
    "credits": 300,
    "traits_add": [
-    "calm"
+    "brave"
    ],
    "text": "Versorgte Verletzte nach Unfällen und Gefechten."
   },
@@ -216,7 +216,7 @@
    },
    "credits": 100,
    "traits_add": [
-    "social"
+    "gregarious"
    ],
    "text": "Sang in den Bars der Stationen für ein paar Credits."
   },
@@ -278,7 +278,7 @@
   {
    "text": "Hielt durch harte Zeiten durch und wurde zäher.",
    "traits_add": [
-    "hardy"
+    "tough"
    ],
    "traits_remove": [
     "fragile"
@@ -287,7 +287,7 @@
   {
    "text": "Wurde durch die Arbeit bequem.",
    "traits_add": [
-    "lazy"
+    "complacent"
    ],
    "traits_remove": [
     "ambitious"
@@ -299,7 +299,7 @@
     "ambitious"
    ],
    "traits_remove": [
-    "lazy"
+    "complacent"
    ]
   },
   {

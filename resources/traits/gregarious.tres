@@ -4,9 +4,12 @@
 
 [resource]
 script = ExtResource("1")
-trait_id = "social"
-trait_name = "Gesellig"
-description = "Kommt mit allen gut aus. Bessere Gespräche, weniger Stress in Gesellschaft."
+trait_id = "gregarious"
+trait_name = "Gregarious"
+description = "Contact thr -20%, Privacy thr +20%"
 positive = true
 modifiers = {"social": 1.3, "stress_resist": 1.05}
-conflicts = PackedStringArray("introvert")
+conflicts = PackedStringArray("shy")
+cost = 3
+opposite = "shy"
+order = 26

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TraitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/traits/trait_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trait_id = "fit"
+trait_name = "Fit"
+description = "G-tol +12.5%, Fatigue thr +25%, Security thr +3%, Threat +3"
+positive = true
+modifiers = {}
+conflicts = PackedStringArray("unfit")
+cost = 3
+opposite = "unfit"
+order = 20
