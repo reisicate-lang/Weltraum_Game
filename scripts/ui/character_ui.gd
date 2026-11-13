@@ -292,6 +292,8 @@ func refresh_creation() -> void:
 	for t in c.traits:
 		tr.append(TraitSystem.get_trait(t).trait_name)
 	creation_box.add_child(ui._label("Eigenschaften: " + ", ".join(tr), ui.COL_MUTED, 12))
+	if CharacterSystem.creation_ended(c):
+		creation_box.add_child(ui._label("Age %d: character creation ends here. Press „Los geht's“." % CharacterSystem.max_age, ui.COL_AMBER, 13))
 	var top: Array = c.skills.keys()
 	top.sort_custom(func(a, b): return SkillSystem.progress(c, a) > SkillSystem.progress(c, b))
 	var sk: PackedStringArray = []

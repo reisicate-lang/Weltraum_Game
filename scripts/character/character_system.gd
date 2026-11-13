@@ -51,6 +51,8 @@ func course_drafted(c: CrewMember, id: String = SkillSystem.BUSINESS) -> bool:
 
 ## Kurs in den Entwurf aufnehmen oder entfernen. Ändert nur das Vorschaualter.
 func set_course(c: CrewMember, on: bool, id: String = SkillSystem.BUSINESS) -> bool:
+	if creation_ended(c):
+		return false
 	var drafts: Array = _drafts(c).duplicate()
 	if on:
 		if course_years(id) <= 0 or id in drafts or preview_age(c) + course_years(id) > max_age or SkillSystem.acquired(c, id):
@@ -103,6 +105,8 @@ func trait_block_reason(c: CrewMember, id: String) -> String:
 	var t: TraitData = TraitSystem.get_trait(id)
 	if t == null:
 		return "Unknown trait."
+	if creation_ended(c):
+		return "Character creation has ended (age %d)." % max_age
 	if id in trait_adds(c) or id in trait_removes(c) or id in c.traits:
 		return ""   # Rückgängig machen bzw. entfernen geht immer
 	var opp := t.opposite
@@ -136,6 +140,7 @@ func toggle_trait(c: CrewMember, id: String) -> String:
 func confirm(c: CrewMember) -> bool:
 	if draft_balance(c) < 0 or pending_encounter(c) != "":
 		return false
+	var age_before := c.age
 	var drafts: Array = _drafts(c)
 	c.set_meta("draft_courses", [])
 	for id in course_ids():   # feste Reihenfolge
@@ -163,6 +168,7 @@ func confirm(c: CrewMember) -> bool:
 		c.history.append("Traits: %s (%+d %s)." % [", ".join(parts), delta, "year" if absi(delta) == 1 else "years"])
 	c.set_meta("draft_trait_add", [])
 	c.set_meta("draft_trait_remove", [])
+	_age_check(c, age_before)
 	return true
 
 func career(id: String) -> Dictionary:
@@ -196,6 +202,8 @@ func begin(c: CrewMember, asteroid_start: bool = true) -> void:
 	c.set_meta("draft_trait_remove", [])
 	c.set_meta("pending_encounter", "")
 	c.set_meta("risk_tokens", {})
+	c.set_meta("aged_29", false)
+	c.set_meta("aged_42", false)
 	if asteroid_start:
 		for t in START_TRAITS:
 			if TraitSystem.get_trait(t) != null and not t in c.traits:
@@ -238,6 +246,7 @@ func apply_career(c: CrewMember, id: String) -> String:
 	var k := career(id)
 	if k.is_empty() or not k in available(c) or pending_encounter(c) != "":
 		return ""
+	var age_before := c.age
 	c.age += int(k.years)
 	var done := done_careers(c)
 	done.append(id)
@@ -276,8 +285,38 @@ func apply_career(c: CrewMember, id: String) -> String:
 		c.enemies.append(enemy)
 		line += " Machte sich %s zum Feind." % enemy
 	c.history.append(line)
+	_age_check(c, age_before)
 	_sanitize_drafts(c)
 	return line
+
+# ---------------- Altern (Ostranauts 1.2) ----------------
+# Beim Erreichen von 29 (Middle Age) und 42 (Old Age) kommt je ein zufälliger negativer Trait dazu
+# (aus allen negativen; schon vorhandene und solche mit vorhandenem Gegenstück werden übersprungen).
+# Mit 47 (max_age) endet die Erstellung: Entwürfe verfallen, nur noch „Los geht's“.
+const AGING := [[29, "Middle age"], [42, "Old age"]]
+
+## Nach jeder Alterung aufrufen: Schwellen zwischen altem und neuem Alter prüfen (je einmal)
+func _age_check(c: CrewMember, old_age: int) -> void:
+	if c.age > max_age:
+		c.age = max_age
+	for a in AGING:
+		var at: int = a[0]
+		var key := "aged_%d" % at
+		if old_age < at and c.age >= at and not c.get_meta(key, false):
+			c.set_meta(key, true)
+			var pool: Array = TraitSystem.ordered_ids().filter(func(t): return TraitSystem.get_trait(t).cost < 0 and TraitSystem.can_add(c, t))
+			if not pool.is_empty():
+				var t: String = pool.pick_random()
+				c.traits.append(t)
+				c.history.append("%d: %s – gained %s." % [at, a[1], TraitSystem.get_trait(t).trait_name])
+	if creation_ended(c):
+		c.set_meta("draft_courses", [])
+		c.set_meta("draft_trait_add", [])
+		c.set_meta("draft_trait_remove", [])
+
+## Mit max_age (47) endet die Erstellung
+func creation_ended(c: CrewMember) -> bool:
+	return c.age >= max_age
 
 # ---------------- Lebensereignisse („Seek Adventure“, Ostranauts 2.1) ----------------
 # Ein Ereignis kostet 1 Jahr. Man wählt eine von mehreren Antworten; manche brauchen einen Skill
@@ -310,6 +349,8 @@ func pending_encounter(c: CrewMember) -> String:
 func adventure_block_reason(c: CrewMember) -> String:
 	if pending_encounter(c) != "":
 		return "Choose an answer for the current encounter first."
+	if creation_ended(c):
+		return "Character creation has ended (age %d)." % max_age
 	if preview_age(c) + int(enc_cfg.get("years", 1)) > max_age:
 		return "Too old for that."
 	return ""
@@ -362,12 +403,15 @@ func resolve_encounter(c: CrewMember, choice_id: String) -> String:
 		label = "RISK: %s – %s" % [label, "failure" if failed else "success"]
 		_apply_reward(c, ch.get("failure" if failed else "success", {}), parts, missing)
 	c.set_meta("pending_encounter", "")
+	if c.age > max_age:
+		c.age = max_age   # die Brig kann nicht über das Ende der Erstellung hinaus führen
 	var line := "%d–%d: %s – %s." % [age0, c.age, e.name, label]
 	if not parts.is_empty():
 		line += " " + ", ".join(parts) + "."
 	if not missing.is_empty():
 		line += " (Not in game: " + "; ".join(missing) + ")"
 	c.history.append(line)
+	_age_check(c, age0)
 	_sanitize_drafts(c)
 	return line
 
