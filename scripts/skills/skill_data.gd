@@ -32,3 +32,5 @@ extends Resource
 @export var removes_eva_malus: bool = false
 ## Erworben: erhöht den Piloting-Wert der Figur am Steuerpult (siehe SkillSystem.piloting)
 @export var piloting_bonus: float = 0.0
+## Reines Prüf-Flag ohne Zahlenwirkung: erworben über SkillSystem.acquired / meets abfragbar
+@export var check_flag: bool = false

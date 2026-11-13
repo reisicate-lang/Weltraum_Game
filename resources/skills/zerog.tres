@@ -5,11 +5,13 @@
 [resource]
 script = ExtResource("1")
 skill_id = "zerog"
-skill_name = "Schwerelosigkeit"
-description = "Bewegung und Arbeit außerhalb der Schwerkraft: schneller und sicherer im Vakuum unterwegs."
+skill_name = "Zero-g Ops"
+description = "Moving and operating in zero gravity."
 category = "praxis"
-learning_sources = PackedStringArray("Bewegung im Vakuum", "Außeneinsätze")
+learning_sources = PackedStringArray("Practical work: moving in vacuum, any job done while wearing an EVA suit", "Textbook: Zero-g Ops")
 training_actions = PackedStringArray("eva_move", "eva_work", "study_zerog")
 required_skills = {}
-gameplay_effects = {"eva_speed": 0.5}
-mastery_text = "Meister: Im Vakuum genauso schnell wie drinnen."
+gameplay_effects = {}
+mastery_text = "Acquired (100 %): counts as Zero-g Ops for skill checks. No numeric modifier."
+course_years = 1
+check_flag = true

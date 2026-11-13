@@ -322,7 +322,8 @@ func refresh_creation() -> void:
 		"software": "+4 work value on software work (debugging)",
 		"spaceship": "+4 work value on ship structure work",
 		"mechanical": "+4 work value on appliances, controls, furniture, climate & ventilation, miscellaneous",
-		"pilot": "Piloting +0.5 at the helm (docking limits, RCS thrust, turn rate)"}
+		"pilot": "Piloting +0.5 at the helm (docking limits, RCS thrust, turn rate)",
+		"zerog": "skill check flag, no numeric modifier"}
 	for id in CharacterSystem.course_ids():
 		var course := CharacterSystem.course_drafted(c, id)
 		var years := CharacterSystem.course_years(id)

@@ -570,6 +570,8 @@ func skill_tooltip(c: CrewMember, id: String) -> String:
 	var lines: PackedStringArray = [s.skill_name, s.description]
 	if s.course_years > 0:
 		lines.append("Character creation: costs %d %s." % [s.course_years, "year" if s.course_years == 1 else "years"])
+	if s.check_flag:
+		lines.append("Effect when acquired (100 %): no numeric modifier; counts as " + s.skill_name + " for skill checks.")
 	if s.piloting_bonus != 0.0:
 		lines.append("Effect when acquired (100 %%): Piloting %+.1f while flying at the helm (docking limits, RCS thrust and turn rate ×(1 + Piloting))." % s.piloting_bonus)
 	if s.removes_eva_malus:

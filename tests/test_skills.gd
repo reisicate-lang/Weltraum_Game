@@ -46,7 +46,7 @@ func _initialize() -> void:
 	_check("32 Fähigkeiten geladen", SK.skills.size() == 32)
 	for id in SK.skills:
 		var s: SkillData = SK.skill(id)
-		_check(id + ": hat Trainingsaktionen, Name, Beschreibung, Wirkungen", s.training_actions.size() > 0 and s.skill_name != "" and s.description != "" and (not s.gameplay_effects.is_empty() or s.work_value_bonus != 0.0 or s.piloting_bonus != 0.0))
+		_check(id + ": hat Trainingsaktionen, Name, Beschreibung, Wirkungen", s.training_actions.size() > 0 and s.skill_name != "" and s.description != "" and (not s.gameplay_effects.is_empty() or s.work_value_bonus != 0.0 or s.piloting_bonus != 0.0 or s.check_flag))
 		var c := _fresh()
 		for r in s.required_skills:
 			SK.set_progress(c, r, 100.0)

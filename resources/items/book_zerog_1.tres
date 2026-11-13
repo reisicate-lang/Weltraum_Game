@@ -5,10 +5,10 @@
 [resource]
 script = ExtResource("1")
 id = "book_zerog_1"
-display_name = "Lehrbuch: Schwerelosigkeit (Grundlagen)"
+display_name = "Textbook: Zero-g Ops (Basics)"
 weight = 0.8
 volume = 1.0
 value = 40
-description = "Bringt Schwerelosigkeit bis 40 %. Lesen in Ruhezeiten."
+description = "Brings Zero-g Ops to 40 %. Read during rest time."
 teaches = "zerog"
 book_level = 1
