@@ -5,10 +5,10 @@
 [resource]
 script = ExtResource("1")
 id = "book_persuasion_2"
-display_name = "Lehrbuch: Überzeugen (Fortgeschritten)"
+display_name = "Textbook: Persuasion (Advanced)"
 weight = 1.0
 volume = 1.2
 value = 120
-description = "Bringt Überzeugen bis 75 %. Braucht 30 % Vorwissen."
+description = "Brings Persuasion to 75 %. Needs 30 % prior knowledge."
 teaches = "persuasion"
 book_level = 2

@@ -5,10 +5,10 @@
 [resource]
 script = ExtResource("1")
 id = "book_folk_2"
-display_name = "Lehrbuch: Volksetikette (Fortgeschritten)"
+display_name = "Textbook: Folk Etiquette (Advanced)"
 weight = 1.0
 volume = 1.2
 value = 120
-description = "Bringt Volksetikette bis 75 %. Braucht 30 % Vorwissen."
+description = "Brings Folk Etiquette to 75 %. Needs 30 % prior knowledge."
 teaches = "folk"
 book_level = 2

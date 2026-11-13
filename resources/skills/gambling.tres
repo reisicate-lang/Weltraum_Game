@@ -5,11 +5,14 @@
 [resource]
 script = ExtResource("1")
 skill_id = "gambling"
-skill_name = "Glücksspiel"
-description = "Würfeln, Karten, Wetten. Wer es kann, gewinnt öfter in der Stationsbar."
+skill_name = "Gambling"
+description = "Hobby: Gambling checks and events, incl. Poker Game options."
 category = "sozial"
-learning_sources = PackedStringArray("Spielen in der Stationsbar")
+learning_sources = PackedStringArray("Gambling", "Textbook: Gambling")
 training_actions = PackedStringArray("gamble", "study_gambling")
 required_skills = {}
-gameplay_effects = {"gamble_edge": 0.25}
-mastery_text = "Meister: Man merkt, wann man aufhören sollte (kein großer Verlust mehr)."
+gameplay_effects = {}
+mastery_text = "Acquired (100 %): counts as Gambling for checks. No numeric modifier."
+course_years = 1
+is_hobby = true
+check_flag = true

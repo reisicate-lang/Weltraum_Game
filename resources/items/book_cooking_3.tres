@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "book_cooking_3"
+display_name = "Textbook: Cooking (Complete)"
+weight = 1.0
+volume = 1.2
+value = 260
+description = "Completes Cooking (100 %, skill acquired). Needs 30 % prior knowledge."
+teaches = "cooking"
+book_level = 3

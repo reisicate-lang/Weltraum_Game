@@ -5,11 +5,14 @@
 [resource]
 script = ExtResource("1")
 skill_id = "acting"
-skill_name = "Schauspiel"
-description = "Rollen spielen, bluffen, Gefühle vortäuschen. Hilft bei Kontrollen und Auftritten."
+skill_name = "Acting"
+description = "Hobby: Acting checks (social, job and event options)."
 category = "sozial"
-learning_sources = PackedStringArray("Auftritte in der Stationsbar", "Bluffen bei Kontrollen")
+learning_sources = PackedStringArray("Performing and bluffing", "Textbook: Acting")
 training_actions = PackedStringArray("perform_acting", "bluff", "study_acting")
 required_skills = {}
-gameplay_effects = {"bluff": 0.6, "perform_income": 0.5}
-mastery_text = "Meister: Kontrollen am Schwarzmarkt werden fast immer weggeredet."
+gameplay_effects = {}
+mastery_text = "Acquired (100 %): counts as Acting for checks. No numeric modifier."
+course_years = 1
+is_hobby = true
+check_flag = true

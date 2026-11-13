@@ -5,10 +5,10 @@
 [resource]
 script = ExtResource("1")
 id = "book_armed_melee_2"
-display_name = "Lehrbuch: Nahkampf mit Waffe (Fortgeschritten)"
+display_name = "Textbook: Armed Melee (Advanced)"
 weight = 1.0
 volume = 1.2
 value = 120
-description = "Bringt Nahkampf mit Waffe bis 75 %. Braucht 30 % Vorwissen."
+description = "Brings Armed Melee to 75 %. Needs 30 % prior knowledge."
 teaches = "armed_melee"
 book_level = 2

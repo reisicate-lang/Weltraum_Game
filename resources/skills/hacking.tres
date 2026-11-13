@@ -5,11 +5,15 @@
 [resource]
 script = ExtResource("1")
 skill_id = "hacking"
-skill_name = "Hacken"
-description = "Verschlossene Kisten und Terminals öffnen, Zugangssysteme umgehen, Software analysieren."
+skill_name = "Hacking"
+description = "Hobby: Software work rate +4; hacking interactions and checks."
 category = "praxis"
-learning_sources = PackedStringArray("Verschlossene Kisten und Terminals knacken", "Datenchips analysieren")
+learning_sources = PackedStringArray("Hacking locks, analyzing software", "Textbook: Hacking")
 training_actions = PackedStringArray("hack", "analyze_software", "study_hacking")
 required_skills = {"software": 25}
-gameplay_effects = {"hack_power": 1.0}
-mastery_text = "Meister: Auch hochgesicherte Behälter (Stufe 3) gehen auf."
+gameplay_effects = {}
+mastery_text = "Acquired (100 %): +4 work value on software work (debugging the navigation console). Hacking locks still uses this skill's progress."
+course_years = 2
+is_hobby = true
+work_value_bonus = 4.0
+work_categories = PackedStringArray("software")

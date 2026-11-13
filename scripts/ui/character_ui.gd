@@ -355,6 +355,8 @@ func refresh_creation() -> void:
 		"pilot": "Piloting +0.5 at the helm (docking limits, RCS thrust, turn rate)",
 		"zerog": "skill check flag, no numeric modifier"}
 	for id in CharacterSystem.course_ids():
+		if SkillSystem.skill(id).is_hobby:
+			continue   # Hobbies: eigene Leiste unten
 		var course := CharacterSystem.course_drafted(c, id)
 		var years := CharacterSystem.course_years(id)
 		if not course and (CharacterSystem.preview_age(c) + years > CharacterSystem.max_age or SkillSystem.acquired(c, id)):
@@ -366,6 +368,25 @@ func refresh_creation() -> void:
 		crow.set_meta("course", id)
 		crow.tooltip_text = SkillSystem.skill_tooltip(c, id)
 		creation_box.add_child(crow)
+	# Hobbies (Ostranauts 2.2.2): kompakte Leiste, gleiche Kurs-Logik (Jahre im Vorschaualter)
+	creation_box.add_child(ui._label("HOBBIES (skills, cost years)", ui.COL_MUTED, 11))
+	var hflow := HFlowContainer.new()
+	for hv in CharacterSystem.course_ids():
+		var hid: String = hv
+		var hs: SkillData = SkillSystem.skill(hid)
+		if not hs.is_hobby:
+			continue
+		var drafted: bool = CharacterSystem.course_drafted(c, hid)
+		var have: bool = SkillSystem.acquired(c, hid)
+		var hb: Button = ui._button(("✔ " if have else ("+ " if drafted else "")) + hs.skill_name + (" (+%d)" % hs.course_years if not have else ""), func():
+			CharacterSystem.set_course(c, not CharacterSystem.course_drafted(c, hid), hid)
+			refresh_creation())
+		hb.set_meta("hobby_course", hid)
+		hb.add_theme_font_size_override("font_size", 11)
+		hb.disabled = have or (not drafted and CharacterSystem.preview_age(c) + hs.course_years > CharacterSystem.max_age)
+		hb.tooltip_text = SkillSystem.skill_tooltip(c, hid)
+		hflow.add_child(hb)
+	creation_box.add_child(hflow)
 	# Traits anpassen (Ostranauts „Tweak Skills & Traits“): positive kosten Jahre, negative geben Jahre zurück
 	var bal := CharacterSystem.draft_balance(c)
 	creation_box.add_child(ui._label("TRAITS · draft balance %+d %s%s" % [bal, "year" if absi(bal) == 1 else "years", " – must not be negative" if bal < 0 else ""],

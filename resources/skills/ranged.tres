@@ -5,11 +5,14 @@
 [resource]
 script = ExtResource("1")
 skill_id = "ranged"
-skill_name = "Fernkampf"
-description = "Schießen mit Bolzenpistole und Signalpistole. Trefferchance auf Distanz."
+skill_name = "Ranged Gunpowder Weapons"
+description = "Hobby: Gunpowder ranged proficiency and checks."
 category = "kampf"
-learning_sources = PackedStringArray("Kämpfe mit Fernwaffe", "Schießübungen")
+learning_sources = PackedStringArray("Shooting and weapon care", "Textbook: Ranged Gunpowder Weapons")
 training_actions = PackedStringArray("fight_ranged", "train_shooting", "study_ranged")
 required_skills = {}
-gameplay_effects = {"combat_ranged": 0.7}
-mastery_text = "Meister: Ein Schuss reicht oft, damit Plünderer fliehen."
+gameplay_effects = {}
+mastery_text = "Acquired (100 %): counts as Ranged Gunpowder Weapons for checks. No numeric modifier."
+course_years = 1
+is_hobby = true
+check_flag = true

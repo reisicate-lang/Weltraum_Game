@@ -5,10 +5,10 @@
 [resource]
 script = ExtResource("1")
 id = "book_oligarch_et_1"
-display_name = "Lehrbuch: Oberschicht-Etikette (Grundlagen)"
+display_name = "Textbook: Oligarch Etiquette (Basics)"
 weight = 0.8
 volume = 1.0
 value = 40
-description = "Bringt Oberschicht-Etikette bis 40 %. Lesen in Ruhezeiten."
+description = "Brings Oligarch Etiquette to 40 %. Read during rest time."
 teaches = "oligarch_et"
 book_level = 1

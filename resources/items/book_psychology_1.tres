@@ -5,10 +5,10 @@
 [resource]
 script = ExtResource("1")
 id = "book_psychology_1"
-display_name = "Lehrbuch: Psychologie (Grundlagen)"
+display_name = "Textbook: Psychology (Basics)"
 weight = 0.8
 volume = 1.0
 value = 40
-description = "Bringt Psychologie bis 40 %. Lesen in Ruhezeiten."
+description = "Brings Psychology to 40 %. Read during rest time."
 teaches = "psychology"
 book_level = 1

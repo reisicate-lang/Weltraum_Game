@@ -5,10 +5,10 @@
 [resource]
 script = ExtResource("1")
 id = "book_gambling_1"
-display_name = "Lehrbuch: Glücksspiel (Grundlagen)"
+display_name = "Textbook: Gambling (Basics)"
 weight = 0.8
 volume = 1.0
 value = 40
-description = "Bringt Glücksspiel bis 40 %. Lesen in Ruhezeiten."
+description = "Brings Gambling to 40 %. Read during rest time."
 teaches = "gambling"
 book_level = 1

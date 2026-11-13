@@ -493,9 +493,11 @@ func combat_power(c: CrewMember) -> float:
 		var w: String = ItemSystem.item(it.type).weapon
 		if w == "ranged" or (w == "armed" and weapon == ""):
 			weapon = w
-	var attack := effect(c, "combat_unarmed")
+	# Angriff: Grundwert der Waffenart plus anteilige Wirkungen plus Bonus erworbener Skills
+	# (Armed/Unarmed Melee: +0,5 = „Attack dmg +50 %“)
+	var attack := effect(c, "combat_unarmed") + attack_bonus(c, "unarmed")
 	if weapon == "armed":
-		attack = maxf(attack, 0.15 + effect(c, "combat_armed"))
+		attack = maxf(attack, 0.15 + effect(c, "combat_armed") + attack_bonus(c, "armed"))
 	elif weapon == "ranged":
 		attack = maxf(attack, 0.3 + effect(c, "combat_ranged"))
 	var power := 10.0 + 25.0 * attack + 15.0 * effect(c, "defense")
@@ -503,6 +505,15 @@ func combat_power(c: CrewMember) -> float:
 	if c.stress > 70.0:
 		power *= 0.8
 	return power * (c.health / 100.0)
+
+## Angriffsbonus erworbener Skills für eine Waffenart ("armed", "unarmed")
+func attack_bonus(c: CrewMember, weapon: String) -> float:
+	var v := 0.0
+	for id in skills:
+		var s: SkillData = skills[id]
+		if s.attack_bonus != 0.0 and s.attack_weapon == weapon and acquired(c, id):
+			v += s.attack_bonus
+	return v
 
 ## Wertschätzung: wie genau ein geschätzter Wert angezeigt wird (0 = grob, 1 = exakt)
 func appraisal() -> float:
@@ -570,8 +581,12 @@ func skill_tooltip(c: CrewMember, id: String) -> String:
 	var lines: PackedStringArray = [s.skill_name, s.description]
 	if s.course_years > 0:
 		lines.append("Character creation: costs %d %s." % [s.course_years, "year" if s.course_years == 1 else "years"])
+	if s.is_hobby:
+		lines.insert(1, "Hobby (Ostranauts 2.2.2).")
 	if s.check_flag:
 		lines.append("Effect when acquired (100 %): no numeric modifier; counts as " + s.skill_name + " for skill checks.")
+	if s.attack_bonus != 0.0:
+		lines.append("Effect when acquired (100 %%): attack %+d %% %s." % [int(round(s.attack_bonus * 100.0)), "with a melee weapon" if s.attack_weapon == "armed" else "without a weapon"])
 	if s.piloting_bonus != 0.0:
 		lines.append("Effect when acquired (100 %%): Piloting %+.1f while flying at the helm (docking limits, RCS thrust and turn rate ×(1 + Piloting))." % s.piloting_bonus)
 	if s.removes_eva_malus:

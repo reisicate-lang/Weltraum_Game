@@ -5,11 +5,14 @@
 [resource]
 script = ExtResource("1")
 skill_id = "folk"
-skill_name = "Volksetikette"
-description = "Umgangsformen einfacher Leute: Arbeiter, Siedler, Schrotthändler. Öffnet Gespräche am Tycho-Schrottplatz."
+skill_name = "Folk Etiquette"
+description = "Hobby: Working-class social checks."
 category = "sozial"
-learning_sources = PackedStringArray("Gespräche mit Arbeitern und Siedlern")
+learning_sources = PackedStringArray("Talking to working-class people", "Textbook: Folk Etiquette")
 training_actions = PackedStringArray("talk_folk", "study_folk")
 required_skills = {}
-gameplay_effects = {"talk_folk": 1.0}
-mastery_text = "Meister: Der Schrottplatz-Händler gibt Rabatt auf Bergungsrechte."
+gameplay_effects = {}
+mastery_text = "Acquired (100 %): counts as Folk Etiquette for checks. No numeric modifier."
+course_years = 1
+is_hobby = true
+check_flag = true

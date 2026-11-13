@@ -5,11 +5,14 @@
 [resource]
 script = ExtResource("1")
 skill_id = "physics"
-skill_name = "Physik"
-description = "Bahnmechanik, Thermodynamik, Materialkunde. Bessere Flugbahnvorhersage und Reiseplanung."
+skill_name = "Physics"
+description = "Hobby: Physics checks."
 category = "sozial"
-learning_sources = PackedStringArray("Navigation", "Lehrbuch Physik")
+learning_sources = PackedStringArray("Navigating and fast travel", "Textbook: Physics")
 training_actions = PackedStringArray("pilot", "navigate", "study_physics")
 required_skills = {}
-gameplay_effects = {"travel_saving": 0.2, "prediction": 1.0}
-mastery_text = "Meister: Schnellreisen dauern 20 % kürzer."
+gameplay_effects = {}
+mastery_text = "Acquired (100 %): counts as Physics for checks. No numeric modifier."
+course_years = 1
+is_hobby = true
+check_flag = true

@@ -34,3 +34,8 @@ extends Resource
 @export var piloting_bonus: float = 0.0
 ## Reines Prüf-Flag ohne Zahlenwirkung: erworben über SkillSystem.acquired / meets abfragbar
 @export var check_flag: bool = false
+## Ostranauts-Hobby (Wiki 2.2.2): im Lebenslauf in der Hobby-Leiste statt als Kurszeile
+@export var is_hobby: bool = false
+## Erworben: Angriff + attack_bonus mit dieser Waffenart ("armed" = Nahkampfwaffe, "unarmed" = ohne Waffe)
+@export var attack_bonus: float = 0.0
+@export var attack_weapon: String = ""

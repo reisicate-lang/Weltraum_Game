@@ -5,11 +5,14 @@
 [resource]
 script = ExtResource("1")
 skill_id = "stealth"
-skill_name = "Heimlichkeit"
-description = "Unauffällig bleiben, Ware verstecken, Kontrollen umgehen."
+skill_name = "Stealth"
+description = "Hobby: Stealth checks and sneaking."
 category = "sozial"
-learning_sources = PackedStringArray("Schmuggel am Schwarzmarkt")
+learning_sources = PackedStringArray("Sneaking and smuggling", "Textbook: Stealth")
 training_actions = PackedStringArray("smuggle", "study_stealth")
 required_skills = {}
-gameplay_effects = {"smuggle": 0.6}
-mastery_text = "Meister: Schmuggelware wird praktisch nie gefunden."
+gameplay_effects = {}
+mastery_text = "Acquired (100 %): counts as Stealth for checks. No numeric modifier."
+course_years = 1
+is_hobby = true
+check_flag = true

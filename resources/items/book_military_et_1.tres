@@ -5,10 +5,10 @@
 [resource]
 script = ExtResource("1")
 id = "book_military_et_1"
-display_name = "Lehrbuch: Militäretikette (Grundlagen)"
+display_name = "Textbook: Military Etiquette (Basics)"
 weight = 0.8
 volume = 1.0
 value = 40
-description = "Bringt Militäretikette bis 40 %. Lesen in Ruhezeiten."
+description = "Brings Military Etiquette to 40 %. Read during rest time."
 teaches = "military_et"
 book_level = 1

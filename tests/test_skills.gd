@@ -46,7 +46,7 @@ func _initialize() -> void:
 	_check("32 Fähigkeiten geladen", SK.skills.size() == 32)
 	for id in SK.skills:
 		var s: SkillData = SK.skill(id)
-		_check(id + ": hat Trainingsaktionen, Name, Beschreibung, Wirkungen", s.training_actions.size() > 0 and s.skill_name != "" and s.description != "" and (not s.gameplay_effects.is_empty() or s.work_value_bonus != 0.0 or s.piloting_bonus != 0.0 or s.check_flag))
+		_check(id + ": hat Trainingsaktionen, Name, Beschreibung, Wirkungen", s.training_actions.size() > 0 and s.skill_name != "" and s.description != "" and (not s.gameplay_effects.is_empty() or s.work_value_bonus != 0.0 or s.piloting_bonus != 0.0 or s.check_flag or s.attack_bonus != 0.0))
 		var c := _fresh()
 		for r in s.required_skills:
 			SK.set_progress(c, r, 100.0)
@@ -101,8 +101,8 @@ func _initialize() -> void:
 	_check("Fortschritt nie über 100 %%", SK.progress(m, "eva") <= 100.0)
 	SK.set_progress(m, "eva", 100.0)
 	_check("Meisterschaft erkannt", SK.mastered(m, "eva"))
-	SK.set_progress(m, "cooking", 100.0)
-	_check("Meisterbonus erhöht die Wirkung", SK.effect(m, "meal_bonus") > 0.6)
+	SK.set_progress(m, "combat_training", 100.0)
+	_check("Meisterbonus erhöht die Wirkung", SK.effect(m, "defense") > 0.5)
 
 	# 5) Wirkungen im Spiel
 	var mira = crew.player()
@@ -126,7 +126,7 @@ func _initialize() -> void:
 	SK.set_progress(mira, "pilot", 100.0)
 	_check("Spaceship Piloting gibt Piloting +0,5 (%.2f -> %.2f)" % [pl_before, SK.piloting(mira)], is_equal_approx(SK.piloting(mira) - pl_before, 0.5))
 	SK.set_progress(mira, "physics", 100.0)
-	_check("Physik verkürzt Schnellreisen", SK.travel_factor() < 1.0)
+	_check("Physics ist ein Prüf-Flag (keine Reiseverkürzung mehr)", is_equal_approx(SK.travel_factor(), 1.0) and SK.acquired(mira, "physics"))
 	gs.selected = mira
 	var it := {"type": "plate", "qty": 10, "cond": 100.0}
 	SK.set_progress(mira, "business", 0.0)
@@ -138,9 +138,21 @@ func _initialize() -> void:
 	SK.set_progress(fighter, "unarmed", 100.0)
 	SK.set_progress(fighter, "combat_training", 100.0)
 	_check("Kampfkraft steigt mit Kampffähigkeiten", SK.combat_power(fighter) > SK.combat_power(weak) * 1.5)
-	fighter.inv.add("boltgun", 1)
-	SK.set_progress(fighter, "ranged", 100.0)
-	_check("Fernwaffe mit Fernkampf erhöht Kampfkraft", SK.combat_power(fighter) > 40.0)
+	var plain_power: float = SK.combat_power(weak)
+	var unarmed_power: float = SK.combat_power(fighter)
+	var melee := _fresh()
+	SK.set_progress(melee, "unarmed", 100.0)
+	_check("Unarmed Melee: Angriff +50 %% (Kampfkraft %.1f → %.1f)" % [plain_power, SK.combat_power(melee)], is_equal_approx(SK.combat_power(melee) - plain_power, 25.0 * 0.5 * melee.health / 100.0 * root.get_node("TraitSystem").factor(melee, "combat")))
+	var armed := _fresh()
+	armed.inv.add("crowbar", 1)
+	var armed0: float = SK.combat_power(armed)
+	SK.set_progress(armed, "armed_melee", 100.0)
+	_check("Armed Melee mit Brechstange: Angriff +50 %%", SK.combat_power(armed) > armed0)
+	var shooter := _fresh()
+	shooter.inv.add("boltgun", 1)
+	var sh0: float = SK.combat_power(shooter)
+	SK.set_progress(shooter, "ranged", 100.0)
+	_check("Fernwaffe: Grundwert zählt, Ranged ist Prüf-Flag (%.1f)" % sh0, sh0 > plain_power and is_equal_approx(SK.combat_power(shooter), sh0))
 	var hk := _fresh()
 	_check("Ohne Hacken keine Stufe-3-Schlösser", SK.hack_value(hk) < SK.hack_needed(3))
 	SK.set_progress(hk, "software", 100.0)

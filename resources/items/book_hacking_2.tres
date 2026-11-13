@@ -5,10 +5,10 @@
 [resource]
 script = ExtResource("1")
 id = "book_hacking_2"
-display_name = "Lehrbuch: Hacken (Fortgeschritten)"
+display_name = "Textbook: Hacking (Advanced)"
 weight = 1.0
 volume = 1.2
 value = 120
-description = "Bringt Hacken bis 75 %. Braucht 30 % Vorwissen."
+description = "Brings Hacking to 75 %. Needs 30 % prior knowledge."
 teaches = "hacking"
 book_level = 2

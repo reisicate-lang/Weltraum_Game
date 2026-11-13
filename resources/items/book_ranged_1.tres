@@ -5,10 +5,10 @@
 [resource]
 script = ExtResource("1")
 id = "book_ranged_1"
-display_name = "Lehrbuch: Fernkampf (Grundlagen)"
+display_name = "Textbook: Ranged Gunpowder Weapons (Basics)"
 weight = 0.8
 volume = 1.0
 value = 40
-description = "Bringt Fernkampf bis 40 %. Lesen in Ruhezeiten."
+description = "Brings Ranged Gunpowder Weapons to 40 %. Read during rest time."
 teaches = "ranged"
 book_level = 1

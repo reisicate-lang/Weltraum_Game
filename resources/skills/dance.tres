@@ -5,11 +5,14 @@
 [resource]
 script = ExtResource("1")
 skill_id = "dance"
-skill_name = "Tanz"
-description = "Bewegung, Rhythmus, Auftritt. Bringt Trinkgeld in der Stationsbar und senkt Stress."
+skill_name = "Dance"
+description = "Hobby: Dance checks."
 category = "sozial"
-learning_sources = PackedStringArray("Tanzen in der Stationsbar")
+learning_sources = PackedStringArray("Dancing and performing", "Textbook: Dance")
 training_actions = PackedStringArray("perform_dance", "study_dance")
 required_skills = {}
-gameplay_effects = {"perform_income": 0.5, "stress_relief": 0.4}
-mastery_text = "Meister: Auftritte bringen doppelte Gage."
+gameplay_effects = {}
+mastery_text = "Acquired (100 %): counts as Dance for checks. No numeric modifier."
+course_years = 1
+is_hobby = true
+check_flag = true

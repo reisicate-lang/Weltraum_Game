@@ -5,11 +5,15 @@
 [resource]
 script = ExtResource("1")
 skill_id = "unarmed"
-skill_name = "Waffenloser Kampf"
-description = "Faustkampf, Ringen, Abwehr ohne Waffen."
+skill_name = "Unarmed Melee"
+description = "Hobby: Attack damage +50 % without a weapon (Security threshold +10 %, Threat +12 in Ostranauts)."
 category = "kampf"
-learning_sources = PackedStringArray("Kämpfe ohne Waffe", "Training am Trainingsgerät")
+learning_sources = PackedStringArray("Fighting without a weapon", "Textbook: Unarmed Melee")
 training_actions = PackedStringArray("fight_unarmed", "train_combat", "study_unarmed")
 required_skills = {}
-gameplay_effects = {"combat_unarmed": 0.6}
-mastery_text = "Meister: Waffenlos genauso gefährlich wie mit Waffe."
+gameplay_effects = {}
+mastery_text = "Acquired (100 %): attack +50 % without a weapon."
+course_years = 2
+is_hobby = true
+attack_bonus = 0.5
+attack_weapon = "unarmed"

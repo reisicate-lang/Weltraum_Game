@@ -5,11 +5,14 @@
 [resource]
 script = ExtResource("1")
 skill_id = "military_et"
-skill_name = "Militäretikette"
-description = "Ränge, Protokoll und Ton beim Militär. Öffnet Gespräche mit Patrouillen und Veteranen."
+skill_name = "Military Etiquette"
+description = "Hobby: Military social checks."
 category = "sozial"
-learning_sources = PackedStringArray("Gespräche mit Militär und Veteranen")
+learning_sources = PackedStringArray("Talking to the military", "Textbook: Military Etiquette")
 training_actions = PackedStringArray("talk_military", "study_military_et")
 required_skills = {}
-gameplay_effects = {"talk_military": 1.0}
-mastery_text = "Meister: Patrouillen lassen dich ohne Kontrolle passieren."
+gameplay_effects = {}
+mastery_text = "Acquired (100 %): counts as Military Etiquette for checks. No numeric modifier."
+course_years = 1
+is_hobby = true
+check_flag = true

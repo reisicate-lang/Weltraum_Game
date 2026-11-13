@@ -5,11 +5,14 @@
 [resource]
 script = ExtResource("1")
 skill_id = "cooking"
-skill_name = "Kochen"
-description = "Aus Rationen etwas Essbares machen. Mahlzeiten sättigen mehr und heben die Laune."
+skill_name = "Cooking"
+description = "Hobby: Cooking checks."
 category = "sozial"
-learning_sources = PackedStringArray("Essen zubereiten")
+learning_sources = PackedStringArray("Cooking and tending food", "Textbook: Cooking")
 training_actions = PackedStringArray("cook", "study_cooking")
 required_skills = {}
-gameplay_effects = {"meal_bonus": 0.6, "meal_mood": 0.5}
-mastery_text = "Meister: Mahlzeiten senken Stress deutlich."
+gameplay_effects = {}
+mastery_text = "Acquired (100 %): counts as Cooking for checks. No numeric modifier."
+course_years = 1
+is_hobby = true
+check_flag = true

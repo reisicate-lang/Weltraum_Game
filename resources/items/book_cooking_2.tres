@@ -5,10 +5,10 @@
 [resource]
 script = ExtResource("1")
 id = "book_cooking_2"
-display_name = "Lehrbuch: Kochen (Fortgeschritten)"
+display_name = "Textbook: Cooking (Advanced)"
 weight = 1.0
 volume = 1.2
 value = 120
-description = "Bringt Kochen bis 75 %. Braucht 30 % Vorwissen."
+description = "Brings Cooking to 75 %. Needs 30 % prior knowledge."
 teaches = "cooking"
 book_level = 2

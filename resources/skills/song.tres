@@ -5,11 +5,14 @@
 [resource]
 script = ExtResource("1")
 skill_id = "song"
-skill_name = "Gesang"
-description = "Singen und Musizieren. Bringt Trinkgeld und hebt die Stimmung der Crew."
+skill_name = "Song"
+description = "Hobby: Song checks (social, job and event options)."
 category = "sozial"
-learning_sources = PackedStringArray("Singen in der Stationsbar", "Singen an Bord")
+learning_sources = PackedStringArray("Singing and performing", "Textbook: Song")
 training_actions = PackedStringArray("perform_song", "study_song")
 required_skills = {}
-gameplay_effects = {"perform_income": 0.5, "crew_mood": 0.4}
-mastery_text = "Meister: Gesang an Bord senkt den Stress aller in der Nähe."
+gameplay_effects = {}
+mastery_text = "Acquired (100 %): counts as Song for checks. No numeric modifier."
+course_years = 1
+is_hobby = true
+check_flag = true
