@@ -10,6 +10,7 @@ description = "Produces 6 kW of power. Burns 1 generator fuel per hour."
 power = 6.0
 build_time = 6.0
 cost = {"plate": 4, "motor": 1, "circuit": 2}
+item_value = 12623
 stock = 240.0
 stock_unit = "generator fuel"
 capacity = 0.0

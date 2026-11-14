@@ -10,6 +10,7 @@ description = "Stores up to 5 kWh. Charges and discharges at up to 20 kW. Behind
 power = 0.0
 build_time = 3.0
 cost = {"plate": 1, "cell": 1, "circuit": 1}
+item_value = 944
 stock = -1.0
 stock_unit = ""
 capacity = 5.0

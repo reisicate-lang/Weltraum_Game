@@ -10,6 +10,7 @@ description = "Battery with 10 kWh. Charges space suits, even outside. Can be re
 power = 0.0
 build_time = 3.0
 cost = {"plate": 1, "cell": 2, "circuit": 1}
+item_value = 786
 stock = -1.0
 stock_unit = ""
 capacity = 10.0

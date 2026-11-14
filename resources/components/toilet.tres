@@ -10,6 +10,7 @@ description = "A toilet. With a sink it makes a Bathroom; forbidden in most livi
 power = 0.0
 build_time = 3.0
 cost = {"plate": 2, "pipe": 2}
+item_value = 623
 stock = -1.0
 stock_unit = ""
 capacity = 0.0

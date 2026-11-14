@@ -10,6 +10,7 @@ description = "A table. Needed for a Galley or Recreational Room."
 power = 0.0
 build_time = 2.5
 cost = {"plate": 2}
+item_value = 64
 stock = -1.0
 stock_unit = ""
 capacity = 0.0

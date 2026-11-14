@@ -10,6 +10,7 @@ description = "Holds food rations."
 power = 0.0
 build_time = 3.0
 cost = {"plate": 3}
+item_value = 774
 stock = 40.0
 stock_unit = "rations"
 capacity = 0.0

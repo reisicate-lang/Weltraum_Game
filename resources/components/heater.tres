@@ -10,6 +10,7 @@ description = "Keeps the room warm (up to 21 °C). Needs 1 kW, but only while it
 power = -1.0
 build_time = 4.0
 cost = {"plate": 2, "copper": 2, "circuit": 1}
+item_value = 2634
 stock = -1.0
 stock_unit = ""
 storage = 0.0

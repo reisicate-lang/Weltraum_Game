@@ -41,8 +41,14 @@ func _initialize() -> void:
 	# 1) Pool und Angebot
 	var ids: Array = CHS.starter_ships().map(func(t): return t.id)
 	_check("Startschiffe: Rostlaube, Lumen, Bairn (%s)" % str(ids), ids == ["rostlaube", "lumen", "bairn"])
-	_check("Kredit = Preis 1:1: Rostlaube 24 000, Lumen 9 000, Bairn 26 000",
-		CHS.starter_ship("rostlaube").price == 24000 and CHS.starter_ship("lumen").price == 9000 and CHS.starter_ship("bairn").price == 26000)
+	# Price ≈ ship value: selling a new ship (60 % of the value) never brings more than it costs
+	var F0 = root.get_node("FleetSystem")
+	var fair := true
+	for t in CHS.starter_ships():
+		var gv: ShipGrid = root.get_node("ShipSystem").grid if t.id == "rostlaube" else F0.build_template(t)
+		var val: int = F0.ship_value(gv)
+		fair = fair and int(t.price) >= int(val * 0.6) and int(t.price) <= int(val * 1.2)
+	_check("Loan = price ≈ ship value (Rustbucket %d, Lumen %d, Bairn %d)" % [CHS.starter_ship("rostlaube").price, CHS.starter_ship("lumen").price, CHS.starter_ship("bairn").price], fair)
 	var c := CrewMember.new(990, "Seeker", Color.WHITE, Vector2i.ZERO)
 	CHS.begin(c)
 	var a0: int = c.age
@@ -122,7 +128,7 @@ func _initialize() -> void:
 			helms += 1
 		if g.devices[i].type == "thruster":
 			thr += 1
-	_check("Spielbeginn auf der Shuttle Lumen (%s), Kredit 9 000 Cr" % F.current_name, F.current_name == "Shuttle Lumen" and F.registered_name == "Shuttle Lumen" and E.debt == 9000)
+	_check("Spielbeginn auf der Shuttle Lumen (%s), loan = its price" % F.current_name, F.current_name == "Shuttle Lumen" and F.registered_name == "Shuttle Lumen" and E.debt == int(CHS.starter_ship("lumen").price))
 	_check("Lumen-Schiff: Steuerpult und ein Triebwerk", helms == 1 and thr == 1)
 	var on_board := true
 	for cm in root.get_node("CrewSystem").crew:
@@ -134,7 +140,7 @@ func _initialize() -> void:
 	gs.new_game()
 	CHS.begin(CHS.get_node("/root/CrewSystem").player())
 	F.start_with(CHS.ship_bought(root.get_node("CrewSystem").player()))
-	_check("Ohne Kauf: Rostlaube, 24 000 Cr Kredit", F.current_name == "Rustbucket" and E.debt == 24000)
+	_check("Without buying: Rustbucket with the start loan", F.current_name == "Rustbucket" and E.debt == Config.START_DEBT)
 
 	print("%d OK, %d Fehler" % [ok_count, fail_count])
 	quit()

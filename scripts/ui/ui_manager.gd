@@ -325,7 +325,7 @@ Uninstalled devices lie on the floor; a character carries one of them in their h
 L / P / O: air, power and heat view · mouse wheel: zoom · arrow keys: pan
 Space: pause · 1–5: time ×1, ×2, ×4, ×8, ×16 · Ctrl+S: save
 
-You owe the bank 24 000 Cr; an instalment is due every 7 days.
+You owe the bank 211 000 Cr; an instalment is due every 7 days.
 Selling and buying: click the trade terminal in the cockpit (only while docked).
 N: go to the navigation console (cockpit) · flying: W/S forward/back, A/D sideways, Q/E rotate · fast travel
 to the Kármán Ring and the debris field. Careful: Earth pulls you in.""", Color(0.87, 0.9, 0.94), 14)

@@ -10,6 +10,7 @@ description = "Thrust 40 kN, mass 1.5 t. Takes 3 tiles in a line: inside on the 
 power = -0.2
 build_time = 8.0
 cost = {"plate": 4, "motor": 1, "pipe": 3}
+item_value = 5520
 stock = -1.0
 stock_unit = ""
 wears = true

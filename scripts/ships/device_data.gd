@@ -23,7 +23,8 @@ extends Resource
 @export var repairable: bool = true
 ## Chance to break when uninstalled (transponder: 0.5)
 @export var uninstall_break: float = 0.0
-## Fixed base value in Cr (0 = from the build cost), e.g. transponder 29 000 per the wiki
+## Fixed base value in Cr (0 = from the build cost): Base Value from the wiki's salvage
+## value/space cheat sheet, e.g. transponder 29 000, Halvorson RCS thruster 5 520
 @export var item_value: int = 0
 ## Storage in liters (0 = no storage)
 @export var storage: float = 0.0

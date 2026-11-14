@@ -10,6 +10,7 @@ description = "For washing."
 power = 0.0
 build_time = 3.0
 cost = {"plate": 2, "pipe": 2}
+item_value = 234
 stock = 80.0
 stock_unit = "L"
 capacity = 0.0

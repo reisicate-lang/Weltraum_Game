@@ -10,6 +10,7 @@ description = "For sleeping."
 power = 0.0
 build_time = 4.0
 cost = {"plate": 2, "fabric": 3}
+item_value = 457
 stock = -1.0
 stock_unit = ""
 capacity = 0.0

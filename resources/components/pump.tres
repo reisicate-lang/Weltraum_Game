@@ -10,6 +10,7 @@ description = "Turns a small room into an airlock: pumps the air out and back in
 power = -1.0
 build_time = 6.0
 cost = {"plate": 2, "motor": 1, "pipe": 2, "circuit": 1}
+item_value = 2050
 stock = -1.0
 stock_unit = ""
 capacity = 0.0

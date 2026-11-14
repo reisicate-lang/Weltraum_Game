@@ -10,6 +10,7 @@ description = "A simple chair. Counts toward Galley, Luxury Quarters and Passeng
 power = 0.0
 build_time = 2.0
 cost = {"plate": 1, "fabric": 1}
+item_value = 85
 stock = -1.0
 stock_unit = ""
 capacity = 0.0

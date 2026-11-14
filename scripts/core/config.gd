@@ -102,8 +102,10 @@ const REPAIR_TIME := 3.0
 
 ## Economy (credits = Cr)
 const START_CREDITS := 400
-const START_DEBT := 24000
-const PAYMENT := 1500
+## Loan of the Rustbucket = about its ship value with wiki device values; the instalment pays
+## it off in 16 weeks (same ratio as before the wiki values)
+const START_DEBT := 211000
+const PAYMENT := 13200
 const PAYMENT_DAYS := 7
 const LATE_FEE := 0.1
 const MAX_STRIKES := 3

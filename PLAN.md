@@ -125,6 +125,7 @@ und werden Schritt für Schritt übertragen.
 - [x] Zielführung: 11 Ziele vom ersten Raumanzug bis zur abbezahlten Schuld, mit Belohnungen
 - [x] Balancing: Wochen-Simulation (Hilfsskript inzwischen entfernt) – Bergung allein reicht knapp für die erste Rate (Bergungsrecht 200 Cr, Verkauf 85 %)
 - [ ] Sprites aus Grafikdateien
+- [x] Gerätewerte nach dem Wiki-Spickzettel „Value/Space“ (Base Value 1:1, z. B. Nav Station 16.880, Halvorson-Thruster 5.520, CO2 AtmoScrubber 14.326, Ship Battery 2.623); Geräte ohne Wiki-Gegenstück behalten den Wert aus den Baukosten; Startkredit 211.000 Cr (≈ Schiffswert), Rate 13.200 Cr/Woche, Werftpreise Lumen 208.000 / Bairn 240.000 (≈ Schiffswert, kein Kauf-Verkauf-Gewinn)
 - [x] Salvage Permit nach Ostranauts-Wiki (Preise 1:1): Yellow 5.000 Cr/24 h bis Black 1.000.000 Cr/300 d, an den Transponder des Schiffs gebunden, N.A.S.S.-Bußgeld 5.000 Cr beim Andocken an ein Wrack nahe einer Station ohne gültiges Permit (Trümmerfeld frei); ersetzt das Bergungsrecht
 
 ## Tests (Godot, ohne Fenster)

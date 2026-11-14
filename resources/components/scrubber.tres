@@ -10,6 +10,7 @@ description = "Removes exhaled CO₂. Needs 1 kW."
 power = -1.0
 build_time = 5.0
 cost = {"plate": 2, "motor": 1, "filter": 2}
+item_value = 14326
 stock = -1.0
 stock_unit = ""
 capacity = 0.0

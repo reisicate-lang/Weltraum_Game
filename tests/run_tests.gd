@@ -242,9 +242,9 @@ func _initialize() -> void:
 	_check("Trading possible at the Kármán Ring", econ.terminal_online())
 	_check("Crew alive after the trip (%d)" % int(crew.player().health), crew.player().health > 50.0)
 	# Flotte
-	econ.credits = 50000
+	econ.credits = 250000
 	fleet.buy("lumen")
-	_check("Shuttle gekauft", fleet.ships.size() == 1)
+	_check("Shuttle bought", fleet.ships.size() == 1)
 	fleet.switch_to(int(fleet.ships[0].id))
 	_check("Aboard the Lumen", fleet.current_name == "Shuttle Lumen")
 	_run(2)

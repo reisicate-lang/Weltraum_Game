@@ -10,6 +10,7 @@ description = "Fuel for the thrusters (600 units)."
 power = 0.0
 build_time = 6.0
 cost = {"plate": 4, "pipe": 2}
+item_value = 410
 stock = 600.0
 stock_unit = "fuel"
 wears = false

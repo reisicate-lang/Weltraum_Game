@@ -10,6 +10,7 @@ description = "Stores up to 10 kWh. Charges and discharges at up to 40 kW. A dam
 power = 0.0
 build_time = 3.0
 cost = {"plate": 1, "cell": 2, "circuit": 1}
+item_value = 1575
 stock = -1.0
 stock_unit = ""
 capacity = 10.0

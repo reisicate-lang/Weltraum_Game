@@ -10,6 +10,7 @@ description = "Fly the ship from the cockpit (N or click). Has a module bay (E a
 power = -0.3
 build_time = 6.0
 cost = {"plate": 2, "circuit": 3, "glass": 1}
+item_value = 16880
 stock = -1.0
 stock_unit = ""
 wears = false

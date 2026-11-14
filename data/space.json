@@ -151,7 +151,7 @@
   {
    "id": "lumen",
    "name": "Shuttle Lumen",
-   "price": 9000,
+   "price": 208000,
    "w": 10,
    "h": 7,
    "desc": "Small and economical. Two rooms, one thruster."
@@ -159,7 +159,7 @@
   {
    "id": "bairn",
    "name": "Freighter Bairn",
-   "price": 26000,
+   "price": 240000,
    "w": 18,
    "h": 11,
    "desc": "Lots of cargo space, three thrusters, room for crew."
