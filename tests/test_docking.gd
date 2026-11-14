@@ -131,9 +131,9 @@ func _initialize() -> void:
 	_run(20)
 	_check("2: Weit weg (%.1f km): kein Andocken, kein Übergang" % P.rel_to(site.id).dist, not P.can_dock(site.id) and _count_zone(1) == 0)
 	_park_near(site.id, 1.0, true)
-	_check("2: Außerhalb der Andockreichweite (%s)" % P.dock_block_reason(site.id), not P.dock(site.id) and _count_zone(1) == 0 and "Zu weit" in P.dock_block_reason(site.id))
+	_check("2: Außerhalb der Andockreichweite (%s)" % P.dock_block_reason(site.id), not P.dock(site.id) and _count_zone(1) == 0 and "Too far" in P.dock_block_reason(site.id))
 	_park_near(site.id, 0.05, false)
-	_check("2: Nah, aber Port nicht ausgerichtet (%s)" % P.dock_block_reason(site.id), not P.dock(site.id) and _count_zone(1) == 0 and "zeigt nicht" in P.dock_block_reason(site.id))
+	_check("2: Nah, aber Port nicht ausgerichtet (%s)" % P.dock_block_reason(site.id), not P.dock(site.id) and _count_zone(1) == 0 and "does not face" in P.dock_block_reason(site.id))
 	var stt: Dictionary = P.loc_state(site, P.secs())
 	P.vel = stt.vel + Vector2(0.02, 0)
 	P.angle = P.dock_alignment(site.id).angle
@@ -226,7 +226,7 @@ func _initialize() -> void:
 	root.get_node("EventBus").ship_changed.emit()
 	toasts.clear()
 	_park_near("tycho", 0.05, true)
-	_check("5: Ohne Port kein Andocken, mit Meldung", ship.ports().is_empty() and not P.dock("tycho", true) and toasts.any(func(t): return "Andockport" in t))
+	_check("5: Ohne Port kein Andocken, mit Meldung", ship.ports().is_empty() and not P.dock("tycho", true) and toasts.any(func(t): return "docking port" in t))
 	_check("5: Frühere Andockschleuse lässt sich nicht einbauen", root.get_node("RemovalSystem").install_reason("pk_dockport", old_right) != "")
 
 	print("%d OK, %d Fehler" % [ok_count, fail_count])

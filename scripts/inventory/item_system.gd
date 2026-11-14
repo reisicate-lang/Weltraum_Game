@@ -20,7 +20,7 @@ func _load_dir(path: String, into: Dictionary, optional: bool = false) -> void:
 	var dir := DirAccess.open(path)
 	if dir == null:
 		if not optional:
-			push_error("Ordner fehlt: " + path)
+			push_error("Folder missing: " + path)
 		return
 	for file in dir.get_files():
 		# Im exportierten Spiel heißen die Dateien *.tres.remap
@@ -41,4 +41,4 @@ func cost_text(cost: Dictionary) -> String:
 	var parts: PackedStringArray = []
 	for k in cost:
 		parts.append("%d× %s" % [cost[k], item(k).display_name])
-	return "Kosten: " + ", ".join(parts)
+	return "Cost: " + ", ".join(parts)

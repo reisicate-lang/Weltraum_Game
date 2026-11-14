@@ -108,8 +108,8 @@ func ignite(i: int) -> void:
 	var g := ShipSystem.grid
 	if g.holds_air(i) and g.o2[i] >= Config.FIRE_O2_MIN and g.fire[i] == 0:
 		g.fire[i] = 1
-		GameState.toast("Feuer an Bord!", "bad")
-		QuestSystem.claim_damage("Feuer")
+		GameState.toast("Fire on board!", "bad")
+		QuestSystem.claim_damage("Fire")
 		ShipConstructionSystem.place("extinguish", g.pos(i))
 
 func extinguish(i: int) -> void:

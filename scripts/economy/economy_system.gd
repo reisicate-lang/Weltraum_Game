@@ -115,10 +115,10 @@ func value_text(viewer: CrewMember, it: Dictionary) -> String:
 func sell(type: String, qty: int, from: Inventory = null) -> void:
 	var t := terminal()
 	if from == null and (t == null or not terminal_online()):
-		GameState.toast("Das Handelsterminal ist offline.", "bad")
+		GameState.toast("The trade terminal is offline.", "bad")
 		return
 	if from != null and PhysicsSystem.station().is_empty():
-		GameState.toast("Verkaufen geht nur an einer Station.", "bad")
+		GameState.toast("You can only sell at a station.", "bad")
 		return
 	var src: Inventory = t.inv if from == null else from
 	var total := 0
@@ -128,9 +128,9 @@ func sell(type: String, qty: int, from: Inventory = null) -> void:
 		var n := src.count(type)
 		src.take(type, n)
 		credits -= 300
-		book("Schmuggelware beschlagnahmt, Strafe", -300)
+		book("Contraband seized, fine", -300)
 		QuestSystem.change_rep("patrol", -10.0)
-		GameState.toast("Kontrolle! Die Schmuggelware wurde beschlagnahmt. 300 Cr Strafe.", "bad")
+		GameState.toast("Inspection! The contraband was seized. 300 Cr fine.", "bad")
 		return
 	for st in src.take(type, qty):
 		total += sell_price(st)
@@ -144,7 +144,7 @@ func sell(type: String, qty: int, from: Inventory = null) -> void:
 		QuestSystem.change_rep("syndicate", 3.0)
 		QuestSystem.change_rep("patrol", -2.0)
 	SkillSystem.train(trader(), "trade", 2.0)
-	book("Verkauf: %s ×%d" % [ItemSystem.item(type).display_name, sold], total)
+	book("Sale: %s ×%d" % [ItemSystem.item(type).display_name, sold], total)
 
 func sell_all() -> void:
 	var t := terminal()
@@ -162,18 +162,18 @@ const SHOP_PACKED := ["pk_transponder"]
 func buy(type: String, qty: int) -> void:
 	var t := terminal()
 	if t == null or not terminal_online():
-		GameState.toast("Das Handelsterminal ist offline.", "bad")
+		GameState.toast("The trade terminal is offline.", "bad")
 		return
 	var price := buy_price(type)
 	var n := mini(mini(qty, credits / price), t.inv.room(type))
 	if n <= 0:
-		GameState.toast("Nicht genug Credits." if credits < price else "Im Terminal ist kein Platz mehr.")
+		GameState.toast("Not enough credits." if credits < price else "There is no room left in the terminal.")
 		return
 	credits -= n * price
 	supply[type] = supply.get(type, 0.0) - n * 0.5
 	t.inv.add(type, n, 100.0)
 	SkillSystem.train(trader(), "trade", 1.0)
-	book("Kauf: %s ×%d" % [ItemSystem.item(type).display_name, n], -n * price)
+	book("Purchase: %s ×%d" % [ItemSystem.item(type).display_name, n], -n * price)
 
 func pay_debt(amount: int) -> void:
 	var n := mini(mini(amount, credits), debt)
@@ -181,37 +181,37 @@ func pay_debt(amount: int) -> void:
 		return
 	credits -= n
 	debt -= n
-	book("Sondertilgung", -n)
+	book("Extra repayment", -n)
 	if debt <= 0:
-		GameState.toast("Der Kredit ist abbezahlt! Das Schiff gehört jetzt dir.")
+		GameState.toast("The loan is paid off! The ship is yours now.")
 
 func buy_claim() -> void:
 	if not Config.ENABLE_WRECK:
-		GameState.toast("Bergung ist vorübergehend abgeschaltet.")
+		GameState.toast("Salvage is temporarily disabled.")
 		return
 	if not terminal_online():
-		GameState.toast("Das Handelsterminal ist offline.", "bad")
+		GameState.toast("The trade terminal is offline.", "bad")
 		return
 	var fee: int = Config.CLAIM_FEE / 2 if DialogueSystem.claim_discount else Config.CLAIM_FEE
 	if credits < fee:
-		GameState.toast("Nicht genug Credits für ein Bergungsrecht.")
+		GameState.toast("Not enough credits for a salvage claim.")
 		return
 	credits -= fee
 	DialogueSystem.claim_discount = false
-	book("Bergungsrecht für neues Wrack", -fee)
+	book("Salvage claim for a new wreck", -fee)
 	# Das Wrack ist ein eigenes Ziel neben der Station: anfliegen und ankoppeln
 	var site := FleetSystem.add_site(PhysicsSystem.docked if PhysicsSystem.docked != "" else "tycho")
-	GameState.toast("Bergungsrecht gekauft: %s treibt jetzt neben der Station (Navigation → Ziele)." % String(site.name))
+	GameState.toast("Salvage claim bought: %s is now drifting next to the station (navigation → targets)." % String(site.name))
 
 func scrap_hull() -> void:
 	if not Config.ENABLE_WRECK:
 		return
 	if not terminal_online() or not SalvageSystem.clearable():
-		GameState.toast("Geht gerade nicht (Terminal offline oder Crew auf dem Wrack).")
+		GameState.toast("Not possible right now (terminal offline or crew on the wreck).")
 		return
 	var v := SalvageSystem.hull_value()
 	credits += v
-	book("Wrack verschrottet", v)
+	book("Wreck scrapped", v)
 	SalvageSystem.clear()
 
 ## Werkbank-Auftrag anlegen
@@ -223,11 +223,11 @@ func craft(recipe_id: String) -> void:
 		if dev.type == station and g.zone[g.idx(dev.pos)] != 1:
 			bench = dev
 	if bench == null:
-		GameState.toast("Dafür brauchst du: " + ItemSystem.device(station).display_name)
+		GameState.toast("For this you need: " + ItemSystem.device(station).display_name)
 		return
 	var key := g.idx(bench.pos)
 	if ShipConstructionSystem.jobs.has(key):
-		GameState.toast("An der Werkbank wird schon gearbeitet.")
+		GameState.toast("Someone is already working at the workbench.")
 		return
 	ShipConstructionSystem.jobs[key] = {"kind": "craft", "recipe": recipe_id, "x": bench.pos.x, "y": bench.pos.y,
 		"need": float(recipe(recipe_id).time), "progress": 0.0, "claimed_by": -1, "retry_at": 0.0, "paid": false}
@@ -256,29 +256,29 @@ func step(_dt: float) -> void:
 			continue
 		if credits >= Config.DOCK_FEE:
 			credits -= Config.DOCK_FEE
-			book("Liegegebühr", -Config.DOCK_FEE)
+			book("Docking fee", -Config.DOCK_FEE)
 		elif not Settings.debt_paused:
 			debt += Config.DOCK_FEE
-			book("Liegegebühr: kein Geld, %d Cr auf die Schulden" % Config.DOCK_FEE, 0)
+			book("Docking fee: no money, %d Cr added to the debt" % Config.DOCK_FEE, 0)
 	if debt > 0 and GameState.time >= next_payment:
 		next_payment += Config.PAYMENT_DAYS * 1440.0
 		var rate := mini(int(Config.PAYMENT * payment_factor), debt)
 		if credits >= rate:
 			credits -= rate
 			debt -= rate
-			book("Kreditrate", -rate)
-			GameState.toast("Kreditrate bezahlt: %d Cr." % rate)
+			book("Loan instalment", -rate)
+			GameState.toast("Loan instalment paid: %d Cr." % rate)
 		else:
 			strikes += 1
 			var fee := int(debt * Config.LATE_FEE)
 			debt += fee
-			book("Rate verpasst: %d Cr Strafzins" % fee, 0)
+			book("Instalment missed: %d Cr penalty interest" % fee, 0)
 			if strikes >= Config.MAX_STRIKES:
 				over = true
 				TimeSystem.set_speed(0)
-				game_over.emit("Gepfändet", "Du hast drei Kreditraten verpasst. Die Bank hat dein Schiff beschlagnahmt.")
+				game_over.emit("Repossessed", "You missed three loan instalments. The bank has seized your ship.")
 			else:
-				GameState.toast("Rate verpasst! %d Cr Strafzins. Noch %d bis zur Pfändung." % [fee, Config.MAX_STRIKES - strikes], "bad")
+				GameState.toast("Instalment missed! %d Cr penalty interest. %d more until repossession." % [fee, Config.MAX_STRIKES - strikes], "bad")
 
 func to_data() -> Dictionary:
 	return {"payment_factor": payment_factor, "claim_discount": DialogueSystem.claim_discount, "rate_lowered": DialogueSystem.rate_lowered,

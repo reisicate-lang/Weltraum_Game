@@ -34,16 +34,16 @@ func candidates_here() -> Array:
 func hire(c: CrewMember) -> void:
 	var fee := c.salary * 2
 	if EconomySystem.credits < fee:
-		GameState.toast("Nicht genug Credits (Handgeld %d Cr)." % fee)
+		GameState.toast("Not enough credits (signing money %d Cr)." % fee)
 		return
 	EconomySystem.credits -= fee
-	EconomySystem.book("Angeheuert: " + c.display_name, -fee)
+	EconomySystem.book("Hired: " + c.display_name, -fee)
 	candidates[PhysicsSystem.station().id].erase(c)
 	var p := CrewSystem.player()
 	c.pos = p.pos if p != null else Vector2(ShipSystem.spawn_point()) + Vector2(0.5, 0.5)
 	CrewSystem.crew.append(c)
 	c.push_out_if_stuck()
-	GameState.toast(c.display_name + " gehört jetzt zur Crew (%d Cr pro Tag)." % c.salary)
+	GameState.toast(c.display_name + " is now part of the crew (%d Cr per day)." % c.salary)
 
 ## Jeden Tag Lohn zahlen. Wer 3 Tage keinen Lohn bekommt, geht.
 func pay_wages() -> void:
@@ -52,16 +52,16 @@ func pay_wages() -> void:
 			continue
 		if EconomySystem.credits >= c.salary:
 			EconomySystem.credits -= c.salary
-			EconomySystem.book("Lohn " + c.display_name, -c.salary)
+			EconomySystem.book("Wages " + c.display_name, -c.salary)
 			unpaid[c.id] = 0
 		else:
 			unpaid[c.id] = int(unpaid.get(c.id, 0)) + 1
 			c.stress = minf(100.0, c.stress + 20.0)
-			GameState.toast("Kein Lohn für %s! (%d. Tag)" % [c.display_name, unpaid[c.id]], "bad")
+			GameState.toast("No wages for %s! (day %d)" % [c.display_name, unpaid[c.id]], "bad")
 			if unpaid[c.id] >= 3 and PhysicsSystem.station().size() > 0:
 				c.release_job()
 				CrewSystem.crew.erase(c)
-				GameState.toast(c.display_name + " hat gekündigt und das Schiff verlassen.", "bad")
+				GameState.toast(c.display_name + " quit and left the ship.", "bad")
 
 # ---------------- Begegnungen ----------------
 
@@ -100,14 +100,14 @@ func fight() -> String:
 	if win:
 		var p: CrewMember = team[0]
 		ShipSystem.grid.drop_items(p.tile(), ["scrap", "circuit", "datachip"].pick_random(), randi_range(1, 2), 60.0)
-		text = "%s und die Crew schlagen die Plünderer in die Flucht. Sie lassen etwas zurück." % p.display_name
+		text = "%s and the crew drive off the plunderers. They leave something behind." % p.display_name
 	else:
 		for c in team:
 			c.health = maxf(5.0, c.health - randf_range(20.0, 40.0) / TraitSystem.factor(c, "toughness"))
 		var loss := int(EconomySystem.credits * 0.2)
 		EconomySystem.credits -= loss
-		EconomySystem.book("Von Plünderern ausgeraubt", -loss)
-		text = "Die Plünderer sind stärker. Die Crew ist verletzt, %d Cr sind weg." % loss
+		EconomySystem.book("Robbed by plunderers", -loss)
+		text = "The plunderers are stronger. The crew is hurt and %d Cr are gone." % loss
 	encounter = {}
 	return text
 
@@ -121,14 +121,14 @@ func negotiate() -> String:
 	SkillSystem.train(c, "talk_street", 5.0)
 	if randf() < chance:
 		encounter = {}
-		return "%s redet auf die Plünderer ein. Sie ziehen ab." % c.display_name
-	return "„Netter Versuch.“ Die Plünderer lassen sich nicht abwimmeln. " + fight()
+		return "%s talks the plunderers down. They leave." % c.display_name
+	return "“Nice try.” The plunderers will not be brushed off. " + fight()
 
 func pay() -> String:
 	var d: int = encounter.demand
 	if EconomySystem.credits < d:
-		return "Zu wenig Geld. " + fight()
+		return "Not enough money. " + fight()
 	EconomySystem.credits -= d
-	EconomySystem.book("Schutzgeld an Plünderer", -d)
+	EconomySystem.book("Protection money to plunderers", -d)
 	encounter = {}
-	return "Du zahlst %d Cr. Die Plünderer verschwinden." % d
+	return "You pay %d Cr. The plunderers disappear." % d

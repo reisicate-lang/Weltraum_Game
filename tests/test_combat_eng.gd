@@ -103,7 +103,7 @@ func _initialize() -> void:
 		"costs 3 years" in tip and "+4 work value" in tip and "Appliances, Controls, Furniture, Climate & Ventilation, Sensors, Weapons" in tip
 		and "Practical work" in tip and "Textbook: Combat Engineering" in tip and "Learning progress: 0.0 %" in tip)
 	_check("1: Hinzufügen", await _press_course("combat_eng", "Add"))
-	_check("1: Vorschau +3 (%d), Alter unverändert" % CHS.preview_age(mira), CHS.preview_age(mira) == base + 3 and mira.age == base and "Alter: %d (incl. Combat Engineering course +3 years)" % (base + 3) in _texts(cui.creation_box))
+	_check("1: Vorschau +3 (%d), Alter unverändert" % CHS.preview_age(mira), CHS.preview_age(mira) == base + 3 and mira.age == base and "Age: %d (incl. Combat Engineering course +3 years)" % (base + 3) in _texts(cui.creation_box))
 	_check("1: Entfernen", await _press_course("combat_eng", "Remove"))
 	_check("1: Vorschau −3 (%d)" % CHS.preview_age(mira), CHS.preview_age(mira) == base and mira.age == base)
 	_check("1: Erneut hinzufügen, dazu Business Admin (+2)", await _press_course("combat_eng", "Add") and await _press_course("business", "Add") and CHS.preview_age(mira) == base + 5)

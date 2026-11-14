@@ -60,25 +60,25 @@ func place_reason(tool: String, p: Vector2i) -> String:
 	var g := ShipSystem.grid
 	var type := tool.substr(4)
 	if not g.in_bounds(p):
-		return "Außerhalb."
+		return "Out of bounds."
 	if type == "dockport":
 		var chk := g.dock_check(p)
 		if chk.reason != "":
 			return chk.reason
 		for c in ShipGrid.dock_cells(p, chk.dir):
 			if jobs.has(g.idx(c)):
-				return "Hier läuft schon ein Auftrag."
+				return "There is already a job here."
 			if StationSystem.reserved(c) or StationSystem.is_hatch(g.idx(c)):
-				return "Gehört der Station."
+				return "Belongs to the station."
 		return ""
 	var why := g.mount_reason(type, p, build_rot)
 	if why != "":
 		return why
 	for c in cells_of(type, p, build_rot):
 		if jobs.has(g.idx(c)):
-			return "Hier läuft schon ein Auftrag."
+			return "There is already a job here."
 		if StationSystem.reserved(c) or StationSystem.is_hatch(g.idx(c)):
-			return "Gehört der Station."
+			return "Belongs to the station."
 	return ""
 
 ## Felder eines Geräts dieser Art an p (Innenfeld) mit Drehung rot
@@ -152,12 +152,12 @@ func g_lock(p: Vector2i) -> int:
 func place_move(src: Vector2i, dst: Vector2i) -> bool:
 	var g := ShipSystem.grid
 	if not can_place("move", src):
-		GameState.toast("Dort steht kein Gerät, das man versetzen kann.")
+		GameState.toast("There is no device there that can be moved.")
 		return false
 	if src == dst:
 		return false
 	if g.get_tile(dst) != ShipGrid.Tile.FLOOR or g.device_at(dst) != null:
-		GameState.toast("Das Ziel muss ein freier Boden sein.")
+		GameState.toast("The target must be free floor.")
 		return false
 	jobs[g.idx(src)] = {"kind": "move", "x": src.x, "y": src.y, "tx": dst.x, "ty": dst.y, "phase": "pickup",
 		"need": 0.3, "progress": 0.0, "claimed_by": -1, "retry_at": 0.0, "paid": true}
@@ -309,7 +309,7 @@ func complete(job: Dictionary, worker_pos: Vector2i, worker: CrewMember = null) 
 			var r := EconomySystem.recipe(job.recipe)
 			var spot := drop_spot(worker_pos)
 			g.drop_items(spot, r.out[0], int(r.out[1]), float(r.out[2]))
-			GameState.toast("Werkbank: %s fertig." % ItemSystem.item(r.out[0]).display_name)
+			GameState.toast("Workbench: %s done." % ItemSystem.item(r.out[0]).display_name)
 		"build":
 			_move_pile_away(i, worker_pos)
 			g.set_tile(p, int(job.tile))
@@ -325,7 +325,7 @@ func complete(job: Dictionary, worker_pos: Vector2i, worker: CrewMember = null) 
 				why = g.mount_reason(job.dev, p, rot)
 			# Mehrfeld-Gerät: Platz inzwischen ungültig? Material kommt zurück
 			if why != "":
-				GameState.toast("%s: Bau nicht möglich – %s Material liegt daneben." % [ItemSystem.device(job.dev).display_name, why], "bad")
+				GameState.toast("%s: cannot build – %s material is lying next to it." % [ItemSystem.device(job.dev).display_name, why], "bad")
 				var back := drop_spot(worker_pos)
 				var c := cost(job)
 				for type in c:
@@ -402,25 +402,25 @@ func missing(c: Dictionary, inv: Inventory) -> Dictionary:
 
 func label(job: Dictionary) -> String:
 	match job.kind:
-		"repair": return "Repariert"
-		"tend": return "Pflegt Pflanzen"
-		"harvest": return "Erntet"
-		"extinguish": return "Löscht Feuer"
-		"hack": return "Hackt Schloss"
-		"refill": return "Füllt nach: " + ItemSystem.item(job.item).display_name
-		"craft": return "Werkbank: " + String(EconomySystem.recipe(job.recipe).name)
-		"haul": return "Bringt Sachen ins Lager" if job.phase == "deliver" else "Sammelt ein"
-		"move": return "Trägt Gerät" if job.phase == "deliver" else "Hebt Gerät auf"
-		"remove": return "Reißt ab"
-		"uninstall": return "Baut ab: " + RemovalSystem.name_of(String(job.target))
-		"dismantle": return "Zerlegt: " + RemovalSystem.name_of(String(job.target))
-		"destroy": return "Zerstört: " + RemovalSystem.name_of(String(job.target))
-		"install": return "Baut ein: " + RemovalSystem.name_of(RemovalSystem.key_of_packed(String(job.item)))
-		"cable": return "Verlegt Kabel"
-		"device": return "Baut " + ItemSystem.device(job.dev).display_name
-		"rotate": return "Dreht Gerät"
+		"repair": return "Repairing"
+		"tend": return "Tending plants"
+		"harvest": return "Harvesting"
+		"extinguish": return "Extinguishing fire"
+		"hack": return "Hacking a lock"
+		"refill": return "Refilling: " + ItemSystem.item(job.item).display_name
+		"craft": return "Workbench: " + String(EconomySystem.recipe(job.recipe).name)
+		"haul": return "Taking things to storage" if job.phase == "deliver" else "Collecting"
+		"move": return "Carrying device" if job.phase == "deliver" else "Picking up device"
+		"remove": return "Demolishing"
+		"uninstall": return "Uninstalling: " + RemovalSystem.name_of(String(job.target))
+		"dismantle": return "Dismantling: " + RemovalSystem.name_of(String(job.target))
+		"destroy": return "Destroying: " + RemovalSystem.name_of(String(job.target))
+		"install": return "Installing: " + RemovalSystem.name_of(RemovalSystem.key_of_packed(String(job.item)))
+		"cable": return "Laying cable"
+		"device": return "Building " + ItemSystem.device(job.dev).display_name
+		"rotate": return "Rotating device"
 		"debug": return "Debugging the navigation console"
-		_: return "Baut " + Config.TILE_NAMES[int(job.tile)]
+		_: return "Building " + Config.TILE_NAMES[int(job.tile)]
 
 func to_data() -> Array:
 	var out: Array = []

@@ -100,7 +100,7 @@ func _menu_text(p: Vector2i, kind: String) -> String:
 	if id < 0:
 		return ""
 	var idx: int = ui.object_menu.get_item_index(id)
-	return ("[aus] " if ui.object_menu.is_item_disabled(idx) else "") + ui.object_menu.get_item_text(idx)
+	return ("[off] " if ui.object_menu.is_item_disabled(idx) else "") + ui.object_menu.get_item_text(idx)
 
 func _click(p: Vector2i, kind: String) -> void:
 	var id := _menu(p, kind)
@@ -148,7 +148,7 @@ func _initialize() -> void:
 
 	# 1) Block abbauen und wieder einbauen (Innenwand zwischen Kabine und Cockpit)
 	var wall := C(x0 + 10, y0 + 2)
-	_check("Menü zeigt Abbauen (%s)" % _menu_text(wall, "uninstall"), _menu_text(wall, "uninstall").begins_with("Abbauen  ("))
+	_check("Menü zeigt Abbauen (%s)" % _menu_text(wall, "uninstall"), _menu_text(wall, "uninstall").begins_with("Uninstall  ("))
 	_click(wall, "uninstall")
 	_check("Abbau-Auftrag angelegt", CS.jobs.has(g.idx(wall)) and CS.jobs[g.idx(wall)].kind == "uninstall")
 	_check("Abbau fertig", _until_done(wall))
@@ -285,7 +285,7 @@ func _initialize() -> void:
 		if _count(t) - b2[t] != int(y_o2[t]):
 			ok_full = false
 	_check("Volles Gepäck: Menge trotzdem exakt", ok_full)
-	_check("… Rest liegt als Haufen, mit Meldung", toasts.any(func(t): return "kann nicht alles tragen" in t))
+	_check("… Rest liegt als Haufen, mit Meldung", toasts.any(func(t): return "cannot carry everything" in t))
 
 	# 7) Außer Reichweite / ohne Werkzeug
 	_fresh()
@@ -293,14 +293,14 @@ func _initialize() -> void:
 	mira = crew.player()
 	var far := Vector2i(2, 2)
 	g.set_tile(far, ShipGrid.Tile.WALL)
-	_check("Unerreichbar: Grund im Menü (%s)" % _menu_text(far, "destroy"), "Niemand kommt" in _menu_text(far, "destroy") and _menu_text(far, "destroy").begins_with("[aus]"))
+	_check("Unerreichbar: Grund im Menü (%s)" % _menu_text(far, "destroy"), "Nobody can reach" in _menu_text(far, "destroy") and _menu_text(far, "destroy").begins_with("[off]"))
 	ui.object_menu.hide()
 	mira.inv.take("crowbar", 9)
 	var wall3 := C(x0 + 10, y0 + 2)
-	_check("Ohne Brechstange: Wand abbauen gesperrt (%s)" % R.reason("uninstall", wall3), "Braucht Werkzeug: Crowbar" in R.reason("uninstall", wall3))
+	_check("Ohne Brechstange: Wand abbauen gesperrt (%s)" % R.reason("uninstall", wall3), "Needs tool: Crowbar" in R.reason("uninstall", wall3))
 	_check("… Zerstören geht mit bloßen Händen", R.reason("destroy", wall3) == "")
 	var st_desk: Vector2i = root.get_node("StationSystem").rooms[0].desk
-	_check("Stationstresen: gesperrt (%s)" % R.reason("destroy", st_desk), R.reason("destroy", st_desk) == "Gehört der Station.")
+	_check("Stationstresen: gesperrt (%s)" % R.reason("destroy", st_desk), R.reason("destroy", st_desk) == "Belongs to the station.")
 	mira.inv.add("crowbar", 1, 80.0)
 
 	# 8) Mehrfach schnell auf denselben Eintrag klicken
@@ -309,7 +309,7 @@ func _initialize() -> void:
 	ui._on_object_menu(id)
 	ui._on_object_menu(id)
 	ui._on_object_menu(id)
-	_check("Zweiter Auftrag wird abgelehnt (%s)" % R.order("dismantle", heater_p), R.order("dismantle", heater_p).begins_with("Hier läuft schon"))
+	_check("Zweiter Auftrag wird abgelehnt (%s)" % R.order("dismantle", heater_p), R.order("dismantle", heater_p).begins_with("Already in progress here"))
 	var plate_b := _count("plate")
 	_until_done(heater_p)
 	_run(5)
@@ -327,7 +327,7 @@ func _initialize() -> void:
 	_check("Kiste abgebaut: ein Gegenstand am Boden, Inhalt darin erhalten, nichts verloren", g.device_at(crate_p) == null and _count_deep("ration") == rations and _count("ration") == 0
 		and g.piles.has(g.idx(crate_p)) and g.piles[g.idx(crate_p)].count("pk_crate") == 1 and not pkc.get("data", {}).get("items", []).is_empty())
 	var locker_p := C(x0 + 1, y0 + 8)
-	_check("Spind mit Anzug: Zerlegen gesperrt (%s)" % R.reason("dismantle", locker_p), "Raumanzug" in R.reason("dismantle", locker_p))
+	_check("Spind mit Anzug: Zerlegen gesperrt (%s)" % R.reason("dismantle", locker_p), "space suit" in R.reason("dismantle", locker_p))
 	_click(locker_p, "uninstall")
 	_until_done(locker_p)
 	var lk: Dictionary = _find_packed("pk_locker")
@@ -342,7 +342,7 @@ func _initialize() -> void:
 	g.devices[g.idx(C(x0 + 13, y0 + 1))].lock_level = 0
 	var crate2: Vector2i = C(x0 + 14, y0 + 8)
 	g.device_at(crate2).lock_level = 2
-	_check("Verschlossene Kiste: gesperrt", R.reason("destroy", crate2) == "Verschlossen – erst knacken (Hacken).")
+	_check("Verschlossene Kiste: gesperrt", R.reason("destroy", crate2) == "Locked – crack it first (hacking).")
 	g.device_at(crate2).lock_level = 0
 	# Objekt verschwindet während des Auftrags
 	var sink2 := C(x0 + 3, y0 + 1)

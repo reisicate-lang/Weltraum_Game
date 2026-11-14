@@ -74,7 +74,7 @@ func _initialize() -> void:
 	var net: Dictionary = P.main_net()
 	_check("Laufzeit %.2f h ≈ 20/3" % net.hours, absf(net.hours - 20.0 / 3.0) < 0.05)
 	var txt: String = ui.runtime_text(net)
-	_check("Anzeige: „%s“" % txt, txt.contains("Batterien reichen noch ca. 6.7 h"))
+	_check("Anzeige: „%s“" % txt, txt.contains("batteries last about 6.7 h"))
 	P.step(60.0)
 	_check("Nach 1 h: Ladung %.2f kWh (−3)" % bat.charge, absf(bat.charge - (20.0 - 3.0 - 0.0005)) < 0.01)
 	bat.charge = 0.2

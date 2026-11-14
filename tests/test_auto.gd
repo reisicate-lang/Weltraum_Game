@@ -59,7 +59,7 @@ func _initialize() -> void:
 	var g = ship.grid
 	gs.selected = mira
 	ui._refresh_auto(mira)
-	_check("Standard: Auto an, Knopf zeigt „Auto: AN“", mira.auto_mode and ui.auto_button.text == "Auto: AN")
+	_check("Standard: Auto an, Knopf zeigt „Auto: AN“", mira.auto_mode and ui.auto_button.text == "Auto: ON")
 	var bed := C(x0 + 1, y0 + 1)
 	var sink := C(x0 + 3, y0 + 1)
 	R.order("dismantle", bed)
@@ -98,12 +98,12 @@ func _initialize() -> void:
 	var job_ref = mira.job
 	ui.toggle_auto()
 	var stop_pos: Vector2 = mira.pos
-	_check("Knopf zeigt „Auto: AUS“", ui.auto_button.text == "Auto: AUS" and not mira.auto_mode)
+	_check("Knopf zeigt „Auto: AUS“", ui.auto_button.text == "Auto: OFF" and not mira.auto_mode)
 	_check("Ziel und Laufweg verworfen", mira.job == null and mira.path.is_empty() and mira.order == null)
 	_check("Auftrag bleibt offen und frei", CS.jobs.has(g.idx(far)) and job_ref != null and job_ref.claimed_by == -1)
 	_run(20)
 	_check("Steht still (%.3f Felder bewegt)" % mira.pos.distance_to(stop_pos), mira.pos.distance_to(stop_pos) < 0.01)
-	_check("Beginnt nichts Neues (%s)" % mira.task, mira.job == null and mira.activity == null and mira.task.contains("Auto-Modus aus"))
+	_check("Beginnt nichts Neues (%s)" % mira.task, mira.job == null and mira.activity == null and mira.task.contains("auto mode off"))
 
 	# 3) Mitten in der Arbeit ausschalten: keine halbfertige Änderung, nichts doppelt
 	ui.toggle_auto()
@@ -162,7 +162,7 @@ func _initialize() -> void:
 	var p0: Vector2 = mira.pos
 	_run(10)
 	_check("Aus + Hunger: geht nicht von selbst essen", mira.activity == null and mira.pos.distance_to(p0) < 0.01)
-	_check("… aber warnt (%s)" % (toasts[-1] if not toasts.is_empty() else "-"), toasts.any(func(t): return "Auto-Modus ist aus" in t))
+	_check("… aber warnt (%s)" % (toasts[-1] if not toasts.is_empty() else "-"), toasts.any(func(t): return "auto mode is off" in t))
 	_check("Laufbefehl von Hand geht auch bei Aus", mira.order_move(ship.spawn_point() + Vector2i(1, 0)))
 	_run(5)
 	_check("… und wird ausgeführt", mira.tile() == ship.spawn_point() + Vector2i(1, 0))

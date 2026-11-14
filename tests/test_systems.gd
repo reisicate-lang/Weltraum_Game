@@ -169,7 +169,7 @@ func _initialize() -> void:
 			dv.inv.add("watercan", 2)
 			break
 	var made := [false]
-	root.get_node("EventBus").toast.connect(func(t, _k): if t.begins_with("Werkbank"): made[0] = true)
+	root.get_node("EventBus").toast.connect(func(t, _k): if t.begins_with("Workbench"): made[0] = true)
 	econ.craft("chemfuel")
 	_run(40)
 	var who = root.get_node("CrewSystem").player()

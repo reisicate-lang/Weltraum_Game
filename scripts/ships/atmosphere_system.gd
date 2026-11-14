@@ -266,18 +266,18 @@ func room_of(i: int) -> int:
 	topology()
 	return room_id[i] if i >= 0 and i < room_id.size() else -1
 
-## Vakuumweg eines Raums: "direkt" (eigene Leckkante), "tür" (über offene Türen),
-## "schlitz" (nur schwach über Lüftungsschlitze) oder "" (dicht)
+## Vakuumweg eines Raums: "direct" (eigene Leckkante), "door" (über offene Türen),
+## "vent" (nur schwach über Lüftungsschlitze) oder "" (dicht)
 func room_leak(r: int) -> String:
 	topology()
 	if r < 0 or r >= rooms.size():
 		return ""
 	if rooms[r].vac > 0 or rooms[r].door_space:
-		return "direkt"
+		return "direct"
 	if _reaches_leak(r, false):
-		return "tür"
+		return "door"
 	if _reaches_leak(r, true):
-		return "schlitz"
+		return "vent"
 	return ""
 
 func _reaches_leak(start: int, with_vents: bool) -> bool:
@@ -320,15 +320,15 @@ func describe(i: int) -> String:
 	var g := ShipSystem.grid
 	if not g.holds_air(i):
 		return ""
-	var text := "O₂ %.1f kPa · CO₂ %.2f kPa · Druck %d kPa" % [g.o2[i], g.co2[i], int(g.pressure(i))]
+	var text := "O₂ %.1f kPa · CO₂ %.2f kPa · pressure %d kPa" % [g.o2[i], g.co2[i], int(g.pressure(i))]
 	var r := room_of(i)
 	if r >= 0:
 		var leak := room_leak(r)
-		text += " · Raum Ø %d kPa" % int(room_pressure(r))
+		text += " · room avg %d kPa" % int(room_pressure(r))
 		match leak:
-			"direkt": text += " · LECK"
-			"tür": text += " · Leck über offene Tür"
-			"schlitz": text += " · schwacher Gasweg über Türschlitz"
+			"direct": text += " · LEAK"
+			"door": text += " · leak through an open door"
+			"vent": text += " · weak gas path through a door vent"
 	elif g.tiles[i] == ShipGrid.Tile.DOOR and g.vent_closed[i] == 1:
-		text += " · Schlitz zu"
+		text += " · vent closed"
 	return text

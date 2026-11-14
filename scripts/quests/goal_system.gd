@@ -4,17 +4,17 @@ extends Node
 
 ## Ziel-Prüfungen. "check" ist der Name einer Funktion unten.
 const GOALS := [
-	{"id": "suit", "text": "Lass Mira einen Raumanzug anziehen (abdocken, dann draußen im All etwas planen, z. B. Boden schräg neben der Außentür der Luftschleuse – direkt davor wird angedockt)", "check": "_g_suit", "reward": 50},
-	{"id": "junk", "text": "Sammle Schrott aus dem Wrack ein (Werkzeug Einsammeln, Q)", "check": "_g_junk", "reward": 80, "needs": "wreck"},
-	{"id": "strip", "text": "Reiß ein Gerät im Wrack ab (Werkzeug Abreißen, X)", "check": "_g_strip", "reward": 80, "needs": "wreck"},
-	{"id": "sell", "text": "Verkaufe etwas am Handelsterminal im Cockpit", "check": "_g_sell", "reward": 100},
-	{"id": "solar", "text": "Baue ein Solarpanel draußen im Vakuum, z. B. auf einem Boden neben der Luftschleuse, nicht direkt vor ihrer Außentür (spart Brennstoff)", "check": "_g_solar", "reward": 150},
-	{"id": "book", "text": "Lass jemanden ein Lehrbuch lesen (im Terminal kaufen, in eine Kiste legen)", "check": "_g_book", "reward": 100},
-	{"id": "fly", "text": "Fliege zum Kármán-Ring (Taste N, Reisen)", "check": "_g_fly", "reward": 200},
-	{"id": "hire", "text": "Heuere ein Crewmitglied an (Terminal, Reiter Crew)", "check": "_g_hire", "reward": 150},
-	{"id": "contract", "text": "Erfülle einen Auftrag (Terminal, Reiter Aufträge)", "check": "_g_contract", "reward": 200},
-	{"id": "rate", "text": "Bezahle eine Kreditrate pünktlich", "check": "_g_rate", "reward": 250},
-	{"id": "debt", "text": "Zahle den Kredit vollständig ab – das Schiff gehört dir", "check": "_g_debt", "reward": 0},
+	{"id": "suit", "text": "Have Mira put on a space suit (undock, then plan something outside in space, e.g. a floor diagonally next to the airlock's outer door – ships dock right in front of it)", "check": "_g_suit", "reward": 50},
+	{"id": "junk", "text": "Collect scrap from the wreck (Haul tool, Q)", "check": "_g_junk", "reward": 80, "needs": "wreck"},
+	{"id": "strip", "text": "Demolish a device in the wreck (Demolish tool, U)", "check": "_g_strip", "reward": 80, "needs": "wreck"},
+	{"id": "sell", "text": "Sell something at the trade terminal in the cockpit", "check": "_g_sell", "reward": 100},
+	{"id": "solar", "text": "Build a solar panel outside in vacuum, e.g. on a floor next to the airlock, not directly in front of its outer door (saves generator fuel)", "check": "_g_solar", "reward": 150},
+	{"id": "book", "text": "Have someone read a textbook (buy it at the terminal, put it in a crate)", "check": "_g_book", "reward": 100},
+	{"id": "fly", "text": "Fly to the Kármán Ring (key N, Travel)", "check": "_g_fly", "reward": 200},
+	{"id": "hire", "text": "Hire a crew member (terminal, Crew tab)", "check": "_g_hire", "reward": 150},
+	{"id": "contract", "text": "Complete a job (terminal, Jobs tab)", "check": "_g_contract", "reward": 200},
+	{"id": "rate", "text": "Pay a loan instalment on time", "check": "_g_rate", "reward": 250},
+	{"id": "debt", "text": "Pay off the loan completely – the ship is yours", "check": "_g_debt", "reward": 0},
 ]
 
 var done: Array[String] = []
@@ -53,10 +53,10 @@ func step(dt: float) -> void:
 	done.append(g.id)
 	if int(g.reward) > 0:
 		EconomySystem.credits += int(g.reward)
-		EconomySystem.book("Ziel erreicht", int(g.reward))
-	GameState.toast("Ziel erreicht: %s%s" % [g.text.split(" (")[0], " (+%d Cr)" % g.reward if int(g.reward) > 0 else ""])
+		EconomySystem.book("Goal reached", int(g.reward))
+	GameState.toast("Goal reached: %s%s" % [g.text.split(" (")[0], " (+%d Cr)" % g.reward if int(g.reward) > 0 else ""])
 	if g.id == "debt":
-		GameState.toast("Du hast es geschafft: Die Rostlaube gehört dir. Das Weltall steht dir offen.")
+		GameState.toast("You made it: the Rustbucket is yours. Space is open to you.")
 
 func on_contract_done() -> void:
 	_contracts_done += 1
@@ -74,13 +74,13 @@ func _g_junk() -> bool:
 
 func _g_strip() -> bool:
 	for e in EconomySystem.log_entries:
-		if String(e.text).begins_with("Verkauf"):
+		if String(e.text).begins_with("Sale"):
 			return true
 	return stripped > 0
 
 func _g_sell() -> bool:
 	for e in EconomySystem.log_entries:
-		if String(e.text).begins_with("Verkauf"):
+		if String(e.text).begins_with("Sale"):
 			return true
 	return false
 
@@ -104,7 +104,7 @@ func _g_contract() -> bool:
 
 func _g_rate() -> bool:
 	for e in EconomySystem.log_entries:
-		if e.text == "Kreditrate":
+		if e.text == "Loan instalment":
 			return true
 	return false
 

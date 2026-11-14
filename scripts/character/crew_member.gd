@@ -25,7 +25,7 @@ var manual_until := 0.0             ## echte Zeit (ms), bis wann von Hand gesteu
 var manual_last := -100000.0        ## echte Zeit (ms) des letzten WASD-Schritts
 var resume_job = null               ## von WASD unterbrochener Auftrag (bleibt für diese Figur reserviert)
 var _job_cmd := false               ## Auftrag per „Resume Task“ befohlen (läuft auch ohne Auto-Modus)
-var task := "Wartet"
+var task := "Waiting"
 var inv := Inventory.new(Config.CARRY_WEIGHT, Config.CARRY_VOLUME)
 var suit = null                     ## getragener Raumanzug {"o2", "battery"} oder null
 var carrying: Device = null         ## getragenes Gerät
@@ -218,7 +218,7 @@ func set_auto(on: bool) -> void:
 		order = null
 		path.clear()
 		waiting = false
-		task = "Steht – Auto-Modus aus"
+		task = "Standing – auto mode off"
 	else:
 		_search_cooldown = 0.0
 		for j in ShipConstructionSystem.jobs.values():
@@ -423,16 +423,16 @@ func _update_body(dt: float) -> void:
 		release_job()
 		stop_activity()
 		order = null
-		GameState.toast(display_name + " ist bewusstlos!", "bad")
+		GameState.toast(display_name + " is unconscious!", "bad")
 	elif unconscious and health >= 10.0 and needs.air >= 40.0:
 		unconscious = false
-		GameState.toast(display_name + " ist wieder bei Bewusstsein.")
-	_warn("air", needs.air < 40.0, display_name + " bekommt kaum Luft!", needs.air > 95.0)
-	_warn("health", health < 30.0, display_name + " geht es sehr schlecht.", health > 50.0)
-	_warn("cold", body_temp < 35.5, display_name + " friert. Eine Heizung oder Thermojacke hilft.", body_temp > 36.5)
+		GameState.toast(display_name + " is conscious again.")
+	_warn("air", needs.air < 40.0, display_name + " can barely breathe!", needs.air > 95.0)
+	_warn("health", health < 30.0, display_name + " is in very bad shape.", health > 50.0)
+	_warn("cold", body_temp < 35.5, display_name + " is freezing. A heater or a thermal jacket helps.", body_temp > 36.5)
 	if suit != null:
 		var low := minf(suit.o2, suit.battery)
-		_warn("suit", low < Config.SUIT_RETURN_AT, "Der Raumanzug von " + display_name + " wird knapp.", low > 60.0)
+		_warn("suit", low < Config.SUIT_RETURN_AT, "The space suit of " + display_name + " is running low.", low > 60.0)
 
 ## Stress steigt bei schlechten Bedürfnissen, Gefahr und Schulden; sinkt im Schlaf und in der Freizeit
 func _update_stress(dt: float, sleeping: bool) -> void:
@@ -459,7 +459,7 @@ func _update_stress(dt: float, sleeping: bool) -> void:
 	stress = clampf(stress + (rise - fall) * h, 0.0, 100.0)
 	if stress >= 100.0 and not _warned.get("breakdown", false):
 		_warned["breakdown"] = true
-		GameState.toast(display_name + " hat einen Nervenzusammenbruch und braucht Ruhe.", "bad")
+		GameState.toast(display_name + " has a breakdown and needs rest.", "bad")
 		release_job()
 	if stress < 60.0:
 		_warned["breakdown"] = false
@@ -476,24 +476,24 @@ func _warn(key: String, cond: bool, text: String, clear: bool) -> void:
 func update(dt: float) -> void:
 	_update_body(dt)
 	if unconscious:
-		task = "Bewusstlos"
+		task = "Unconscious"
 		return
 	if away_until > GameState.time:
-		task = "Auf der Station unterwegs"
+		task = "Out on the station"
 		return
 	# Nach WASD: Selbststeuerung bleibt kurz aus, ein Laufbefehl startet aber schon
 	# nach MANUAL_WALK_DELAY echten Sekunden (vorgemerkter Klick läuft dann von selbst los)
 	if is_manual() and order != null and UIManager.pilot != self and walk_ready():
 		manual_until = 0.0
 	if is_manual():
-		task = "Steuert das Schiff" if UIManager.pilot == self else ("Läuft gleich los" if order != null else "Wird von dir gesteuert")
+		task = "Flying the ship" if UIManager.pilot == self else ("About to walk" if order != null else "Controlled by you")
 		return
 	# 1) Laufbefehl
 	if order != null:
 		if path.is_empty():
 			order = null
 		else:
-			task = "Läuft"
+			task = "Walking"
 			if not follow_path(dt):
 				path = ShipSystem.find_path(tile(), order)
 				if path.is_empty():
@@ -518,9 +518,9 @@ func update(dt: float) -> void:
 			stop_activity()
 		if job == null or not _job_cmd:
 			_job_cmd = false
-			task = "Steht – Auto-Modus aus"
+			task = "Standing – auto mode off"
 			for k in ["food", "water", "sleep", "hygiene"]:
-				_warn("auto-" + k, needs[k] < Config.NEEDS[k].at, "%s: %s – der Auto-Modus ist aus." % [display_name, Config.NEEDS[k].name], needs[k] >= Config.NEEDS[k].at)
+				_warn("auto-" + k, needs[k] < Config.NEEDS[k].at, "%s: %s – auto mode is off." % [display_name, Config.NEEDS[k].name], needs[k] >= Config.NEEDS[k].at)
 			return
 	# 3) Tätigkeit (Freizeit wird für Arbeit unterbrochen)
 	if activity != null and activity.get("kind", "") in ["study", "hobby", "trainer"] and _has_open_job():
@@ -551,7 +551,7 @@ func update(dt: float) -> void:
 			_do_fetch(dt)
 			return
 		elif not path.is_empty():
-			task = "Wartet auf Schleuse" if waiting else "Geht zu: " + ShipConstructionSystem.label(job)
+			task = "Waiting for the airlock" if waiting else "Going to: " + ShipConstructionSystem.label(job)
 			if not follow_path(dt):
 				release_job()
 			return
@@ -601,9 +601,9 @@ func update(dt: float) -> void:
 			return
 		else:
 			release_job()
-	task = "Kann keinen Bauplan erreichen" if not ShipConstructionSystem.jobs.is_empty() else "Wartet"
+	task = "Cannot reach any build plan" if not ShipConstructionSystem.jobs.is_empty() else "Waiting"
 	if check and stress >= 95.0:
-		task = "Zusammenbruch: braucht Ruhe"
+		task = "Breakdown: needs rest"
 		return
 	if check and auto_mode:
 		_assign_job()
@@ -675,7 +675,7 @@ func _finish_job() -> void:
 			EventBus.ship_changed.emit()
 			var res := ShipSystem.nearest_adjacent(tile(), [CS.target_of(job)])
 			if not res.ok:
-				GameState.toast(display_name + " kommt nicht zum Ziel und stellt das Gerät ab.")
+				GameState.toast(display_name + " cannot reach the target and sets the device down.")
 				drop_carried()
 				return
 			path = res.path
@@ -717,7 +717,7 @@ func _finish_haul() -> void:
 				carry.append(it.type)
 		g.clean_piles()
 		if carry.is_empty():
-			GameState.toast(display_name + " kann nichts mehr tragen.")
+			GameState.toast(display_name + " cannot carry any more.")
 			CS.jobs.erase(g.idx(src))
 			job = null
 			return
@@ -730,7 +730,7 @@ func _finish_haul() -> void:
 						break
 		var res := ShipSystem.nearest_adjacent(tile(), targets)
 		if not res.ok:
-			GameState.toast("Keine Frachtkiste mit freiem Platz im Schiff.", "bad")
+			GameState.toast("No cargo crate with free space on the ship.", "bad")
 			CS.jobs.erase(g.idx(src))
 			job = null
 			return
@@ -762,9 +762,9 @@ func _finish_hack() -> void:
 		return
 	if SkillSystem.hack_value(self) >= SkillSystem.hack_needed(dev.lock_level):
 		dev.lock_level = 0
-		GameState.toast("%s hat das Schloss geknackt." % display_name)
+		GameState.toast("%s cracked the lock." % display_name)
 	else:
-		GameState.toast("%s scheitert am Schloss (Stufe %d). Mehr Übung in Hacken und Software nötig." % [display_name, dev.lock_level], "bad")
+		GameState.toast("%s fails at the lock (level %d). Needs more practice in Hacking and Software." % [display_name, dev.lock_level], "bad")
 
 ## Zu einem passenden Gerät gehen (Anzugschrank, Ladestation)
 func _start_device(kind: String, filter: Callable) -> bool:
@@ -848,7 +848,7 @@ func _assign_job() -> void:
 			if _start_device("suit_up", func(d): return d.type == "locker" and d.suit != null and not d.broken):
 				return
 			chosen.retry_at = GameState.time + 1.0
-			_warn("need-suit", true, display_name + " braucht einen Raumanzug für diese Arbeit.", false)
+			_warn("need-suit", true, display_name + " needs a space suit for this work.", false)
 			return
 	if is_same(chosen, resume_job):
 		resume_job = null
@@ -883,7 +883,7 @@ func _start_fetch() -> bool:
 func _do_fetch(dt: float) -> void:
 	var CS := ShipConstructionSystem
 	if not path.is_empty():
-		task = "Holt Material"
+		task = "Fetching material"
 		if not follow_path(dt):
 			release_job()
 		return
@@ -901,7 +901,7 @@ func _do_fetch(dt: float) -> void:
 	var full := moved > 0 and still.keys().all(func(t): return inv.room(t) <= 0)
 	if not still.is_empty() and not full:
 		if not _start_fetch():
-			GameState.toast(display_name + ": Nicht genug Material (oder zu schwer).", "bad")
+			GameState.toast(display_name + ": not enough material (or too heavy).", "bad")
 			job.retry_at = GameState.time + 1.0
 			release_job()
 		return
@@ -930,7 +930,7 @@ func _start_need() -> bool:
 		var res := ShipSystem.nearest_adjacent(tile(), targets)
 		if not res.ok:
 			_warn("no-" + need, needs[need] < Config.NEEDS[need].at - 15.0,
-				display_name + ": " + Config.NEEDS[need].name + ", aber nichts Passendes erreichbar.", needs[need] >= Config.NEEDS[need].at)
+				display_name + ": " + Config.NEEDS[need].name + ", but nothing suitable is reachable.", needs[need] >= Config.NEEDS[need].at)
 			continue
 		release_job()
 		var dev: Device = by_pos[res.target]
@@ -943,7 +943,7 @@ func _start_need() -> bool:
 func _do_activity(dt: float) -> void:
 	var akind: String = activity.get("kind", "")
 	if akind == "study":
-		task = "Liest: " + ItemSystem.item(activity.book).display_name
+		task = "Reading: " + ItemSystem.item(activity.book).display_name
 		activity.timer += dt
 		SkillSystem.study(self, activity.book, dt)
 		if activity.timer >= 30.0 or SkillSystem.readable_book(self) != activity.book:
@@ -953,14 +953,14 @@ func _do_activity(dt: float) -> void:
 		var names: PackedStringArray = []
 		for h in hobbies:
 			names.append(HobbySystem.get_hobby(h).hobby_name)
-		task = "Freizeit: " + ", ".join(names)
+		task = "Free time: " + ", ".join(names)
 		activity.timer += dt
 		HobbySystem.practice(self, dt)
 		if activity.timer >= 30.0 or stress <= 5.0:
 			stop_activity()
 		return
 	if activity.has("flee"):
-		task = "Sucht Luft zum Atmen"
+		task = "Looking for air to breathe"
 		activity.timer = float(activity.get("timer", 0.0)) + dt
 		# Schon in atembarer Luft, oder zu lange (z. B. wartet an einer Schleuse, die nicht öffnet): Flucht beenden
 		if safe_air(grid().idx(tile())) and needs.air >= 50.0 or activity.timer > 3.0:
@@ -974,7 +974,7 @@ func _do_activity(dt: float) -> void:
 		stop_activity()
 		return
 	if not path.is_empty():
-		task = "Wartet auf Schleuse" if waiting else "Geht zu: " + dev.data().display_name
+		task = "Waiting for the airlock" if waiting else "Going to: " + dev.data().display_name
 		if not follow_path(dt):
 			stop_activity()
 		return
@@ -989,13 +989,13 @@ func _do_activity(dt: float) -> void:
 				var w := ""
 				for it in inv.items:
 					w = ItemSystem.item(it.type).weapon if ItemSystem.item(it.type).weapon != "" else w
-				task = "Trainiert" + (" mit Waffe" if w != "" else "")
+				task = "Training" + (" with a weapon" if w != "" else "")
 				SkillSystem.train(self, {"armed": "train_combat_armed", "ranged": "train_shooting"}.get(w, "train_combat"), dt)
 				stress = maxf(0.0, stress - 8.0 * dt / 60.0)
 				if activity.timer >= 30.0:
 					stop_activity()
 			"suit_up":
-				task = "Zieht Raumanzug an"
+				task = "Putting on a space suit"
 				if dev.suit == null:
 					stop_activity()
 				elif activity.timer >= 0.5:
@@ -1004,7 +1004,7 @@ func _do_activity(dt: float) -> void:
 					stop_activity()
 					_search_cooldown = 0.0
 			"suit_off":
-				task = "Zieht Raumanzug aus"
+				task = "Taking off the space suit"
 				if dev.suit != null or suit == null:
 					stop_activity()
 				elif activity.timer >= 0.5:
@@ -1013,7 +1013,7 @@ func _do_activity(dt: float) -> void:
 					SkillSystem.train(self, "suit_maintenance", 2.0)
 					stop_activity()
 			"recharge":
-				task = "Lädt Anzug"
+				task = "Charging suit"
 				if suit == null:
 					stop_activity()
 					return
@@ -1073,7 +1073,7 @@ func _start_flee() -> bool:
 			activity = {"flee": true}
 			path = p
 			return true
-	task = "Keine Atemluft erreichbar!"
+	task = "No breathable air within reach!"
 	return false
 
 # ---------------- Speichern ----------------

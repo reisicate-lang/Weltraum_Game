@@ -20,7 +20,7 @@
 extends Node
 
 const KINDS := ["uninstall", "dismantle", "destroy"]
-const NAMES := {"uninstall": "Abbauen", "dismantle": "Zerlegen", "destroy": "Zerstören"}
+const NAMES := {"uninstall": "Uninstall", "dismantle": "Dismantle", "destroy": "Destroy"}
 const TILE_KEYS := {ShipGrid.Tile.FLOOR: "tile:floor", ShipGrid.Tile.WALL: "tile:wall", ShipGrid.Tile.DOOR: "tile:door", ShipGrid.Tile.WINDOW: "tile:window"}
 
 var data: Dictionary = {}
@@ -107,11 +107,11 @@ func next_layer(p: Vector2i, prev_tile: Vector2i, prev_key: String) -> String:
 
 func name_of(key: String) -> String:
 	if key == "cable":
-		return "Kabel"
+		return "Cable"
 	if key.begins_with("dev:"):
 		return ItemSystem.device(key.substr(4)).display_name
 	if key == "tile:rock":
-		return "Fels"
+		return "Rock"
 	for t in TILE_KEYS:
 		if TILE_KEYS[t] == key:
 			return Config.TILE_NAMES[t]
@@ -156,11 +156,11 @@ func _register_packed() -> void:
 			val = int(ItemSystem.device(key.substr(4)).item_value / 0.9)
 		var item := ItemData.new()
 		item.id = packed_id(key)
-		item.display_name = name_of(key) + " (abgebaut)"
+		item.display_name = name_of(key) + " (uninstalled)"
 		item.weight = mass_kg(key)
 		item.volume = clampf(v * float(d.packed_weight_factor), 1.0, float(d.packed_max_weight))
 		item.value = int(val * 0.9)
-		item.description = "Abgebaut, kann wieder eingebaut werden (Rechtsklick auf ein freies Feld oder „Einbauen“). Zustand und Inhalt bleiben erhalten."
+		item.description = "Uninstalled, can be installed again (right-click a free tile or “Install”). Condition and contents are kept."
 		ItemSystem.items[item.id] = item
 
 ## Einzelgewicht in kg: genau die Masse, mit der das eingebaute Objekt zur Schiffsmasse zählt
@@ -234,46 +234,46 @@ func worker_ok(c: CrewMember, job: Dictionary) -> bool:
 func reason(kind: String, p: Vector2i, key: String = "") -> String:
 	var g := ShipSystem.grid
 	if not g.in_bounds(p):
-		return "Außerhalb des Schiffs."
+		return "Outside the ship."
 	if key == "":
 		key = key_at(p)
 	if key.begins_with("dev:"):
 		p = anchor(p)
 	var i := g.idx(p)
 	if key == "" or not layers_at(p).has(key):
-		return "Hier ist nichts."
+		return "There is nothing here."
 	var nm := name_of(key)
 	if g.linked.has(i):
-		return "Die Schleuse ist gerade angedockt. Erst abdocken."
+		return "The airlock is docked right now. Undock first."
 	if StationSystem.reserved(p):
-		return "Gehört der Station."
+		return "Belongs to the station."
 	if ShipConstructionSystem.jobs.has(i):
-		return "Hier läuft schon: " + ShipConstructionSystem.label(ShipConstructionSystem.jobs[i]) + "."
+		return "Already in progress here: " + ShipConstructionSystem.label(ShipConstructionSystem.jobs[i]) + "."
 	var cfg := config(key)
 	if not kind in cfg.actions:
-		return "%s lässt sich nicht %s." % [nm, {"uninstall": "abbauen", "dismantle": "zerlegen", "destroy": "zerstören"}[kind]]
+		return "%s cannot be %s." % [nm, {"uninstall": "uninstalled", "dismantle": "dismantled", "destroy": "destroyed"}[kind]]
 	var dev := g.device_at(p) if key.begins_with("dev:") else null
 	if key.begins_with("tile:") and g.device_at(p) != null:
-		return "Darauf steht %s. Erst das Gerät abbauen (nächster Rechtsklick wählt es)." % g.device_at(p).data().display_name
+		return "%s stands on it. Uninstall the device first (the next right-click selects it)." % g.device_at(p).data().display_name
 	if dev != null:
 		if dev.lock_level > 0:
-			return "Verschlossen – erst knacken (Hacken)."
+			return "Locked – crack it first (hacking)."
 		if dev.suit != null and kind != "uninstall":
-			return "Im Spind hängt ein Raumanzug. Nur Abbauen ist möglich."
+			return "A space suit hangs in the locker. Only Uninstall is possible."
 		if g.linked.has(i):
-			return "Die Schleuse ist gerade angedockt. Erst abdocken."
+			return "The airlock is docked right now. Undock first."
 	elif key == "tile:floor":
 		if g.cables[i] == 1:
-			return "Auf dem Boden liegt ein Kabel. Erst das Kabel abbauen (Rechtsklick wählt es)."
+			return "There is a cable on the floor. Uninstall the cable first (right-click selects it)."
 	# Werkzeug und Erreichbarkeit
 	var tool := tool_for(kind, key)
 	var with_tool: Array = CrewSystem.crew.filter(func(c): return not c.unconscious and has_tool(c, tool))
 	if with_tool.is_empty():
-		return "Braucht Werkzeug: %s (im Gepäck einer Figur)." % ItemSystem.item(tool).display_name
+		return "Needs tool: %s (in someone's pack)." % ItemSystem.item(tool).display_name
 	for c in with_tool:
 		if ShipSystem.nearest_adjacent(c.tile(), [p], 1).ok:
 			return ""
-	return "Niemand kommt an %s heran." % nm
+	return "Nobody can reach %s." % nm
 
 ## Auftrag anlegen. Gibt "" bei Erfolg zurück, sonst den Grund.
 ## Mehrfeld-Gerät (Triebwerk 1×3): jedes seiner Felder steht für das ganze Gerät,
@@ -311,7 +311,7 @@ func drop_stale(job: Dictionary) -> void:
 	var i := g.idx(ShipConstructionSystem.pos_of(job))
 	if ShipConstructionSystem.jobs.get(i) == job:
 		ShipConstructionSystem.jobs.erase(i)
-		GameState.toast("%s ist schon weg. Auftrag aufgelöst." % name_of(String(job.target)))
+		GameState.toast("%s is already gone. Job removed." % name_of(String(job.target)))
 
 func _cond(p: Vector2i) -> float:
 	var g := ShipSystem.grid
@@ -372,7 +372,7 @@ func finish(job: Dictionary, worker: CrewMember, worker_pos: Vector2i) -> void:
 	var p := ShipConstructionSystem.pos_of(job)
 	var i := g.idx(p)
 	if not target_ok(job):
-		GameState.toast("%s ist schon weg." % name_of(String(job.target)))
+		GameState.toast("%s is already gone." % name_of(String(job.target)))
 		return
 	var key := String(job.target)
 	var kind := String(job.kind)
@@ -382,7 +382,7 @@ func finish(job: Dictionary, worker: CrewMember, worker_pos: Vector2i) -> void:
 		var cspot := p if g.walkable(p) else ShipConstructionSystem.drop_spot(worker_pos)
 		for type in Config.CABLE_COST:
 			g.drop_items(cspot, type, int(Config.CABLE_COST[type]), 80.0)
-		GameState.toast("%s: Kabel abgebaut – %s liegt am Boden." % [worker.display_name if worker != null else "Crew", _cable_text()])
+		GameState.toast("%s: cable uninstalled – %s is on the floor." % [worker.display_name if worker != null else "Crew", _cable_text()])
 		return
 	var dev := g.device_at(p) if key.begins_with("dev:") else null
 	var cond := dev.cond if dev != null else g.cond[i]
@@ -441,14 +441,14 @@ func finish(job: Dictionary, worker: CrewMember, worker_pos: Vector2i) -> void:
 		# Ein vollständiger Gegenstand auf einem erreichbaren Bodenfeld (innen)
 		var at := p if g.walkable(p) else ShipConstructionSystem.drop_spot(worker_pos)
 		g.drop_items(at, packed[0], 1, packed[2], packed[3])
-		GameState.toast("%s: Abbauen fertig – %s liegt am Boden (%.0f kg)." % [worker.display_name if worker != null else "Crew",
+		GameState.toast("%s: uninstall done – %s is on the floor (%.0f kg)." % [worker.display_name if worker != null else "Crew",
 			ItemSystem.item(packed[0]).display_name, Inventory.stack_weight({"type": packed[0], "qty": 1, "data": packed[3]})])
 		return
 	_give(worker, worker_pos, results)
 	var parts: PackedStringArray = []
 	for r in results:
 		parts.append("%d× %s" % [r[1], ItemSystem.item(r[0]).display_name])
-	GameState.toast("%s: %s fertig – %s." % [worker.display_name if worker != null else "Crew", NAMES[kind], ", ".join(parts)])
+	GameState.toast("%s: %s done – %s." % [worker.display_name if worker != null else "Crew", NAMES[kind], ", ".join(parts)])
 
 ## Ergebnisse ins Gepäck, Rest als Haufen daneben (volles Inventar)
 func _give(worker: CrewMember, worker_pos: Vector2i, results: Array) -> void:
@@ -466,7 +466,7 @@ func _give(worker: CrewMember, worker_pos: Vector2i, results: Array) -> void:
 			g.drop_items(spot, r[0], left, r[2], r[3])
 			dropped = true
 	if dropped and worker != null:
-		GameState.toast("%s kann nicht alles tragen. Der Rest liegt daneben auf dem Boden." % worker.display_name)
+		GameState.toast("%s cannot carry everything. The rest is on the floor next to it." % worker.display_name)
 
 # ---------------- Wiedereinbau ----------------
 
@@ -477,32 +477,32 @@ func can_install(pk: String, p: Vector2i) -> bool:
 func install_reason(pk: String, p: Vector2i) -> String:
 	var g := ShipSystem.grid
 	if not g.in_bounds(p):
-		return "Außerhalb."
+		return "Out of bounds."
 	var i := g.idx(p)
 	if StationSystem.reserved(p) or StationSystem.is_hatch(i):
-		return "Gehört der Station."
+		return "Belongs to the station."
 	if ShipConstructionSystem.jobs.has(i):
-		return "Hier läuft schon ein Auftrag."
+		return "There is already a job here."
 	var key := key_of_packed(pk)
 	var t := g.get_tile(p)
 	var has_dev := g.occupied(p)
 	var ok := false
 	if key == "dev:dockport":
-		return "Andockschleusen werden nicht mehr eingebaut – angedockt wird an der Außentür einer Luftschleuse."
+		return "Docking ports are no longer installed – ships dock at the outer door of an airlock."
 	elif key.begins_with("dev:") and ItemSystem.device(key.substr(4)).length > 1:
 		var why := g.mount_reason(key.substr(4), p, ShipConstructionSystem.build_rot)
 		if why != "":
 			return why
 		for c in _cells(key.substr(4), p, ShipConstructionSystem.build_rot):
 			if ShipConstructionSystem.jobs.has(g.idx(c)):
-				return "Hier läuft schon ein Auftrag."
+				return "There is already a job here."
 		ok = true
 	else:
 		ok = _fits(key, t, has_dev, p)
 	if not ok:
-		return "Passt hier nicht hin."
+		return "Does not fit here."
 	if ShipConstructionSystem.available(pk) <= 0 and not CrewSystem.crew.any(func(c): return c.inv.count(pk) > 0):
-		return "Kein „%s“ vorhanden." % ItemSystem.item(pk).display_name
+		return "No “%s” available." % ItemSystem.item(pk).display_name
 	return ""
 
 ## Felder eines Geräts dieser Art an p mit Drehung rot (Innenfeld zuerst)
@@ -557,7 +557,7 @@ func finish_install(job: Dictionary, worker_pos: Vector2i) -> void:
 			why = g.mount_reason(dev.type, p, dev.rot)
 		# Mehrfeld-Gerät: Platz inzwischen ungültig? Dann bleibt das Stück erhalten
 		if why != "":
-			GameState.toast("%s: Einbau nicht möglich – %s Das Stück liegt daneben." % [name_of(key), why], "bad")
+			GameState.toast("%s: cannot install – %s The part is lying next to it." % [name_of(key), why], "bad")
 			g.drop_items(ShipConstructionSystem.drop_spot(worker_pos), String(job.item), 1, float(st.cond), st.get("data"))
 			return
 		if dev.type == "dockport":
@@ -568,4 +568,4 @@ func finish_install(job: Dictionary, worker_pos: Vector2i) -> void:
 		var tile: int = TILE_KEYS.find_key(key)
 		g.set_tile(p, tile)
 		g.cond[i] = float(st.cond)
-	GameState.toast("%s eingebaut (%d %%)." % [name_of(key), int(st.cond)])
+	GameState.toast("%s installed (%d %%)." % [name_of(key), int(st.cond)])

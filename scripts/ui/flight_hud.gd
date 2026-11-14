@@ -64,7 +64,7 @@ func _draw() -> void:
 			draw_line(c + port_dir * (r * 0.55), c + port_dir * (r * 0.85), COL_PORT if al.ok else Color(0.9, 0.33, 0.29), 3.0)
 	# Legende
 	var y := size.y - 4.0
-	draw_string(font, Vector2(4, y), "▲ Nase", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COL_SHIP)
-	draw_string(font, Vector2(62, y), "— Bewegung rel. Ziel", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COL_MOVE)
-	draw_string(font, Vector2(4, 12), "● Ziel", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COL_TARGET)
-	draw_string(font, Vector2(54, 12), "▬ Schleuse", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COL_PORT)
+	draw_string(font, Vector2(4, y), "▲ Nose", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COL_SHIP)
+	draw_string(font, Vector2(62, y), "— motion rel. target", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COL_MOVE)
+	draw_string(font, Vector2(4, 12), "● Target", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COL_TARGET)
+	draw_string(font, Vector2(54, 12), "▬ Airlock", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COL_PORT)

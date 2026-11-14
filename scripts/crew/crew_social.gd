@@ -53,7 +53,7 @@ static func _argument(a: CrewMember, b: CrewMember) -> void:
 	change(a, b, -10.0)
 	a.stress = minf(100.0, a.stress + 8.0)
 	b.stress = minf(100.0, b.stress + 8.0)
-	GameState.toast("%s: „Lass mich in Ruhe!“ – %s: „Dann mach deine Arbeit!“" % [a.display_name.split(" ")[0], b.display_name.split(" ")[0]], "bad")
+	GameState.toast("%s: “Leave me alone!” – %s: “Then do your job!”" % [a.display_name.split(" ")[0], b.display_name.split(" ")[0]], "bad")
 	# Wer kann schlichten?
 	var best: CrewMember = null
 	for c in CrewSystem.crew:
@@ -62,29 +62,29 @@ static func _argument(a: CrewMember, b: CrewMember) -> void:
 	if best != null and randf() < 0.3 + SkillSystem.effect(best, "calm"):
 		change(a, b, 8.0)
 		SkillSystem.train(best, "calm", 10.0)
-		GameState.toast("%s schlichtet den Streit." % best.display_name)
+		GameState.toast("%s settles the argument." % best.display_name)
 
 ## Kurze Sätze aus dem Leben der Crew
 static func _chatter(c: CrewMember) -> void:
 	var lines: Array = []
 	for h in c.history:
-		if "Werft" in h:
-			lines.append("Auf der Werft haben wir solche Hüllen in einer Schicht geflickt.")
-		if "Militär" in h:
-			lines.append("Im Krieg war das Trümmerfeld noch eine Flotte. Ich war dabei.")
-		if "Straße" in h:
-			lines.append("Auf L4 lernt man schnell, wem man trauen kann. Niemandem.")
-		if "Universität" in h:
-			lines.append("Eine Hohmann-Bahn zum Kármán-Ring würde uns Treibstoff sparen.")
-		if "Bergbau" in h:
-			lines.append("Eis abbauen war ehrlicher als Schrott sammeln.")
+		if "Shipyard" in h:
+			lines.append("At the shipyard we patched hulls like this in a single shift.")
+		if "Military" in h:
+			lines.append("In the war that debris field was still a fleet. I was there.")
+		if "Street" in h:
+			lines.append("On L4 you learn fast who you can trust. Nobody.")
+		if "University" in h:
+			lines.append("A Hohmann transfer to the Kármán Ring would save us fuel.")
+		if "Mining" in h:
+			lines.append("Mining ice was more honest than collecting scrap.")
 	for e in c.enemies:
-		lines.append("Wenn %s je hier auftaucht, bin ich weg." % e)
+		lines.append("If %s ever shows up here, I'm gone." % e)
 	if c.stress > 70.0:
-		lines.append("Ich brauche eine Pause. Wirklich.")
+		lines.append("I need a break. Really.")
 	if lines.is_empty():
-		lines.append("Noch ein Tag in dieser Blechdose.")
-	GameState.toast("%s: „%s“" % [c.display_name.split(" ")[0], lines.pick_random()])
+		lines.append("Another day in this tin can.")
+	GameState.toast("%s: “%s”" % [c.display_name.split(" ")[0], lines.pick_random()])
 
 ## Charakter in eine Datei exportieren (für andere Spielstände)
 static func export_character(c: CrewMember) -> String:

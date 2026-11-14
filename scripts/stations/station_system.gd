@@ -17,25 +17,25 @@ const DEFAULT_ROOMS := ["market", "bar", "board", "hiring", "claims", "bank"]
 
 ## Raumarten: Tresen-Gerät, Reiter im Handelsfenster, wer dort arbeitet, was sie sagen
 const ROOMS := {
-	"market": {"name": "Markt", "desk": "st_market", "tab": "sell", "role": "Händler",
-		"lines": ["Frische Ware, kaum gebraucht!", "Platten, Kupfer, Rationen – alles da.", "Zeig mal, was du im Gepäck hast."]},
-	"bar": {"name": "Bar", "desk": "st_bar", "tab": "station", "role": "Barkeeper",
-		"lines": ["Noch einen? Geht aufs Haus. Nein, war ein Witz.", "Hier hört man alles, wenn man still ist.", "Die Bühne ist frei, falls du singen willst."]},
-	"board": {"name": "Auftragsbrett", "desk": "st_board", "tab": "jobs", "role": "Vermittlerin",
-		"lines": ["Neue Aushänge, frisch von heute.", "Pünktlich liefern, dann gibt es Ansehen.", "Die Gilde zahlt gut, die Patrouille pünktlich."]},
-	"hiring": {"name": "Heuerbüro", "desk": "st_hiring", "tab": "crew", "role": "Heuerbeamter",
-		"lines": ["Brauchst du Leute? Die da hinten suchen eine Koje.", "Handgeld vorab, Lohn jeden Tag.", "Gute Mechaniker sind selten geworden."]},
-	"claims": {"name": "Bergungsamt", "desk": "st_claims", "tab": "salvage", "role": "Sachbearbeiter",
-		"lines": ["Bergungsrechte gibt es nur gegen Gebühr.", "Formular B-7, dreifach. Kleiner Scherz.", "Draußen treibt wieder was Neues."]},
-	"bank": {"name": "Kreditbüro", "desk": "st_bank", "tab": "bank", "role": "Bankangestellte",
-		"lines": ["Ihre nächste Rate ist bald fällig.", "Pünktliche Zahler sind uns die liebsten.", "Möchten Sie heute etwas tilgen?"]},
-	"shipyard": {"name": "Werft", "desk": "st_shipyard", "tab": "ships", "role": "Werftmeisterin",
-		"lines": ["Ein neues Schiff? Ich hab da was Schönes.", "Dein Kahn sieht aus, als hält er nur noch aus Gewohnheit.", "Wracks melden wir auch an."]},
+	"market": {"name": "Market", "desk": "st_market", "tab": "sell", "role": "Trader",
+		"lines": ["Fresh goods, barely used!", "Plates, copper, rations – all here.", "Show me what's in your pack."]},
+	"bar": {"name": "Bar", "desk": "st_bar", "tab": "station", "role": "Bartender",
+		"lines": ["Another one? On the house. No, just kidding.", "You hear everything here if you keep quiet.", "The stage is free if you want to sing."]},
+	"board": {"name": "Job Board", "desk": "st_board", "tab": "jobs", "role": "Broker",
+		"lines": ["New notices, fresh today.", "Deliver on time and you earn reputation.", "The guild pays well, the patrol pays on time."]},
+	"hiring": {"name": "Hiring Office", "desk": "st_hiring", "tab": "crew", "role": "Hiring clerk",
+		"lines": ["Need people? Those over there are looking for a berth.", "Signing money up front, wages every day.", "Good mechanics have become rare."]},
+	"claims": {"name": "Salvage Office", "desk": "st_claims", "tab": "salvage", "role": "Clerk",
+		"lines": ["Salvage claims only for a fee.", "Form B-7, in triplicate. Just kidding.", "Something new is drifting outside again."]},
+	"bank": {"name": "Credit Office", "desk": "st_bank", "tab": "bank", "role": "Bank clerk",
+		"lines": ["Your next instalment is due soon.", "We like punctual payers best.", "Would you like to pay something off today?"]},
+	"shipyard": {"name": "Shipyard", "desk": "st_shipyard", "tab": "ships", "role": "Shipyard master",
+		"lines": ["A new ship? I've got something nice.", "Your tub looks like it only holds together out of habit.", "We register wrecks too."]},
 }
 const NAMES := ["Ada", "Bo", "Cass", "Dario", "Edda", "Fenn", "Gita", "Hal", "Ines", "Jory", "Kemal", "Lu",
 	"Mads", "Nia", "Oskar", "Pia", "Rune", "Suri", "Teo", "Wen", "Yara", "Zeno"]
-const VISITOR_LINES := ["Schon gehört? Im Trümmerfeld treiben Plünderer.", "Die Luft hier riecht nach Maschinenöl.",
-	"Mein Schiff steht seit drei Wochen im Dock.", "Am Kármán-Ring zahlen sie mehr für Schrott.", "Wer hat hier schon wieder geraucht?"]
+const VISITOR_LINES := ["Heard? There are plunderers in the debris field.", "The air here smells of machine oil.",
+	"My ship has been in dock for three weeks.", "They pay more for scrap at the Kármán Ring.", "Who's been smoking in here again?"]
 const COLORS := [Color(0.55, 0.7, 0.85), Color(0.85, 0.6, 0.45), Color(0.6, 0.8, 0.55), Color(0.8, 0.55, 0.75),
 	Color(0.85, 0.8, 0.5), Color(0.55, 0.75, 0.75)]
 
@@ -93,7 +93,7 @@ func build(id: String) -> bool:
 	# Klammern ausgerichtete zuerst (ShipSystem.dock_pref)
 	var ports: Array = ShipSystem.free_ports()
 	if ShipSystem.ports().is_empty():
-		GameState.toast("Kein Andockport: Angedockt wird an der Außentür einer Luftschleuse.", "bad")
+		GameState.toast("No docking port: ships dock at the outer door of an airlock.", "bad")
 		return false
 	var kinds: Array = l.get("rooms", DEFAULT_ROOMS).duplicate()
 	if l.get("shipyard", false) and not "shipyard" in kinds:
@@ -104,7 +104,7 @@ func build(id: String) -> bool:
 		if ud >= 0:
 			_build_at(g, id, port, ud, kinds)
 			return true
-	GameState.toast("Keine freie Andockschleuse passt an %s (Platz oder Richtung). Handel geht nur über das Terminal." % l.name, "bad")
+	GameState.toast("No free docking port fits %s (space or direction). Trade only through the terminal." % l.name, "bad")
 	return false
 
 ## Station im eigenen Raster: u entlang des Gangs, v weg vom Schiff.
@@ -256,7 +256,7 @@ func _name(used: Array) -> String:
 		if not n in used:
 			used.append(n)
 			return n
-	return "Gast"
+	return "Guest"
 
 func _add_npc(n: String, kind: String, room: Dictionary, home: Rect2i, lines: Array, ref = null) -> Dictionary:
 	var g := ShipSystem.grid
@@ -290,7 +290,7 @@ func _sync_candidates() -> void:
 	npcs.assign(npcs.filter(func(n): return n.kind != "candidate" or n.ref in cands))
 	for c in cands:
 		if not npcs.any(func(n): return n.ref == c):
-			_add_npc(c.display_name, "candidate", hiring, _front(hiring), ["Ich suche Arbeit. %d Cr am Tag, und ich bin dabei." % c.salary], c)
+			_add_npc(c.display_name, "candidate", hiring, _front(hiring), ["I'm looking for work. %d Cr a day and I'm in." % c.salary], c)
 
 func step(dt: float) -> void:
 	if not Config.ENABLE_STATION or not active():
@@ -392,10 +392,10 @@ func approach(c: CrewMember, npc: Dictionary) -> void:
 				target = r.desk
 	var res := ShipSystem.nearest_adjacent(c.tile(), [target], 1)
 	if not res.ok or not c.order_move(res.path[-1] if not res.path.is_empty() else c.tile()):
-		GameState.toast(c.display_name + " findet keinen Weg zu " + String(npc.name) + ".")
+		GameState.toast(c.display_name + " finds no way to " + String(npc.name) + ".")
 		return
 	pending = {"crew": c, "npc": npc, "target": target}
-	GameState.toast(c.display_name + " geht zu " + String(npc.name) + ".")
+	GameState.toast(c.display_name + " walks to " + String(npc.name) + ".")
 
 ## Gespräch beginnen: passendes Fenster öffnen, Figur grüßt
 func talk(npc: Dictionary, c: CrewMember) -> void:
@@ -406,17 +406,17 @@ func talk(npc: Dictionary, c: CrewMember) -> void:
 		"staff":
 			var info: Dictionary = ROOMS[npc.room]
 			tab = info.tab
-			line = "%s: „%s“" % [String(npc.name).split(" (")[0], _greeting(npc.room, c)]
+			line = "%s: “%s”" % [String(npc.name).split(" (")[0], _greeting(npc.room, c)]
 		"contact":
 			tab = "station"
-			line = "%s: „Setz dich. Was führt dich her?“" % String(npc.name).split(",")[0]
+			line = "%s: “Have a seat. What brings you here?”" % String(npc.name).split(",")[0]
 		"candidate":
 			tab = "crew"
-			line = "%s: „%s“" % [npc.name, npc.lines[0]]
+			line = "%s: “%s”" % [npc.name, npc.lines[0]]
 		_:
 			npc.line = String(npc.lines[_rng.randi() % npc.lines.size()])
 			npc.line_until = GameState.time + 0.1
-			GameState.toast("%s: „%s“" % [npc.name, npc.line])
+			GameState.toast("%s: “%s”" % [npc.name, npc.line])
 			return
 	SkillSystem.train(c, "folk", 0.5)
 	UIManager.open_talk(tab, line, npc.room if npc.kind == "staff" else npc.kind)
@@ -424,15 +424,15 @@ func talk(npc: Dictionary, c: CrewMember) -> void:
 func _greeting(kind: String, c: CrewMember) -> String:
 	match kind:
 		"market":
-			return "Willkommen, %s. Ich kaufe, was du tragen kannst." % c.display_name.split(" ")[0]
+			return "Welcome, %s. I buy whatever you can carry." % c.display_name.split(" ")[0]
 		"bank":
-			return "Restschuld %d Cr. Die nächste Rate ist in %.1f Tagen fällig." % [EconomySystem.debt, maxf(0.0, (EconomySystem.next_payment - GameState.time) / 1440.0)]
+			return "Remaining debt %d Cr. The next instalment is due in %.1f days." % [EconomySystem.debt, maxf(0.0, (EconomySystem.next_payment - GameState.time) / 1440.0)]
 		"claims":
-			return "Ein neues Bergungsrecht kostet %d Cr." % Config.CLAIM_FEE
+			return "A new salvage claim costs %d Cr." % Config.CLAIM_FEE
 		"hiring":
-			return "%d Leute suchen gerade Arbeit." % NPCSystem.candidates_here().size()
+			return "%d people are looking for work right now." % NPCSystem.candidates_here().size()
 		"board":
-			return "%d Aufträge hängen aus." % QuestSystem.offers_here().size()
+			return "%d jobs are posted." % QuestSystem.offers_here().size()
 	var lines: Array = ROOMS[kind].lines
 	return String(lines[_rng.randi() % lines.size()])
 

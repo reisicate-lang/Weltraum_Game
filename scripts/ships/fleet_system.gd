@@ -13,10 +13,10 @@ var places: Dictionary = {}         ## Ort -> {"wreck": Daten oder null}
 var sites: Array = []
 var next_site := 1
 const WRECK_KINDS := ["wreck", "debris", "outpost", "asteroid"]
-var current_name := "Rostlaube"
+var current_name := "Rustbucket"
 ## Name im öffentlichen Register (Ostranauts: Ogiso's Register). Umbenennen an der
 ## Navigationskonsole ändert erst den Schiffsnamen; eingetragen wird er beim Ship-Rating-Service der Werft.
-var registered_name := "Rostlaube"
+var registered_name := "Rustbucket"
 ## Hull registry ID (Ostranauts Ship Building 2), z. B. „J-YV16“: fest, auch beim Umbenennen
 var registry_id := ""
 var current_id := 1
@@ -25,8 +25,8 @@ var next_id := 2
 func reset() -> void:
 	ships.clear()
 	places.clear()
-	current_name = "Rostlaube"
-	registered_name = "Rostlaube"
+	current_name = "Rustbucket"
+	registered_name = "Rustbucket"
 	registry_id = new_registry_id()
 	current_id = 1
 	next_id = 2
@@ -53,8 +53,8 @@ func add_site(near: String, data = null) -> Dictionary:
 	var name := String(data.get("name", "")) if data is Dictionary else ""
 	if name == "":
 		name = SalvageSystem.NAMES.pick_random()
-	var l := {"id": "wreck_%d" % next_site, "kind": "wreck", "name": "Wrack " + name, "wreck_name": name, "near": near,
-		"off": [cos(ang) * 8.0, sin(ang) * 8.0], "desc": "Treibendes Wrack. Anfliegen, abbremsen, Port ausrichten und andocken, dann ist es begehbar."}
+	var l := {"id": "wreck_%d" % next_site, "kind": "wreck", "name": "Wreck " + name, "wreck_name": name, "near": near,
+		"off": [cos(ang) * 8.0, sin(ang) * 8.0], "desc": "Drifting wreck. Fly there, slow down, line up the port and dock; then you can walk aboard."}
 	next_site += 1
 	sites.append(l)
 	places[l.id] = {"wreck": data}
@@ -68,7 +68,7 @@ func attach_site(l: Dictionary) -> bool:
 	var w = place.get("wreck")
 	if w != null:
 		if not _attach_stored(w):
-			GameState.toast("Das Wrack passt nicht an den Andockport.", "bad")
+			GameState.toast("The wreck does not fit the docking port.", "bad")
 			return false
 		place.wreck = null
 	else:
@@ -109,7 +109,7 @@ func capture():
 			piles.append([r.x, r.y, g.piles[i].to_data()])
 	if tiles.is_empty():
 		return null
-	return {"name": SalvageSystem.wreck_name if SalvageSystem.wreck_name != "" else "Altes Wrack", "rel": true, "scale": Config.GRID_SCALE, "tiles": tiles,
+	return {"name": SalvageSystem.wreck_name if SalvageSystem.wreck_name != "" else "Old wreck", "rel": true, "scale": Config.GRID_SCALE, "tiles": tiles,
 		"devices": devs, "piles": piles, "investigated": SalvageSystem.investigated, "cause": SalvageSystem.cause}
 
 ## Alte Spielstände (vor den Andockschleusen) bereinigen:
@@ -135,7 +135,7 @@ func migrate_docking() -> void:
 		g.zone[i] = 0
 		changed = true
 	if changed:
-		GameState.toast("Alter Spielstand: Steg entfernt. Angedockt wird an der Luftschleuse.")
+		GameState.toast("Old save: gangway removed. Ships now dock at the airlock.")
 	var here_id := PhysicsSystem.docked if PhysicsSystem.docked != "" else "tycho"
 	# Wrack abgeschaltet oder ohne Verbindung (sehr alter Stand): als eigenes Wrackziel ablegen
 	if not Config.ENABLE_WRECK or SalvageSystem.port < 0:
@@ -307,10 +307,10 @@ func arrive(l: Dictionary) -> void:
 			place.wreck = null
 			EventBus.ship_changed.emit()
 		else:
-			GameState.toast("Das Wrack „%s“ liegt hier. Zum Ankoppeln fehlt ein freier Andockport (Luftschleuse)." % String(w.name))
+			GameState.toast("The wreck “%s” is here. Coupling needs a free docking port (airlock)." % String(w.name))
 	elif l.kind == "asteroid":
 		if SalvageSystem.generate_asteroid():
-			GameState.toast("Ein Felsbrocken hängt an der Schleuse. Abreißen bringt Eis und Erz.")
+			GameState.toast("A chunk of rock hangs at the airlock. Demolishing it yields ice and ore.")
 	elif l.kind == "outpost":
 		if not SalvageSystem.generate():
 			return
@@ -319,10 +319,10 @@ func arrive(l: Dictionary) -> void:
 			if dev.type == "crate" and ShipSystem.grid.zone[ShipSystem.grid.idx(dev.pos)] == 1:
 				dev.lock_level = maxi(dev.lock_level, randi_range(1, 3))
 				dev.inv.add(["datachip", "cell", "motor", "boltgun", "genemod"].pick_random(), 1, randf_range(60.0, 95.0))
-		GameState.toast("Der Außenposten ist verlassen. Die Lagerräume sind verschlossen.")
+		GameState.toast("The outpost is abandoned. The storerooms are locked.")
 	elif l.kind == "debris":
 		if SalvageSystem.generate():
-			GameState.toast("Ein Wrack aus dem Trümmerfeld dockt an der Schleuse an: " + SalvageSystem.wreck_name)
+			GameState.toast("A wreck from the debris field docks at the airlock: " + SalvageSystem.wreck_name)
 
 # ---------------- Schiffe ----------------
 
@@ -335,20 +335,20 @@ func ships_here() -> Array:
 func switch_to(id: int) -> void:
 	# Schiffe wechseln geht nur angedockt (dort liegen die anderen Schiffe)
 	if here() == "":
-		GameState.toast("Schiff wechseln geht nur angedockt.")
+		GameState.toast("You can only switch ships while docked.")
 		return
 	var target: Dictionary = {}
 	for s in ships:
 		if s.id == id:
 			target = s
 	if target.is_empty() or target.location != here():
-		GameState.toast("Dieses Schiff liegt nicht hier.")
+		GameState.toast("This ship is not here.")
 		return
 	if not SalvageSystem.clearable():
-		GameState.toast("Erst alle Crewmitglieder vom Wrack holen.")
+		GameState.toast("Bring all crew members back from the wreck first.")
 		return
 	if not StationSystem.clearable():
-		GameState.toast("Erst alle Crewmitglieder von der Station zurück an Bord holen.")
+		GameState.toast("Bring all crew members back aboard from the station first.")
 		return
 	var l := PhysicsSystem.loc(here())
 	StationSystem.clear()
@@ -373,7 +373,7 @@ func switch_to(id: int) -> void:
 	_place_crew()
 	arrive(l)
 	StationSystem.build(l.id)
-	GameState.toast("Du bist jetzt an Bord der " + current_name + ".")
+	GameState.toast("You are now aboard the " + current_name + ".")
 
 func _place_crew() -> void:
 	var g := ShipSystem.grid
@@ -472,19 +472,19 @@ func register_name() -> String:
 func register_wreck() -> void:
 	var g := ShipSystem.grid
 	if SalvageSystem.wreck_name == "":
-		GameState.toast("Hier ist kein Wrack.")
+		GameState.toast("There is no wreck here.")
 		return
 	if not EconomySystem.terminal_online():
-		GameState.toast("Das Handelsterminal ist offline.")
+		GameState.toast("The trade terminal is offline.")
 		return
 	if EconomySystem.credits < REGISTER_FEE:
-		GameState.toast("Nicht genug Credits für die Registrierung.")
+		GameState.toast("Not enough credits for the registration.")
 		return
 	if not SalvageSystem.clearable():
-		GameState.toast("Erst alle Crewmitglieder vom Wrack holen.")
+		GameState.toast("Bring all crew members back from the wreck first.")
 		return
 	EconomySystem.credits -= REGISTER_FEE
-	EconomySystem.book("Wrack als Schiff angemeldet: " + SalvageSystem.wreck_name, -REGISTER_FEE)
+	EconomySystem.book("Wreck registered as a ship: " + SalvageSystem.wreck_name, -REGISTER_FEE)
 	var nw := ShipGrid.new(g.width, g.height)
 	for i in g.tiles.size():
 		if g.zone[i] != 1:
@@ -500,13 +500,13 @@ func register_wreck() -> void:
 	ships.append({"id": next_id, "name": SalvageSystem.wreck_name, "registry": new_registry_id(), "location": here(), "data": nw.to_data()})
 	next_id += 1
 	SalvageSystem.clear()
-	GameState.toast("Angemeldet! Im Handelsterminal unter „Schiffe“ kannst du an Bord wechseln.")
+	GameState.toast("Registered! Switch aboard in the trade terminal under “Ships”.")
 
 ## on_credit: mit Schiffskredit (Preis +20 % auf die Schulden)
 func buy(kind: String, on_credit: bool = false) -> void:
 	var st := PhysicsSystem.station()
 	if st.is_empty() or not st.get("shipyard", false):
-		GameState.toast("Hier gibt es keine Werft.")
+		GameState.toast("There is no shipyard here.")
 		return
 	var t: Dictionary = {}
 	for s in PhysicsSystem.space.shipyard:
@@ -514,28 +514,28 @@ func buy(kind: String, on_credit: bool = false) -> void:
 			t = s
 	if on_credit:
 		EconomySystem.debt += int(int(t.price) * 1.2)
-		EconomySystem.book("Schiffskredit: " + t.name + " (+%d Cr Schulden)" % int(int(t.price) * 1.2), 0)
+		EconomySystem.book("Ship loan: " + t.name + " (+%d Cr debt)" % int(int(t.price) * 1.2), 0)
 	else:
 		if EconomySystem.credits < int(t.price):
-			GameState.toast("Nicht genug Credits.")
+			GameState.toast("Not enough credits.")
 			return
 		EconomySystem.credits -= int(t.price)
-		EconomySystem.book("Schiff gekauft: " + t.name, -int(t.price))
+		EconomySystem.book("Ship bought: " + t.name, -int(t.price))
 	var g := build_template(t)
 	ships.append({"id": next_id, "name": t.name, "registry": new_registry_id(), "location": here(), "data": g.to_data()})
 	next_id += 1
-	GameState.toast(t.name + " gehört jetzt dir. Wechseln unter „Schiffe“.")
+	GameState.toast(t.name + " is yours now. Switch aboard under “Ships”.")
 
 func sell(id: int) -> void:
 	var st := PhysicsSystem.station()
 	for s in ships:
 		if s.id == id:
 			if st.is_empty() or not st.get("shipyard", false) or s.location != here():
-				GameState.toast("Schiffe kann man nur an einer Werft verkaufen, an der sie liegen.")
+				GameState.toast("Ships can only be sold at a shipyard where they are moored.")
 				return
 			var v := int(ship_value(ShipGrid.from_data(s.data)) * 0.6)
 			EconomySystem.credits += v
-			EconomySystem.book("Schiff verkauft: " + s.name, v)
+			EconomySystem.book("Ship sold: " + s.name, v)
 			ships = ships.filter(func(x): return x.id != id)
 			return
 

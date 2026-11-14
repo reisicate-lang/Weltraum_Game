@@ -191,7 +191,7 @@ func _initialize() -> void:
 			bench_crate = dev
 	bench_crate.inv.add("scrap", 6, 50.0)
 	var crafted := [false]
-	root.get_node("EventBus").toast.connect(func(t, _k): if t.begins_with("Werkbank"): crafted[0] = true)
+	root.get_node("EventBus").toast.connect(func(t, _k): if t.begins_with("Workbench"): crafted[0] = true)
 	econ.craft("plate")
 	_run_coarse(60)
 	_check("Werkbank hat eine Platte hergestellt", crafted[0])
@@ -251,7 +251,7 @@ func _initialize() -> void:
 	_check("Lumen: Steuerpult und Triebwerk laufen", phys.helm_ok() and phys.max_thrust() > 0.0)
 	_check("Mira atmet auf der Lumen (%d)" % int(crew.player().needs.air), crew.player().needs.air > 90.0)
 	fleet.switch_to(int(fleet.ships[0].id))
-	_check("Zurück auf der Rostlaube", fleet.current_name == "Rostlaube")
+	_check("Zurück auf der Rostlaube", fleet.current_name == "Rustbucket")
 	_run(0.1)
 	seat_pilot()   # Pilot am Steuerpult (Flugbefehle nur dort)
 	phys.travel_to("debris")

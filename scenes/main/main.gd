@@ -115,7 +115,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				if dst != _drag_start:
 					ShipConstructionSystem.place_move(_drag_start, dst)
 				else:
-					GameState.toast("Halte die Maustaste gedrückt und ziehe vom Gerät zum Zielfeld.")
+					GameState.toast("Hold the mouse button and drag from the device to the target tile.")
 				_drag_start = Vector2i(-1, -1)
 			elif _drag_start.x >= 0:
 				var count := 0
@@ -129,7 +129,7 @@ func _unhandled_input(event: InputEvent) -> void:
 						why = ShipConstructionSystem.place_reason(GameState.tool, tiles[0])
 					elif GameState.tool.begins_with("install:"):
 						why = RemovalSystem.install_reason(GameState.tool.substr(8), tiles[0])
-					GameState.toast(why if why != "" else "Das geht hier nicht.")
+					GameState.toast(why if why != "" else "That is not possible here.")
 				_drag_start = Vector2i(-1, -1)
 		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
 			_right_click(_tile_at_mouse())
@@ -177,23 +177,23 @@ func _click(t: Vector2i) -> void:
 	if sel == null:
 		return
 	if not g.walkable(t):
-		GameState.toast("Dorthin kann niemand laufen.")
+		GameState.toast("Nobody can walk there.")
 	elif not sel.order_move(t):
-		GameState.toast(sel.display_name + " findet keinen Weg dorthin.")
+		GameState.toast(sel.display_name + " finds no way there.")
 
 func _right_click(t: Vector2i) -> void:
 	var g := ShipSystem.grid
 	var c := CrewSystem.at(get_global_mouse_position() / Config.TILE_SIZE)
 	if c != null:
 		c.cancel_all()
-		GameState.toast(c.display_name + ": Aufgabe abgebrochen.")
+		GameState.toast(c.display_name + ": task cancelled.")
 		return
 	# Mit dem Auswahl-Werkzeug: Kontextmenü für das Objekt (Abbauen, Zerlegen, Zerstören ...)
 	if GameState.tool == "select" and UIManager.open_object_menu(t):
 		return
 	if g.in_bounds(t) and ShipConstructionSystem.jobs.has(g.idx(t)):
 		ShipConstructionSystem.cancel(ShipConstructionSystem.jobs[g.idx(t)])
-		GameState.toast("Bauplan abgebrochen.")
+		GameState.toast("Build plan cancelled.")
 		return
 	UIManager.set_tool("select")
 

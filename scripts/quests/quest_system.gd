@@ -3,10 +3,10 @@
 extends Node
 
 const FACTIONS := {
-	"guild": {"name": "Tycho-Händlergilde", "station": "tycho"},
-	"consortium": {"name": "Kármán-Konsortium", "station": "karman"},
-	"syndicate": {"name": "L4-Syndikat", "station": "l4"},
-	"patrol": {"name": "Raumpatrouille", "station": ""},
+	"guild": {"name": "Tycho Traders' Guild", "station": "tycho"},
+	"consortium": {"name": "Kármán Consortium", "station": "karman"},
+	"syndicate": {"name": "L4 Syndicate", "station": "l4"},
+	"patrol": {"name": "Space Patrol", "station": ""},
 }
 const DELIVERABLE := ["plate", "copper", "circuit", "motor", "cell", "pipe", "glass", "filter", "ration", "fuelcan", "datachip"]
 const INSURANCE_PREMIUM := 120   ## Cr pro Woche
@@ -81,8 +81,8 @@ func _make_offer(station_id: String) -> Dictionary:
 func describe(o: Dictionary) -> String:
 	var dest_name: String = PhysicsSystem.loc(o.to).name
 	if o.kind == "transport":
-		return "Transport: %d× Fracht nach %s · %d Cr · bis Tag %d" % [o.qty, dest_name, o.reward, int(o.deadline / 1440.0) + 1]
-	return "Liefern: %d× %s an %s · %d Cr · bis Tag %d" % [o.qty, ItemSystem.item(o.item).display_name, dest_name, o.reward, int(o.deadline / 1440.0) + 1]
+		return "Transport: %d× cargo to %s · %d Cr · by day %d" % [o.qty, dest_name, o.reward, int(o.deadline / 1440.0) + 1]
+	return "Deliver: %d× %s to %s · %d Cr · by day %d" % [o.qty, ItemSystem.item(o.item).display_name, dest_name, o.reward, int(o.deadline / 1440.0) + 1]
 
 func accept(o: Dictionary) -> void:
 	offers[o.from].erase(o)
@@ -91,26 +91,26 @@ func accept(o: Dictionary) -> void:
 		var t := EconomySystem.terminal()
 		if t != null:
 			t.inv.add("cargo", int(o.qty), 100.0)
-	GameState.toast("Auftrag angenommen: " + describe(o))
+	GameState.toast("Job accepted: " + describe(o))
 
 ## Abliefern: Ware muss im Handelsterminal liegen, am Zielort
 func deliver(o: Dictionary) -> bool:
 	var st := PhysicsSystem.station()
 	var t := EconomySystem.terminal()
 	if st.is_empty() or st.id != o.to or t == null:
-		GameState.toast("Abliefern geht nur am Zielort: " + PhysicsSystem.loc(o.to).name)
+		GameState.toast("Delivery only at the destination: " + PhysicsSystem.loc(o.to).name)
 		return false
 	if t.inv.count(o.item) < int(o.qty):
-		GameState.toast("Im Terminal fehlen noch %d× %s." % [int(o.qty) - t.inv.count(o.item), ItemSystem.item(o.item).display_name])
+		GameState.toast("The terminal is still missing %d× %s." % [int(o.qty) - t.inv.count(o.item), ItemSystem.item(o.item).display_name])
 		return false
 	t.inv.take(o.item, int(o.qty))
 	EconomySystem.credits += int(o.reward)
-	EconomySystem.book("Auftrag erfüllt", int(o.reward))
+	EconomySystem.book("Job completed", int(o.reward))
 	change_rep(o.faction, 8.0)
 	accepted.erase(o)
 	GoalSystem.on_contract_done()
 	SkillSystem.train(EconomySystem.trader(), "trade", 10.0)
-	GameState.toast("Auftrag erfüllt: +%d Cr, Ansehen bei %s steigt." % [o.reward, FACTIONS.get(o.faction, {"name": "?"}).name])
+	GameState.toast("Job completed: +%d Cr, reputation with %s rises." % [o.reward, FACTIONS.get(o.faction, {"name": "?"}).name])
 	return true
 
 # ---------------- Versicherung ----------------
@@ -118,14 +118,14 @@ func deliver(o: Dictionary) -> bool:
 func set_insured(on: bool) -> void:
 	insured = on
 	next_premium = GameState.time
-	GameState.toast("Versicherung " + ("abgeschlossen" if on else "gekündigt") + ".")
+	GameState.toast("Insurance " + ("abgeschlossen" if on else "cancelled") + ".")
 
 ## Schaden melden (Hüllenbruch, Feuer)
 func claim_damage(what: String) -> void:
 	if not insured:
 		return
 	EconomySystem.credits += INSURANCE_PAYOUT
-	EconomySystem.book("Versicherung zahlt: " + what, INSURANCE_PAYOUT)
+	EconomySystem.book("Insurance pays: " + what, INSURANCE_PAYOUT)
 
 # ---------------- Täglich ----------------
 
@@ -139,14 +139,14 @@ func step(_dt: float) -> void:
 		if GameState.time > float(o.deadline):
 			accepted.erase(o)
 			change_rep(o.faction, -10.0)
-			GameState.toast("Auftrag verpasst. Dein Ansehen leidet.", "bad")
+			GameState.toast("Job missed. Your reputation suffers.", "bad")
 	# Neue Angebote an allen Stationen
 	offers.clear()
 	# Versicherungsprämie
 	if insured and GameState.time >= next_premium:
 		next_premium += 7.0 * 1440.0
 		EconomySystem.credits -= INSURANCE_PREMIUM
-		EconomySystem.book("Versicherungsprämie", -INSURANCE_PREMIUM)
+		EconomySystem.book("Insurance premium", -INSURANCE_PREMIUM)
 	# Weltereignisse
 	events = events.filter(func(e): return float(e.until) > GameState.time)
 	if randf() < 0.35:
@@ -154,17 +154,17 @@ func step(_dt: float) -> void:
 
 func _new_event() -> void:
 	var options := [
-		{"text": "Streik in der Mondwerft: Stahlplatten sind knapp und teuer.", "item": "plate", "station": "", "factor": 1.5},
-		{"text": "Ein Frachter mit Elektronik ist gestrandet: Platinen sind billig.", "item": "circuit", "station": "", "factor": 0.6},
-		{"text": "Treibstoffmangel am Kármán-Ring.", "item": "fuelcan", "station": "karman", "factor": 1.6},
-		{"text": "Razzia der Patrouille auf L4: Schmuggelware ist gefragt wie nie.", "item": "contraband", "station": "l4", "factor": 1.4},
-		{"text": "Hungerwinter in den Mondsiedlungen: Rationen sind teuer.", "item": "ration", "station": "tycho", "factor": 1.5},
-		{"text": "Datenleck beim Konsortium: Datenchips sind heiß begehrt.", "item": "datachip", "station": "", "factor": 1.5},
+		{"text": "Strike at the lunar shipyard: steel plates are scarce and expensive.", "item": "plate", "station": "", "factor": 1.5},
+		{"text": "A freighter full of electronics is stranded: circuit boards are cheap.", "item": "circuit", "station": "", "factor": 0.6},
+		{"text": "Fuel shortage at the Kármán Ring.", "item": "fuelcan", "station": "karman", "factor": 1.6},
+		{"text": "Patrol raid on L4: contraband is in demand like never before.", "item": "contraband", "station": "l4", "factor": 1.4},
+		{"text": "Hunger winter in the lunar settlements: rations are expensive.", "item": "ration", "station": "tycho", "factor": 1.5},
+		{"text": "Data leak at the Consortium: data chips are in hot demand.", "item": "datachip", "station": "", "factor": 1.5},
 	]
 	var e: Dictionary = options.pick_random().duplicate()
 	e.until = GameState.time + randf_range(2.0, 5.0) * 1440.0
 	events.append(e)
-	GameState.toast("Nachrichten: " + e.text)
+	GameState.toast("News: " + e.text)
 
 func to_data() -> Dictionary:
 	return {"reputation": reputation, "accepted": accepted, "insured": insured, "next_premium": next_premium, "events": events}

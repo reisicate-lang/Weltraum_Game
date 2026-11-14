@@ -556,24 +556,6 @@ func readable_book(c: CrewMember) -> String:
 
 # ---------------- Texte für die Oberfläche ----------------
 
-const EFFECT_NAMES := {
-	"work_structure": "Tempo bei Wänden und Böden", "work_furniture": "Tempo bei Möbeln", "work_build": "Bautempo",
-	"work_electrical": "Tempo bei Elektrik", "cable_speed": "Tempo beim Kabelverlegen", "work_robotic": "Tempo bei Automatik",
-	"work_computer": "Tempo bei Rechnern", "hack_assist": "Hilfe beim Hacken", "work_hull": "Tempo bei Hüllenreparatur",
-	"work_propulsion": "Tempo bei Triebwerken", "work_mechanical": "Tempo bei Mechanik", "military_salvage": "Ausbeute aus Kriegswracks",
-	"weapon_care": "Waffenpflege", "combat_armed": "Angriff mit Nahkampfwaffe", "combat_unarmed": "Angriff ohne Waffe",
-	"combat_ranged": "Angriff mit Fernwaffe", "defense": "Verteidigung", "threat": "Bedrohungswirkung",
-	"suit_o2_saving": "Sauerstoff im Anzug gespart", "eva_work": "Arbeitstempo im Anzug", "hack_power": "Hacken",
-	"sell_bonus": "Mehr beim Verkaufen", "buy_discount": "Rabatt beim Kaufen", "appraise": "Genauigkeit beim Schätzen",
-	"work_demolish": "Tempo beim Abreißen", "demolish_yield": "Ausbeute beim Abreißen", "fuel_saving": "Treibstoff gespart",
-	"eva_speed": "Tempo im Vakuum", "bluff": "Bluffen", "perform_income": "Gage bei Auftritten", "meal_bonus": "Sättigung von Mahlzeiten",
-	"meal_mood": "Stimmung durch Mahlzeiten", "stress_relief": "Stressabbau", "talk_folk": "Gespräche mit einfachen Leuten",
-	"find_hidden": "Verstecke finden", "damage_insight": "Schadensursachen erkennen", "gamble_edge": "Vorteil beim Glücksspiel",
-	"talk_military": "Gespräche mit Militär", "talk_oligarch": "Gespräche mit Reichen", "negotiate": "Verhandeln", "calm": "Beruhigen",
-	"travel_saving": "Kürzere Schnellreisen", "prediction": "Flugbahnvorhersage", "stress_insight": "Stress erkennen",
-	"counsel": "Seelsorge", "crew_mood": "Stimmung der Crew", "smuggle": "Schmuggeln", "talk_street": "Gespräche mit der Halbwelt",
-	"black_bonus": "Mehr am Schwarzmarkt",
-}
 
 ## Tooltip einer Fähigkeit (englisch): Kurskosten, Bonus, Kategorien, Lernwege, aktueller Fortschritt
 func skill_tooltip(c: CrewMember, id: String) -> String:
@@ -600,9 +582,9 @@ func skill_tooltip(c: CrewMember, id: String) -> String:
 		var full := float(s.gameplay_effects[e]) * (1.0 + MASTERY_BONUS)
 		var now := float(s.gameplay_effects[e]) * p / 100.0 + (float(s.gameplay_effects[e]) * MASTERY_BONUS if p >= ACQUIRED else 0.0)
 		if e in WORK_EFFECTS:
-			lines.append("Effect: %s %+.1f work value at 100 %% (now %+.1f, grows with progress)." % [EFFECT_NAMES_EN.get(e, e), full * WORK_VALUE_SCALE, now * WORK_VALUE_SCALE])
+			lines.append("Effect: %s %+.1f work value at 100 %% (now %+.1f, grows with progress)." % [EFFECT_NAMES.get(e, e), full * WORK_VALUE_SCALE, now * WORK_VALUE_SCALE])
 		else:
-			lines.append("Effect: %s %+d %% at 100 %% (now %+d %%, grows with progress)." % [EFFECT_NAMES_EN.get(e, e), int(round(full * 100.0)), int(round(now * 100.0))])
+			lines.append("Effect: %s %+d %% at 100 %% (now %+d %%, grows with progress)." % [EFFECT_NAMES.get(e, e), int(round(full * 100.0)), int(round(now * 100.0))])
 	if s.mastery_text != "":
 		lines.append(s.mastery_text if s.mastery_text.begins_with("Acquired") else "At 100 %: " + s.mastery_text)
 	lines.append("Ways to learn: " + "; ".join(s.learning_sources) + ".")
@@ -614,8 +596,8 @@ func skill_tooltip(c: CrewMember, id: String) -> String:
 const WORK_EFFECTS := ["work_structure", "work_furniture", "work_build", "work_electrical", "cable_speed", "work_robotic",
 	"work_computer", "work_hull", "work_propulsion", "work_mechanical", "work_demolish"]
 
-## Englische Namen der Wirkungen für Tooltips
-const EFFECT_NAMES_EN := {
+## Namen der Wirkungen für Tooltips
+const EFFECT_NAMES := {
 	"work_structure": "Walls and floors", "work_furniture": "Furniture work", "work_build": "Building (walls, floors, cables, new devices, crafting, installing)",
 	"work_electrical": "Electrical work", "cable_speed": "Laying cables", "work_robotic": "Automation work", "work_computer": "Computer work",
 	"hack_assist": "Hacking assistance", "work_hull": "Hull repair", "work_propulsion": "Propulsion work", "work_mechanical": "Mechanical work",

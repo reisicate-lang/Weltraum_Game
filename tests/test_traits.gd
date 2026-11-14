@@ -199,6 +199,6 @@ func _initialize() -> void:
 
 func _find_go() -> Button:
 	for b in ui.char_ui.creation_bottom.get_children():
-		if b is Button and not b.is_queued_for_deletion() and b.text == "Los geht's":
+		if b is Button and not b.is_queued_for_deletion() and b.text == "Let's go":
 			return b
 	return null

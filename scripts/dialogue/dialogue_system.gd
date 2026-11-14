@@ -4,9 +4,9 @@
 extends Node
 
 const CONTACTS := {
-	"tycho": {"name": "Gus, Schrotthändler", "style": "folk", "talk": "talk_folk"},
-	"karman": {"name": "Aurel Lindqvist, Bankier", "style": "oligarch_et", "talk": "talk_oligarch"},
-	"l4": {"name": "Vex, Schieberin", "style": "street", "talk": "talk_street"},
+	"tycho": {"name": "Gus, scrap dealer", "style": "folk", "talk": "talk_folk"},
+	"karman": {"name": "Aurel Lindqvist, banker", "style": "oligarch_et", "talk": "talk_oligarch"},
+	"l4": {"name": "Vex, fixer", "style": "street", "talk": "talk_street"},
 }
 
 var claim_discount := false
@@ -30,19 +30,19 @@ func options() -> Array:
 	if not con.is_empty():
 		var lvl := SkillSystem.progress(c, con.style)
 		var unlock := HobbySystem.unlocks(c, con.talk) or c.contacts.any(func(x): return con.name.split(",")[0] in x)
-		out.append({"id": "chat", "text": "Mit %s plaudern" % con.name, "ok": true, "why": ""})
+		out.append({"id": "chat", "text": "Chat with %s" % con.name, "ok": true, "why": ""})
 		match st.id:
 			"tycho":
-				out.append({"id": "tip", "text": "Gus nach einem lohnenden Wrack fragen", "ok": (lvl >= 30.0 or unlock) and not claim_discount, "why": "Volksetikette 30 % oder Hobby Geschichte"})
+				out.append({"id": "tip", "text": "Ask Gus about a worthwhile wreck", "ok": (lvl >= 30.0 or unlock) and not claim_discount, "why": "Folk Etiquette 30 % or hobby History"})
 			"karman":
-				out.append({"id": "rate", "text": "Mit Lindqvist über die Kreditrate reden", "ok": lvl >= 40.0 and not rate_lowered, "why": "Oberschicht-Etikette 40 %"})
+				out.append({"id": "rate", "text": "Talk to Lindqvist about the loan instalment", "ok": lvl >= 40.0 and not rate_lowered, "why": "Oligarch Etiquette 40 %"})
 			"l4":
-				out.append({"id": "smuggle", "text": "Vex nach Schmuggelware fragen (2 Kisten, 100 Cr)", "ok": lvl >= 30.0 or unlock, "why": "Straßenetikette 30 %, Hobby Kartenspiel oder Kontakt Vex"})
-	out.append({"id": "deal", "text": "Bessere Preise für heute aushandeln", "ok": true, "why": ""})
-	out.append({"id": "song", "text": "In der Bar singen (2 Stunden)", "ok": true, "why": ""})
-	out.append({"id": "dance", "text": "In der Bar tanzen (2 Stunden)", "ok": true, "why": ""})
-	out.append({"id": "acting", "text": "In der Bar ein Stück spielen (2 Stunden)", "ok": true, "why": ""})
-	out.append({"id": "gamble", "text": "Würfeln um 50 Cr", "ok": EconomySystem.credits >= 50, "why": "50 Cr nötig"})
+				out.append({"id": "smuggle", "text": "Ask Vex about contraband (2 crates, 100 Cr)", "ok": lvl >= 30.0 or unlock, "why": "Street Etiquette 30 %, hobby Card Games or contact Vex"})
+	out.append({"id": "deal", "text": "Negotiate better prices for today", "ok": true, "why": ""})
+	out.append({"id": "song", "text": "Sing in the bar (2 hours)", "ok": true, "why": ""})
+	out.append({"id": "dance", "text": "Dance in the bar (2 hours)", "ok": true, "why": ""})
+	out.append({"id": "acting", "text": "Act a piece in the bar (2 hours)", "ok": true, "why": ""})
+	out.append({"id": "gamble", "text": "Play dice for 50 Cr", "ok": EconomySystem.credits >= 50, "why": "Needs 50 Cr"})
 	return out
 
 ## Option ausführen. Gibt die Antwort (Dialogzeile) zurück.
@@ -55,13 +55,13 @@ func choose(id: String) -> String:
 		"chat":
 			SkillSystem.train(c, con.talk, 10.0 * social)
 			c.stress = maxf(0.0, c.stress - 5.0)
-			return {"tycho": "Gus: „Das Trümmerfeld spuckt immer noch Kriegsschrott aus. Pass auf Plünderer auf.“",
-				"karman": "Lindqvist: „Pünktliche Raten, und wir bleiben Freunde.“",
-				"l4": "Vex: „Hier fragt keiner nach Papieren. Solange du nicht fragst, wer ich bin.“"}.get(st.id, "")
+			return {"tycho": "Gus: “The debris field still coughs up war scrap. Watch out for plunderers.”",
+				"karman": "Lindqvist: “Pay your instalments on time and we stay friends.”",
+				"l4": "Vex: “Nobody here asks for papers. As long as you don't ask who I am.”"}.get(st.id, "")
 		"tip":
 			SkillSystem.train(c, "talk_folk", 15.0)
 			claim_discount = true
-			return "Gus: „Für dich? Das nächste Bergungsrecht kriegst du zum halben Preis.“"
+			return "Gus: “For you? You get the next salvage claim at half price.”"
 		"rate":
 			SkillSystem.train(c, "talk_oligarch", 15.0)
 			SkillSystem.train(c, "negotiate", 10.0)
@@ -69,41 +69,41 @@ func choose(id: String) -> String:
 			if SkillSystem.mastered(c, "oligarch_et") or randf() < chance * social:
 				rate_lowered = true
 				EconomySystem.payment_factor = 0.85 if not SkillSystem.mastered(c, "oligarch_et") else 0.7
-				return "Lindqvist: „Nun gut. Ab jetzt eine kleinere Rate. Enttäuschen Sie mich nicht.“"
-			return "Lindqvist: „Ich fürchte, da kann ich nichts machen.“"
+				return "Lindqvist: “Very well. A smaller instalment from now on. Don't disappoint me.”"
+			return "Lindqvist: “I'm afraid there is nothing I can do.”"
 		"smuggle":
 			if EconomySystem.credits < 100 or EconomySystem.terminal() == null:
-				return "Vex: „Komm wieder, wenn du flüssig bist.“"
+				return "Vex: “Come back when you have the cash.”"
 			EconomySystem.credits -= 100
-			EconomySystem.book("Schmuggelware von Vex", -100)
+			EconomySystem.book("Contraband from Vex", -100)
 			EconomySystem.terminal().inv.add("contraband", 2, 90.0)
 			SkillSystem.train(c, "talk_street", 10.0)
-			return "Vex: „Zwei Kisten, liegen im Terminal. Verkauf sie hier auf L4, woanders kontrollieren sie.“"
+			return "Vex: “Two crates, they're in your terminal. Sell them here on L4 – elsewhere they inspect.”"
 		"deal":
 			SkillSystem.train(c, "negotiate", 10.0)
 			var bonus := 0.03 + SkillSystem.effect(c, "negotiate") * 0.2 * social
 			EconomySystem.deal_bonus = bonus
 			EconomySystem.deal_until = (floorf(GameState.time / 1440.0) + 1.0) * 1440.0
-			return "%s handelt %d %% bessere Preise für heute aus." % [c.display_name, int(bonus * 100.0)]
+			return "%s negotiates %d %% better prices for today." % [c.display_name, int(bonus * 100.0)]
 		"song", "dance", "acting":
 			var skill_id := {"song": "song", "dance": "dance", "acting": "acting"}[id] as String
 			var income := int((15.0 + 120.0 * SkillSystem.effect(c, "perform_income") * randf_range(0.6, 1.2)) * (2.0 if id == "dance" and SkillSystem.mastered(c, "dance") else 1.0))
 			EconomySystem.credits += income
-			EconomySystem.book("Gage in der Bar", income)
+			EconomySystem.book("Bar fee", income)
 			SkillSystem.train(c, {"song": "perform_song", "dance": "perform_dance", "acting": "perform_acting"}[id], 120.0)
 			c.away_until = GameState.time + 120.0
 			c.stress = maxf(0.0, c.stress - SkillSystem.effect(c, "stress_relief") * 20.0)
-			return "%s tritt auf (%s) und bekommt %d Cr Gage." % [c.display_name, SkillSystem.skill(skill_id).skill_name, income]
+			return "%s performs (%s) and earns a %d Cr fee." % [c.display_name, SkillSystem.skill(skill_id).skill_name, income]
 		"gamble":
 			EconomySystem.credits -= 50
 			SkillSystem.train(c, "gamble", 20.0)
 			var win := randf() < 0.42 + SkillSystem.effect(c, "gamble_edge")
 			if win:
 				EconomySystem.credits += 100
-				EconomySystem.book("Würfelgewinn", 50)
-				return "%s gewinnt beim Würfeln 50 Cr." % c.display_name
-			EconomySystem.book("Würfelverlust", -50)
-			return "%s verliert 50 Cr beim Würfeln." % c.display_name
+				EconomySystem.book("Dice win", 50)
+				return "%s wins 50 Cr at dice." % c.display_name
+			EconomySystem.book("Dice loss", -50)
+			return "%s loses 50 Cr at dice." % c.display_name
 	return ""
 
 ## Schmuggelware verkaufen: Kontrolle möglich (Heimlichkeit, Schauspiel helfen)
@@ -125,4 +125,4 @@ func counsel(counselor: CrewMember, target: CrewMember) -> String:
 	target.stress = maxf(0.0, target.stress - amount)
 	SkillSystem.train(counselor, "counsel", 15.0)
 	SkillSystem.train(counselor, "calm", 5.0)
-	return "%s spricht mit %s. Stress −%d." % [counselor.display_name, target.display_name, int(amount)]
+	return "%s talks with %s. Stress −%d." % [counselor.display_name, target.display_name, int(amount)]

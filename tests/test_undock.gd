@@ -65,7 +65,7 @@ func _initialize() -> void:
 	_run(2)
 	toasts.clear()
 	_check("Frei treibend: Abdocken liefert false", not P.request_undock())
-	_check("… mit verständlicher Meldung (%s)" % _last(), _last() == "Das Schiff ist nicht angedockt.")
+	_check("… mit verständlicher Meldung (%s)" % _last(), _last() == "The ship is not docked.")
 
 	# 2) Abdocken an einem stillstehenden Ort (Habitat L4 steht fest)
 	_fresh()
@@ -84,7 +84,7 @@ func _initialize() -> void:
 	_run(30)
 	var r: Dictionary = P.rel_to("l4")
 	_check("Schiff treibt gleichmäßig weg (%.0f m nach 30 s)" % (r.dist * 1000.0), r.dist > 0.07 and r.dist < 0.12)
-	_check("Kein Zusammenstoß, Hülle unversehrt", _hull(ship.grid) == hull_before and not toasts.any(func(t): return "Zusammenstoß" in t))
+	_check("Kein Zusammenstoß, Hülle unversehrt", _hull(ship.grid) == hull_before and not toasts.any(func(t): return "Collision" in t))
 
 	# 3) Abdocken an einem bewegten Ort (Kármán-Ring kreist um die Erde)
 	_fresh()
@@ -111,7 +111,7 @@ func _initialize() -> void:
 	var third: bool = P.request_undock()
 	_check("Nur der erste Aufruf dockt ab", first and not second and not third)
 	_check("Abstoß nur einmal", P.vel == v1)
-	_check("Genau eine Erfolgsmeldung", toasts.filter(func(t): return t.begins_with("Abgedockt")).size() == 1)
+	_check("Genau eine Erfolgsmeldung", toasts.filter(func(t): return t.begins_with("Undocked")).size() == 1)
 
 	# 5) Blockierende Sicherheitsbedingungen
 	_fresh()
@@ -122,7 +122,7 @@ func _initialize() -> void:
 	_check("Crew auf der Station: Abdocken verweigert", not P.request_undock() and P.docked == "tycho" and st.active())
 	_check("… Meldung nennt die Person (%s)" % _last(), mira.display_name in _last())
 	mira.pos = Vector2(ship.grid.pos(st.hatch)) + Vector2(0.5, 0.5)
-	_check("Crew in der Luke: verweigert (%s)" % P.undock_block_reason(), not P.request_undock() and "Luke" in _last())
+	_check("Crew in der Luke: verweigert (%s)" % P.undock_block_reason(), not P.request_undock() and "hatch" in _last())
 	mira.pos = Vector2(ship.spawn_point()) + Vector2(0.5, 0.5)
 	# Ein Wrack am Port (sonst ein eigenes Ziel): Station lösen, Wrack direkt ankoppeln
 	st.clear()
@@ -133,11 +133,11 @@ func _initialize() -> void:
 			wreck_tile = ship.grid.pos(i)
 			break
 	mira.pos = Vector2(wreck_tile) + Vector2(0.5, 0.5)
-	_check("Crew auf dem Wrack: verweigert (%s)" % P.undock_block_reason(), not P.request_undock() and "Wrack" in _last())
+	_check("Crew auf dem Wrack: verweigert (%s)" % P.undock_block_reason(), not P.request_undock() and "wreck" in _last())
 	mira.pos = Vector2(ship.spawn_point()) + Vector2(0.5, 0.5)
 	var helm = P.ship_devices("helm")[0]
 	helm.broken = true
-	_check("Steuerpult kaputt: verweigert (%s)" % P.undock_block_reason(), not P.request_undock() and "kaputt" in _last())
+	_check("Steuerpult kaputt: verweigert (%s)" % P.undock_block_reason(), not P.request_undock() and "broken" in _last())
 	helm.broken = false
 	_run(2)
 	_check("Nach Beheben der Gründe klappt es", P.request_undock() and P.docked == "")
@@ -146,10 +146,10 @@ func _initialize() -> void:
 	_fresh()
 	P.request_undock()
 	_check("Sofort wieder andocken gesperrt", not P.can_dock("tycho") and not P.dock("tycho"))
-	_check("… Grund wird genannt (%s)" % P.dock_block_reason("tycho"), "Gerade erst abgedockt" in P.dock_block_reason("tycho"))
+	_check("… Grund wird genannt (%s)" % P.dock_block_reason("tycho"), "Just undocked" in P.dock_block_reason("tycho"))
 	toasts.clear()
 	P.start_autodock()
-	_check("Auto-Dock ist ebenfalls gesperrt", P.autodock.is_empty() and "Gerade erst abgedockt" in _last())
+	_check("Auto-Dock ist ebenfalls gesperrt", P.autodock.is_empty() and "Just undocked" in _last())
 	_run(16)
 	# Bewusst zurückmanövrieren: Geschwindigkeit angleichen und heranfliegen
 	var t0: Dictionary = P.loc_state(P.loc("tycho"), P.secs())
@@ -176,7 +176,7 @@ func _initialize() -> void:
 		var rr: Dictionary = P.rel_to("tycho")
 		_check("Zeitstufe %d: frei, ohne Wiederandocken, gleichmäßig (%.0f m, %.1f m/s, %d Bilder)" % [si, rr.dist * 1000.0, rr.speed * 1000.0, frames],
 			P.docked == "" and rr.speed > 0.0025 and rr.speed < 0.004 and rr.dist > 0.1 and rr.dist < 0.3)   # 3 m/s Abstoß + Bahnabdrift
-		_check("Zeitstufe %d: kein Zusammenstoß" % si, _hull(ship.grid) == hb and not toasts.any(func(t): return "Zusammenstoß" in t))
+		_check("Zeitstufe %d: kein Zusammenstoß" % si, _hull(ship.grid) == hb and not toasts.any(func(t): return "Collision" in t))
 	time.set_speed(0)
 
 	# 8) Speichern und Laden nach dem Abdocken

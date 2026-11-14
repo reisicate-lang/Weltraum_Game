@@ -18,11 +18,11 @@ func _process(delta: float) -> void:
 ## Kurzinfo zu einem Speicherplatz (für das Menü)
 func slot_info(s: int) -> String:
 	if not FileAccess.file_exists(path(s)):
-		return "leer"
+		return "empty"
 	var d = JSON.parse_string(FileAccess.get_file_as_string(path(s)))
 	if typeof(d) != TYPE_DICTIONARY:
-		return "beschädigt"
-	return "Tag %d · %d Cr · %s" % [int(float(d.time) / 1440.0) + 1, int(d.economy.credits), String(d.fleet.current_name)]
+		return "damaged"
+	return "Day %d · %d Cr · %s" % [int(float(d.time) / 1440.0) + 1, int(d.economy.credits), String(d.fleet.current_name)]
 
 func save_game(silent: bool = false) -> bool:
 	var data := {
@@ -44,12 +44,12 @@ func save_game(silent: bool = false) -> bool:
 	var f := FileAccess.open(path(), FileAccess.WRITE)
 	if f == null:
 		if not silent:
-			GameState.toast("Speichern hat nicht geklappt.", "bad")
+			GameState.toast("Saving failed.", "bad")
 		return false
 	f.store_string(JSON.stringify(data))
 	f.close()
 	if not silent:
-		GameState.toast("Spiel gespeichert.")
+		GameState.toast("Game saved.")
 	return true
 
 ## Früherer Spielstand (doppelt so große Felder): gespeicherte Positionen ins feine Raster.
@@ -80,7 +80,7 @@ func _upscale_positions(data: Dictionary) -> void:
 	if int(st.get("hatch", -1)) >= 0 and int(st.hatch) < g.coarse_map.size():
 		st.hatch = g.coarse_map[int(st.hatch)]
 	if cw > 0:
-		GameState.toast("Älterer Spielstand: Raster verfeinert (jedes Feld ist jetzt 2×2 Felder).")
+		GameState.toast("Older save: grid refined (every tile is now 2×2 tiles).")
 
 func has_save() -> bool:
 	return FileAccess.file_exists(path())
@@ -88,13 +88,13 @@ func has_save() -> bool:
 func load_game(silent: bool = false) -> bool:
 	if not has_save():
 		if not silent:
-			GameState.toast("Es gibt noch keinen Spielstand.")
+			GameState.toast("There is no saved game yet.")
 		return false
 	var text := FileAccess.get_file_as_string(path())
 	var data = JSON.parse_string(text)
 	if typeof(data) != TYPE_DICTIONARY or int(data.get("version", 0)) != Config.SAVE_VERSION:
 		if not silent:
-			GameState.toast("Der Spielstand passt nicht zu dieser Version.", "bad")
+			GameState.toast("This save does not match this version.", "bad")
 		return false
 	GameState.time = float(data.time)
 	var legacy := int(data.ship.get("scale", 1)) < Config.GRID_SCALE
@@ -120,7 +120,7 @@ func load_game(silent: bool = false) -> bool:
 	EventBus.game_loaded.emit()
 	EventBus.ship_changed.emit()
 	if not silent:
-		GameState.toast("Spielstand geladen.")
+		GameState.toast("Game loaded.")
 	return true
 
 ## Ältere Spielstände: Transponder und Antenne gab es noch nicht. Fehlen sie am eigenen Schiff,

@@ -87,7 +87,7 @@ func _nav_buttons() -> Array:
 		if row.is_queued_for_deletion():
 			continue
 		for b in row.find_children("*", "Button", true, false):
-			if b.text == "Ausrichten" or b.text == "Angleichen":
+			if b.text == "Align" or b.text == "Match":
 				out.append(b)
 	return out
 
@@ -145,7 +145,7 @@ func _initialize() -> void:
 		var f0: float = P.fuel()
 		toasts.clear()
 		ui.toggle_nav(true)                 # N
-		_check("1 (%s): N wird abgewiesen (%s)" % [mode, toasts[-1] if not toasts.is_empty() else ""], not ui.nav_open and P.helm_at == P.NO_HELM and not toasts.is_empty() and ("kaputt" in toasts[-1] or "Strom" in toasts[-1]))
+		_check("1 (%s): N wird abgewiesen (%s)" % [mode, toasts[-1] if not toasts.is_empty() else ""], not ui.nav_open and P.helm_at == P.NO_HELM and not toasts.is_empty() and ("broken" in toasts[-1] or "power" in toasts[-1]))
 		ui.request_flight(near)             # Klick aufs Pult
 		_check("1 (%s): Klick wird abgewiesen" % mode, not ui.nav_open and not ui._helm_walk)
 		_frames(120, 1.0, true)             # W und Q halten
@@ -201,8 +201,8 @@ func _initialize() -> void:
 		(_vrel() - v_cut - _grav(120)).length() < 0.01 and P.fuel() == f_cut and P.thrust == 0.0)
 	_check("2: Vorhandene Bewegung bleibt (%.2f m/s)" % (vel_cut.length() * 1000.0), vel_cut.length() > 0.0 and absf((P.vel - vel_cut).length() * 1000.0 - _grav(120).length()) < 0.01 and _vrel().length() > 1.0)
 	_check("2: Keine Drehung ohne versorgtes Pult", P.ang_vel == 0.0)
-	_check("2: Meldung „Schub beendet“ (%s)" % ", ".join(toasts), toasts.any(func(t): return t.begins_with("Schub beendet")))
-	_check("2: Cockpit zeigt den Grund", P.helm_block_reason(P.operated_helm()) == "Dieses Steuerpult hat keinen Strom.")
+	_check("2: Meldung „Schub beendet“ (%s)" % ", ".join(toasts), toasts.any(func(t): return t.begins_with("Thrust stopped")))
+	_check("2: Cockpit zeigt den Grund", P.helm_block_reason(P.operated_helm()) == "This navigation console has no power.")
 	# Drehung, die schon läuft, dreht weiter
 	_wire(far)
 	_frames(30, 0.0, true)
@@ -223,7 +223,7 @@ func _initialize() -> void:
 	_cut(far)
 	var vm := _vrel()
 	_frames(60)
-	_check("2: Angleichen endet beim Ausfall (%s)" % ", ".join(toasts), P.match_target == "" and toasts.any(func(t): return t.begins_with("Angleichen beendet")) and (_vrel() - vm - _grav(60)).length() < 0.01)
+	_check("2: Angleichen endet beim Ausfall (%s)" % ", ".join(toasts), P.match_target == "" and toasts.any(func(t): return t.begins_with("Matching stopped")) and (_vrel() - vm - _grav(60)).length() < 0.01)
 	ui.toggle_match()
 	_check("2: Angleichen lässt sich ohne Strom nicht einschalten", P.match_target == "")
 	_wire(far)
@@ -239,11 +239,11 @@ func _initialize() -> void:
 	mira.order = null
 	_check("4: Angedockt an L4, beide Pulte in Ordnung, niemand am Pult", P.docked == "l4" and P.helm_at == P.NO_HELM and P.helm_ok())
 	toasts.clear()
-	_check("4: Ohne Pilot am Pult: Abdocken verweigert (%s)" % P.undock_block_reason(), not P.request_undock() and P.docked == "l4" and "Cockpit" in toasts[-1])
+	_check("4: Ohne Pilot am Pult: Abdocken verweigert (%s)" % P.undock_block_reason(), not P.request_undock() and P.docked == "l4" and "cockpit" in toasts[-1])
 	P.travel_to("karman")
-	_check("4: … Schnellreise verweigert", P.travel.is_empty() and P.docked == "l4" and "Cockpit" in toasts[-1])
+	_check("4: … Schnellreise verweigert", P.travel.is_empty() and P.docked == "l4" and "cockpit" in toasts[-1])
 	P.start_autodock()
-	_check("4: … Auto-Dock verweigert", P.autodock.is_empty() and "Cockpit" in toasts[-1])
+	_check("4: … Auto-Dock verweigert", P.autodock.is_empty() and "cockpit" in toasts[-1])
 	for mode in ["kaputt", "ohne Strom"]:
 		if mode == "kaputt":
 			near.broken = true
@@ -251,11 +251,11 @@ func _initialize() -> void:
 			_cut(near)
 		P.helm_at = near.pos                # Pilot steht am nahen Pult
 		toasts.clear()
-		_check("4 (%s): Abdocken verweigert, obwohl das andere Pult geht (%s)" % [mode, P.undock_block_reason()], P.helm_ok() and not P.request_undock() and P.docked == "l4" and ("kaputt" in toasts[-1] or "Strom" in toasts[-1]))
+		_check("4 (%s): Abdocken verweigert, obwohl das andere Pult geht (%s)" % [mode, P.undock_block_reason()], P.helm_ok() and not P.request_undock() and P.docked == "l4" and ("broken" in toasts[-1] or "power" in toasts[-1]))
 		P.travel_to("karman")
 		_check("4 (%s): Schnellreise verweigert" % mode, P.travel.is_empty() and P.docked == "l4")
 		P.start_autodock()
-		_check("4 (%s): Auto-Dock verweigert (%s)" % [mode, toasts[-1]], P.autodock.is_empty() and ("kaputt" in toasts[-1] or "Strom" in toasts[-1]))
+		_check("4 (%s): Auto-Dock verweigert (%s)" % [mode, toasts[-1]], P.autodock.is_empty() and ("broken" in toasts[-1] or "power" in toasts[-1]))
 		near.broken = false
 		_wire(near)
 	P.helm_at = P.NO_HELM
@@ -300,10 +300,10 @@ func _initialize() -> void:
 	P.ang_vel = 0.0
 	P.angle = P.dock_alignment("l4").angle
 	P.helm_at = P.NO_HELM
-	_check("5: Ohne Pilot am Pult: Andocken verweigert (%s)" % P.dock_block_reason("l4"), not P.can_dock("l4") and not P.dock("l4") and P.docked == "" and "Cockpit" in P.dock_block_reason("l4"))
+	_check("5: Ohne Pilot am Pult: Andocken verweigert (%s)" % P.dock_block_reason("l4"), not P.can_dock("l4") and not P.dock("l4") and P.docked == "" and "cockpit" in P.dock_block_reason("l4"))
 	near.broken = true
 	P.helm_at = near.pos
-	_check("5: Am kaputten Pult: Andocken verweigert (%s)" % P.dock_block_reason("l4"), not P.dock("l4") and "kaputt" in P.dock_block_reason("l4"))
+	_check("5: Am kaputten Pult: Andocken verweigert (%s)" % P.dock_block_reason("l4"), not P.dock("l4") and "broken" in P.dock_block_reason("l4"))
 	near.broken = false
 	mira.pos = _beside(far)
 	ui.request_flight(far)
@@ -325,7 +325,7 @@ func _initialize() -> void:
 	toasts.clear()
 	_cut(far)
 	gs.step(1.0 / 60.0 / 60.0)
-	_check("5: Pult fällt aus: Reise abgebrochen (%s)" % (toasts[-1] if not toasts.is_empty() else ""), P.travel.is_empty() and P.docked == "" and toasts.any(func(t): return t.begins_with("Schnellreise abgebrochen")))
+	_check("5: Pult fällt aus: Reise abgebrochen (%s)" % (toasts[-1] if not toasts.is_empty() else ""), P.travel.is_empty() and P.docked == "" and toasts.any(func(t): return t.begins_with("Fast travel aborted")))
 	var v_tr: float = P.vel.length()
 	var p_tr: Vector2 = P.pos
 	for k in 60:
@@ -344,7 +344,7 @@ func _initialize() -> void:
 	toasts.clear()
 	_cut(far)
 	gs.step(1.0 / 60.0 / 60.0)
-	_check("5: Pult fällt aus: Auto-Dock abgebrochen (%s)" % (toasts[-1] if not toasts.is_empty() else ""), P.autodock.is_empty() and P.docked == "" and toasts.any(func(t): return t.begins_with("Auto-Dock abgebrochen")))
+	_check("5: Pult fällt aus: Auto-Dock abgebrochen (%s)" % (toasts[-1] if not toasts.is_empty() else ""), P.autodock.is_empty() and P.docked == "" and toasts.any(func(t): return t.begins_with("Auto-Dock aborted")))
 	_wire(far)
 	# „Ausrichten“ dreht mit Drehschub statt sofort, bei ×1 und ×16
 	for factor in [1.0, 16.0]:

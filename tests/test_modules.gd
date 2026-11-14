@@ -131,7 +131,7 @@ func _initialize() -> void:
 	_secs(20)
 	_near_tycho()
 	var why: String = P.autodock_block_reason()
-	_check("1: Auto-Dock gesperrt, mit Grund (%s)" % why, why.begins_with("Kein Autodock Module in diesem Steuerpult"))
+	_check("1: Auto-Dock gesperrt, mit Grund (%s)" % why, why.begins_with("No Autodock Module in this navigation console"))
 	var btn = _autodock_button()
 	_check("1: Cockpit-Knopf Auto-Dock gesperrt", btn != null and btn.disabled)
 	toasts.clear()
@@ -178,22 +178,22 @@ func _initialize() -> void:
 	P.helm_at = helm_a.pos
 	_check("2: An A verfügbar", P.autodock_block_reason() == "")
 	P.helm_at = helm_b.pos
-	_check("2: An B gesperrt (%s)" % P.autodock_block_reason(), P.autodock_block_reason().begins_with("Kein Autodock Module"))
+	_check("2: An B gesperrt (%s)" % P.autodock_block_reason(), P.autodock_block_reason().begins_with("No Autodock Module"))
 	P.helm_at = helm_a.pos
 	_open_helm(helm_a)
 	ui._transfer(true, "mod_autodock", 1)
-	_check("2: A nach Entnahme gesperrt", P.autodock_block_reason().begins_with("Kein Autodock Module"))
+	_check("2: A nach Entnahme gesperrt", P.autodock_block_reason().begins_with("No Autodock Module"))
 	ui._transfer(false, "mod_autodock", 1)
 	helm_a.inv.add("mod_autodock", 1, 60.0)
 	_check("2: Zwei Module in A: eine Funktion, frei", helm_a.inv.count("mod_autodock") == 2 and P.autodock_block_reason() == "")
 	helm_a.inv.take("mod_autodock", 1)
 	g.cables[g.idx(helm_a.pos)] = 0
 	_power()
-	_check("2: A ohne Strom gesperrt (%s), B hat Strom" % P.autodock_block_reason(), "Strom" in P.autodock_block_reason() and helm_b.powered)
+	_check("2: A ohne Strom gesperrt (%s), B hat Strom" % P.autodock_block_reason(), "power" in P.autodock_block_reason() and helm_b.powered)
 	g.cables[g.idx(helm_a.pos)] = 1
 	_power()
 	helm_a.inv.items[0].cond = 0.0
-	_check("2: Kaputtes Modul schaltet nichts frei (%s)" % P.autodock_block_reason(), "kaputt" in P.autodock_block_reason())
+	_check("2: Kaputtes Modul schaltet nichts frei (%s)" % P.autodock_block_reason(), "broken" in P.autodock_block_reason())
 	helm_a.inv.items[0].cond = 73.0
 
 	# ---------------- 3) Stromausfall während des Manövers ----------------
@@ -208,7 +208,7 @@ func _initialize() -> void:
 	gs.step(1.0 / 60.0)
 	var p_cut: Vector2 = P.pos
 	_check("3: Abgebrochen (%s), nicht angedockt, keine Kopplung" % (toasts[-1] if not toasts.is_empty() else ""), P.autodock.is_empty() and P.docked == "" and not st.active() and g.linked.is_empty()
-		and toasts.any(func(t): return t.begins_with("Auto-Dock abgebrochen")))
+		and toasts.any(func(t): return t.begins_with("Auto-Dock aborted")))
 	_secs(30)
 	_check("3: Gültiger Flugzustand, Schiff treibt frei weiter", P.pos.is_finite() and P.vel.is_finite() and P.docked == "" and P.autodock.is_empty() and P.pos != p_cut)
 	g.cables[g.idx(helm_a.pos)] = 1

@@ -40,7 +40,7 @@ func step(dt: float) -> void:
 				if dev.powered:
 					if not dev.genemod and _take_item("genemod"):
 						dev.genemod = true
-						GameState.toast("Die Auto-Farm hat einen Gen-Mod bekommen: ab jetzt tägliche Ernte.")
+						GameState.toast("The auto farm got a gene mod: daily harvest from now on.")
 					dev.growth += h / (24.0 if dev.genemod else 96.0)
 					if dev.growth >= 1.0:
 						dev.growth = 0.0
@@ -91,4 +91,4 @@ func finish_farm_job(job: Dictionary) -> void:
 		dev.tended_at = GameState.time
 		g.drop_items(ShipConstructionSystem.drop_spot(dev.pos), "ration", 4, 100.0)
 		g.drop_items(ShipConstructionSystem.drop_spot(dev.pos), "seeds", 1, 100.0)
-		GameState.toast("Ernte: 4 Rationen aus der Hydrokultur.")
+		GameState.toast("Harvest: 4 rations from the hydroponics.")

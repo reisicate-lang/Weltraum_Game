@@ -63,7 +63,7 @@ func step(dt: float) -> void:
 func clock_text() -> String:
 	var secs := int((Config.START_MINUTES + time) * 60.0)
 	var day := secs / 86400 + 1
-	return "Tag %d  %02d:%02d:%02d" % [day, (secs / 3600) % 24, (secs / 60) % 60, secs % 60]
+	return "Day %d  %02d:%02d:%02d" % [day, (secs / 3600) % 24, (secs / 60) % 60, secs % 60]
 
 func toast(text: String, kind: String = "") -> void:
 	EventBus.toast.emit(text, kind)

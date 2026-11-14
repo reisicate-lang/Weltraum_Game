@@ -106,7 +106,7 @@ static func dock_cells(p: Vector2i, out: Vector2i, w: int = 5) -> Array[Vector2i
 ## Innenreihe: 5 freie Bodenfelder; hinter der Innentür ein freies Bodenfeld.
 ## allow_foreign: außen darf schon eine Station/ein Wrack anliegen (Umstellung alter Stände).
 func dock_check(p: Vector2i, ignore: Device = null, allow_foreign: bool = false) -> Dictionary:
-	var why := "Die Andockschleuse (5×2) braucht eine gerade Außenwand: 5 Wandfelder, außen frei, innen 5 freie Bodenfelder und dahinter Platz."
+	var why := "The docking port (5×2) needs a straight outer wall: 5 wall tiles, free space outside, 5 free floor tiles inside and room behind them."
 	if not in_bounds(p) or zone[idx(p)] != 0 or (get_tile(p) != Tile.WALL and get_tile(p) != Tile.DOOR):
 		return {"dir": Vector2i.ZERO, "reason": why}
 	for d in Device.PUSH_DIRS:
@@ -201,26 +201,26 @@ func mount_reason(type: String, p: Vector2i, rot: int, ignore: Device = null) ->
 	var out: Vector2i = -Device.PUSH_DIRS[rot % 4]
 	for k in n:
 		if not in_bounds(p + out * k):
-			return "Außerhalb."
+			return "Out of bounds."
 	var busy := func(q: Vector2i) -> bool:
 		var d := device_at(q)
 		return d != null and d != ignore
 	if get_tile(p) != Tile.FLOOR or zone[idx(p)] != 0:
-		return "Das innere Feld muss freier Boden im eigenen Schiff sein."
+		return "The inner tile must be free floor on your own ship."
 	if busy.call(p):
-		return "Das innere Feld ist belegt."
+		return "The inner tile is occupied."
 	if n < 3:
 		return ""
 	var mid := p + out
 	var tip := p + out * 2
 	if get_tile(mid) != Tile.WALL or zone[idx(mid)] != 0:
-		return "Das mittlere Feld muss auf einer Wand des eigenen Schiffs sitzen (keine Tür, kein Fenster)."
+		return "The middle tile must sit on a wall of your own ship (no door, no window)."
 	if busy.call(mid):
-		return "Auf dieser Wand sitzt schon etwas."
+		return "Something is already mounted on this wall."
 	if get_tile(tip) != Tile.SPACE:
-		return "Innenwand: Die Düse muss durch eine Außenwand ins freie All zeigen."
+		return "Inner wall: the nozzle must point through an outer wall into open space."
 	if busy.call(tip) or zone[idx(tip)] != 0:
-		return "Das Düsenfeld draußen ist belegt."
+		return "The nozzle tile outside is occupied."
 	return ""
 
 func place_device(type: String, p: Vector2i, rot: int = 0) -> Device:

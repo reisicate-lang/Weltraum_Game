@@ -3,17 +3,17 @@
 extends Node
 
 const TOOLS := [
-	["select", "Auswahl", "Esc", "Klick auf den Boden: Figur läuft hin. Ziehen: Ansicht verschieben. WASD: deine Figur steuern."],
-	["floor", "Boden", "B", "Klicken oder Fläche ziehen. Boden geht nur im Weltraum."],
-	["wall", "Wand", "M", "Ziehen zeichnet eine Linie oder den Rand eines Rechtecks."],
-	["door", "Tür", "T", "Klick auf eine Wand oder einen Boden."],
-	["window", "Fenster", "Z", "Wie eine Wand, aber aus Panzerglas. Der Ausblick senkt Stress, kostet aber Wärme."],
-	["cable", "Kabel", "K", "Kabel verbinden Geräte mit Strom."],
-	["move", "Versetzen", "V", "Vom Gerät zum Zielfeld ziehen. Ein Charakter trägt es dorthin."],
-	["haul", "Einsammeln", "Q", "Haufen markieren. Die Crew bringt alles in die nächste Frachtkiste im Schiff."],
-	["repair", "Reparieren", "R", "Auf Beschädigtes klicken. Stark Beschädigtes wird automatisch repariert."],
-	["remove", "Abreißen", "U", "Schicht für Schicht: Gerät, Kabel, Wand/Tür, Boden. Gibt Teile zurück."],
-	["cancel", "Plan löschen", "C", "Entfernt Baupläne. Rechtsklick geht auch."],
+	["select", "Select", "Esc", "Click the floor: the character walks there. Drag: pan the view. WASD: steer your character."],
+	["floor", "Floor", "B", "Click or drag an area. Floors can only be placed in empty space."],
+	["wall", "Wall", "M", "Dragging draws a line or the outline of a rectangle."],
+	["door", "Door", "T", "Click a wall or a floor."],
+	["window", "Window", "Z", "Like a wall, but made of armored glass. The view lowers stress but costs heat."],
+	["cable", "Cable", "K", "Cables connect devices to power."],
+	["move", "Move", "V", "Drag from the device to the target tile. A character carries it there."],
+	["haul", "Haul", "Q", "Mark piles. The crew takes everything to the nearest cargo crate on the ship."],
+	["repair", "Repair", "R", "Click something damaged. Badly damaged things are repaired automatically."],
+	["remove", "Demolish", "U", "Layer by layer: device, cable, wall/door, floor. Returns parts."],
+	["cancel", "Cancel plan", "C", "Removes build plans. Right-click works too."],
 	["orders", "Orders", "Y", "Pick an action and filters below, then click a tile or drag over an area. Only objects matching an active filter get the order."],
 ]
 const COL_PANEL := Color(0.05, 0.07, 0.106, 0.92)
@@ -28,10 +28,10 @@ var pilot: CrewMember = null
 var _helm_walk := false
 var _walk_helm := Vector2i(-1, -1)   ## Pult, zu dem die Spielfigur gerade läuft
 ## Tatsächliche Tastenbelegung im Flugmodus (wird im Cockpit angezeigt)
-const FLIGHT_KEYS := [["W / S", "Schub vor / zurück (Triebwerke in dieser Richtung + Lagedüsen)"], ["A / D", "Schub links / rechts (Triebwerke in dieser Richtung + Lagedüsen)"],
-	["Q / E", "drehen gegen / im Uhrzeigersinn"], ["R", "Drehung stoppen"], ["X", "Geschwindigkeit ans Ziel angleichen"],
-	["T", "nächstes Ziel (oder „Ziel“ in der Liste anklicken)"], ["F", "andocken"], ["U", "abdocken"], ["Tab", "Inventar öffnen / schließen"],
-	["Mausrad", "Karte zoomen"], ["Esc / N", "Cockpit verlassen"]]
+const FLIGHT_KEYS := [["W / S", "Thrust forward / back (thrusters in that direction + RCS)"], ["A / D", "Thrust left / right (thrusters in that direction + RCS)"],
+	["Q / E", "rotate counter-clockwise / clockwise"], ["R", "stop rotation"], ["X", "match velocity with the target"],
+	["T", "next target (or click “Target” in the list)"], ["F", "dock"], ["U", "undock"], ["Tab", "open / close inventory"],
+	["Mouse wheel", "zoom the map"], ["Esc / N", "leave the cockpit"]]
 ## Persönliches Inventar offen (Tab)
 var inv_open := false
 ## Rechtsklick-Auswahl: Kachel und Ebene ("cable", "dev:…", "tile:…"), siehe RemovalSystem.next_layer
@@ -148,7 +148,7 @@ func _build_top() -> void:
 	row.add_theme_constant_override("separation", 10)
 	p.add_child(row)
 	row.add_child(_label("WELTRAUM_GAME", COL_AMBER, 16))
-	clock_label = _label("Tag 1  08:00:00")
+	clock_label = _label("Day 1  08:00:00")
 	row.add_child(clock_label)
 	var names := ["❚❚", "×1", "×2", "×4", "×8", "×16"]
 	for i in names.size():
@@ -161,11 +161,11 @@ func _build_top() -> void:
 	row.add_child(spacer)
 	money_label = _label("", COL_MUTED, 12)
 	row.add_child(money_label)
-	row.add_child(_button("Charakter [I]", func(): char_ui.toggle()))
-	row.add_child(_button("Speichern", func(): open_slots(true)))
-	row.add_child(_button("Laden", func(): open_slots(false)))
+	row.add_child(_button("Character [I]", func(): char_ui.toggle()))
+	row.add_child(_button("Save", func(): open_slots(true)))
+	row.add_child(_button("Load", func(): open_slots(false)))
 	row.add_child(_button("⚙", open_settings))
-	row.add_child(_button("Neues Spiel", func():
+	row.add_child(_button("New game", func():
 		GameState.new_game()
 		char_ui.open_creation()))
 	row.add_child(_button("?", toggle_help))
@@ -186,10 +186,10 @@ func _build_left() -> void:
 	task_label = _label("", COL_MUTED, 12)
 	box.add_child(task_label)
 	# Auto-Modus der ausgewählten Figur (Taste J)
-	auto_button = _button("Auto: AN", toggle_auto)
-	auto_button.tooltip_text = "AN: Die Figur wählt selbst Aufträge, isst, schläft und hat Freizeit.\nAUS: Sie bleibt sofort stehen und tut nur, was du befiehlst (Klick, WASD). Taste J."
+	auto_button = _button("Auto: ON", toggle_auto)
+	auto_button.tooltip_text = "ON: the character picks jobs, eats, sleeps and has free time on their own.\nOFF: they stop at once and only do what you order (click, WASD). Key J."
 	box.add_child(auto_button)
-	for key in [["health", "Gesundheit"], ["warmth", "Körperwärme"], ["stress", "Ruhe"], ["air", "Atmung"], ["food", "Hunger"], ["water", "Durst"], ["sleep", "Energie"], ["hygiene", "Hygiene"], ["suit_o2", "Anzug O₂"], ["suit_bat", "Anzug-Akku"]]:
+	for key in [["health", "Health"], ["warmth", "Body heat"], ["stress", "Calm"], ["air", "Breathing"], ["food", "Hunger"], ["water", "Thirst"], ["sleep", "Energy"], ["hygiene", "Hygiene"], ["suit_o2", "Suit O₂"], ["suit_bat", "Suit battery"]]:
 		var row := HBoxContainer.new()
 		var l := _label(key[1], COL_MUTED, 12)
 		l.custom_minimum_size = Vector2(80, 0)
@@ -211,12 +211,12 @@ func _build_left() -> void:
 		row.add_child(bar)
 		box.add_child(row)
 		need_bars[key[0]] = bar
-	box.add_child(_label("ZIEL", COL_MUTED, 11))
+	box.add_child(_label("GOAL", COL_MUTED, 11))
 	goal_label = _label("", COL_AMBER, 12)
 	goal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	goal_label.custom_minimum_size = Vector2(250, 0)
 	box.add_child(goal_label)
-	box.add_child(_label("GEPÄCK", COL_MUTED, 11))
+	box.add_child(_label("PACK", COL_MUTED, 11))
 	inv_label = _label("", Color(0.87, 0.9, 0.94), 12)
 	inv_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	inv_label.custom_minimum_size = Vector2(250, 0)
@@ -233,13 +233,13 @@ func _build_bottom() -> void:
 	box.add_child(row)
 	for t in TOOLS:
 		var b := _button(t[1], set_tool.bind(t[0]))
-		b.tooltip_text = "%s (Taste %s)" % [t[1], t[2]]
+		b.tooltip_text = "%s (key %s)" % [t[1], t[2]]
 		b.add_theme_font_size_override("font_size", 13)
 		b.toggle_mode = true
 		tool_buttons[t[0]] = b
 		row.add_child(b)
 	device_menu = MenuButton.new()
-	device_menu.text = "Geräte ▾"
+	device_menu.text = "Devices ▾"
 	device_menu.flat = false
 	var keys := ItemSystem.devices.keys()
 	keys.sort()
@@ -254,9 +254,9 @@ func _build_bottom() -> void:
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(spacer)
-	row.add_child(_button("Luft [L]", func(): GameState.view = "normal" if GameState.view == "air" else "air"))
-	row.add_child(_button("Strom [P]", func(): GameState.view = "normal" if GameState.view == "power" else "power"))
-	row.add_child(_button("Wärme [O]", func(): GameState.view = "normal" if GameState.view == "heat" else "heat"))
+	row.add_child(_button("Air [L]", func(): GameState.view = "normal" if GameState.view == "air" else "air"))
+	row.add_child(_button("Power [P]", func(): GameState.view = "normal" if GameState.view == "power" else "power"))
+	row.add_child(_button("Heat [O]", func(): GameState.view = "normal" if GameState.view == "heat" else "heat"))
 	row.add_child(_button("Damage [X]", func(): GameState.view = "normal" if GameState.view == "damage" else "damage"))
 	_build_orders_bar(box)
 	power_label = _label("", COL_MUTED, 12)
@@ -299,7 +299,7 @@ func _build_help() -> void:
 	help_panel.add_child(outer)
 	# Kopfzeile mit Schließen-Knopf
 	var head := HBoxContainer.new()
-	var title := _label("STEUERUNG", COL_AMBER, 18)
+	var title := _label("CONTROLS", COL_AMBER, 18)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
 	head.add_child(_button("✕", close_help))
@@ -310,29 +310,29 @@ func _build_help() -> void:
 	outer.add_child(help_scroll)
 	var box := VBoxContainer.new()
 	help_scroll.add_child(box)
-	var text := _label("""Dein kleines Schiff treibt im All. Mira lebt darin und baut, was du planst.
-Halte sie am Leben: Luft, Essen, Wasser, Schlaf.
+	var text := _label("""Your small ship drifts in space. Mira lives aboard and builds whatever you plan.
+Keep her alive: air, food, water, sleep.
 
-WASD: deine Figur steuern (Umschalt: rennen)
-Auswahl + Klick auf Boden: hinlaufen lassen · Klick auf Kiste: Inhalt
-Werkzeuge unten: Boden B, Wand M, Tür T, Kabel K, Abreißen U, Plan löschen C, Schadensansicht X
-Geräte-Menü: Generator, Sauerstoff, Betten, Kisten ...
-Rechtsklick auf ein Objekt: Menü (Abbauen, Zerlegen, Zerstören, Einbauen) · auf Figur: Aufgabe abbrechen
-Für Arbeiten im Vakuum holt Mira selbst einen Raumanzug. Die Luftschleuse links
-pumpt die Luft ab, bevor die Außentür aufgeht. Angedockt wird über Andockschleusen in der Außenwand.
-E: Kiste oder Haufen neben dir durchsuchen · Tab: eigenes Inventar · J: Auto-Modus an/aus
-Abgebaute Geräte liegen am Boden; eine Figur trägt eines davon in den Händen (E → Nehmen).
-L / P / O: Luft-, Strom- und Wärme-Ansicht · Mausrad: zoomen · Pfeiltasten: Ansicht
-Leertaste: Pause · 1–5: Zeit ×1, ×2, ×4, ×8, ×16 · Strg+S: speichern
+WASD: steer your character (Shift: run)
+Select + click the floor: walk there · click a crate: contents
+Tools below: Floor B, Wall M, Door T, Cable K, Demolish U, Cancel plan C, Orders Y, damage view X
+Device menu: generator, oxygen, beds, crates ...
+Right-click an object: menu (Uninstall, Dismantle, Destroy, Install) · on a character: cancel task
+For work in vacuum Mira fetches a space suit herself. The airlock on the left
+pumps out the air before the outer door opens. Ships dock at the airlock's outer door.
+E: search a crate or pile next to you · Tab: own inventory · J: auto mode on/off
+Uninstalled devices lie on the floor; a character carries one of them in their hands (E → Take).
+L / P / O: air, power and heat view · mouse wheel: zoom · arrow keys: pan
+Space: pause · 1–5: time ×1, ×2, ×4, ×8, ×16 · Ctrl+S: save
 
-Du schuldest der Bank 24 000 Cr, alle 7 Tage ist eine Rate fällig.
-Verkaufen und kaufen: Handelsterminal im Cockpit anklicken (nur angedockt).
-N: ans Steuerpult (Cockpit) · Fliegen: W/S vor/zurück, A/D seitwärts, Q/E drehen · Schnellreise
-und ins Trümmerfeld. Vorsicht: Die Erde zieht dich an.""", Color(0.87, 0.9, 0.94), 14)
+You owe the bank 24 000 Cr; an instalment is due every 7 days.
+Selling and buying: click the trade terminal in the cockpit (only while docked).
+N: go to the navigation console (cockpit) · flying: W/S forward/back, A/D sideways, Q/E rotate · fast travel
+to the Kármán Ring and the debris field. Careful: Earth pulls you in.""", Color(0.87, 0.9, 0.94), 14)
 	text.custom_minimum_size = Vector2(560, 0)
 	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(text)
-	outer.add_child(_button("Los geht's", close_help))
+	outer.add_child(_button("Let's go", close_help))
 	_fit_help.call_deferred()
 
 func _build_window() -> void:
@@ -408,25 +408,25 @@ func request_flight(helm: Device = null) -> void:
 		helm = helm_device()
 	var p := CrewSystem.player()
 	if helm == null:
-		GameState.toast("Dein Schiff hat kein Steuerpult.")
+		GameState.toast("Your ship has no navigation console.")
 		return
 	if p == null or p.unconscious:
-		GameState.toast("Niemand kann das Steuerpult bedienen.")
+		GameState.toast("Nobody can operate the navigation console.")
 		return
 	var why := PhysicsSystem.helm_block_reason(helm)
 	if why != "":
-		GameState.toast(why + " Fliegen geht hier nicht.", "bad")
+		GameState.toast(why + " Flying is not possible here.", "bad")
 		return
 	if p.can_reach(helm.pos):
 		enter_flight(helm)
 		return
 	var res := ShipSystem.nearest_adjacent(p.tile(), [helm.pos], 1)
 	if not res.ok or not p.order_move(res.path[-1] if not res.path.is_empty() else p.tile()):
-		GameState.toast(p.display_name + " kommt nicht ans Steuerpult.")
+		GameState.toast(p.display_name + " cannot get to the navigation console.")
 		return
 	_helm_walk = true
 	_walk_helm = helm.pos
-	GameState.toast(p.display_name + " geht zum Steuerpult.")
+	GameState.toast(p.display_name + " walks to the navigation console.")
 
 ## Flugmodus an diesem Pult: Flugeingaben steuern das Schiff, die Figur bleibt am Pult
 func enter_flight(helm: Device = null) -> void:
@@ -435,7 +435,7 @@ func enter_flight(helm: Device = null) -> void:
 		helm = helm_device()
 	var why := PhysicsSystem.helm_block_reason(helm)
 	if why != "":
-		GameState.toast(why + " Fliegen geht hier nicht.", "bad")
+		GameState.toast(why + " Flying is not possible here.", "bad")
 		return
 	pilot = CrewSystem.player()
 	PhysicsSystem.helm_at = helm.pos
@@ -451,7 +451,7 @@ func enter_flight(helm: Device = null) -> void:
 	nav_map.auto_zoom = true
 	_last_nav = ""
 	_refresh_nav()
-	GameState.toast("%s übernimmt das Steuer. Esc oder N: Cockpit verlassen." % pilot.display_name)
+	GameState.toast("%s takes the helm. Esc or N: leave the cockpit." % pilot.display_name)
 
 ## Flugmodus aus: Schub endet, die Figur wird wieder normal gesteuert
 func leave_flight() -> void:
@@ -467,7 +467,7 @@ func leave_flight() -> void:
 		pilot.manual_until = 0.0
 	pilot = null
 	if was:
-		GameState.toast("Cockpit verlassen – Charaktersteuerung.")
+		GameState.toast("Left the cockpit – character control.")
 
 ## Läuft die Figur zum Pult? Angekommen: Flugmodus. Unterbrochen: abbrechen.
 func _check_helm_walk() -> void:
@@ -491,7 +491,7 @@ func keep_pilot() -> bool:
 		leave_flight()
 		return false
 	pilot.manual_until = Time.get_ticks_msec() + 500.0
-	pilot.task = "Steuert das Schiff"
+	pilot.task = "Flying the ship"
 	return true
 
 func _course(v: Vector2) -> String:
@@ -512,30 +512,30 @@ func _build_flight_info() -> void:
 	var P := PhysicsSystem
 	var bad := Color(0.9, 0.33, 0.29)
 	var good := Color(0.44, 0.81, 0.56)
-	nav_side.add_child(_label("FLUGLAGE", COL_MUTED, 11))
-	nav_side.add_child(_row("Ausrichtung (Nase)", [_label(_course(Vector2.from_angle(P.angle)), COL_AMBER, 12)]))
-	nav_side.add_child(_row("Drehrate", [_label("%+d °/s" % int(rad_to_deg(P.ang_vel)), COL_AMBER if absf(P.ang_vel) < 0.01 else bad, 12)]))
+	nav_side.add_child(_label("ATTITUDE", COL_MUTED, 11))
+	nav_side.add_child(_row("Heading (nose)", [_label(_course(Vector2.from_angle(P.angle)), COL_AMBER, 12)]))
+	nav_side.add_child(_row("Turn rate", [_label("%+d °/s" % int(rad_to_deg(P.ang_vel)), COL_AMBER if absf(P.ang_vel) < 0.01 else bad, 12)]))
 	var thr: PackedStringArray = []
-	if P.thrust > 0.0: thr.append("vor")
-	if P.thrust < 0.0: thr.append("zurück")
-	if P.strafe < 0.0: thr.append("links")
-	if P.strafe > 0.0: thr.append("rechts")
-	if P.rot_input != 0.0: thr.append("drehen")
-	if P.rot_stop: thr.append("Drehung stoppen")
-	if P.aligning: thr.append("ausrichten")
+	if P.thrust > 0.0: thr.append("forward")
+	if P.thrust < 0.0: thr.append("back")
+	if P.strafe < 0.0: thr.append("left")
+	if P.strafe > 0.0: thr.append("right")
+	if P.rot_input != 0.0: thr.append("turning")
+	if P.rot_stop: thr.append("stop rotation")
+	if P.aligning: thr.append("aligning")
 	if P.match_target != "":
-		thr.append("angleichen" + (" (feuert)" if P.match_input != Vector2.ZERO else " (Ziel erreicht)"))
-	nav_side.add_child(_row("Aktiver Schub", [_label(", ".join(thr) if not thr.is_empty() else "keiner – Schiff driftet", COL_AMBER, 12)]))
+		thr.append("matching" + (" (firing)" if P.match_input != Vector2.ZERO else " (target reached)"))
+	nav_side.add_child(_row("Active thrust", [_label(", ".join(thr) if not thr.is_empty() else "none – ship drifting", COL_AMBER, 12)]))
 	var fl: Vector2 = P.thrust_vector_local()
 	var mass_t: float = P.mass()
-	nav_side.add_child(_row("Gesamtmasse", [_label("%.1f t" % mass_t, COL_AMBER, 12)]))
-	nav_side.add_child(_row("Wirksamer Schub jetzt", [_label("%d kN → %.2f m/s²" % [int(fl.length()), fl.length() / maxf(1.0, mass_t)], COL_AMBER if fl.length() > 0.0 else COL_MUTED, 12)]))
-	nav_side.add_child(_row("Triebwerke (kN)", [_label("vor %d · zurück %d · links %d · rechts %d · Lagedüsen je %d" % [
+	nav_side.add_child(_row("Total mass", [_label("%.1f t" % mass_t, COL_AMBER, 12)]))
+	nav_side.add_child(_row("Effective thrust now", [_label("%d kN → %.2f m/s²" % [int(fl.length()), fl.length() / maxf(1.0, mass_t)], COL_AMBER if fl.length() > 0.0 else COL_MUTED, 12)]))
+	nav_side.add_child(_row("Thrusters (kN)", [_label("forward %d · back %d · left %d · right %d · RCS each %d" % [
 		int(P.thrust_dir(Vector2i(1, 0))), int(P.thrust_dir(Vector2i(-1, 0))), int(P.thrust_dir(Vector2i(0, -1))), int(P.thrust_dir(Vector2i(0, 1))), int(P.rcs_thrust())], COL_MUTED, 12)]))
 	var tl := P.loc(P.target)
 	var tr := HBoxContainer.new()
-	tr.add_child(_label("ZIEL: " + (String(tl.name) if not tl.is_empty() else "keins"), COL_MUTED, 11))
-	var nb := _button("nächstes [T]", cycle_target)
+	tr.add_child(_label("TARGET: " + (String(tl.name) if not tl.is_empty() else "none"), COL_MUTED, 11))
+	var nb := _button("next [T]", cycle_target)
 	nb.add_theme_font_size_override("font_size", 11)
 	tr.add_child(nb)
 	nav_side.add_child(tr)
@@ -544,41 +544,41 @@ func _build_flight_info() -> void:
 	else:
 		var ap: Dictionary = P.approach(P.target)
 		var vrel: Vector2 = ap.vrel
-		nav_side.add_child(_row("Entfernung", [_label(_fmt_dist(ap.dist), COL_AMBER, 12)]))
-		nav_side.add_child(_row("Relativgeschwindigkeit", [_label("%s · Richtung %s" % [_fmt_speed(ap.speed), _course(vrel) if vrel.length() > 0.0000005 else "–"], COL_AMBER, 12)]))
+		nav_side.add_child(_row("Distance", [_label(_fmt_dist(ap.dist), COL_AMBER, 12)]))
+		nav_side.add_child(_row("Relative velocity", [_label("%s · heading %s" % [_fmt_speed(ap.speed), _course(vrel) if vrel.length() > 0.0000005 else "–"], COL_AMBER, 12)]))
 		var closing: float = ap.closing
-		var ctext := ("nähert sich mit %s" % _fmt_speed(closing)) if closing > 0.0000005 else (("entfernt sich mit %s" % _fmt_speed(-closing)) if closing < -0.0000005 else "Abstand bleibt gleich")
-		nav_side.add_child(_row("Annäherung", [_label(ctext, good if closing > 0.0 else COL_MUTED, 12)]))
+		var ctext := ("closing at %s" % _fmt_speed(closing)) if closing > 0.0000005 else (("receding at %s" % _fmt_speed(-closing)) if closing < -0.0000005 else "distance unchanged")
+		nav_side.add_child(_row("Approach", [_label(ctext, good if closing > 0.0 else COL_MUTED, 12)]))
 		if ap.eta > 0.0:
-			nav_side.add_child(_row("Ankunft bei diesem Tempo", [_label("%d s" % int(ap.eta) if ap.eta < 3600.0 else "%.1f h" % (ap.eta / 3600.0), COL_MUTED, 12)]))
+			nav_side.add_child(_row("Arrival at this speed", [_label("%d s" % int(ap.eta) if ap.eta < 3600.0 else "%.1f h" % (ap.eta / 3600.0), COL_MUTED, 12)]))
 		if closing > 0.0:
-			nav_side.add_child(_row("Bremsweg", [_label("S (Lagedüsen): %s · gewendet mit W: %s" % [_fmt_dist(ap.brake_rcs), _fmt_dist(ap.brake_main)], COL_MUTED, 12)]))
+			nav_side.add_child(_row("Stopping distance", [_label("S (RCS): %s · turned around with W: %s" % [_fmt_dist(ap.brake_rcs), _fmt_dist(ap.brake_main)], COL_MUTED, 12)]))
 			if ap.brake_main >= ap.dist * 0.9:
-				nav_side.add_child(_label("ZU SCHNELL – sofort bremsen!", bad, 13))
+				nav_side.add_child(_label("TOO FAST – brake now!", bad, 13))
 			elif ap.brake_rcs >= ap.dist * 0.9:
-				nav_side.add_child(_label("Jetzt bremsen (wenden und W, oder S halten).", COL_AMBER, 13))
+				nav_side.add_child(_label("Brake now (turn around and W, or hold S).", COL_AMBER, 13))
 		# Andock-Ampel
 		var m := P.dock_factor()
 		var al: Dictionary = P.dock_alignment(P.target)
 		var lights := HBoxContainer.new()
-		lights.add_child(_label("ANDOCKEN ", COL_MUTED, 11))
+		lights.add_child(_label("DOCKING ", COL_MUTED, 11))
 		var ok_dist: bool = ap.dist < float(P.space.dock_dist) * m
 		var ok_speed: bool = ap.speed < float(P.space.dock_speed) * m
-		lights.add_child(_label("● Abstand < %d m  " % int(float(P.space.dock_dist) * m * 1000.0), good if ok_dist else bad, 11))
-		lights.add_child(_label("● Tempo < %d m/s  " % int(float(P.space.dock_speed) * m * 1000.0), good if ok_speed else bad, 11))
-		lights.add_child(_label("● Schleuse %d°" % int(al.deg) if al.port else "● keine Schleuse", good if al.ok else bad, 11))
+		lights.add_child(_label("● distance < %d m  " % int(float(P.space.dock_dist) * m * 1000.0), good if ok_dist else bad, 11))
+		lights.add_child(_label("● speed < %d m/s  " % int(float(P.space.dock_speed) * m * 1000.0), good if ok_speed else bad, 11))
+		lights.add_child(_label("● airlock %d°" % int(al.deg) if al.port else "● no airlock", good if al.ok else bad, 11))
 		nav_side.add_child(lights)
 		var row := HBoxContainer.new()
-		var db := _button("Andocken [F]", func(): if not P.dock(P.target): GameState.toast(P.dock_block_reason(P.target)))
+		var db := _button("Dock [F]", func(): if not P.dock(P.target): GameState.toast(P.dock_block_reason(P.target)))
 		db.disabled = not P.can_dock(P.target)
 		row.add_child(db)
 		var on: bool = P.match_target == P.target
-		var mb := _button("Angleichen [X]: AN" if on else "Angleichen [X]", toggle_match)
+		var mb := _button("Match [X]: ON" if on else "Match [X]", toggle_match)
 		if on:
 			mb.add_theme_color_override("font_color", good)
 		row.add_child(mb)
 		nav_side.add_child(row)
-	nav_side.add_child(_label("TASTEN IM COCKPIT", COL_MUTED, 11))
+	nav_side.add_child(_label("COCKPIT KEYS", COL_MUTED, 11))
 	for k in FLIGHT_KEYS:
 		nav_side.add_child(_row(k[1], [_label(k[0], COL_AMBER, 12)], COL_MUTED))
 
@@ -600,7 +600,7 @@ func toggle_match() -> void:
 	if P.docked != "" or P.target == "":
 		return
 	if P.match_target != P.target and not P.manual_ok():
-		GameState.toast("Angleichen geht nicht: " + P.helm_block_reason(P.operated_helm()), "bad")
+		GameState.toast("Cannot match: " + P.helm_block_reason(P.operated_helm()), "bad")
 		return
 	P.match_target = "" if P.match_target == P.target else P.target
 	_last_nav = ""
@@ -631,10 +631,10 @@ func _refresh_nav() -> void:
 	for c in nav_side.get_children():
 		c.queue_free()
 	var head := HBoxContainer.new()
-	var title := _label("COCKPIT · %s am Steuer" % (pilot.display_name if pilot != null else "?"), COL_AMBER, 15)
+	var title := _label("COCKPIT · %s at the helm" % (pilot.display_name if pilot != null else "?"), COL_AMBER, 15)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
-	head.add_child(_button("Verlassen [Esc]", toggle_nav.bind(false)))
+	head.add_child(_button("Leave [Esc]", toggle_nav.bind(false)))
 	nav_side.add_child(head)
 	nav_side.add_child(_label(P.status(), COL_AMBER, 14))
 	var faults: Array = P.xpdr_faults()
@@ -646,31 +646,31 @@ func _refresh_nav() -> void:
 	elif P.prox_muted:
 		nav_side.add_child(_row("Proximity alarm muted", [_button("Unmute", func(): P.prox_muted = false)], COL_MUTED))
 	_build_flight_info()
-	nav_side.add_child(_row("Geschwindigkeit", [_label(_fmt_speed(P.vel.length()), COL_AMBER, 12)]))
-	nav_side.add_child(_row("Höhe über der Erde", [_label(_fmt_dist(alt), Color(0.9, 0.33, 0.29) if alt < float(P.space.warn_alt) else COL_AMBER, 12)]))
-	nav_side.add_child(_row("Treibstoff", [_label("%d" % int(P.fuel()), COL_AMBER, 12)]))
-	nav_side.add_child(_row("Schub / Masse", [_label("%d kN / %.1f t" % [int(P.max_thrust()), P.mass()], COL_AMBER, 12)]))
+	nav_side.add_child(_row("Velocity", [_label(_fmt_speed(P.vel.length()), COL_AMBER, 12)]))
+	nav_side.add_child(_row("Altitude above Earth", [_label(_fmt_dist(alt), Color(0.9, 0.33, 0.29) if alt < float(P.space.warn_alt) else COL_AMBER, 12)]))
+	nav_side.add_child(_row("Fuel", [_label("%d" % int(P.fuel()), COL_AMBER, 12)]))
+	nav_side.add_child(_row("Thrust / mass", [_label("%d kN / %.1f t" % [int(P.max_thrust()), P.mass()], COL_AMBER, 12)]))
 	var helm_why := P.helm_block_reason(P.operated_helm())
 	if helm_why != "":
-		nav_side.add_child(_label(helm_why + " Kein Schub, keine Drehung.", Color(0.9, 0.33, 0.29), 12))
+		nav_side.add_child(_label(helm_why + " No thrust, no rotation.", Color(0.9, 0.33, 0.29), 12))
 	if P.docked != "":
-		nav_side.add_child(_button("Abdocken [U]", P.request_undock))
+		nav_side.add_child(_button("Undock [U]", P.request_undock))
 	elif P.travel.is_empty() and P.autodock.is_empty():
-		var b := _button("Auto-Dock (nächster Ort)", P.start_autodock)
+		var b := _button("Auto-Dock (nearest place)", P.start_autodock)
 		var ad_why := P.autodock_block_reason()
 		b.disabled = ad_why != ""
 		b.tooltip_text = ad_why
 		nav_side.add_child(b)
 		if ad_why != "":
-			nav_side.add_child(_label("Auto-Dock gesperrt: " + ad_why, Color(0.9, 0.33, 0.29), 11))
+			nav_side.add_child(_label("Auto-Dock locked: " + ad_why, Color(0.9, 0.33, 0.29), 11))
 	# Modulfach des bedienten Steuerpults
 	var oh := P.operated_helm()
 	if oh != null and oh.inv != null:
 		var mods: PackedStringArray = []
 		for it in oh.inv.items:
 			mods.append("%s (%d %%)" % [ItemSystem.item(it.type).display_name, int(it.cond)])
-		var mrow := _row("Module im Pult", [_label(", ".join(mods) if not mods.is_empty() else "keine", COL_AMBER if not mods.is_empty() else COL_MUTED, 12)])
-		mrow.add_child(_button("Modulfach [E]", func(): open_container(PhysicsSystem.operated_helm().pos)))
+		var mrow := _row("Modules in the console", [_label(", ".join(mods) if not mods.is_empty() else "none", COL_AMBER if not mods.is_empty() else COL_MUTED, 12)])
+		mrow.add_child(_button("Module bay [E]", func(): open_container(PhysicsSystem.operated_helm().pos)))
 		nav_side.add_child(mrow)
 	# Ship logs (Diagnostik): letzte Andock- und Kollisionsereignisse
 	if not P.ship_log.is_empty():
@@ -678,53 +678,53 @@ func _refresh_nav() -> void:
 		for le in P.ship_log.slice(maxi(0, P.ship_log.size() - 4)):
 			var tm := float(le.t)
 			nav_side.add_child(_label("Day %d %02d:%02d · %s" % [int(tm / 1440.0) + 1, int(fmod(tm, 1440.0) / 60.0), int(fmod(tm, 60.0)), le.text], COL_MUTED, 11))
-	nav_side.add_child(_label("ZIELE", COL_MUTED, 11))
+	nav_side.add_child(_label("TARGETS", COL_MUTED, 11))
 	for l in P.locations:
 		var r := P.rel_to(l.id)
 		var here: bool = P.docked == l.id
 		var btns: Array = []
 		if l.id != P.target:
-			btns.append(_button("Ziel", func():
+			btns.append(_button("Target", func():
 				PhysicsSystem.target = l.id
 				_last_nav = ""
 				_refresh_nav()))
 		if not here and P.travel.is_empty():
 			if r.dist < 300.0:
-				var mb := _button("Angleichen", func():
+				var mb := _button("Match", func():
 					P.target = l.id
 					P.match_target = ""
 					toggle_match())
 				mb.disabled = not P.manual_ok()
 				btns.append(mb)
-			var ab := _button("Ausrichten", func(): P.start_align((P.rel_to(l.id).pos - P.pos).angle()))
+			var ab := _button("Align", func(): P.start_align((P.rel_to(l.id).pos - P.pos).angle()))
 			ab.disabled = not P.manual_ok()
 			btns.append(ab)
 			if P.can_dock(l.id):
-				btns.append(_button("Andocken", func(): P.dock(l.id)))
+				btns.append(_button("Dock", func(): P.dock(l.id)))
 			elif P.redock_locked(l.id) and r.dist < float(P.space.dock_dist) * 3.0:
-				var lb := _button("Andocken in %d s" % int(ceil(P.redock_wait(l.id))), func(): GameState.toast(P.dock_block_reason(l.id)))
+				var lb := _button("Dock in %d s" % int(ceil(P.redock_wait(l.id))), func(): GameState.toast(P.dock_block_reason(l.id)))
 				lb.disabled = true
 				btns.append(lb)
 			var info := P.travel_info(l.id)
-			var tb := _button("Reisen %.1f h · %d T" % [info.secs / 3600.0, int(ceil(info.fuel))], P.travel_to.bind(l.id))
+			var tb := _button("Travel %.1f h · %d fuel" % [info.secs / 3600.0, int(ceil(info.fuel))], P.travel_to.bind(l.id))
 			tb.tooltip_text = l.desc
 			btns.append(tb)
-		nav_side.add_child(_label("%s%s · %s · Δv %s" % [l.name, " (hier)" if here else "", _fmt_dist(r.dist), _fmt_speed(r.speed)], Color(0.87, 0.9, 0.94), 12))
+		nav_side.add_child(_label("%s%s · %s · Δv %s" % [l.name, " (here)" if here else "", _fmt_dist(r.dist), _fmt_speed(r.speed)], Color(0.87, 0.9, 0.94), 12))
 		var row := HBoxContainer.new()
 		for b in btns:
 			b.add_theme_font_size_override("font_size", 11)
 			row.add_child(b)
 		nav_side.add_child(row)
 	var zoom_row := HBoxContainer.new()
-	zoom_row.add_child(_button("Schiff zeigen", func():
+	zoom_row.add_child(_button("Show ship", func():
 		nav_map.follow = true
 		nav_map.zoom = 40.0))
-	zoom_row.add_child(_button("Ganzes System", func():
+	zoom_row.add_child(_button("Whole system", func():
 		nav_map.follow = false
 		nav_map.center = Vector2(30000, -5000)
 		nav_map.zoom = minf(nav_map.size.x, nav_map.size.y) / 150000.0))
 	nav_side.add_child(zoom_row)
-	var help := _label("Andocken: näher als 250 m, langsamer als 6 m/s und eine freie Andockschleuse zeigt zum Ziel.", COL_MUTED, 11)
+	var help := _label("Docking: closer than 250 m, slower than 6 m/s, and a free docking port facing the target.", COL_MUTED, 11)
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	nav_side.add_child(help)
 
@@ -741,7 +741,7 @@ func _build_gameover() -> void:
 	gameover_label.custom_minimum_size = Vector2(420, 0)
 	gameover_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(gameover_label)
-	box.add_child(_button("Neues Spiel", func():
+	box.add_child(_button("New game", func():
 		gameover_panel.visible = false
 		GameState.new_game()
 		TimeSystem.set_speed(1)))
@@ -774,9 +774,9 @@ func _show_dialog(title: String, build: Callable) -> void:
 	build.call(box)
 
 func open_slots(saving: bool) -> void:
-	_show_dialog("Speichern" if saving else "Laden", func(box: VBoxContainer):
+	_show_dialog("Save" if saving else "Load", func(box: VBoxContainer):
 		for s in [1, 2, 3]:
-			box.add_child(_row("Platz %d: %s" % [s, SaveSystem.slot_info(s)], [_button("Hier speichern" if saving else "Laden", func():
+			box.add_child(_row("Slot %d: %s" % [s, SaveSystem.slot_info(s)], [_button("Save here" if saving else "Load", func():
 				SaveSystem.slot = s
 				if saving:
 					SaveSystem.save_game()
@@ -785,7 +785,7 @@ func open_slots(saving: bool) -> void:
 				_dialog.queue_free())])))
 
 func open_settings() -> void:
-	_show_dialog("Einstellungen", func(box: VBoxContainer):
+	_show_dialog("Settings", func(box: VBoxContainer):
 		var depth := OptionButton.new()
 		for k in Settings.DEPTHS:
 			depth.add_item(k)
@@ -793,7 +793,7 @@ func open_settings() -> void:
 		depth.item_selected.connect(func(i):
 			Settings.depth = Settings.DEPTHS.keys()[i]
 			Settings.save())
-		box.add_child(_row("Simulationstiefe (Luft und Wärme)", [depth]))
+		box.add_child(_row("Simulation depth (air and heat)", [depth]))
 		var auto := SpinBox.new()
 		auto.min_value = 15
 		auto.max_value = 600
@@ -802,22 +802,22 @@ func open_settings() -> void:
 		auto.value_changed.connect(func(v):
 			Settings.autosave_seconds = v
 			Settings.save())
-		box.add_child(_row("Autosave alle … Sekunden", [auto]))
+		box.add_child(_row("Autosave every … seconds", [auto]))
 		var met := CheckBox.new()
-		met.text = "Mikrometeoriten"
+		met.text = "Micrometeorites"
 		met.button_pressed = Settings.meteors
 		met.toggled.connect(func(on):
 			Settings.meteors = on
 			Settings.save())
 		box.add_child(met)
 		var dp := CheckBox.new()
-		dp.text = "Schulden pausieren (keine Raten, keine Strafzinsen)"
+		dp.text = "Pause debt (no instalments, no penalty interest)"
 		dp.button_pressed = Settings.debt_paused
 		dp.toggled.connect(func(on):
 			Settings.debt_paused = on
 			Settings.save())
 		box.add_child(dp)
-		var mods := _label("Mods: eigene .tres-Dateien nach %s legen (Unterordner items, components, skills, traits, hobbies)." % ProjectSettings.globalize_path("user://mods"), COL_MUTED, 11)
+		var mods := _label("Mods: put your own .tres files into %s (subfolders items, components, skills, traits, hobbies)." % ProjectSettings.globalize_path("user://mods"), COL_MUTED, 11)
 		mods.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		mods.custom_minimum_size = Vector2(400, 0)
 		box.add_child(mods))
@@ -872,7 +872,7 @@ func _refresh_window() -> void:
 		child.queue_free()
 	var head := HBoxContainer.new()
 	var st := PhysicsSystem.station()
-	var title := _label({"bench": "Werkbank", "chem": "Chemiestation"}.get(window_kind, "Handelsterminal" + (" · " + String(st.name) if not st.is_empty() else "")), COL_AMBER, 15)
+	var title := _label({"bench": "Workbench", "chem": "Chemistry Station"}.get(window_kind, "Trade Terminal" + (" · " + String(st.name) if not st.is_empty() else "")), COL_AMBER, 15)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
 	head.add_child(_button("✕", close_window))
@@ -883,7 +883,7 @@ func _refresh_window() -> void:
 		tl.custom_minimum_size = Vector2(370, 0)
 		window_box.add_child(tl)
 	if window_kind in ["bench", "chem"]:
-		window_box.add_child(_label("Die Crew holt das Material selbst und legt das Ergebnis daneben.", COL_MUTED, 12))
+		window_box.add_child(_label("The crew fetches the material and puts the result next to the bench.", COL_MUTED, 12))
 		for r in E.recipes:
 			if r.get("station", "workbench") != ("workbench" if window_kind == "bench" else "chemstation"):
 				continue
@@ -891,14 +891,14 @@ func _refresh_window() -> void:
 			for k in r["in"]:
 				parts.append("%d× %s" % [r["in"][k], ItemSystem.item(k).display_name])
 			var txt := "%s\n%s → %d× %s" % [r.name, " + ".join(parts), int(r.out[1]), ItemSystem.item(r.out[0]).display_name]
-			window_box.add_child(_row(txt, [_button("Herstellen", E.craft.bind(r.id))]))
+			window_box.add_child(_row(txt, [_button("Craft", E.craft.bind(r.id))]))
 		return
 	if not E.terminal_online():
-		window_box.add_child(_label("Offline: kein Strom oder nicht an einer Station angedockt.", Color(0.9, 0.33, 0.29), 12))
+		window_box.add_child(_label("Offline: no power or not docked at a station.", Color(0.9, 0.33, 0.29), 12))
 	if st.get("black", false):
-		window_box.add_child(_label("Schwarzmarkt: Datenchips bringen hier das Doppelte.", COL_MUTED, 12))
+		window_box.add_child(_label("Black market: data chips are worth double here.", COL_MUTED, 12))
 	var tabs := HBoxContainer.new()
-	for tb in [["sell", "Verkaufen"], ["buy", "Kaufen"], ["bank", "Konto"], ["salvage", "Bergung"], ["ships", "Schiffe"], ["station", "Station"], ["crew", "Crew"], ["jobs", "Aufträge"]]:
+	for tb in [["sell", "Sell"], ["buy", "Buy"], ["bank", "Account"], ["salvage", "Salvage"], ["ships", "Ships"], ["station", "Station"], ["crew", "Crew"], ["jobs", "Jobs"]]:
 		if tb[0] == "salvage" and not Config.ENABLE_WRECK:
 			continue
 		var b := _button(tb[1], func():
@@ -912,80 +912,80 @@ func _refresh_window() -> void:
 	window_box.add_child(_label("%d Cr" % E.credits, COL_AMBER, 20))
 	match trade_tab:
 		"sell":
-			window_box.add_child(_label("Was im Terminal liegt, kannst du verkaufen. Leg Sachen aus dem Gepäck hinein.", COL_MUTED, 12))
+			window_box.add_child(_label("You can sell whatever is in the terminal. Put things in from your pack.", COL_MUTED, 12))
 			if t != null and not t.inv.items.is_empty():
 				var total := 0
 				for it in t.inv.items:
 					total += E.sell_price(it)
 					window_box.add_child(_trade_row("%s ×%d · %d %%" % [ItemSystem.item(it.type).display_name, it.qty, int(it.cond)], it,
 						[_offer_button("Offer", E.sell_price(it), E.sell.bind(it.type, it.qty))]))
-				window_box.add_child(_row("Summe: %d Cr" % total, [_button("Alles verkaufen", E.sell_all)], COL_AMBER))
+				window_box.add_child(_row("Total: %d Cr" % total, [_button("Sell all", E.sell_all)], COL_AMBER))
 			else:
-				window_box.add_child(_label("Das Terminal ist leer.", COL_MUTED, 12))
+				window_box.add_child(_label("The terminal is empty.", COL_MUTED, 12))
 			if c != null and not c.inv.items.is_empty():
 				# Am Markttresen direkt aus dem Gepäck verkaufen
 				var at_market := talk_role == "market"
-				window_box.add_child(_label(("Gepäck von %s – direkt an den Händler" if at_market else "Gepäck von %s") % c.display_name, COL_MUTED, 11))
+				window_box.add_child(_label(("%s's pack – straight to the trader" if at_market else "%s's pack") % c.display_name, COL_MUTED, 11))
 				for it in c.inv.items:
-					var btn: Button = _offer_button("Offer", E.sell_price(it), E.sell.bind(it.type, it.qty, c.inv)) if at_market else _button("Hineinlegen", _put_terminal.bind(it.type, it.qty))
+					var btn: Button = _offer_button("Offer", E.sell_price(it), E.sell.bind(it.type, it.qty, c.inv)) if at_market else _button("Put in", _put_terminal.bind(it.type, it.qty))
 					window_box.add_child(_trade_row("%s ×%d" % [ItemSystem.item(it.type).display_name, it.qty], it, [btn]))
 		"buy":
-			window_box.add_child(_label("Gekauftes landet im Terminal. Preise ändern sich jeden Tag.", COL_MUTED, 12))
+			window_box.add_child(_label("Purchases go into the terminal. Prices change every day.", COL_MUTED, 12))
 			var ids: Array = ItemSystem.items.keys().filter(func(x): return not RemovalSystem.is_packed(x) or x in E.SHOP_PACKED)
 			ids.sort()
 			for id in ids:
 				var f: float = E.prices.get(id, 1.0)
-				var trend := "  ▲ teuer" if f > 1.1 else ("  ▼ günstig" if f < 0.9 else "")
+				var trend := "  ▲ expensive" if f > 1.1 else ("  ▼ cheap" if f < 0.9 else "")
 				window_box.add_child(_trade_row(ItemSystem.item(id).display_name + trend, {"type": id, "qty": 1, "cond": 100.0},
 					[_offer_button("Price", E.buy_price(id), E.buy.bind(id, 1)), _button("×5", E.buy.bind(id, 5))]))
 		"bank":
 			var days := maxf(0.0, (E.next_payment - GameState.time) / 1440.0)
-			window_box.add_child(_row("Restschuld", [_label("%d Cr" % E.debt, COL_AMBER, 13)]))
-			window_box.add_child(_row("Nächste Rate", [_label("pausiert (Einstellungen ⚙)" if Settings.debt_paused else "%d Cr in %.1f Tagen" % [mini(Config.PAYMENT, E.debt), days], COL_AMBER, 13)]))
-			window_box.add_child(_row("Liegegebühr", [_label("%d Cr pro Tag" % Config.DOCK_FEE, COL_MUTED, 13)]))
-			window_box.add_child(_row("Verpasste Raten", [_label("%d von %d" % [E.strikes, Config.MAX_STRIKES], COL_MUTED, 13)]))
-			window_box.add_child(_row("Tilgen", [_button("500 Cr", E.pay_debt.bind(500)), _button("Alles", E.pay_debt.bind(999999))]))
-			window_box.add_child(_label("Kontoauszug", COL_MUTED, 11))
+			window_box.add_child(_row("Remaining debt", [_label("%d Cr" % E.debt, COL_AMBER, 13)]))
+			window_box.add_child(_row("Next instalment", [_label("paused (settings ⚙)" if Settings.debt_paused else "%d Cr in %.1f days" % [mini(Config.PAYMENT, E.debt), days], COL_AMBER, 13)]))
+			window_box.add_child(_row("Docking fee", [_label("%d Cr per day" % Config.DOCK_FEE, COL_MUTED, 13)]))
+			window_box.add_child(_row("Missed instalments", [_label("%d of %d" % [E.strikes, Config.MAX_STRIKES], COL_MUTED, 13)]))
+			window_box.add_child(_row("Repay", [_button("500 Cr", E.pay_debt.bind(500)), _button("All", E.pay_debt.bind(999999))]))
+			window_box.add_child(_label("Account statement", COL_MUTED, 11))
 			for e in E.log_entries:
 				window_box.add_child(_row(e.text, [_label(("%+d" % e.amount) if e.amount != 0 else "", COL_MUTED, 12)], COL_MUTED))
 		"jobs":
 			var Q := QuestSystem
 			for e in Q.events:
-				window_box.add_child(_label("Nachrichten: " + e.text, Color(0.95, 0.76, 0.31), 12))
-			window_box.add_child(_label("ANSEHEN", COL_MUTED, 11))
+				window_box.add_child(_label("News: " + e.text, Color(0.95, 0.76, 0.31), 12))
+			window_box.add_child(_label("REPUTATION", COL_MUTED, 11))
 			for f in Q.FACTIONS:
 				window_box.add_child(_row(Q.FACTIONS[f].name, [_label("%+d" % int(Q.reputation.get(f, 0.0)), COL_AMBER, 12)]))
-			window_box.add_child(_label("ANGENOMMENE AUFTRÄGE", COL_MUTED, 11))
+			window_box.add_child(_label("ACCEPTED JOBS", COL_MUTED, 11))
 			if Q.accepted.is_empty():
-				window_box.add_child(_label("Keine.", COL_MUTED, 12))
+				window_box.add_child(_label("None.", COL_MUTED, 12))
 			for o in Q.accepted.duplicate():
-				window_box.add_child(_row(Q.describe(o), [_button("Abliefern", func():
+				window_box.add_child(_row(Q.describe(o), [_button("Deliver", func():
 					Q.deliver(o)
 					_last_window = ""
 					_refresh_window())]))
-			window_box.add_child(_label("ANGEBOTE HIER", COL_MUTED, 11))
+			window_box.add_child(_label("OFFERS HERE", COL_MUTED, 11))
 			for o in Q.offers_here().duplicate():
-				window_box.add_child(_row(Q.describe(o), [_button("Annehmen", func():
+				window_box.add_child(_row(Q.describe(o), [_button("Accept", func():
 					Q.accept(o)
 					_last_window = ""
 					_refresh_window())]))
-			window_box.add_child(_row("Versicherung (%d Cr/Woche, zahlt %d Cr je Hüllenbruch oder Feuer)" % [Q.INSURANCE_PREMIUM, Q.INSURANCE_PAYOUT],
-				[_button("Kündigen" if Q.insured else "Abschließen", func():
+			window_box.add_child(_row("Insurance (%d Cr/week, pays %d Cr per hull breach or fire)" % [Q.INSURANCE_PREMIUM, Q.INSURANCE_PAYOUT],
+				[_button("Cancel" if Q.insured else "Sign up", func():
 					Q.set_insured(not Q.insured)
 					_last_window = ""
 					_refresh_window())]))
 		"station":
 			if st.is_empty():
-				window_box.add_child(_label("Nur angedockt an einer Station.", COL_MUTED, 12))
+				window_box.add_child(_label("Only while docked at a station.", COL_MUTED, 12))
 			else:
-				window_box.add_child(_label("Wer redet: %s (ausgewählte Figur)" % E.trader().display_name, COL_MUTED, 12))
+				window_box.add_child(_label("Speaking: %s (selected character)" % E.trader().display_name, COL_MUTED, 12))
 				if station_reply != "":
 					var rl := _label(station_reply, Color(0.95, 0.76, 0.31), 13)
 					rl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 					rl.custom_minimum_size = Vector2(370, 0)
 					window_box.add_child(rl)
 				for o in DialogueSystem.options():
-					var b := _button("Wählen", func():
+					var b := _button("Choose", func():
 						station_reply = DialogueSystem.choose(o.id)
 						_last_window = ""
 						_refresh_window())
@@ -993,7 +993,7 @@ func _refresh_window() -> void:
 					window_box.add_child(_row(o.text + ("" if o.ok else "  (" + o.why + ")"), [b], Color(0.87, 0.9, 0.94) if o.ok else COL_MUTED))
 		"crew":
 			if st.is_empty():
-				window_box.add_child(_label("Bewerber gibt es nur an Stationen.", COL_MUTED, 12))
+				window_box.add_child(_label("Applicants are only found at stations.", COL_MUTED, 12))
 			for cand in NPCSystem.candidates_here():
 				var best: Array = cand.skills.keys()
 				best.sort_custom(func(a, b): return SkillSystem.progress(cand, a) > SkillSystem.progress(cand, b))
@@ -1003,11 +1003,11 @@ func _refresh_window() -> void:
 				var trs: PackedStringArray = []
 				for tid in cand.traits:
 					trs.append(TraitSystem.get_trait(tid).trait_name)
-				window_box.add_child(_row("%s, %d J. · %s · %s · %d Cr/Tag" % [cand.display_name, cand.age, ", ".join(parts), ", ".join(trs), cand.salary],
-					[_button("Anheuern", NPCSystem.hire.bind(cand))]))
+				window_box.add_child(_row("%s, %d y. · %s · %s · %d Cr/day" % [cand.display_name, cand.age, ", ".join(parts), ", ".join(trs), cand.salary],
+					[_button("Hire", NPCSystem.hire.bind(cand))]))
 		"ships":
 			var F := FleetSystem
-			window_box.add_child(_row("Aktuelles Schiff", [_label(F.current_name, COL_AMBER, 13)]))
+			window_box.add_child(_row("Current ship", [_label(F.current_name, COL_AMBER, 13)]))
 			var reg_txt := "Hull ID %s · Registered as %s" % [F.registry_id, F.registered_name] + ("" if F.registered_name == F.current_name else " (new name not registered yet)")
 			var reg_btns: Array = []
 			if st.get("shipyard", false):
@@ -1020,37 +1020,37 @@ func _refresh_window() -> void:
 			var cg := ShipSystem.grid
 			window_box.add_child(_label(ship_rating_text(cg, PhysicsSystem.mass() * 1000.0), COL_MUTED, 12))
 			window_box.add_child(_label(rooms_text(cg), COL_MUTED, 12))
-			window_box.add_child(_label("Deine anderen Schiffe", COL_MUTED, 11))
+			window_box.add_child(_label("Your other ships", COL_MUTED, 11))
 			if F.ships.is_empty():
-				window_box.add_child(_label("Keine weiteren Schiffe.", COL_MUTED, 12))
+				window_box.add_child(_label("No other ships.", COL_MUTED, 12))
 			for s in F.ships:
 				var b: Array = []
 				if s.location == F.here():
-					b.append(_button("An Bord gehen", F.switch_to.bind(int(s.id))))
+					b.append(_button("Go aboard", F.switch_to.bind(int(s.id))))
 					if st.get("shipyard", false):
-						b.append(_button("Verkaufen", F.sell.bind(int(s.id))))
+						b.append(_button("Sell", F.sell.bind(int(s.id))))
 				var sg := ShipGrid.from_data(s.data)
-				window_box.add_child(_row("%s (%s) · liegt bei %s · Ship Rating %s · Verkaufswert %d Cr" % [s.name, String(s.get("registry", "")), PhysicsSystem.loc(s.location).name,
+				window_box.add_child(_row("%s (%s) · moored at %s · Ship Rating %s · sale value %d Cr" % [s.name, String(s.get("registry", "")), PhysicsSystem.loc(s.location).name,
 					ShipRating.rating(sg), int(F.ship_value(sg) * 0.6)], b))
 			if SalvageSystem.wreck_name != "" and not st.is_empty():
-				window_box.add_child(_button("Wrack „%s“ als Schiff anmelden (%d Cr)" % [SalvageSystem.wreck_name, F.REGISTER_FEE], F.register_wreck))
+				window_box.add_child(_button("Register wreck “%s” as a ship (%d Cr)" % [SalvageSystem.wreck_name, F.REGISTER_FEE], F.register_wreck))
 			if st.get("shipyard", false):
-				window_box.add_child(_label("Werft", COL_MUTED, 11))
+				window_box.add_child(_label("Shipyard", COL_MUTED, 11))
 				for t2 in PhysicsSystem.space.shipyard:
 					window_box.add_child(_row("%s · %s" % [t2.name, t2.desc], [_button("%d Cr" % int(t2.price), F.buy.bind(t2.id, false)),
-						_button("Auf Kredit", F.buy.bind(t2.id, true))]))
+						_button("On credit", F.buy.bind(t2.id, true))]))
 			else:
-				window_box.add_child(_label("Schiffe kaufen und verkaufen: Werft am Kármán-Ring.", COL_MUTED, 12))
+				window_box.add_child(_label("Buy and sell ships: shipyard at the Kármán Ring.", COL_MUTED, 12))
 		"salvage":
 			if SalvageSystem.wreck_name != "":
-				window_box.add_child(_row("Wrack an der Leine", [_label(SalvageSystem.wreck_name, COL_AMBER, 13)]))
-				window_box.add_child(_row("Restwert beim Verschrotten", [_label("%d Cr" % SalvageSystem.hull_value(), COL_AMBER, 13)]))
-				window_box.add_child(_label("Was du vorher ausbaust und einzeln verkaufst, bringt viel mehr.", COL_MUTED, 12))
-				window_box.add_child(_button("Wrack verschrotten", E.scrap_hull))
-				window_box.add_child(_button("Wrack untersuchen (Forensik, Figur muss auf dem Wrack sein)", func():
+				window_box.add_child(_row("Wreck on the line", [_label(SalvageSystem.wreck_name, COL_AMBER, 13)]))
+				window_box.add_child(_row("Scrap value", [_label("%d Cr" % SalvageSystem.hull_value(), COL_AMBER, 13)]))
+				window_box.add_child(_label("Whatever you strip first and sell separately is worth much more.", COL_MUTED, 12))
+				window_box.add_child(_button("Scrap wreck", E.scrap_hull))
+				window_box.add_child(_button("Investigate wreck (Forensic Science, character must be on the wreck)", func():
 					station_reply = SalvageSystem.investigate(E.trader())
 					GameState.toast(station_reply)))
-			window_box.add_child(_button("Neues Bergungsrecht (%d Cr)" % Config.CLAIM_FEE, E.buy_claim))
+			window_box.add_child(_button("New salvage claim (%d Cr)" % Config.CLAIM_FEE, E.buy_claim))
 
 func _put_terminal(type: String, qty: int) -> void:
 	var c: CrewMember = GameState.selected if GameState.selected != null else CrewSystem.player()
@@ -1058,7 +1058,7 @@ func _put_terminal(type: String, qty: int) -> void:
 	if c == null or t == null:
 		return
 	if not c.can_reach(t.pos):
-		GameState.toast(c.display_name + " muss neben dem Terminal stehen.")
+		GameState.toast(c.display_name + " must stand next to the terminal.")
 		return
 	c.inv.move_to(t.inv, type, qty)
 	_last_window = ""
@@ -1073,13 +1073,13 @@ func toggle_auto() -> void:
 	if c == null:
 		return
 	c.set_auto(not c.auto_mode)
-	GameState.toast("%s: Auto-Modus %s." % [c.display_name, "AN – sucht sich selbst Aufgaben" if c.auto_mode else "AUS – bleibt stehen"])
+	GameState.toast("%s: auto mode %s." % [c.display_name, "ON – finds tasks on their own" if c.auto_mode else "OFF – stays put"])
 	_refresh_auto(c)
 
 func _refresh_auto(c: CrewMember) -> void:
 	if auto_button == null or c == null:
 		return
-	auto_button.text = "Auto: AN" if c.auto_mode else "Auto: AUS"
+	auto_button.text = "Auto: ON" if c.auto_mode else "Auto: OFF"
 	auto_button.add_theme_color_override("font_color", Color(0.44, 0.81, 0.56) if c.auto_mode else Color(0.9, 0.33, 0.29))
 
 # ---------------- Rechtsklick-Menü ----------------
@@ -1140,13 +1140,13 @@ func open_object_menu(p: Vector2i) -> bool:
 		var pos_in := layers.find(key)
 		var after: String = layers[(pos_in + 1) % layers.size()]
 		var dev := g.device_at(p) if key.begins_with("dev:") else null
-		var head := "▶ Ausgewählt: %s" % R.name_of(key)
+		var head := "▶ Selected: %s" % R.name_of(key)
 		if key != "cable":
-			head += " · Zustand %d %%" % int(dev.cond if dev != null else g.cond[i])
-		head += " · Ebene %d von %d" % [pos_in + 1, layers.size()]
+			head += " · condition %d %%" % int(dev.cond if dev != null else g.cond[i])
+		head += " · layer %d of %d" % [pos_in + 1, layers.size()]
 		object_menu.add_separator(head)
 		if layers.size() > 1:
-			object_menu.add_item("(Nächster Rechtsklick hier: %s)" % R.name_of(after), menu_actions.size())
+			object_menu.add_item("(next right-click here: %s)" % R.name_of(after), menu_actions.size())
 			object_menu.set_item_disabled(object_menu.item_count - 1, true)
 			menu_actions.append({"kind": "none"})
 		for kind in R.KINDS:
@@ -1166,7 +1166,7 @@ func open_object_menu(p: Vector2i) -> bool:
 	# Drehbare Geräte (Triebwerke): um 90° drehen lassen
 	var rdev := g.device_at(p) if key.begins_with("dev:") else null
 	if rdev != null and rdev.data().rotatable and not g.foreign(i):
-		object_menu.add_item("Drehen (90° im Uhrzeigersinn) – schiebt jetzt %s" % _push_name(rdev.push_dir()), menu_actions.size())
+		object_menu.add_item("Rotate (90° clockwise) – now pushes %s" % _push_name(rdev.push_dir()), menu_actions.size())
 		object_menu.set_item_disabled(object_menu.item_count - 1, not ShipConstructionSystem.can_place("rotate", p))
 		menu_actions.append({"kind": "rotate"})
 	# Navigationskonsole (Steuerpult): Debuggen als Arbeitsauftrag (Software Engineering)
@@ -1189,15 +1189,15 @@ func open_object_menu(p: Vector2i) -> bool:
 	if key == "tile:door" and not StationSystem.reserved(p):
 		var lock := AirlockSystem.is_lock_door(i) or StationSystem.is_hatch(i)
 		var closed := g.vent_closed[i] == 1
-		object_menu.add_item("Schleusentür: immer dicht" if lock else ("Lüftungsschlitz öffnen" if closed else "Lüftungsschlitz schließen (Tür wird dicht)"), menu_actions.size())
+		object_menu.add_item("Airlock door: always sealed" if lock else ("Open door vent" if closed else "Close door vent (door becomes airtight)"), menu_actions.size())
 		object_menu.set_item_disabled(object_menu.item_count - 1, lock)
 		menu_actions.append({"kind": "vent", "closed": not closed})
 	if job != null:
 		object_menu.add_separator()
-		object_menu.add_item("Auftrag abbrechen: " + ShipConstructionSystem.label(job), menu_actions.size())
+		object_menu.add_item("Cancel job: " + ShipConstructionSystem.label(job), menu_actions.size())
 		menu_actions.append({"kind": "cancel"})
 	for pk in installs:
-		object_menu.add_item("Einbauen: %s (%d %%)" % [ItemSystem.item(pk).display_name, int(installs[pk])], menu_actions.size())
+		object_menu.add_item("Install: %s (%d %%)" % [ItemSystem.item(pk).display_name, int(installs[pk])], menu_actions.size())
 		menu_actions.append({"kind": "install", "item": pk})
 	object_menu.reset_size()
 	object_menu.position = Vector2i(get_viewport().get_mouse_position())
@@ -1226,11 +1226,11 @@ func _menu_detail(kind: String, key: String) -> String:
 			return "%.1f min%s → %s" % [R.time_for(kind, key), tool_txt, R.uninstall_result(key)]
 		"dismantle":
 			return "%.1f min%s → %s" % [R.time_for(kind, key), tool_txt, _items_text(R.dismantle_yield(key))]
-	return "Schläge%s → %s" % [tool_txt, _items_text(R.debris(key))]
+	return "Hits%s → %s" % [tool_txt, _items_text(R.debris(key))]
 
 ## Richtung eines Triebwerks in Worten (Schiffskoordinaten)
 func _push_name(d: Vector2i) -> String:
-	return {Vector2i(1, 0): "nach vorn (zur Nase)", Vector2i(0, 1): "nach rechts", Vector2i(-1, 0): "nach hinten", Vector2i(0, -1): "nach links"}.get(d, "?")
+	return {Vector2i(1, 0): "forward (towards the nose)", Vector2i(0, 1): "to the right", Vector2i(-1, 0): "backward", Vector2i(0, -1): "to the left"}.get(d, "?")
 
 ## Taste G: Bau-Drehung für drehbare Geräte weiterschalten
 func rotate_build() -> void:
@@ -1242,7 +1242,7 @@ func rotate_build() -> void:
 		if key.begins_with("dev:"):
 			dev_id = key.substr(4)
 	if dev_id == "" or not ItemSystem.device(dev_id).rotatable:
-		GameState.toast("G dreht nur drehbare Geräte beim Bauen (z. B. Triebwerk).")
+		GameState.toast("G only rotates rotatable devices while building (e.g. a thruster).")
 		return
 	ShipConstructionSystem.build_rot = (ShipConstructionSystem.build_rot + 1) % 4
 	set_tool(GameState.tool)
@@ -1270,7 +1270,7 @@ func _on_object_menu(id: int) -> void:
 				GameState.toast(why)
 		"rotate":
 			if ShipConstructionSystem.place("rotate", menu_pos):
-				GameState.toast("Auftrag: Gerät um 90° drehen.")
+				GameState.toast("Job: rotate device by 90°.")
 		"debug":
 			if ShipConstructionSystem.place("debug", menu_pos):
 				GameState.toast("Task: debug the navigation console.")
@@ -1278,7 +1278,7 @@ func _on_object_menu(id: int) -> void:
 				GameState.toast("The navigation console can't be debugged right now.")
 		"vent":
 			AtmosphereSystem.set_vent(g.idx(menu_pos), bool(a.closed))
-			GameState.toast("Lüftungsschlitz geschlossen: die Tür ist jetzt dicht." if a.closed else "Lüftungsschlitz offen: etwas Luft strömt durch die geschlossene Tür.")
+			GameState.toast("Door vent closed: the door is now airtight." if a.closed else "Door vent open: some air flows through the closed door.")
 		"rename":
 			open_rename_dialog()
 		"switch":
@@ -1288,10 +1288,10 @@ func _on_object_menu(id: int) -> void:
 			var job = ShipConstructionSystem.jobs.get(g.idx(menu_pos))
 			if job != null:
 				ShipConstructionSystem.cancel(job)
-				GameState.toast("Auftrag abgebrochen.")
+				GameState.toast("Job cancelled.")
 		"install":
 			if ShipConstructionSystem.place("install:" + String(a.item), menu_pos):
-				GameState.toast("Auftrag: %s einbauen." % ItemSystem.item(a.item).display_name)
+				GameState.toast("Job: install %s." % ItemSystem.item(a.item).display_name)
 			else:
 				GameState.toast(RemovalSystem.install_reason(String(a.item), menu_pos))
 		"none":
@@ -1301,26 +1301,26 @@ func _on_object_menu(id: int) -> void:
 			var key := String(a.get("key", RemovalSystem.key_at(menu_pos)))
 			var name := RemovalSystem.name_of(key)
 			var why := RemovalSystem.order(String(a.kind), menu_pos, key)
-			GameState.toast(why if why != "" else "Auftrag: %s – %s." % [RemovalSystem.NAMES[a.kind], name])
+			GameState.toast(why if why != "" else "Job: %s – %s." % [RemovalSystem.NAMES[a.kind], name])
 	menu_actions.clear()
 
 func set_tool(tool: String) -> void:
 	GameState.tool = tool
 	for k in tool_buttons:
 		tool_buttons[k].button_pressed = k == tool
-	device_menu.text = ItemSystem.device(tool.substr(4)).display_name + " ▾" if tool.begins_with("dev:") else "Geräte ▾"
+	device_menu.text = ItemSystem.device(tool.substr(4)).display_name + " ▾" if tool.begins_with("dev:") else "Devices ▾"
 	var hint := ""
 	for t in TOOLS:
 		if t[0] == tool:
 			hint = t[3]
 	var c := {}
 	if tool.begins_with("install:"):
-		hint = "Klick auf ein passendes Feld: %s einbauen. Rechtsklick: zurück zur Auswahl." % ItemSystem.item(tool.substr(8)).display_name
+		hint = "Click a suitable tile: install %s. Right-click: back to Select." % ItemSystem.item(tool.substr(8)).display_name
 	if tool.begins_with("dev:"):
 		var d := ItemSystem.device(tool.substr(4))
 		hint = d.description
 		if d.rotatable:
-			hint = "Schiebt %s (G: drehen). %s" % [_push_name(Device.PUSH_DIRS[ShipConstructionSystem.build_rot]), hint]
+			hint = "Pushes %s (G: rotate). %s" % [_push_name(Device.PUSH_DIRS[ShipConstructionSystem.build_rot]), hint]
 		c = d.cost
 	elif ShipConstructionSystem.TOOL_TILE.has(tool):
 		c = Config.TILE_COST[ShipConstructionSystem.TOOL_TILE[tool]]
@@ -1372,7 +1372,7 @@ func interact() -> void:
 	if best.x >= 0:
 		open_container(best)
 		return
-	GameState.toast("Hier ist nichts zum Durchsuchen. Stell dich neben eine Kiste oder einen Haufen.")
+	GameState.toast("Nothing to search here. Stand next to a crate or a pile.")
 
 func open_container(p: Vector2i) -> void:
 	open_pos = p
@@ -1428,14 +1428,14 @@ func _transfer(from_box: bool, type: String, qty: int) -> void:
 	if c == null or inv == null:
 		return
 	if not c.can_reach(open_pos):
-		GameState.toast(c.display_name + " steht nicht daneben. Geh näher heran (WASD).")
+		GameState.toast(c.display_name + " is not next to it. Move closer (WASD).")
 		return
 	var moved := inv.move_to(c.inv, type, qty) if from_box else c.inv.move_to(inv, type, qty)
 	if moved < qty:
 		if not from_box and inv.only_modules and ItemSystem.item(type).helm_module == "":
-			GameState.toast("Das Modulfach des Steuerpults nimmt nur Steuerpultmodule auf.")
+			GameState.toast("The console's module bay only takes navigation console modules.")
 		else:
-			GameState.toast("Nicht alles passt hinein." if not from_box else c.display_name + " kann nicht mehr tragen.")
+			GameState.toast("Not everything fits." if not from_box else c.display_name + " cannot carry any more.")
 	ShipSystem.grid.clean_piles()
 	_last_container = ""
 	_refresh_container()
@@ -1465,7 +1465,7 @@ func _refresh() -> void:
 	var c: CrewMember = GameState.selected if GameState.selected != null else CrewSystem.player()
 	if c != null:
 		name_label.text = ("▸ " if c.is_player else "") + c.display_name
-		task_label.text = c.task + (" · trägt " + c.carrying.data().display_name if c.carrying != null else "")
+		task_label.text = c.task + (" · carrying " + c.carrying.data().display_name if c.carrying != null else "")
 		_refresh_auto(c)
 		need_bars.health.value = c.health
 		need_bars.warmth.value = clampf((c.body_temp - 33.0) / 4.0 * 100.0, 0.0, 100.0)
@@ -1483,19 +1483,19 @@ func _refresh() -> void:
 			sb.bg_color = Color(0.9, 0.33, 0.29) if v < 25.0 else (COL_AMBER if v < 50.0 else Color(0.44, 0.81, 0.56))
 		var lines: PackedStringArray = []
 		for it in c.inv.items:
-			lines.append("%s ×%d (%d %%)%s" % [ItemSystem.item(it.type).display_name, it.qty, int(it.cond), " · in den Händen" if c.inv._in_hand(it) else ""])
-		inv_label.text = ("%.1f / %d kg · Tab: Inventar\n" % [c.inv.load_weight(), int(Config.CARRY_WEIGHT)]) + ("\n".join(lines) if not lines.is_empty() else "leer")
+			lines.append("%s ×%d (%d %%)%s" % [ItemSystem.item(it.type).display_name, it.qty, int(it.cond), " · in hands" if c.inv._in_hand(it) else ""])
+		inv_label.text = ("%.1f / %d kg · Tab: inventory\n" % [c.inv.load_weight(), int(Config.CARRY_WEIGHT)]) + ("\n".join(lines) if not lines.is_empty() else "empty")
 	var goal := GoalSystem.current()
 	var goal_count: int = GoalSystem.GOALS.filter(func(x): return GoalSystem._available(x)).size()
-	goal_label.text = ("%s (%d/%d)" % [goal.text, mini(GoalSystem.done.size() + 1, goal_count), goal_count]) if not goal.is_empty() else "Alle Ziele erreicht. Mach, was du willst."
+	goal_label.text = ("%s (%d/%d)" % [goal.text, mini(GoalSystem.done.size() + 1, goal_count), goal_count]) if not goal.is_empty() else "All goals reached. Do whatever you like."
 	var net := ShipPowerSystem.main_net()
 	if net.is_empty():
-		power_label.text = "⚡ Kein Stromnetz"
+		power_label.text = "⚡ No power network"
 	else:
-		power_label.text = "⚡ %.1f kW erzeugt · %.1f kW verbraucht · Batterie %.1f/%.0f kWh%s%s" % [
-			net.production, net.demand, net.charge, net.capacity, runtime_text(net), "" if net.ok else " · STROMAUSFALL"]
-	money_label.text = "%d Cr · Schulden %d · %s · %d Baupläne" % [EconomySystem.credits, EconomySystem.debt,
-		"Raten pausiert" if Settings.debt_paused else "Rate in %.1f T" % maxf(0.0, (EconomySystem.next_payment - GameState.time) / 1440.0),
+		power_label.text = "⚡ %.1f kW produced · %.1f kW used · battery %.1f/%.0f kWh%s%s" % [
+			net.production, net.demand, net.charge, net.capacity, runtime_text(net), "" if net.ok else " · POWER FAILURE"]
+	money_label.text = "%d Cr · debt %d · %s · %d build plans" % [EconomySystem.credits, EconomySystem.debt,
+		"instalments paused" if Settings.debt_paused else "instalment in %.1f d" % maxf(0.0, (EconomySystem.next_payment - GameState.time) / 1440.0),
 		ShipConstructionSystem.jobs.size()]
 	money_label.add_theme_color_override("font_color", COL_AMBER)
 	_refresh_window()
@@ -1519,10 +1519,10 @@ func _refresh_hover() -> void:
 	var dev := g.device_at(t)
 	parts.append(dev.status_text() if dev != null else Config.TILE_NAMES[int(g.tiles[i])])
 	if g.cables[i] == 1:
-		parts.append("Kabel")
+		parts.append("Cable")
 	if ShipConstructionSystem.jobs.has(i):
 		var job: Dictionary = ShipConstructionSystem.jobs[i]
-		parts.append("Plan: " + ShipConstructionSystem.label(job) + (" (Material fehlt)" if job.get("missing", false) else ""))
+		parts.append("Plan: " + ShipConstructionSystem.label(job) + (" (material missing)" if job.get("missing", false) else ""))
 	var air := AtmosphereSystem.describe(i)
 	if air != "":
 		parts.append(air)
@@ -1547,7 +1547,7 @@ func _refresh_container() -> void:
 	var head := HBoxContainer.new()
 	var dev := ShipSystem.grid.device_at(open_pos)
 	var helm_box: bool = dev != null and inv != null and inv.only_modules
-	var title := _label((dev.data().display_name + (" – Modulfach" if helm_box else "")) if dev != null else "Haufen auf dem Boden", COL_AMBER, 15)
+	var title := _label((dev.data().display_name + (" – module bay" if helm_box else "")) if dev != null else "Pile on the floor", COL_AMBER, 15)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
 	head.add_child(_button("✕", close_container))
@@ -1555,19 +1555,19 @@ func _refresh_container() -> void:
 	if helm_box:
 		# Was dieses Pult freischaltet (nur dieses Pult, nur funktionsfähige Module)
 		var why := PhysicsSystem.module_block_reason(dev, "autodock")
-		container_box.add_child(_label("Nimmt nur Steuerpultmodule. Auto-Dock an diesem Pult: " + ("freigeschaltet" if why == "" else why), COL_MUTED, 11))
+		container_box.add_child(_label("Only takes navigation console modules. Auto-Dock at this console: " + ("unlocked" if why == "" else why), COL_MUTED, 11))
 	if dev != null and dev.lock_level > 0:
-		container_box.add_child(_label("Verschlossen (Sicherheitsstufe %d). Nötig: Hacken+Software %d (beste Figur hat %d)." % [
+		container_box.add_child(_label("Locked (security level %d). Needs Hacking+Software %d (best character has %d)." % [
 			dev.lock_level, int(SkillSystem.hack_needed(dev.lock_level)), int(_best_hack())], Color(0.9, 0.33, 0.29), 12))
-		container_box.add_child(_button("Hacken lassen", func():
+		container_box.add_child(_button("Have it hacked", func():
 			if ShipConstructionSystem.place("hack", open_pos):
-				GameState.toast("Hack-Auftrag erteilt.")))
+				GameState.toast("Hacking job given.")))
 		return
 	if inv == null or inv.items.is_empty():
-		container_box.add_child(_label("Leer.", COL_MUTED, 12))
+		container_box.add_child(_label("Empty.", COL_MUTED, 12))
 	else:
 		for it in inv.items:
-			container_box.add_child(_install_btn(_item_row(it, "Nehmen", _transfer.bind(true, it.type, it.qty)), it.type))
+			container_box.add_child(_install_btn(_item_row(it, "Take", _transfer.bind(true, it.type, it.qty)), it.type))
 	if c != null:
 		_own_section(c, true)
 
@@ -1577,19 +1577,19 @@ func _own_section(c: CrewMember, box_open: bool) -> void:
 	if c == null:
 		return
 	var head := HBoxContainer.new()
-	var title := _label("Inventar von %s · %.1f / %d kg" % [c.display_name, c.inv.load_weight(), int(Config.CARRY_WEIGHT)], COL_AMBER if not box_open else COL_MUTED, 15 if not box_open else 11)
+	var title := _label("%s's inventory · %.1f / %d kg" % [c.display_name, c.inv.load_weight(), int(Config.CARRY_WEIGHT)], COL_AMBER if not box_open else COL_MUTED, 15 if not box_open else 11)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
 	if not box_open:
 		head.add_child(_button("✕", toggle_inventory))
 	container_box.add_child(head)
 	var hand := c.inv.in_hands()
-	container_box.add_child(_label("In den Händen: " + (ItemSystem.item(hand.type).display_name if not hand.is_empty() else "nichts"), COL_MUTED, 11))
+	container_box.add_child(_label("In hands: " + (ItemSystem.item(hand.type).display_name if not hand.is_empty() else "nothing"), COL_MUTED, 11))
 	if c.inv.items.is_empty():
-		container_box.add_child(_label("Leer.", COL_MUTED, 12))
+		container_box.add_child(_label("Empty.", COL_MUTED, 12))
 		return
 	for it in c.inv.items:
-		var row := _item_row(it, "Hineinlegen" if box_open else "Ablegen", _transfer.bind(false, it.type, it.qty) if box_open else _drop_own.bind(it.type, it.qty), c.inv._in_hand(it))
+		var row := _item_row(it, "Put in" if box_open else "Drop", _transfer.bind(false, it.type, it.qty) if box_open else _drop_own.bind(it.type, it.qty), c.inv._in_hand(it))
 		container_box.add_child(_install_btn(row, it.type))
 
 func _best_hack() -> float:
@@ -1601,7 +1601,7 @@ func _best_hack() -> float:
 ## Abgebaute Stücke bekommen einen Knopf „Einbauen“ (Werkzeug: nächster Klick setzt den Auftrag)
 func _install_btn(row: HBoxContainer, type: String) -> HBoxContainer:
 	if RemovalSystem.is_packed(type):
-		row.add_child(_button("Einbauen", func():
+		row.add_child(_button("Install", func():
 			set_tool("install:" + type)
 			close_container()))
 	return row
@@ -1622,7 +1622,7 @@ func _offer_button(kind: String, price: int, cb: Callable) -> Button:
 func _item_row(it: Dictionary, action: String, cb: Callable, hand: bool = false) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	var d := ItemSystem.item(it.type)
-	var l := _label("%s ×%d · %d %% · %.1f kg%s" % [d.display_name, it.qty, int(it.cond), Inventory.stack_weight(it), " · in den Händen" if hand else ""], Color(0.87, 0.9, 0.94), 12)
+	var l := _label("%s ×%d · %d %% · %.1f kg%s" % [d.display_name, it.qty, int(it.cond), Inventory.stack_weight(it), " · in hands" if hand else ""], Color(0.87, 0.9, 0.94), 12)
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	l.tooltip_text = item_tooltip(it)
 	row.add_child(l)
@@ -1642,8 +1642,8 @@ func runtime_text(net: Dictionary) -> String:
 	if h == INF or net.charge <= 0.0:
 		return ""
 	if h < 1.0:
-		return " · Batterien reichen noch ca. %d min" % int(round(h * 60.0))
-	return " · Batterien reichen noch ca. %.1f h" % h
+		return " · batteries last about %d min" % int(round(h * 60.0))
+	return " · batteries last about %.1f h" % h
 
 ## Schiffsbewertung W-X-Y-ZZZZ mit Erklärung (Ostranauts Ship Rating)
 func ship_rating_text(g: ShipGrid, mass_kg: float) -> String:

@@ -337,34 +337,34 @@ func dock_factor() -> float:
 ## Warum ein Steuerpult nicht geflogen werden kann ("" = es geht)
 func helm_block_reason(h: Device) -> String:
 	if h == null:
-		return "Niemand steht an einem Steuerpult."
+		return "Nobody is at a navigation console."
 	if h.broken:
-		return "Dieses Steuerpult ist kaputt."
+		return "This navigation console is broken."
 	if not h.powered:
-		return "Dieses Steuerpult hat keinen Strom."
+		return "This navigation console has no power."
 	return ""
 
 ## Grund, warum der Pilot gerade keine Flugbefehle geben kann (Abdocken, Schnellreise,
 ## Auto-Dock): Es braucht das bediente Pult, intakt und mit Strom. "" = es geht.
 func pilot_block_reason() -> String:
 	if ship_devices("helm").is_empty():
-		return "Kein Steuerpult an Bord."
+		return "No navigation console aboard."
 	var h := operated_helm()
 	if h == null:
-		return "Das geht nur am Steuerpult: erst ins Cockpit (N)."
+		return "Only possible at the navigation console: go to the cockpit first (N)."
 	var why := helm_block_reason(h)
 	if why != "":
-		return why + (" Erst reparieren." if h.broken else "")
+		return why + (" Repair it first." if h.broken else "")
 	return ""
 
 ## Pult, das eine Schnellreise oder ein Auto-Dock gestartet hat ({hx, hy} im Auftrag):
 ## "" = noch in Ordnung. Ältere Spielstände ohne Pult-Angabe: irgendein versorgtes Pult.
 func _cmd_helm_reason(d: Dictionary) -> String:
 	if not d.has("hx"):
-		return "" if helm_ok() else "Kein Steuerpult mit Strom."
+		return "" if helm_ok() else "No navigation console with power."
 	var h := ShipSystem.grid.device_at(Vector2i(int(d.hx), int(d.hy)))
 	if h == null or h.type != "helm":
-		return "Das Steuerpult ist weg."
+		return "The navigation console is gone."
 	return helm_block_reason(h)
 
 ## Manueller Flug (Schub, Drehen, Angleichen) nur über das bediente Pult,
@@ -388,13 +388,13 @@ func autodock_block_reason() -> String:
 ## Steckt im Pult h ein funktionsfähiges Modul dieser Art? "" = ja, sonst der Grund
 func module_block_reason(h: Device, kind: String) -> String:
 	if h == null:
-		return "Das Steuerpult ist weg."
+		return "The navigation console is gone."
 	if not h.module(kind).is_empty():
 		return ""
 	var name := module_name(kind)
 	if h.has_module_item(kind):
-		return "Das %s in diesem Steuerpult ist kaputt." % name
-	return "Kein %s in diesem Steuerpult. Modul ins Modulfach legen (E am Pult)." % name
+		return "The %s in this navigation console is broken." % name
+	return "No %s in this navigation console. Put the module in the module bay (E at the console)." % name
 
 ## Anzeigename des Moduls für eine Funktion (z. B. "Autodock-Modul")
 func module_name(kind: String) -> String:
@@ -430,13 +430,13 @@ func step(dt: float) -> void:
 		# Pult ausgefallen: Reise endet, das Schiff fliegt mit der Reisegeschwindigkeit weiter
 		var dest_now: Vector2 = loc_state(loc(travel.to), t).pos
 		vel = (dest_now - travel.from) / maxf(1.0, travel.t1 - travel.t0)
-		GameState.toast("Schnellreise abgebrochen: %s Das Schiff fliegt mit %.2f km/s weiter." % [_cmd_helm_reason(travel), vel.length()], "bad")
+		GameState.toast("Fast travel aborted: %s The ship keeps flying at %.2f km/s." % [_cmd_helm_reason(travel), vel.length()], "bad")
 		travel = {}
 		return
 	if not autodock.is_empty() and _autodock_reason() != "":
 		# Kontrolliert abbrechen: freier Flug mit der erreichten Lage und Geschwindigkeit,
 		# keine Kopplung
-		GameState.toast("Auto-Dock abgebrochen: " + _autodock_reason(), "bad")
+		GameState.toast("Auto-Dock aborted: " + _autodock_reason(), "bad")
 		autodock = {}
 		return
 	if not travel.is_empty():
@@ -447,7 +447,7 @@ func step(dt: float) -> void:
 		if f >= 1.0:
 			var dest: String = travel.to
 			travel = {}
-			GameState.toast("Angekommen: " + loc(dest).name)
+			GameState.toast("Arrived: " + loc(dest).name)
 			dock(dest, true)
 		return
 	if not autodock.is_empty():
@@ -459,7 +459,7 @@ func step(dt: float) -> void:
 			var dest: String = autodock.to
 			autodock = {}
 			if not dock(dest, true):
-				GameState.toast("Auto-Dock: Ankoppeln nicht möglich, das Schiff treibt frei.", "bad")
+				GameState.toast("Auto-Dock: coupling failed, the ship is drifting free.", "bad")
 		return
 	# Wurde pos/vel von außen gesetzt (Abdocken, Laden, Zusammenstoß)? Dann übernehmen.
 	if pos != _p32:
@@ -475,9 +475,9 @@ func step(dt: float) -> void:
 	if not manual and (thrust != 0.0 or strafe != 0.0 or rot_input != 0.0 or rot_stop or aligning or match_target != ""):
 		var why := helm_block_reason(operated_helm())
 		if match_target != "":
-			GameState.toast("Angleichen beendet: " + why, "bad")
+			GameState.toast("Matching stopped: " + why, "bad")
 		elif helm_at != NO_HELM and not _helm_fail_warned:
-			GameState.toast("Schub beendet: " + why, "bad")
+			GameState.toast("Thrust stopped: " + why, "bad")
 		_helm_fail_warned = helm_at != NO_HELM
 		stop_inputs()
 		match_target = ""
@@ -518,7 +518,7 @@ func _thrust_accel(dt: float, inp: Vector2) -> Vector2:
 	if fuel() < need or f == Vector2.ZERO:
 		if not _no_fuel_warned:
 			_no_fuel_warned = true
-			GameState.toast("Kein Treibstoff!" if fuel() < need else "Kein Triebwerk für diese Richtung und keine Lagedüsen!", "bad")
+			GameState.toast("No fuel!" if fuel() < need else "No thruster for this direction and no RCS!", "bad")
 		return Vector2.ZERO
 	use_fuel(need)
 	_no_fuel_warned = false
@@ -619,14 +619,14 @@ func _check_hazards() -> void:
 	var alt_m := pos.distance_to(Vector2(m.x, m.y)) - float(m.r)
 	if alt_e < float(space.warn_alt) and not _warned:
 		_warned = true
-		GameState.toast("Warnung: Die Schwerkraft der Erde zieht das Schiff an! Gegenschub geben.", "bad")
+		GameState.toast("Warning: Earth's gravity is pulling the ship in! Burn away from it.", "bad")
 	if alt_e > float(space.warn_alt) * 1.5:
 		_warned = false
 	if alt_e < float(space.crash_alt) or alt_m < float(space.moon_crash_alt):
 		crashed = true
 		TimeSystem.set_speed(0)
-		var text := "Die Erde hat dein Schiff nicht mehr losgelassen. Beim Eintritt in die Atmosphäre ist es verglüht." if alt_e < float(space.crash_alt) else "Dein Schiff ist auf der Mondoberfläche zerschellt."
-		EconomySystem.game_over.emit("Abgestürzt", text)
+		var text := "Earth never let your ship go. It burned up entering the atmosphere." if alt_e < float(space.crash_alt) else "Your ship crashed into the lunar surface."
+		EconomySystem.game_over.emit("Crashed", text)
 		return
 	for l in locations:
 		if l.kind != "station":
@@ -638,7 +638,7 @@ func _check_hazards() -> void:
 				DamageSystem.strike()
 			log_event("Collision with %s at %.0f m/s (%d hull hits)" % [l.name, vel.distance_to(st.vel) * 1000.0, hits])
 			vel = st.vel
-			GameState.toast("Zusammenstoß mit " + l.name + "! Die Hülle ist beschädigt.", "bad")
+			GameState.toast("Collision with " + l.name + "! The hull is damaged.", "bad")
 
 # ---------------- Andocken, Reisen ----------------
 
@@ -671,18 +671,18 @@ func dock_block_reason(id: String) -> String:
 	if why != "":
 		return why
 	if redock_locked(id):
-		return "Gerade erst abgedockt. Andocken an %s ist in %d s wieder möglich." % [loc(id).name, int(ceil(redock_wait(id)))]
+		return "Just undocked. Docking at %s is possible again in %d s." % [loc(id).name, int(ceil(redock_wait(id)))]
 	var r := rel_to(id)
 	var m := dock_factor()
 	if r.dist >= float(space.dock_dist) * m:
-		return "Zu weit weg zum Andocken (%d m, nötig unter %d m)." % [int(r.dist * 1000.0), int(float(space.dock_dist) * m * 1000.0)]
+		return "Too far away to dock (%d m, must be under %d m)." % [int(r.dist * 1000.0), int(float(space.dock_dist) * m * 1000.0)]
 	if r.speed >= float(space.dock_speed) * m:
-		return "Zu schnell zum Andocken (%.1f m/s, nötig unter %.0f m/s)." % [r.speed * 1000.0, float(space.dock_speed) * m * 1000.0]
+		return "Too fast to dock (%.1f m/s, must be under %.0f m/s)." % [r.speed * 1000.0, float(space.dock_speed) * m * 1000.0]
 	var al := dock_alignment(id)
 	if not al.port:
-		return "Keine freie Andockschleuse."
+		return "No free docking port."
 	if not al.ok:
-		return "Andockschleuse zeigt nicht zum Ziel (%d° daneben, erlaubt %d°). Mit Q/E drehen." % [int(al.deg), int(space.dock_align_deg)]
+		return "The docking port does not face the target (%d° off, %d° allowed). Turn with Q/E." % [int(al.deg), int(space.dock_align_deg)]
 	return ""
 
 func can_dock(id: String) -> bool:
@@ -708,7 +708,7 @@ func dock(id: String, force: bool = false) -> bool:
 		return false
 	# Andocken nur mit Andockschleuse (Tür an Tür, keine Gänge)
 	if ShipSystem.ports().is_empty():
-		GameState.toast("Kein Andockport: Angedockt wird an der Außentür einer Luftschleuse (Raum mit Pumpe, Tür ins All).", "bad")
+		GameState.toast("No docking port: ships dock at the outer door of an airlock (a room with a pump and a door to space).", "bad")
 		return false
 	# Klammern am ausgerichteten Port: dort entsteht der Übergang
 	var al := dock_alignment(id)
@@ -726,7 +726,7 @@ func dock(id: String, force: bool = false) -> bool:
 	NPCSystem.on_docked(id)
 	SkillSystem.train_all_at("helm", "dock", 0.3 if force else 8.0)
 	log_event("Docked: " + loc(id).name)
-	GameState.toast("Angedockt: " + loc(id).name)
+	GameState.toast("Docked at: " + loc(id).name)
 	if String(loc(id).get("kind", "")) == "station" and not xpdr_faults().is_empty():
 		GameState.toast("Security Services (N.A.S.S.) take a closer look at your unidentified ship (%s)." % ", ".join(xpdr_faults()), "bad")
 	return true
@@ -772,9 +772,9 @@ func xpdr_dock_reason(id: String) -> String:
 ## Grund, der das Abdocken verhindert ("" = Abdocken möglich)
 func undock_block_reason() -> String:
 	if docked == "":
-		return "Das Schiff ist nicht angedockt."
+		return "The ship is not docked."
 	if crashed:
-		return "Das Schiff ist zerstört."
+		return "The ship is destroyed."
 	var why := pilot_block_reason()
 	if why != "":
 		return why
@@ -791,11 +791,11 @@ func undock_block_reason() -> String:
 		elif StationSystem.is_hatch(i):
 			in_hatch.append(c.display_name)
 	if not on_wreck.is_empty():
-		return "Noch auf dem Wrack: %s. Erst alle zurück an Bord holen." % ", ".join(on_wreck)
+		return "Still on the wreck: %s. Bring everyone back aboard first." % ", ".join(on_wreck)
 	if not on_station.is_empty():
-		return "Noch auf der Station: %s. Erst alle zurück an Bord holen." % ", ".join(on_station)
+		return "Still on the station: %s. Bring everyone back aboard first." % ", ".join(on_station)
 	if not in_hatch.is_empty():
-		return "%s steht in der Luke zur Station." % ", ".join(in_hatch)
+		return "%s is standing in the hatch to the station." % ", ".join(in_hatch)
 	return ""
 
 ## Abdocken über die Bedienung (Knopf, Taste U): meldet immer Erfolg oder Grund
@@ -830,7 +830,7 @@ func undock() -> bool:
 	undock_lock_id = from
 	undock_lock_until = secs() + REDOCK_LOCK_SECS
 	log_event("Undocked: " + loc(from).name)
-	GameState.toast("Abgedockt von %s. Das Schiff treibt frei – Steuerung in der Navigation (WASD)." % loc(from).name)
+	GameState.toast("Undocked from %s. The ship is drifting free – steer from the navigation console (WASD)." % loc(from).name)
 	return true
 
 func start_autodock() -> void:
@@ -839,10 +839,10 @@ func start_autodock() -> void:
 		GameState.toast(why, "bad")
 		return
 	if docked != "":
-		GameState.toast("Das Schiff ist schon angedockt.")
+		GameState.toast("The ship is already docked.")
 		return
 	if ShipSystem.free_ports().is_empty():
-		GameState.toast("Keine freie Andockschleuse für das Auto-Dock.", "bad")
+		GameState.toast("No free docking port for Auto-Dock.", "bad")
 		return
 	var n := nearest()
 	if redock_locked(n.id):
@@ -852,16 +852,16 @@ func start_autodock() -> void:
 		GameState.toast(xpdr_dock_reason(n.id), "bad")
 		return
 	if n.dist > float(space.autodock_dist) or n.speed > float(space.autodock_speed):
-		GameState.toast("Zu weit weg oder zu schnell für das Auto-Dock.")
+		GameState.toast("Too far away or too fast for Auto-Dock.")
 		return
 	var need: float = (5.0 + n.speed * 60.0) * fuel_factor()
 	if fuel() < need:
-		GameState.toast("Nicht genug Treibstoff zum Andocken.", "bad")
+		GameState.toast("Not enough fuel to dock.", "bad")
 		return
 	use_fuel(need)
 	var t_dock: float = 300.0 + n.dist * 5.0
 	autodock = {"to": n.id, "t0": secs(), "t1": secs() + t_dock, "hx": helm_at.x, "hy": helm_at.y}
-	GameState.toast("Auto-Dock läuft: " + loc(n.id).name)
+	GameState.toast("Auto-Dock running: " + loc(n.id).name)
 
 func travel_info(id: String) -> Dictionary:
 	var r := rel_to(id)
@@ -880,10 +880,10 @@ func travel_to(id: String) -> void:
 		return
 	var info := travel_info(id)
 	if max_thrust() <= 0.0:
-		GameState.toast("Keine Triebwerke mit Strom.", "bad")
+		GameState.toast("No thrusters with power.", "bad")
 		return
 	if fuel() < info.fuel:
-		GameState.toast("Zu wenig Treibstoff (%d nötig)." % int(ceil(info.fuel)), "bad")
+		GameState.toast("Not enough fuel (%d needed)." % int(ceil(info.fuel)), "bad")
 		return
 	if not undock():
 		return
@@ -891,16 +891,16 @@ func travel_to(id: String) -> void:
 	travel = {"to": id, "t0": secs(), "t1": secs() + info.secs, "from": pos, "hx": helm_at.x, "hy": helm_at.y}
 	SkillSystem.train_all_at("helm", "navigate", 10.0)
 	SkillSystem.train_all_at("helm", "pilot", 5.0)
-	GameState.toast("Schnellreise nach %s: %.1f Stunden." % [loc(id).name, info.secs / 3600.0])
+	GameState.toast("Fast travel to %s: %.1f hours." % [loc(id).name, info.secs / 3600.0])
 
 func status() -> String:
 	if docked != "":
-		return "Angedockt: " + loc(docked).name
+		return "Docked at: " + loc(docked).name
 	if not travel.is_empty():
-		return "Unterwegs nach " + loc(travel.to).name
+		return "En route to " + loc(travel.to).name
 	if not autodock.is_empty():
-		return "Dockt an: " + loc(autodock.to).name
-	return "Im freien Flug"
+		return "Docking at: " + loc(autodock.to).name
+	return "In free flight"
 
 ## Station, an der gerade angedockt ist (sonst leer)
 func station() -> Dictionary:

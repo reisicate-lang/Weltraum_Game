@@ -3,8 +3,8 @@
 ## unbekanntem Inhalt, Schrott und alte Kabel.
 extends Node
 
-const NAMES := ["MV Kestrel", "Frachter Nansen-4", "Tankschiff Halcyon", "Bergbauschlepper Ox-12",
-	"Shuttle Meridian", "Kurierschiff Pallas", "Prospektor Vesna", "Versorger Hollis"]
+const NAMES := ["MV Kestrel", "Freighter Nansen-4", "Tanker Halcyon", "Mining Tug Ox-12",
+	"Shuttle Meridian", "Courier Pallas", "Prospector Vesna", "Supply Ship Hollis"]
 const DEVICE_POOL := ["generator", "battery", "o2gen", "scrubber", "bed", "food", "airtank", "locker", "water", "sink", "pump", "solar", "charger"]
 const LOOT := [["scrap", 6], ["plate", 5], ["copper", 5], ["circuit", 3], ["motor", 2], ["cell", 2], ["pipe", 4],
 	["glass", 2], ["filter", 2], ["fabric", 3], ["ration", 4], ["fuelcan", 1], ["aircan", 1], ["watercan", 1], ["datachip", 1]]
@@ -46,7 +46,7 @@ func generate() -> bool:
 	var g := ShipSystem.grid
 	var pt := free_port()
 	if pt.is_empty():
-		GameState.toast("Für ein Wrack fehlt ein freier Andockport (Außentür einer Luftschleuse).", "bad")
+		GameState.toast("A wreck needs a free docking port (the outer door of an airlock).", "bad")
 		return false
 	_frame(pt)
 	var e := Vector2i(0, 0)      # Wracktür im Port-Rahmen
@@ -66,7 +66,7 @@ func generate() -> bool:
 			found = true
 			break
 	if not found:
-		GameState.toast("Kein Platz für das Wrack vor dem Andockport.", "bad")
+		GameState.toast("No room for the wreck in front of the docking port.", "bad")
 		return false
 	var inner: Array[Vector2i] = []
 	for y in range(top, top + h):
@@ -161,7 +161,7 @@ func generate() -> bool:
 			g.cables[g.idx(_w(cx, cy))] = 1
 	wreck_name = NAMES.pick_random()
 	investigated = false
-	cause = ["ein Reaktorbrand", "ein Treffer im Krieg", "eine Kollision mit Trümmern", "ein Hüllenbruch durch Materialermüdung", "Meuterei an Bord"].pick_random()
+	cause = ["a reactor fire", "a hit in the war", "a collision with debris", "a hull breach from metal fatigue", "a mutiny on board"].pick_random()
 	EventBus.ship_changed.emit()
 	return true
 
@@ -197,7 +197,7 @@ func generate_asteroid() -> bool:
 	var g := ShipSystem.grid
 	var pt := free_port()
 	if pt.is_empty():
-		GameState.toast("Für den Asteroiden fehlt ein freier Andockport.", "bad")
+		GameState.toast("The asteroid needs a free docking port.", "bad")
 		return false
 	_frame(pt)
 	var K := Config.GRID_SCALE
@@ -215,7 +215,7 @@ func generate_asteroid() -> bool:
 	# Landeplatz direkt vor dem Port
 	_put(g, _w(0, 0), ShipGrid.Tile.FLOOR)
 	_link(g, pt, _w(0, 0))
-	wreck_name = "Asteroid " + ["KX-7a", "KX-7b", "Brocken 12", "Splitter 4"].pick_random()
+	wreck_name = "Asteroid " + ["KX-7a", "KX-7b", "Chunk 12", "Shard 4"].pick_random()
 	investigated = true
 	EventBus.ship_changed.emit()
 	return true
@@ -273,9 +273,9 @@ func estimate_text(dev: Device) -> String:
 	var v := device_value(dev)
 	var acc := SkillSystem.appraisal()
 	if acc >= 0.99:
-		return "Bergungswert %d Cr" % v
+		return "Salvage value %d Cr" % v
 	var spread := int(v * (0.5 - 0.45 * acc))
-	return "Bergungswert ~%d–%d Cr" % [maxi(0, v - spread), v + spread]
+	return "Salvage value ~%d–%d Cr" % [maxi(0, v - spread), v + spread]
 
 ## Restwert beim Verschrotten
 func hull_value() -> int:
@@ -302,24 +302,24 @@ func hull_value() -> int:
 func investigate(c: CrewMember) -> String:
 	var g := ShipSystem.grid
 	if wreck_name == "":
-		return "Hier ist kein Wrack."
+		return "There is no wreck here."
 	if g.zone[g.idx(c.tile())] != 1:
-		return c.display_name + " muss dafür auf dem Wrack sein."
+		return c.display_name + " must be on the wreck for this."
 	if investigated:
-		return "Dieses Wrack wurde schon untersucht."
+		return "This wreck has already been investigated."
 	investigated = true
 	SkillSystem.train(c, "investigate", 20.0)
 	var text := ""
 	if SkillSystem.effect(c, "damage_insight") > 0.2:
-		text = "%s findet heraus: Das Wrack ging durch %s verloren. " % [c.display_name, cause]
+		text = "%s finds out: the wreck was lost to %s. " % [c.display_name, cause]
 	else:
-		text = "%s findet Spuren, kann sie aber nicht deuten. " % c.display_name
+		text = "%s finds traces but cannot make sense of them. " % c.display_name
 	var chance := 0.15 + SkillSystem.effect(c, "find_hidden")
 	if SkillSystem.mastered(c, "forensic") or randf() < chance:
 		g.drop_items(c.tile(), "datachip", randi_range(1, 2), randf_range(70.0, 100.0))
-		text += "Unter einer Bodenplatte liegt ein Versteck mit Datenchips!"
+		text += "Under a floor plate there is a stash of data chips!"
 	else:
-		text += "Kein Versteck gefunden."
+		text += "No stash found."
 	return text
 
 ## Geräte in der Nähe eines Charakters werden erkannt

@@ -179,13 +179,13 @@ func _initialize() -> void:
 	var outer := Vector2i(3, 5)
 	_complete("uninstall", outer, "tile:wall", Vector2i(4, 5))
 	_check("Außenwand wird Boden mit Vakuumkante", g.tiles[g.idx(outer)] == T.FLOOR and atm.vacuum_edges(g.idx(outer)) == 1)
-	_check("Kabine hat einen direkten Vakuumweg", atm.room_leak(atm.room_of(a[0])) == "direkt")
+	_check("Kabine hat einen direkten Vakuumweg", atm.room_leak(atm.room_of(a[0])) == "direct")
 	_sim(30)
 	_check("Kabinendruck sinkt (%.1f kPa nach 30 s)" % _mean(a), _mean(a) < 99.0 and atm.vented.o2 > 0.0)
 	_check("Kontrollkammer hinter dichter Tür hält Druck (%.3f kPa)" % _mean(b), absf(_mean(b) - 100.0) <= 0.01 and atm.room_leak(atm.room_of(b[0])) == "")
 	# Tür öffnen: Kontrollkammer bekommt indirekten Vakuumweg; schließen isoliert wieder
 	g.door_open_until[door] = 1e12
-	_check("Offene Tür: Kontrollkammer verliert über die Tür", atm.room_leak(atm.room_of(b[0])) == "tür")
+	_check("Offene Tür: Kontrollkammer verliert über die Tür", atm.room_leak(atm.room_of(b[0])) == "door")
 	_sim(10)
 	g.door_open_until[door] = 0.0
 	mb = _mean(b)
@@ -221,7 +221,7 @@ func _initialize() -> void:
 	_complete("uninstall", Vector2i(8, 8), "tile:floor", Vector2i(7, 8))
 	_sim(30)
 	_check("Nur diagonal angrenzende dichte Tasche verliert kein Gas", _same(_total(pocket), pocket0, 0.0001) and atm.room_leak(atm.room_of(pocket[0])) == "")
-	_check("… der Raum selbst leckt", atm.room_leak(atm.room_of(a[0])) == "direkt")
+	_check("… der Raum selbst leckt", atm.room_leak(atm.room_of(a[0])) == "direct")
 
 	# 6) Abdichten und wiederbefüllen
 	_grid()
@@ -272,7 +272,7 @@ func _initialize() -> void:
 	_sim(2)
 	_complete("install", h1, "pk_tile_floor", Vector2i(5, 5))
 	_sim(1)
-	_check("Erstes Loch zu: zweites leckt weiter (%.3f kPa im letzten Schritt)" % atm.last_vented, atm.last_vented > 0.0 and atm.room_leak(atm.room_of(a[0])) == "direkt")
+	_check("Erstes Loch zu: zweites leckt weiter (%.3f kPa im letzten Schritt)" % atm.last_vented, atm.last_vented > 0.0 and atm.room_leak(atm.room_of(a[0])) == "direct")
 	var save = root.get_node("SaveSystem")
 	save.save_game(true)
 	var snap: Array = []
@@ -288,7 +288,7 @@ func _initialize() -> void:
 			same = false
 	_check("Nach dem Laden: gespeicherte Partialdrücke sind der Startzustand", same)
 	_check("… derselbe Vakuumweg wird erkannt (nur am zweiten Loch)", g.tiles[g.idx(h2)] == T.SPACE and g.tiles[g.idx(h1)] == T.FLOOR
-		and atm.vacuum_edges(g.idx(h2 + Vector2i(1, 0))) == 1 and atm.vacuum_edges(g.idx(h1 + Vector2i(1, 0))) == 0 and atm.room_leak(atm.room_of(a[0])) == "direkt")
+		and atm.vacuum_edges(g.idx(h2 + Vector2i(1, 0))) == 1 and atm.vacuum_edges(g.idx(h1 + Vector2i(1, 0))) == 0 and atm.room_leak(atm.room_of(a[0])) == "direct")
 	_sim(1)
 	_check("… und leckt dort weiter", atm.last_vented > 0.0)
 

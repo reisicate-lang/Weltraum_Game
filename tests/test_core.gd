@@ -58,7 +58,7 @@ func _initialize() -> void:
 	var cr: int = econ.credits
 	toasts.clear()
 	econ.buy_claim()
-	_check("Bergungsrecht abgelehnt, mit Meldung", econ.credits == cr and toasts.any(func(t): return "Bergung ist vorübergehend abgeschaltet" in t))
+	_check("Bergungsrecht abgelehnt, mit Meldung", econ.credits == cr and toasts.any(func(t): return "Salvage is temporarily disabled" in t))
 	econ.terminal().inv.add("scrap", 3, 80.0)
 	econ.sell_all()
 	_check("Verkaufen am Terminal geht", econ.credits > cr)
@@ -66,7 +66,7 @@ func _initialize() -> void:
 	var labels: Array = []
 	for b in ui.window_box.find_children("*", "Button", true, false):
 		labels.append(b.text)
-	_check("Reiter „Bergung“ ist ausgeblendet", not "Bergung" in labels and "Verkaufen" in labels)
+	_check("Reiter „Bergung“ ist ausgeblendet", not "Salvage" in labels and "Sell" in labels)
 	ui.close_window()
 
 	# 3) Ziele: Wrack-Ziele werden übersprungen

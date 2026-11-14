@@ -182,17 +182,17 @@ func _initialize() -> void:
 		if row.is_queued_for_deletion():
 			continue
 		for b in row.find_children("*", "Button", true, false):
-			if b.text == "Ziel" and zb == null:
+			if b.text == "Target" and zb == null:
 				zb = b
 	zb.pressed.emit()
 	_check("1: Zielwahl per Maus („Ziel“-Knopf) geht weiter (%s)" % P.target, zb != null and P.target != tgt1)
 	var hint := false
 	for kk in ui.FLIGHT_KEYS:
-		if kk[0] == "T" and "Ziel" in kk[1]:
+		if kk[0] == "T" and "target" in kk[1]:
 			hint = true
-		if kk[0] == "Tab" and "Inventar" in kk[1]:
+		if kk[0] == "Tab" and "inventory" in kk[1]:
 			hint = hint and true
-	_check("1: Tastenhinweis im Cockpit: T = Ziel, Tab = Inventar", hint and ui.FLIGHT_KEYS.any(func(kk): return kk[0] == "Tab" and "Inventar" in kk[1]))
+	_check("1: Tastenhinweis im Cockpit: T = Ziel, Tab = Inventar", hint and ui.FLIGHT_KEYS.any(func(kk): return kk[0] == "Tab" and "inventory" in kk[1]))
 	ui.leave_flight()
 	# Behälter offen + Tab: Austausch geht weiter
 	var crate_p := C(x0 + 13, y0 + 8)
@@ -323,7 +323,7 @@ func _initialize() -> void:
 	ui.open_container(mira.tile())
 	toasts.clear()
 	ui._transfer(true, "plate", 1)
-	_check("3: Gepäck zu schwer (%.0f kg): Platte bleibt am Boden (%s)" % [mira.inv.load_weight(), toasts[-1] if not toasts.is_empty() else ""], g.piles.has(fp) and g.piles[fp].count("plate") == 1 and "tragen" in toasts[-1])
+	_check("3: Gepäck zu schwer (%.0f kg): Platte bleibt am Boden (%s)" % [mira.inv.load_weight(), toasts[-1] if not toasts.is_empty() else ""], g.piles.has(fp) and g.piles[fp].count("plate") == 1 and "carry" in toasts[-1])
 	# Hände belegt: zweites abgebautes Gerät bleibt am Boden
 	mira.inv.add("pk_bed", 1, 90.0, {"type": "bed", "x": 0, "y": 0, "cond": 90.0, "broken": false, "stock": -1.0, "charge": 0.0, "items": []})
 	g.drop_items(mira.tile(), "pk_sink", 1, 90.0)
@@ -340,7 +340,7 @@ func _initialize() -> void:
 	# Ungültige Plätze (Vorschau = can_place / place_reason, alle drei Felder)
 	CS.build_rot = 2
 	var inner_wall := inside_wall(x0 + 10, y0 + 2, Vector2i(1, 0))   # Trennwand Kabine/Cockpit, dahinter Boden
-	_check("4: Innenwand abgewiesen (%s)" % CS.place_reason("dev:thruster", inner_wall), not CS.can_place("dev:thruster", inner_wall) and "Innenwand" in CS.place_reason("dev:thruster", inner_wall))
+	_check("4: Innenwand abgewiesen (%s)" % CS.place_reason("dev:thruster", inner_wall), not CS.can_place("dev:thruster", inner_wall) and "Inner wall" in CS.place_reason("dev:thruster", inner_wall))
 	CS.build_rot = 3
 	var swapped := inside_wall(x0 + 12, y0, Vector2i(0, 1))          # innen draußen im All, außen in der Kabine
 	_check("4: Vertauschte Innen-/Außenseite abgewiesen (%s)" % CS.place_reason("dev:thruster", swapped), not CS.can_place("dev:thruster", swapped) and "inner" in CS.place_reason("dev:thruster", swapped))
@@ -348,7 +348,7 @@ func _initialize() -> void:
 	var blocked := inside_wall(x0 + 7, y0, Vector2i(0, -1))
 	var nozzle := blocked + Vector2i(0, -2)
 	var junk = g.place_device("solar", nozzle)   # etwas schwebt vor der Düse
-	_check("4: Blockiertes Düsenfeld abgewiesen (%s)" % CS.place_reason("dev:thruster", blocked), not CS.can_place("dev:thruster", blocked) and "Düsenfeld" in CS.place_reason("dev:thruster", blocked))
+	_check("4: Blockiertes Düsenfeld abgewiesen (%s)" % CS.place_reason("dev:thruster", blocked), not CS.can_place("dev:thruster", blocked) and "nozzle tile" in CS.place_reason("dev:thruster", blocked))
 	g.remove_device(junk)
 	_check("4: Vorschau umfasst 3 Felder", CS.cells_of("thruster", blocked, 1).size() == 3 and CS.cells_of("thruster", blocked, 1)[2] == nozzle)
 	_check("4: Überschneidung mit vorhandenem Triebwerk abgewiesen", not CS.can_place("dev:thruster", C(x0 + 1, y0 + 2)))

@@ -104,33 +104,33 @@ func usable() -> bool:
 func status_text() -> String:
 	var d := data()
 	if unknown:
-		return "Kiste · Inhalt unbekannt (näher herangehen)" if inv != null else "Unbekanntes Gerät (näher herangehen)"
+		return "Crate · contents unknown (move closer)" if inv != null else "Unknown device (move closer)"
 	var parts: PackedStringArray = [d.display_name]
 	if lock_level > 0:
-		parts.append("verschlossen (Stufe %d)" % lock_level)
+		parts.append("locked (level %d)" % lock_level)
 	if broken:
 		parts.append("KAPUTT")
 	elif cond < 100.0:
-		parts.append("Zustand %d %%" % int(cond))
+		parts.append("condition %d %%" % int(cond))
 	if needs_power():
-		parts.append("läuft" if powered else "kein Strom")
+		parts.append("running" if powered else "no power")
 	if d.power > 0.0:
-		parts.append("liefert %.1f kW" % d.power if producing else ("muss draußen im Vakuum stehen" if type == "solar" else "liefert nichts"))
+		parts.append("producing %.1f kW" % d.power if producing else ("must stand outside in vacuum" if type == "solar" else "producing nothing"))
 	if type == "locker":
-		parts.append("Anzug: O₂ %d %%, Akku %d %%" % [int(suit.o2), int(suit.battery)] if suit != null else "leer (Anzug ist unterwegs)")
+		parts.append("Suit: O₂ %d %%, battery %d %%" % [int(suit.o2), int(suit.battery)] if suit != null else "empty (suit is in use)")
 	if type == "pump":
-		parts.append("Speicher %d kPa" % int(store))
+		parts.append("storage %d kPa" % int(store))
 	if type in ["hydro", "autofarm", "meatvat"]:
-		parts.append("Wachstum %d %%" % int(growth * 100.0) + (" · Gen-Mod" if genemod else ""))
+		parts.append("growth %d %%" % int(growth * 100.0) + (" · gene mod" if genemod else ""))
 	if type == "hydro":
-		parts.append("gepflegt" if GameState.time - tended_at < 1440.0 else "braucht Pflege")
+		parts.append("gepflegt" if GameState.time - tended_at < 1440.0 else "needs care")
 	if d.capacity > 0.0:
 		var cap := ShipPowerSystem.capacity_of(self)
-		parts.append("%.1f / %.0f kWh" % [charge, cap] + ("" if cap >= d.capacity else " (Nenn %.0f)" % d.capacity))
+		parts.append("%.1f / %.0f kWh" % [charge, cap] + ("" if cap >= d.capacity else " (rated %.0f)" % d.capacity))
 	if d.stock >= 0.0:
-		parts.append("Vorrat: %d %s" % [int(stock), d.stock_unit])
+		parts.append("stock: %d %s" % [int(stock), d.stock_unit])
 	if inv != null:
-		parts.append("%d / %d L belegt" % [int(inv.volume()), int(d.storage)])
+		parts.append("%d / %d L used" % [int(inv.volume()), int(d.storage)])
 	if ShipSystem.grid != null and ShipSystem.grid.zone[ShipSystem.grid.idx(pos)] == 1:
 		parts.append(SalvageSystem.estimate_text(self))
 	return " · ".join(parts)

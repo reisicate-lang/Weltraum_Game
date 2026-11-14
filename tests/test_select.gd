@@ -117,9 +117,9 @@ func _initialize() -> void:
 	var h2 := _menu_head()
 	var s3: String = await _rclick(bat)
 	var h3 := _menu_head()
-	_check("1: Rechtsklick 1 → Kabel (%s)" % h1, s1 == "cable" and "Ausgewählt: Kabel" in h1 and ui.object_menu.visible)
-	_check("1: Rechtsklick 2 → Gerät (%s)" % h2, s2 == "dev:battery" and "Ausgewählt: Ship Battery" in h2)
-	_check("1: Rechtsklick 3 → Boden (%s)" % h3, s3 == "tile:floor" and "Ausgewählt: Boden" in h3)
+	_check("1: Rechtsklick 1 → Kabel (%s)" % h1, s1 == "cable" and "Selected: Cable" in h1 and ui.object_menu.visible)
+	_check("1: Rechtsklick 2 → Gerät (%s)" % h2, s2 == "dev:battery" and "Selected: Ship Battery" in h2)
+	_check("1: Rechtsklick 3 → Boden (%s)" % h3, s3 == "tile:floor" and "Selected: Floor" in h3)
 	var s4: String = await _rclick(bat)
 	_check("1: Rechtsklick 4 → wieder Kabel", s4 == "cable")
 	_check("1: Markierung sichtbar (Auswahl gültig: %s auf %s)" % [ui.sel_key, str(ui.sel_tile)], ui.selection_valid() and ui.sel_tile == bat)
@@ -155,7 +155,7 @@ func _initialize() -> void:
 	_until_done(bat)
 	_check("2: Batterie abgebaut (liegt als Gegenstand am Boden)", g.device_at(bat) == null and g.get_tile(bat) == ShipGrid.Tile.FLOOR and g.piles.has(g.idx(bat)) and g.piles[g.idx(bat)].count("pk_battery") == 1)
 	var k3: String = await _rclick(bat)
-	_check("2: Nächster Rechtsklick → Boden (%s)" % _menu_head(), k3 == "tile:floor" and "Ausgewählt: Boden" in _menu_head())
+	_check("2: Nächster Rechtsklick → Boden (%s)" % _menu_head(), k3 == "tile:floor" and "Selected: Floor" in _menu_head())
 	ui.object_menu.hide()
 
 	# Mehrfeld-Gerät: jede belegte Kachel wählt dieselbe Instanz

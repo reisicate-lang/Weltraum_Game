@@ -220,7 +220,7 @@ func begin(c: CrewMember, asteroid_start: bool = true) -> void:
 		# Zufällige Figur: eine angeborene Eigenschaft
 		var ids := TraitSystem.traits.keys()
 		TraitSystem.add(c, ids.pick_random())
-		c.history.append("Geboren in einer Mondsiedlung.")
+		c.history.append("Born in a lunar settlement.")
 
 func done_careers(c: CrewMember) -> Array:
 	return c.get_meta("careers", [])
@@ -288,7 +288,7 @@ func apply_career(c: CrewMember, id: String) -> String:
 	if randf() < float(k.get("enemy_chance", 0.0)):
 		var enemy := "%s %s" % [FIRST_NAMES.pick_random(), LAST_NAMES.pick_random()]
 		c.enemies.append(enemy)
-		line += " Machte sich %s zum Feind." % enemy
+		line += " Made an enemy of %s." % enemy
 	c.history.append(line)
 	_age_check(c, age_before)
 	_sanitize_drafts(c)
@@ -342,7 +342,7 @@ func creation_ended(c: CrewMember) -> bool:
 
 ## Startschiffe: die Rostlaube und die Werftschiffe, Kredit = Preis (Cr)
 func starter_ships() -> Array:
-	var out: Array = [{"id": "rostlaube", "name": "Rostlaube", "price": Config.START_DEBT,
+	var out: Array = [{"id": "rostlaube", "name": "Rustbucket", "price": Config.START_DEBT,
 		"desc": "Your old salvage tug: life support, generator, two thrusters, an airlock."}]
 	for t in PhysicsSystem.space.shipyard:
 		out.append(t)

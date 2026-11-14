@@ -83,7 +83,7 @@ func _initialize() -> void:
 	_check("Cockpit zeigt die Tastenbelegung", texts.has("Q / E") and texts.has("W / S") and texts.has("A / D") and texts.has("Esc / N"))
 	ui.keep_pilot()
 	_secs(5)
-	_check("Pilot bleibt am Pult", mira.can_reach(helm.pos) and mira.task == "Steuert das Schiff")
+	_check("Pilot bleibt am Pult", mira.can_reach(helm.pos) and mira.task == "Flying the ship")
 
 	# 2) Abdocken, wegfliegen, Schub loslassen: Schiff driftet weiter
 	_check("Abdocken", P.request_undock())
@@ -155,7 +155,7 @@ func _initialize() -> void:
 	P.pos = st.pos + Vector2(0.1, 0)
 	P.vel = st.vel
 	P.angle = P.dock_alignment("tycho").angle + PI
-	_check("Schleuse zeigt weg: kein Andocken (%s)" % P.dock_block_reason("tycho"), not P.can_dock("tycho") and "zeigt nicht zum Ziel" in P.dock_block_reason("tycho"))
+	_check("Schleuse zeigt weg: kein Andocken (%s)" % P.dock_block_reason("tycho"), not P.can_dock("tycho") and "does not face the target" in P.dock_block_reason("tycho"))
 	P.angle = P.dock_alignment("tycho").angle
 	_check("Ausgerichtet: Andocken möglich", P.can_dock("tycho"))
 

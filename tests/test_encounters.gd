@@ -142,7 +142,7 @@ func _initialize() -> void:
 	_check("Ereignis „%s“ mit %d Antwort-Knöpfen" % [ev.get("name", "?"), choices.size()], not ev.is_empty() and choices.all(func(b): return b != null))
 	var go: Button = null
 	for b in cui.creation_bottom.get_children():
-		if b is Button and not b.is_queued_for_deletion() and b.text == "Los geht's":
+		if b is Button and not b.is_queued_for_deletion() and b.text == "Let's go":
 			go = b
 	_check("Los geht's gesperrt, solange das Ereignis offen ist", go != null and go.disabled)
 	var free_b: Button = null

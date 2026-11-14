@@ -96,7 +96,7 @@ func _initialize() -> void:
 	await process_frame
 	var go: Button = null
 	for b in cui.creation_bottom.get_children():
-		if b is Button and not b.is_queued_for_deletion() and b.text == "Los geht's":
+		if b is Button and not b.is_queued_for_deletion() and b.text == "Let's go":
 			go = b
 	_check("Angebot offen: Kaufen/Ablehnen, Los geht's gesperrt", _find(cui.creation_box, "ship_buy") != null and _find(cui.creation_box, "ship_decline") != null and go != null and go.disabled)
 	# auf Lumen festlegen und kaufen
@@ -108,7 +108,7 @@ func _initialize() -> void:
 	await process_frame
 	_check("Gekauft: Erstellung beendet", CHS.ship_bought(mira) == "lumen" and _find(cui.creation_box, "seek_ship") == null)
 	for b in cui.creation_bottom.get_children():
-		if b is Button and not b.is_queued_for_deletion() and b.text == "Los geht's":
+		if b is Button and not b.is_queued_for_deletion() and b.text == "Let's go":
 			go = b
 	go.pressed.emit()
 	await process_frame
@@ -134,7 +134,7 @@ func _initialize() -> void:
 	gs.new_game()
 	CHS.begin(CHS.get_node("/root/CrewSystem").player())
 	F.start_with(CHS.ship_bought(root.get_node("CrewSystem").player()))
-	_check("Ohne Kauf: Rostlaube, 24 000 Cr Kredit", F.current_name == "Rostlaube" and E.debt == 24000)
+	_check("Ohne Kauf: Rostlaube, 24 000 Cr Kredit", F.current_name == "Rustbucket" and E.debt == 24000)
 
 	print("%d OK, %d Fehler" % [ok_count, fail_count])
 	quit()

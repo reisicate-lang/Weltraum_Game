@@ -31,9 +31,9 @@ func _initialize() -> void:
 	PS.step(0.01)
 
 	# 1) Umbenennen an der Navigationskonsole
-	_check("Start: Rostlaube, registriert", F.current_name == "Rostlaube" and F.registered_name == "Rostlaube")
-	_check("Leerer Name abgelehnt", F.rename("   ") != "" and F.current_name == "Rostlaube")
-	_check("Umbenennen: „Morning Star“", F.rename("  Morning Star ") == "" and F.current_name == "Morning Star" and F.registered_name == "Rostlaube")
+	_check("Start: Rostlaube, registriert", F.current_name == "Rustbucket" and F.registered_name == "Rustbucket")
+	_check("Leerer Name abgelehnt", F.rename("   ") != "" and F.current_name == "Rustbucket")
+	_check("Umbenennen: „Morning Star“", F.rename("  Morning Star ") == "" and F.current_name == "Morning Star" and F.registered_name == "Rustbucket")
 	F.rename("X".repeat(80))
 	_check("Höchstens %d Zeichen" % F.NAME_MAX, F.current_name.length() == F.NAME_MAX)
 	F.rename("Morning Star")
@@ -60,7 +60,7 @@ func _initialize() -> void:
 	_check("Bestätigen benennt um", F.current_name == "Kestrel")
 
 	# 3) Registrieren nur an der Werft (Ship Rating service)
-	_check("Tycho: keine Werft → nicht registriert", F.register_name() != "" and F.registered_name == "Rostlaube")
+	_check("Tycho: keine Werft → nicht registriert", F.register_name() != "" and F.registered_name == "Rustbucket")
 	var old_docked: String = P.docked
 	P.docked = "karman"
 	_check("Kármán-Ring (Werft): Name eingetragen", F.register_name() == "" and F.registered_name == "Kestrel")

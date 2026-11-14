@@ -19,7 +19,7 @@ func step(dt: float) -> void:
 				dev.cond = 0.0
 				dev.broken = true
 				if not g.foreign(i):
-					GameState.toast(dev.data().display_name + " ist kaputt gegangen!", "bad")
+					GameState.toast(dev.data().display_name + " broke down!", "bad")
 	# Mikrometeoriten
 	if Settings.meteors and GameState.time / 1440.0 >= Config.FIRST_METEOR_DAY and randf() < Config.METEORS_PER_DAY * dt / 1440.0:
 		strike()
@@ -64,10 +64,10 @@ func strike() -> void:
 		g.set_tile(p, ShipGrid.Tile.FLOOR)
 		EventBus.ship_changed.emit()
 		ShipConstructionSystem.place("door" if was_door else "wall", p)
-		GameState.toast("Hüllenbruch! Ein Mikrometeorit hat ein Loch geschlagen.", "bad")
-		QuestSystem.claim_damage("Hüllenbruch")
+		GameState.toast("Hull breach! A micrometeorite punched a hole.", "bad")
+		QuestSystem.claim_damage("Hull breach")
 	else:
-		GameState.toast("Mikrometeorit-Einschlag! Die Hülle ist beschädigt.", "bad")
+		GameState.toast("Micrometeorite impact! The hull is damaged.", "bad")
 
 func needs_repair(p: Vector2i) -> bool:
 	var g := ShipSystem.grid

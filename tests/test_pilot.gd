@@ -184,7 +184,7 @@ func _initialize() -> void:
 	var why_without: String = P.dock_block_reason(st_id)
 	SK.set_progress(mira, "pilot", 100.0)
 	_check("3: 1,2-fache Andockdistanz: mit Skill nah genug (%s), ohne zu weit (%s)" % [why_with, why_without],
-		not why_with.begins_with("Zu weit") and why_without.begins_with("Zu weit"))
+		not why_with.begins_with("Too far") and why_without.begins_with("Too far"))
 	# Schiffswechsel im abgedockten Zustand: wird abgelehnt statt abzustürzen
 	var fl = root.get_node("FleetSystem")
 	var gx := ShipGrid.new()
@@ -195,7 +195,7 @@ func _initialize() -> void:
 	var cur: int = fl.current_id
 	toasts.clear()
 	fl.switch_to(idx)
-	_check("3: Abgedockt: Schiffswechsel abgelehnt (%s)" % str(toasts), fl.current_id == cur and toasts.has("Schiff wechseln geht nur angedockt."))
+	_check("3: Abgedockt: Schiffswechsel abgelehnt (%s)" % str(toasts), fl.current_id == cur and toasts.has("You can only switch ships while docked."))
 	fl.ships = fl.ships.filter(func(e): return e.id != idx)
 
 	# 4) Alter Spielstand mit erworbenem Skill

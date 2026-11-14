@@ -188,7 +188,7 @@ func retire_legacy_ports() -> int:
 			n += 1
 	if n > 0:
 		EventBus.ship_changed.emit()
-		GameState.toast("Alte Andockschleuse entfernt, Außenwand abgedichtet. Angedockt wird jetzt an der Luftschleuse.")
+		GameState.toast("Old docking port removed, outer wall sealed. Ships now dock at the airlock.")
 	return n
 
 ## Freie (nicht verbundene) Schleusen, optional nur in eine Richtung
