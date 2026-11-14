@@ -49,9 +49,12 @@ const CABLE_COST := {"copper": 1}
 const AIR_O2 := 21.0
 const AIR_N2 := 79.0
 const AIR_CO2 := 0.04
-const O2_OK := 18.0
-const O2_LOW := 16.0
-const CO2_BAD := 3.0
+## Ostranauts "Ideal Atmosphere": O2 ~20 kPa (below 20 → hypoxia), N2 ~80, total ~100 kPa,
+## CO2 at most 0.5 kPa (more → hypercapnia), 290–300 K
+const O2_OK := 20.5          ## below: warning (yellow in the air view)
+const O2_LOW := 20.0         ## below: hypoxia
+const CO2_MAX := 0.5         ## target maximum: above it the air view turns yellow
+const CO2_BAD := 3.0         ## above: hypercapnia damage (the wiki names no value)
 const BREATH_O2 := 0.12      ## kPa O2 per minute and person
 const DIFFUSION := 0.2       ## air exchange between tiles (per 1/3 minute)
 const DOOR_SLITS := 0.05     ## closed inner doors
@@ -131,6 +134,9 @@ const REFILL_AT := 0.3
 
 ## Temperatur (°C)
 const ROOM_TEMP := 21.0
+## Comfortable range 290–300 K (Ostranauts Ideal Atmosphere)
+const TEMP_COMFORT_MIN := 17.0
+const TEMP_COMFORT_MAX := 27.0
 const SPACE_TEMP := -60.0
 const HEAT_LOSS := 0.02        ## Heat loss to space per minute (fraction)
 const HEATER_RATE := 1.5       ## degrees per minute

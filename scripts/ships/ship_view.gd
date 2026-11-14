@@ -276,7 +276,7 @@ func _draw_air(g: ShipGrid, x0: int, y0: int, x1: int, y1: int) -> void:
 			var col := Color(0.44, 0.81, 0.56, 0.38)
 			if o2 < Config.O2_LOW:
 				col = Color(0.9, 0.33, 0.29, 0.3 + 0.35 * (1.0 - o2 / Config.O2_LOW))
-			elif o2 < Config.O2_OK or g.co2[i] > Config.CO2_BAD:
+			elif o2 < Config.O2_OK or g.co2[i] > Config.CO2_MAX:
 				col = Color(0.95, 0.78, 0.23, 0.45)
 			draw_rect(_rect(Vector2i(x, y)), col)
 	_draw_room_types(g)
@@ -334,8 +334,10 @@ func _draw_heat(g: ShipGrid, x0: int, y0: int, x1: int, y1: int) -> void:
 			if not g.holds_air(i):
 				continue
 			var t := g.temp[i]
-			var col := Color(0.3, 0.5, 0.95, clampf((15.0 - t) / 40.0, 0.0, 0.6)) if t < 15.0 else Color(0.95, 0.45, 0.2, clampf((t - 25.0) / 40.0, 0.0, 0.6))
-			if t >= 15.0 and t <= 25.0:
+			var lo := Config.TEMP_COMFORT_MIN
+			var hi := Config.TEMP_COMFORT_MAX
+			var col := Color(0.3, 0.5, 0.95, clampf(0.1 + (lo - t) / 40.0, 0.0, 0.6)) if t < lo else Color(0.95, 0.45, 0.2, clampf(0.1 + (t - hi) / 40.0, 0.0, 0.6))
+			if t >= lo and t <= hi:
 				col = Color(0.44, 0.81, 0.56, 0.25)
 			draw_rect(_rect(Vector2i(x, y)), col)
 
