@@ -123,7 +123,7 @@ und werden Schritt für Schritt übertragen.
 - [x] Drei Speicherplätze
 - [x] Gezeichnete Symbole für alle Geräte, erzeugte Geräusche (Alarm, Meldung, Bauen)
 - [x] Zielführung: 11 Ziele vom ersten Raumanzug bis zur abbezahlten Schuld, mit Belohnungen
-- [x] Balancing: Wochen-Simulation (`tests/balance_week.gd`) – Bergung allein reicht knapp für die erste Rate (Bergungsrecht 200 Cr, Verkauf 85 %)
+- [x] Balancing: Wochen-Simulation (Hilfsskript inzwischen entfernt) – Bergung allein reicht knapp für die erste Rate (Bergungsrecht 200 Cr, Verkauf 85 %)
 - [ ] Sprites aus Grafikdateien
 
 ## Tests (Godot, ohne Fenster)

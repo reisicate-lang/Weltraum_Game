@@ -45,10 +45,10 @@ func _initialize() -> void:
 	_check("Devices loaded", root.get_node("ItemSystem").devices.size() >= 10)
 	_check("Starter ship has devices", ship.grid.devices.size() >= 10)
 
-	# 1) Two game days: air and needs stay stable
-	_run_coarse(48 * 60, 15.0)   # two days of stability: coarse steps are enough
+	# 1) Short run: power and air stay stable (long-term stability: test_core, one day)
+	_run_coarse(2 * 60, 15.0)
 	var mira = crew.player()
-	_check("Mira is alive after 2 days (health %d)" % int(mira.health), mira.health > 50.0)
+	_check("Mira is alive (health %d)" % int(mira.health), mira.health > 50.0)
 	_check("Power is running", not power.main_net().is_empty() and power.main_net().ok)
 	var o2_ok := true
 	for i in ship.grid.tiles.size():
