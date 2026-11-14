@@ -88,6 +88,9 @@ func build(id: String) -> bool:
 	var l := PhysicsSystem.loc(id)
 	if l.is_empty() or String(l.get("kind", "")) != "station":
 		return false
+	var design := DesignLoader.read_design("places/" + id)
+	if not design.is_empty():
+		return _build_design(id, design)
 	var g := ShipSystem.grid
 	# Every free port (outer door of an airlock) fits, in any direction; the one
 	# aligned when clamping comes first (ShipSystem.dock_pref)
@@ -105,6 +108,41 @@ func build(id: String) -> bool:
 			_build_at(g, id, port, ud, kinds)
 			return true
 	GameState.toast("No free docking port fits %s (space or direction). Trade only through the terminal." % l.name, "bad")
+	return false
+
+func _build_design(id: String, design: Dictionary) -> bool:
+	var g := ShipSystem.grid
+	for pt in ShipSystem.free_ports():
+		var d: Vector2i = pt.dir
+		var a := Vector2i(d.y, -d.x)
+		var origin: Vector2i = pt.pos + d
+		if not DesignLoader.fits(design, g, origin, a, d):
+			continue
+		DesignLoader.apply(design, g, origin, a, d, ZONE)
+		station_id = id
+		_rng.seed = hash(id)
+		var first := true
+		for cell in design.tiles:
+			var p: Vector2i = origin + a * int(cell[0]) + d * int(cell[1])
+			var i := g.idx(p)
+			tiles.append(i)
+			_own[i] = true
+			area = Rect2i(p, Vector2i.ONE) if first else area.expand(p)
+			first = false
+		for source in design.rooms:
+			var room: Dictionary = source.duplicate()
+			for key in ["inner", "front", "behind"]:
+				room[key] = DesignLoader.map_rect(source[key], origin, a, d)
+			for key in ["desk", "door"]:
+				room[key] = origin + a * source[key].x + d * source[key].y
+			rooms.append(room)
+		corridor = area
+		hatch = int(pt.i)
+		g.linked[hatch] = true
+		_spawn_npcs()
+		EventBus.ship_changed.emit()
+		return true
+	GameState.toast("The station design does not fit a free docking port.", "bad")
 	return false
 
 ## Station in its own grid: u along the hall, v away from the ship.

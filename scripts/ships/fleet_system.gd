@@ -72,6 +72,10 @@ func attach_site(l: Dictionary) -> bool:
 			return false
 		place.wreck = null
 	else:
+		var design := DesignLoader.read_design("ships/wreck")
+		if not design.is_empty():
+			design.name = String(l.get("wreck_name", design.name))
+			return _attach_design(design)
 		if not SalvageSystem.generate():
 			return false
 		SalvageSystem.wreck_name = String(l.get("wreck_name", SalvageSystem.wreck_name))
@@ -308,6 +312,13 @@ func arrive(l: Dictionary) -> void:
 			EventBus.ship_changed.emit()
 		else:
 			GameState.toast("The wreck “%s” is here. Coupling needs a free docking port (airlock)." % String(w.name))
+	elif ResourceLoader.exists("res://designs/places/" + String(l.id) + ".tscn"):
+		var design := DesignLoader.read_design("places/" + String(l.id))
+		if not design.is_empty() and l.kind == "asteroid":
+			design.name = "Asteroid " + String(l.name)
+		if _attach_design(design):
+			SalvageSystem.investigated = l.kind == "asteroid"
+			EventBus.ship_changed.emit()
 	elif l.kind == "asteroid":
 		if SalvageSystem.generate_asteroid():
 			GameState.toast("A chunk of rock hangs at the airlock. Demolishing it yields ice and ore.")
@@ -543,7 +554,26 @@ func sell(id: int) -> void:
 func build_template(t: Dictionary) -> ShipGrid:
 	var cg := ShipGrid.new(Config.WORLD_W / Config.GRID_SCALE, Config.WORLD_H / Config.GRID_SCALE)
 	_build_template(cg, t)
-	return ShipGrid.refine(cg)
+	return DesignLoader.ship(String(t.id), ShipGrid.refine(cg))
+
+func _attach_design(design: Dictionary) -> bool:
+	if design.is_empty():
+		return false
+	var g := ShipSystem.grid
+	for pt in ShipSystem.free_ports():
+		var d: Vector2i = pt.dir
+		var a := Vector2i(d.y, -d.x)
+		var origin: Vector2i = pt.pos + d
+		if not DesignLoader.fits(design, g, origin, a, d):
+			continue
+		DesignLoader.apply(design, g, origin, a, d, 1)
+		SalvageSystem._link(g, pt, origin)
+		SalvageSystem.wreck_name = String(design.name)
+		SalvageSystem.investigated = false
+		EventBus.ship_changed.emit()
+		return true
+	GameState.toast("The saved design does not fit a free docking port.", "bad")
+	return false
 
 ## Template in the tiles of earlier versions (twice as large)
 func _build_template(g: ShipGrid, t: Dictionary) -> void:

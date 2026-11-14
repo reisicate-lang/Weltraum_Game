@@ -1,0 +1,486 @@
+[gd_scene format=4]
+
+[ext_resource type="Script" path="res://scripts/design/design_device.gd" id="1_yd4ik"]
+[ext_resource type="Resource" path="res://resources/components/thruster.tres" id="2_eswat"]
+[ext_resource type="Resource" path="res://resources/components/generator.tres" id="3_f2m46"]
+[ext_resource type="Resource" path="res://resources/components/battery.tres" id="4_4kuvb"]
+[ext_resource type="Resource" path="res://resources/components/o2gen.tres" id="5_2r1sc"]
+[ext_resource type="Resource" path="res://resources/components/scrubber.tres" id="6_oyk3s"]
+[ext_resource type="Resource" path="res://resources/components/airtank.tres" id="7_aros4"]
+[ext_resource type="Resource" path="res://resources/components/bed.tres" id="8_kmtj3"]
+[ext_resource type="Resource" path="res://resources/components/locker.tres" id="9_nsllt"]
+[ext_resource type="Resource" path="res://resources/components/helm.tres" id="10_mjtow"]
+[ext_resource type="Resource" path="res://resources/components/fueltank.tres" id="11_aon25"]
+[ext_resource type="Resource" path="res://resources/components/crate.tres" id="12_fo26b"]
+[ext_resource type="Resource" path="res://resources/components/terminal.tres" id="13_n1lvl"]
+[ext_resource type="Resource" path="res://resources/components/food.tres" id="14_1rvhh"]
+[ext_resource type="Resource" path="res://resources/components/transponder.tres" id="15_gx1o5"]
+[ext_resource type="Resource" path="res://resources/components/antenna.tres" id="16_k5poi"]
+[ext_resource type="Resource" path="res://resources/components/pump.tres" id="17_p7c6c"]
+
+[sub_resource type="Image" id="Image_yd4ik"]
+data = {
+"data": PackedByteArray("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KTRC/yk0Qv8pNEL/KTRC/yk0Qv8pNEL/KTRC/yk0Qv8pNEL/KTRC/yk0Qv////8Ap7HA/6exwP+nscD/p7HA/6exwP+nscD/p7HA/6exwP+nscD/p7HA/6exwP+nscD/p7HA/6exwP+nscD/////AMmKLP/Jiiz/yYos/8mKLP/Jiiz/yYos/8mKLP/Jiiz/yYos/8mKLP/Jiiz/yYos/8mKLP/Jiiz/yYos/////wBar8b/Wq/G/1qvxv9ar8b/Wq/G/1qvxv9ar8b/Wq/G/1qvxv9ar8b/Wq/G/1qvxv9ar8b/Wq/G/1qvxv////8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AA=="),
+"format": "RGBA8",
+"height": 16,
+"mipmaps": false,
+"width": 64
+}
+
+[sub_resource type="ImageTexture" id="ImageTexture_s58xs"]
+image = SubResource("Image_yd4ik")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_b6he5"]
+texture = SubResource("ImageTexture_s58xs")
+0:0/0 = 0
+1:0/0 = 0
+2:0/0 = 0
+3:0/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_01k13"]
+sources/0 = SubResource("TileSetAtlasSource_b6he5")
+
+[sub_resource type="Image" id="Image_eswat"]
+data = {
+"data": PackedByteArray("////AP///wD///8A////AP///wD///8A/9Bg///QYP//0GD/////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP/QYP//0GD//9Bg/////wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD/0GD//9Bg///QYP////8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A/9Bg///QYP//0GD/////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP/QYP//0GD//9Bg/////wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD/0GD//9Bg///QYP////8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A/9Bg///QYP//0GD//9Bg///QYP//0GD//9Bg///QYP//0GD//9Bg///QYP//0GD//9Bg///QYP//0GD//9Bg/////wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP/QYP//0GD//9Bg///QYP//0GD//9Bg///QYP//0GD//9Bg///QYP//0GD//9Bg///QYP//0GD//9Bg///QYP////8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD/0GD//9Bg///QYP//0GD//9Bg///QYP//0GD//9Bg///QYP//0GD//9Bg///QYP//0GD//9Bg///QYP//0GD/////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A/9Bg///QYP//0GD/////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP/QYP//0GD//9Bg/////wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD/0GD//9Bg///QYP////8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A/9Bg///QYP//0GD/////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP/QYP//0GD//9Bg/////wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD/0GD//9Bg///QYP////8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A/9Bg///QYP//0GD/////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AA=="),
+"format": "RGBA8",
+"height": 16,
+"mipmaps": false,
+"width": 64
+}
+
+[sub_resource type="ImageTexture" id="ImageTexture_deqgp"]
+image = SubResource("Image_eswat")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_r4jlw"]
+texture = SubResource("ImageTexture_deqgp")
+0:0/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_0j4ba"]
+sources/0 = SubResource("TileSetAtlasSource_r4jlw")
+
+[node name="Lumen" type="Node2D" unique_id=916525840]
+metadata/display_name = "Shuttle Lumen"
+metadata/piles = []
+metadata/grid_origin = Vector2i(64, 44)
+
+[node name="Terrain" type="TileMapLayer" parent="." unique_id=1513358204]
+tile_map_data = PackedByteArray("AAA2ABwA//////////83ABwA//////////84ABwA//////////85ABwA//////////86ABwA//////////87ABwA//////////88ABwA//////////89ABwA//////////8+ABwA//////////8/ABwA//////////9AABwA//////////9BABwA//////////9CABwA//////////9DABwA//////////9EABwA//////////9FABwA//////////9GABwA//////////9HABwA//////////9IABwA//////////9JABwA//////////82AB0A//////////83AB0A//////////84AB0A//////////85AB0A//////////86AB0A//////////87AB0A//////////88AB0A//////////89AB0A//////////8+AB0A//////////8/AB0A//////////9AAB0A//////////9BAB0A//////////9CAB0A//////////9DAB0A//////////9EAB0A//////////9FAB0A//////////9GAB0A//////////9HAB0A//////////9IAB0A//////////9JAB0A//////////82AB4A//////////83AB4A//////////84AB4A//////////85AB4A//////////86AB4A//////////87AB4A//////////88AB4A//////////89AB4A//////////8+AB4A//////////8/AB4A//////////9AAB4A//////////9BAB4A//////////9CAB4A//////////9DAB4A//////////9EAB4A//////////9FAB4A//////////9GAB4A//////////9HAB4A//////////9IAB4A//////////9JAB4A//////////82AB8A//////////83AB8A//////////84AB8A//////////85AB8A//////////86AB8A//////////87AB8A//////////88AB8A//////////89AB8A//////////8+AB8A//////////8/AB8A//////////9AAB8A//////////9BAB8A//////////9CAB8A//////////9DAB8A//////////9EAB8A//////////9FAB8A//////////9GAB8A//////////9HAB8A//////////9IAB8A//////////9JAB8A//////////82ACAA//////////83ACAA//////////84ACAA//////////85ACAA//////////86ACAA//////////87ACAA//////////88ACAA//////////89ACAA//////////8+ACAA//////////8/ACAA//////////9AACAA//////////9BACAA//////////9CACAA//////////9DACAA//////////9EACAA//////////9FACAA//////////9GACAA//////////9HACAA//////////9IACAA//////////9JACAA//////////82ACEA//////////83ACEA//////////84ACEA//////////85ACEA//////////86ACEA//////////87ACEA//////////88ACEA//////////89ACEA//////////8+ACEA//////////8/ACEA//////////9AACEA//////////9BACEA//////////9CACEA//////////9DACEA//////////9EACEA//////////9FACEA//////////9GACEA//////////9HACEA//////////9IACEA//////////9JACEA//////////8wACIA//////////8xACIA//////////8yACIA//////////8zACIA//////////80ACIA//////////81ACIA//////////82ACIA//////////83ACIA//////////84ACIA//////////85ACIA//////////86ACIA//////////87ACIA//////////88ACIA//////////89ACIA//////////8+ACIA//////////8/ACIA//////////9AACIA//////////9BACIA//////////9CACIA//////////9DACIA//////////9EACIA//////////9FACIA//////////9GACIA//////////9HACIA//////////9IACIA//////////9JACIA//////////8wACMA//////////8xACMA//////////8yACMA//////////8zACMA//////////80ACMA//////////81ACMA//////////82ACMA//////////83ACMA//////////84ACMA//////////85ACMA//////////86ACMA//////////87ACMA//////////88ACMA//////////89ACMA//////////8+ACMA//////////8/ACMA//////////9AACMA//////////9BACMA//////////9CACMA//////////9DACMA//////////9EACMA//////////9FACMA//////////9GACMA//////////9HACMA//////////9IACMA//////////9JACMA//////////8wACQA//////////8xACQA//////////8yACQA//////////8zACQA//////////80ACQA//////////81ACQA//////////82ACQA//////////83ACQA//////////84ACQA//////////85ACQA//////////86ACQA//////////87ACQA//////////88ACQA//////////89ACQA//////////8+ACQA//////////8/ACQA//////////9AACQA//////////9BACQA//////////9CACQA//////////9DACQA//////////9EACQA//////////9FACQA//////////9GACQA//////////9HACQA//////////9IACQA//////////9JACQA//////////8wACUA//////////8xACUA//////////8yACUA//////////8zACUA//////////80ACUA//////////81ACUA//////////82ACUA//////////83ACUA//////////84ACUA//////////85ACUA//////////86ACUA//////////87ACUA//////////88ACUA//////////89ACUA//////////8+ACUA//////////8/ACUA//////////9AACUA//////////9BACUA//////////9CACUA//////////9DACUA//////////9EACUA//////////9FACUA//////////9GACUA//////////9HACUA//////////9IACUA//////////9JACUA//////////8wACYA//////////8xACYA//////////8yACYA//////////8zACYA//////////80ACYA//////////81ACYA//////////82ACYA//////////83ACYA//////////84ACYA//////////85ACYA//////////86ACYA//////////87ACYA//////////88ACYA//////////89ACYA//////////8+ACYA//////////8/ACYA//////////9AACYA//////////9BACYA//////////9CACYA//////////9DACYA//////////9EACYA//////////9FACYA//////////9GACYA//////////9HACYA//////////9IACYA//////////9JACYA//////////8wACcA//////////8xACcA//////////8yACcA//////////8zACcA//////////80ACcA//////////81ACcA//////////82ACcA//////////83ACcA//////////84ACcA//////////85ACcA//////////86ACcA//////////87ACcA//////////88ACcA//////////89ACcA//////////8+ACcA//////////8/ACcA//////////9AACcA//////////9BACcA//////////9CACcA//////////9DACcA//////////9EACcA//////////9FACcA//////////9GACcA//////////9HACcA//////////9IACcA//////////9JACcA//////////8wACgA//////////8xACgA//////////8yACgA//////////8zACgA//////////80ACgA//////////81ACgA//////////82ACgA//////////83ACgA//////////84ACgA//////////85ACgA//////////86ACgA//////////87ACgA//////////88ACgA//////////89ACgA//////////8+ACgA//////////8/ACgA//////////9AACgA//////////9BACgA//////////9CACgA//////////9DACgA//////////9EACgA//////////9FACgA//////////9GACgA//////////9HACgA//////////9IACgA//////////9JACgA//////////8wACkA//////////8xACkA//////////8yACkA//////////8zACkA//////////80ACkA//////////81ACkA//////////82ACkA//////////83ACkA//////////84ACkA//////////85ACkA//////////86ACkA//////////87ACkA//////////88ACkA//////////89ACkA//////////8+ACkA//////////8/ACkA//////////9AACkA//////////9BACkA//////////9CACkA//////////9DACkA//////////9EACkA//////////9FACkA//////////9GACkA//////////9HACkA//////////9IACkA//////////9JACkA///////////2//D/AAABAAAAAAD3//D/AAABAAAAAAD4//D/AAABAAAAAAD5//D/AAABAAAAAAD6//D/AAABAAAAAAD7//D/AAABAAAAAAD8//D/AAABAAAAAAD9//D/AAABAAAAAAD+//D/AAABAAAAAAD///D/AAABAAAAAAAAAPD/AAABAAAAAAABAPD/AAABAAAAAAACAPD/AAABAAAAAAADAPD/AAABAAAAAAAEAPD/AAABAAAAAAAFAPD/AAABAAAAAAAGAPD/AAABAAAAAAAHAPD/AAABAAAAAAAIAPD/AAABAAAAAAAJAPD/AAABAAAAAAD2//H/AAABAAAAAAD3//H/AAAAAAAAAAD4//H/AAAAAAAAAAD5//H/AAAAAAAAAAD6//H/AAAAAAAAAAD7//H/AAAAAAAAAAD8//H/AAAAAAAAAAD9//H/AAAAAAAAAAD+//H/AAAAAAAAAAD///H/AAAAAAAAAAAAAPH/AAABAAAAAAABAPH/AAAAAAAAAAACAPH/AAAAAAAAAAADAPH/AAAAAAAAAAAEAPH/AAAAAAAAAAAFAPH/AAAAAAAAAAAGAPH/AAAAAAAAAAAHAPH/AAAAAAAAAAAIAPH/AAAAAAAAAAAJAPH/AAABAAAAAAD2//L/AAABAAAAAAD3//L/AAAAAAAAAAD4//L/AAAAAAAAAAD5//L/AAAAAAAAAAD6//L/AAAAAAAAAAD7//L/AAAAAAAAAAD8//L/AAAAAAAAAAD9//L/AAAAAAAAAAD+//L/AAAAAAAAAAD///L/AAAAAAAAAAAAAPL/AAABAAAAAAABAPL/AAAAAAAAAAACAPL/AAAAAAAAAAADAPL/AAAAAAAAAAAEAPL/AAAAAAAAAAAFAPL/AAAAAAAAAAAGAPL/AAAAAAAAAAAHAPL/AAAAAAAAAAAIAPL/AAAAAAAAAAAJAPL/AAABAAAAAAD2//P/AAABAAAAAAD3//P/AAAAAAAAAAD4//P/AAAAAAAAAAD5//P/AAAAAAAAAAD6//P/AAAAAAAAAAD7//P/AAAAAAAAAAD8//P/AAAAAAAAAAD9//P/AAAAAAAAAAD+//P/AAAAAAAAAAD///P/AAAAAAAAAAAAAPP/AAABAAAAAAABAPP/AAAAAAAAAAACAPP/AAAAAAAAAAADAPP/AAAAAAAAAAAEAPP/AAAAAAAAAAAFAPP/AAAAAAAAAAAGAPP/AAAAAAAAAAAHAPP/AAAAAAAAAAAIAPP/AAAAAAAAAAAJAPP/AAABAAAAAAD2//T/AAABAAAAAAD3//T/AAAAAAAAAAD4//T/AAAAAAAAAAD5//T/AAAAAAAAAAD6//T/AAAAAAAAAAD7//T/AAAAAAAAAAD8//T/AAAAAAAAAAD9//T/AAAAAAAAAAD+//T/AAAAAAAAAAD///T/AAAAAAAAAAAAAPT/AAABAAAAAAABAPT/AAAAAAAAAAACAPT/AAAAAAAAAAADAPT/AAAAAAAAAAAEAPT/AAAAAAAAAAAFAPT/AAAAAAAAAAAGAPT/AAAAAAAAAAAHAPT/AAAAAAAAAAAIAPT/AAAAAAAAAAAJAPT/AAABAAAAAAD2//X/AAABAAAAAAD3//X/AAAAAAAAAAD4//X/AAAAAAAAAAD5//X/AAAAAAAAAAD6//X/AAAAAAAAAAD7//X/AAAAAAAAAAD8//X/AAAAAAAAAAD9//X/AAAAAAAAAAD+//X/AAAAAAAAAAD///X/AAAAAAAAAAAAAPX/AAABAAAAAAABAPX/AAAAAAAAAAACAPX/AAAAAAAAAAADAPX/AAAAAAAAAAAEAPX/AAAAAAAAAAAFAPX/AAAAAAAAAAAGAPX/AAAAAAAAAAAHAPX/AAAAAAAAAAAIAPX/AAAAAAAAAAAJAPX/AAABAAAAAADw//b/AAABAAAAAADx//b/AAABAAAAAADy//b/AAABAAAAAADz//b/AAABAAAAAAD0//b/AAABAAAAAAD1//b/AAABAAAAAAD2//b/AAABAAAAAAD3//b/AAAAAAAAAAD4//b/AAAAAAAAAAD5//b/AAAAAAAAAAD6//b/AAAAAAAAAAD7//b/AAAAAAAAAAD8//b/AAAAAAAAAAD9//b/AAAAAAAAAAD+//b/AAAAAAAAAAD///b/AAAAAAAAAAAAAPb/AAACAAAAAAABAPb/AAAAAAAAAAACAPb/AAAAAAAAAAADAPb/AAAAAAAAAAAEAPb/AAAAAAAAAAAFAPb/AAAAAAAAAAAGAPb/AAAAAAAAAAAHAPb/AAAAAAAAAAAIAPb/AAAAAAAAAAAJAPb/AAABAAAAAADw//f/AAABAAAAAADx//f/AAAAAAAAAADy//f/AAAAAAAAAADz//f/AAAAAAAAAAD0//f/AAAAAAAAAAD1//f/AAAAAAAAAAD2//f/AAABAAAAAAD3//f/AAAAAAAAAAD4//f/AAAAAAAAAAD5//f/AAAAAAAAAAD6//f/AAAAAAAAAAD7//f/AAAAAAAAAAD8//f/AAAAAAAAAAD9//f/AAAAAAAAAAD+//f/AAAAAAAAAAD///f/AAAAAAAAAAAAAPf/AAABAAAAAAABAPf/AAAAAAAAAAACAPf/AAAAAAAAAAADAPf/AAAAAAAAAAAEAPf/AAAAAAAAAAAFAPf/AAAAAAAAAAAGAPf/AAAAAAAAAAAHAPf/AAAAAAAAAAAIAPf/AAAAAAAAAAAJAPf/AAABAAAAAADw//j/AAACAAAAAADx//j/AAAAAAAAAADy//j/AAAAAAAAAADz//j/AAAAAAAAAAD0//j/AAAAAAAAAAD1//j/AAAAAAAAAAD2//j/AAACAAAAAAD3//j/AAAAAAAAAAD4//j/AAAAAAAAAAD5//j/AAAAAAAAAAD6//j/AAAAAAAAAAD7//j/AAAAAAAAAAD8//j/AAAAAAAAAAD9//j/AAAAAAAAAAD+//j/AAAAAAAAAAD///j/AAAAAAAAAAAAAPj/AAABAAAAAAABAPj/AAAAAAAAAAACAPj/AAAAAAAAAAADAPj/AAAAAAAAAAAEAPj/AAAAAAAAAAAFAPj/AAAAAAAAAAAGAPj/AAAAAAAAAAAHAPj/AAAAAAAAAAAIAPj/AAAAAAAAAAAJAPj/AAABAAAAAADw//n/AAABAAAAAADx//n/AAAAAAAAAADy//n/AAAAAAAAAADz//n/AAAAAAAAAAD0//n/AAAAAAAAAAD1//n/AAAAAAAAAAD2//n/AAABAAAAAAD3//n/AAAAAAAAAAD4//n/AAAAAAAAAAD5//n/AAAAAAAAAAD6//n/AAAAAAAAAAD7//n/AAAAAAAAAAD8//n/AAAAAAAAAAD9//n/AAAAAAAAAAD+//n/AAAAAAAAAAD///n/AAAAAAAAAAAAAPn/AAABAAAAAAABAPn/AAAAAAAAAAACAPn/AAAAAAAAAAADAPn/AAAAAAAAAAAEAPn/AAAAAAAAAAAFAPn/AAAAAAAAAAAGAPn/AAAAAAAAAAAHAPn/AAAAAAAAAAAIAPn/AAAAAAAAAAAJAPn/AAABAAAAAADw//r/AAABAAAAAADx//r/AAAAAAAAAADy//r/AAAAAAAAAADz//r/AAAAAAAAAAD0//r/AAAAAAAAAAD1//r/AAAAAAAAAAD2//r/AAABAAAAAAD3//r/AAAAAAAAAAD4//r/AAAAAAAAAAD5//r/AAAAAAAAAAD6//r/AAAAAAAAAAD7//r/AAAAAAAAAAD8//r/AAAAAAAAAAD9//r/AAAAAAAAAAD+//r/AAAAAAAAAAD///r/AAAAAAAAAAAAAPr/AAABAAAAAAABAPr/AAAAAAAAAAACAPr/AAAAAAAAAAADAPr/AAAAAAAAAAAEAPr/AAAAAAAAAAAFAPr/AAAAAAAAAAAGAPr/AAAAAAAAAAAHAPr/AAAAAAAAAAAIAPr/AAAAAAAAAAAJAPr/AAABAAAAAADw//v/AAABAAAAAADx//v/AAAAAAAAAADy//v/AAAAAAAAAADz//v/AAAAAAAAAAD0//v/AAAAAAAAAAD1//v/AAAAAAAAAAD2//v/AAABAAAAAAD3//v/AAAAAAAAAAD4//v/AAAAAAAAAAD5//v/AAAAAAAAAAD6//v/AAAAAAAAAAD7//v/AAAAAAAAAAD8//v/AAAAAAAAAAD9//v/AAAAAAAAAAD+//v/AAAAAAAAAAD///v/AAAAAAAAAAAAAPv/AAABAAAAAAABAPv/AAAAAAAAAAACAPv/AAAAAAAAAAADAPv/AAAAAAAAAAAEAPv/AAAAAAAAAAAFAPv/AAAAAAAAAAAGAPv/AAAAAAAAAAAHAPv/AAAAAAAAAAAIAPv/AAAAAAAAAAAJAPv/AAABAAAAAADw//z/AAABAAAAAADx//z/AAAAAAAAAADy//z/AAAAAAAAAADz//z/AAAAAAAAAAD0//z/AAAAAAAAAAD1//z/AAAAAAAAAAD2//z/AAABAAAAAAD3//z/AAAAAAAAAAD4//z/AAAAAAAAAAD5//z/AAAAAAAAAAD6//z/AAAAAAAAAAD7//z/AAAAAAAAAAD8//z/AAAAAAAAAAD9//z/AAAAAAAAAAD+//z/AAAAAAAAAAD///z/AAAAAAAAAAAAAPz/AAABAAAAAAABAPz/AAAAAAAAAAACAPz/AAAAAAAAAAADAPz/AAAAAAAAAAAEAPz/AAAAAAAAAAAFAPz/AAAAAAAAAAAGAPz/AAAAAAAAAAAHAPz/AAAAAAAAAAAIAPz/AAAAAAAAAAAJAPz/AAABAAAAAADw//3/AAABAAAAAADx//3/AAABAAAAAADy//3/AAABAAAAAADz//3/AAABAAAAAAD0//3/AAABAAAAAAD1//3/AAABAAAAAAD2//3/AAABAAAAAAD3//3/AAABAAAAAAD4//3/AAABAAAAAAD5//3/AAABAAAAAAD6//3/AAABAAAAAAD7//3/AAABAAAAAAD8//3/AAABAAAAAAD9//3/AAABAAAAAAD+//3/AAABAAAAAAD///3/AAABAAAAAAAAAP3/AAABAAAAAAABAP3/AAABAAAAAAACAP3/AAABAAAAAAADAP3/AAABAAAAAAAEAP3/AAABAAAAAAAFAP3/AAABAAAAAAAGAP3/AAABAAAAAAAHAP3/AAABAAAAAAAIAP3/AAABAAAAAAAJAP3/AAABAAAAAAA=")
+tile_set = SubResource("TileSet_01k13")
+
+[node name="Cables" type="TileMapLayer" parent="." unique_id=938434882]
+tile_map_data = PackedByteArray("AAA4AB4A//////////85AB4A//////////86AB4A//////////87AB4A//////////88AB4A//////////89AB4A//////////8+AB4A//////////8/AB4A//////////9AAB4A//////////9BAB4A//////////9CAB4A//////////9DAB4A//////////9EAB4A//////////9FAB4A//////////9GAB4A//////////84AB8A//////////83ACAA//////////84ACAA//////////84ACEA//////////84ACIA//////////84ACMA//////////84ACQA//////////84ACUA//////////80ACYA//////////81ACYA//////////82ACYA//////////83ACYA//////////84ACYA//////////85ACYA//////////86ACYA//////////87ACYA//////////88ACYA//////////89ACYA//////////8+ACYA//////////8/ACYA//////////9AACYA//////////9BACYA//////////9CACYA//////////9DACYA//////////9EACYA//////////9FACYA//////////9GACYA///////////4//L/AAAAAAAAAAD5//L/AAAAAAAAAAD6//L/AAAAAAAAAAD7//L/AAAAAAAAAAD8//L/AAAAAAAAAAD9//L/AAAAAAAAAAD+//L/AAAAAAAAAAD///L/AAAAAAAAAAAAAPL/AAAAAAAAAAABAPL/AAAAAAAAAAACAPL/AAAAAAAAAAADAPL/AAAAAAAAAAAEAPL/AAAAAAAAAAAFAPL/AAAAAAAAAAAGAPL/AAAAAAAAAAD4//P/AAAAAAAAAAD3//T/AAAAAAAAAAD4//T/AAAAAAAAAAD4//X/AAAAAAAAAAD4//b/AAAAAAAAAAD4//f/AAAAAAAAAAD4//j/AAAAAAAAAAD4//n/AAAAAAAAAAD0//r/AAAAAAAAAAD1//r/AAAAAAAAAAD2//r/AAAAAAAAAAD3//r/AAAAAAAAAAD4//r/AAAAAAAAAAD5//r/AAAAAAAAAAD6//r/AAAAAAAAAAD7//r/AAAAAAAAAAD8//r/AAAAAAAAAAD9//r/AAAAAAAAAAD+//r/AAAAAAAAAAD///r/AAAAAAAAAAAAAPr/AAAAAAAAAAABAPr/AAAAAAAAAAACAPr/AAAAAAAAAAADAPr/AAAAAAAAAAAEAPr/AAAAAAAAAAAFAPr/AAAAAAAAAAAGAPr/AAAAAAAAAAA=")
+tile_set = SubResource("TileSet_0j4ba")
+
+[node name="Devices" type="Node2D" parent="." unique_id=435086690]
+
+[node name="thruster" type="Node2D" parent="Devices" unique_id=318616832]
+position = Vector2(-144, -192)
+script = ExtResource("1_yd4ik")
+component = ExtResource("2_eswat")
+initial_state = {
+"broken": false,
+"charge": 0.0,
+"cond": 100.0,
+"genemod": false,
+"growth": 0.0,
+"items": [],
+"lock": 0,
+"rot": 0,
+"shape": 3,
+"stock": -1.0,
+"store": 0.0,
+"suit": null,
+"switch": true,
+"tended_at": 0.0,
+"type": "thruster",
+"unknown": false,
+"x": 55,
+"y": 32
+}
+
+[node name="generator" type="Node2D" parent="Devices" unique_id=1247987717]
+position = Vector2(-128, -224)
+script = ExtResource("1_yd4ik")
+component = ExtResource("3_f2m46")
+initial_state = {
+"broken": false,
+"charge": 0.0,
+"cond": 100.0,
+"genemod": false,
+"growth": 0.0,
+"items": [],
+"lock": 0,
+"rot": 0,
+"shape": 1,
+"stock": 240.0,
+"store": 0.0,
+"suit": null,
+"switch": true,
+"tended_at": 0.0,
+"type": "generator",
+"unknown": false,
+"x": 56,
+"y": 30
+}
+
+[node name="battery" type="Node2D" parent="Devices" unique_id=188088284]
+position = Vector2(-96, -224)
+script = ExtResource("1_yd4ik")
+component = ExtResource("4_4kuvb")
+initial_state = {
+"broken": false,
+"charge": 10.0,
+"cond": 100.0,
+"genemod": false,
+"growth": 0.0,
+"items": [],
+"lock": 0,
+"rot": 0,
+"shape": 1,
+"stock": -1.0,
+"store": 0.0,
+"suit": null,
+"switch": true,
+"tended_at": 0.0,
+"type": "battery",
+"unknown": false,
+"x": 58,
+"y": 30
+}
+
+[node name="o2gen" type="Node2D" parent="Devices" unique_id=2141826218]
+position = Vector2(-64, -224)
+script = ExtResource("1_yd4ik")
+component = ExtResource("5_2r1sc")
+initial_state = {
+"broken": false,
+"charge": 0.0,
+"cond": 100.0,
+"genemod": false,
+"growth": 0.0,
+"items": [],
+"lock": 0,
+"rot": 0,
+"shape": 1,
+"stock": -1.0,
+"store": 0.0,
+"suit": null,
+"switch": true,
+"tended_at": 0.0,
+"type": "o2gen",
+"unknown": false,
+"x": 60,
+"y": 30
+}
+
+[node name="scrubber" type="Node2D" parent="Devices" unique_id=690705748]
+position = Vector2(-128, -96)
+script = ExtResource("1_yd4ik")
+component = ExtResource("6_oyk3s")
+initial_state = {
+"broken": false,
+"charge": 0.0,
+"cond": 100.0,
+"genemod": false,
+"growth": 0.0,
+"items": [],
+"lock": 0,
+"rot": 0,
+"shape": 1,
+"stock": -1.0,
+"store": 0.0,
+"suit": null,
+"switch": true,
+"tended_at": 0.0,
+"type": "scrubber",
+"unknown": false,
+"x": 56,
+"y": 38
+}
+
+[node name="airtank" type="Node2D" parent="Devices" unique_id=1064298907]
+position = Vector2(-96, -96)
+script = ExtResource("1_yd4ik")
+component = ExtResource("7_aros4")
+initial_state = {
+"broken": false,
+"charge": 0.0,
+"cond": 100.0,
+"genemod": false,
+"growth": 0.0,
+"items": [],
+"lock": 0,
+"rot": 0,
+"shape": 1,
+"stock": 4000.0,
+"store": 0.0,
+"suit": null,
+"switch": true,
+"tended_at": 0.0,
+"type": "airtank",
+"unknown": false,
+"x": 58,
+"y": 38
+}
+
+[node name="bed" type="Node2D" parent="Devices" unique_id=1155778283]
+position = Vector2(-64, -96)
+script = ExtResource("1_yd4ik")
+component = ExtResource("8_kmtj3")
+initial_state = {
+"broken": false,
+"charge": 0.0,
+"cond": 100.0,
+"genemod": false,
+"growth": 0.0,
+"items": [],
+"lock": 0,
+"rot": 0,
+"shape": 1,
+"stock": -1.0,
+"store": 0.0,
+"suit": null,
+"switch": true,
+"tended_at": 0.0,
+"type": "bed",
+"unknown": false,
+"x": 60,
+"y": 38
+}
+
+[node name="locker" type="Node2D" parent="Devices" unique_id=149012606]
+position = Vector2(-32, -224)
+script = ExtResource("1_yd4ik")
+component = ExtResource("9_nsllt")
+initial_state = {
+"broken": false,
+"charge": 0.0,
+"cond": 100.0,
+"genemod": false,
+"growth": 0.0,
+"items": [],
+"lock": 0,
+"rot": 0,
+"shape": 1,
+"stock": -1.0,
+"store": 0.0,
+"suit": {
+"battery": 100.0,
+"o2": 100.0
+},
+"switch": true,
+"tended_at": 0.0,
+"type": "locker",
+"unknown": false,
+"x": 62,
+"y": 30
+}
+
+[node name="helm" type="Node2D" parent="Devices" unique_id=669087160]
+position = Vector2(96, -224)
+script = ExtResource("1_yd4ik")
+component = ExtResource("10_mjtow")
+initial_state = {
+"broken": false,
+"charge": 0.0,
+"cond": 100.0,
+"genemod": false,
+"growth": 0.0,
+"items": Array[Dictionary]([]),
+"lock": 0,
+"rot": 0,
+"shape": 1,
+"stock": -1.0,
+"store": 0.0,
+"suit": null,
+"switch": true,
+"tended_at": 0.0,
+"type": "helm",
+"unknown": false,
+"x": 70,
+"y": 30
+}
+
+[node name="fueltank" type="Node2D" parent="Devices" unique_id=848095747]
+position = Vector2(32, -224)
+script = ExtResource("1_yd4ik")
+component = ExtResource("11_aon25")
+initial_state = {
+"broken": false,
+"charge": 0.0,
+"cond": 100.0,
+"genemod": false,
+"growth": 0.0,
+"items": [],
+"lock": 0,
+"rot": 0,
+"shape": 1,
+"stock": 600.0,
+"store": 0.0,
+"suit": null,
+"switch": true,
+"tended_at": 0.0,
+"type": "fueltank",
+"unknown": false,
+"x": 66,
+"y": 30
+}
+
+[node name="crate" type="Node2D" parent="Devices" unique_id=898929047]
+position = Vector2(32, -96)
+script = ExtResource("1_yd4ik")
+component = ExtResource("12_fo26b")
+initial_state = {
+"broken": false,
+"charge": 0.0,
+"cond": 100.0,
+"genemod": false,
+"growth": 0.0,
+"items": Array[Dictionary]([{
+"cond": 100.0,
+"qty": 10,
+"type": "ration"
+}, {
+"cond": 100.0,
+"qty": 2,
+"type": "fuelcan"
+}]),
+"lock": 0,
+"rot": 0,
+"shape": 1,
+"stock": -1.0,
+"store": 0.0,
+"suit": null,
+"switch": true,
+"tended_at": 0.0,
+"type": "crate",
+"unknown": false,
+"x": 66,
+"y": 38
+}
+
+[node name="terminal" type="Node2D" parent="Devices" unique_id=1969617792]
+position = Vector2(64, -224)
+script = ExtResource("1_yd4ik")
+component = ExtResource("13_n1lvl")
+initial_state = {
+"broken": false,
+"charge": 0.0,
+"cond": 100.0,
+"genemod": false,
+"growth": 0.0,
+"items": Array[Dictionary]([]),
+"lock": 0,
+"rot": 0,
+"shape": 1,
+"stock": -1.0,
+"store": 0.0,
+"suit": null,
+"switch": true,
+"tended_at": 0.0,
+"type": "terminal",
+"unknown": false,
+"x": 68,
+"y": 30
+}
+
+[node name="food" type="Node2D" parent="Devices" unique_id=25712380]
+position = Vector2(64, -96)
+script = ExtResource("1_yd4ik")
+component = ExtResource("14_1rvhh")
+initial_state = {
+"broken": false,
+"charge": 0.0,
+"cond": 100.0,
+"genemod": false,
+"growth": 0.0,
+"items": [],
+"lock": 0,
+"rot": 0,
+"shape": 1,
+"stock": 40.0,
+"store": 0.0,
+"suit": null,
+"switch": true,
+"tended_at": 0.0,
+"type": "food",
+"unknown": false,
+"x": 68,
+"y": 38
+}
+
+[node name="transponder" type="Node2D" parent="Devices" unique_id=526691594]
+position = Vector2(-32, -96)
+script = ExtResource("1_yd4ik")
+component = ExtResource("15_gx1o5")
+initial_state = {
+"broken": false,
+"charge": 0.0,
+"cond": 100.0,
+"genemod": false,
+"growth": 0.0,
+"items": [],
+"lock": 0,
+"rot": 0,
+"shape": 1,
+"stock": -1.0,
+"store": 0.0,
+"suit": null,
+"switch": true,
+"tended_at": 0.0,
+"type": "transponder",
+"unknown": false,
+"x": 62,
+"y": 38
+}
+
+[node name="antenna" type="Node2D" parent="Devices" unique_id=376788235]
+position = Vector2(96, -96)
+script = ExtResource("1_yd4ik")
+component = ExtResource("16_k5poi")
+initial_state = {
+"broken": false,
+"charge": 0.0,
+"cond": 100.0,
+"genemod": false,
+"growth": 0.0,
+"items": [],
+"lock": 0,
+"rot": 0,
+"shape": 1,
+"stock": -1.0,
+"store": 0.0,
+"suit": null,
+"switch": true,
+"tended_at": 0.0,
+"type": "antenna",
+"unknown": false,
+"x": 70,
+"y": 38
+}
+
+[node name="pump" type="Node2D" parent="Devices" unique_id=1658692710]
+position = Vector2(-192, -96)
+script = ExtResource("1_yd4ik")
+component = ExtResource("17_p7c6c")
+initial_state = {
+"broken": false,
+"charge": 0.0,
+"cond": 100.0,
+"genemod": false,
+"growth": 0.0,
+"items": [],
+"lock": 0,
+"rot": 0,
+"shape": 1,
+"stock": -1.0,
+"store": 1000.0,
+"suit": null,
+"switch": true,
+"tended_at": 0.0,
+"type": "pump",
+"unknown": false,
+"x": 52,
+"y": 38
+}

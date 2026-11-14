@@ -1,5 +1,11 @@
 # Project Memory
 
+## User-authored Godot layouts
+
+Read and follow `AGENTS.md` and `docs/GODOT_BAUEN.md` for all work in this repository.
+The user builds ships and locations in Godot. Their saved `designs/**/*.tscn` scenes are the authoritative layouts and must remain connected to gameplay through `DesignLoader`.
+Inspect local changes before editing. Preserve user-authored scenes and uncommitted work. Never regenerate or replace these layouts with procedural defaults. New code must use the current saved designs. Keep migrations lossless and game saves compatible.
+
 ## Ostranauts
 Reference data for Ostranauts character creation (traits, skills, hobbies, year costs, starter ships, aging):
 @docs/ostranauts/ostranauts-character-creation.md

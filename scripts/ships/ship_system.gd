@@ -105,6 +105,7 @@ func create_start_ship() -> void:
 			break
 	template_map = grid.coarse_map.duplicate()
 	template_w = grid.coarse_width
+	grid = DesignLoader.ship("rostlaube", grid)
 	EventBus.ship_changed.emit()
 
 # ---------------- Andockschleusen ----------------
@@ -215,6 +216,9 @@ func spawn_point() -> Vector2i:
 			for dx in range(-r, r + 1):
 				if grid.walkable(p + Vector2i(dx, dy)):
 					return p + Vector2i(dx, dy)
+	for i in grid.tiles.size():
+		if grid.zone[i] == 0 and grid.walkable(grid.pos(i)):
+			return grid.pos(i)
 	return p
 
 # ---------------- Pathfinding (AStarGrid2D) ----------------
