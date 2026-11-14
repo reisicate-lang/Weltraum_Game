@@ -126,6 +126,7 @@ und werden Schritt für Schritt übertragen.
 - [x] Balancing: Wochen-Simulation (Hilfsskript inzwischen entfernt) – Bergung allein reicht knapp für die erste Rate (Bergungsrecht 200 Cr, Verkauf 85 %)
 - [ ] Sprites aus Grafikdateien
 - [x] Gerätewerte nach dem Wiki-Spickzettel „Value/Space“ (Base Value 1:1, z. B. Nav Station 16.880, Halvorson-Thruster 5.520, CO2 AtmoScrubber 14.326, Ship Battery 2.623); Geräte ohne Wiki-Gegenstück behalten den Wert aus den Baukosten; Startkredit 211.000 Cr (≈ Schiffswert), Rate 13.200 Cr/Woche, Werftpreise Lumen 208.000 / Bairn 240.000 (≈ Schiffswert, kein Kauf-Verkauf-Gewinn)
+- [x] Crew anheuern nach Wiki: Salary 200–500/Tag, Signing Bonus ab 0, Death Pay 10.000–100.000 in Treuhand (zurück bei Kündigung/Entlassung), einfaches Angebot statt Sozialkampf
 - [x] Salvage Permit nach Ostranauts-Wiki (Preise 1:1): Yellow 5.000 Cr/24 h bis Black 1.000.000 Cr/300 d, an den Transponder des Schiffs gebunden, N.A.S.S.-Bußgeld 5.000 Cr beim Andocken an ein Wrack nahe einer Station ohne gültiges Permit (Trümmerfeld frei); ersetzt das Bergungsrecht
 
 ## Tests (Godot, ohne Fenster)
@@ -134,6 +135,7 @@ und werden Schritt für Schritt übertragen.
 - `tests/test_systems.gd` – Temperatur, Feuer, Wasser, Anbau, Chemie (21)
 - `tests/test_world.gd` – Crew-Beziehungen, Aufträge, Fraktionen, Einstellungen, Mods, Speicherplätze, neue Orte, Ziele (32)
 - `tests/test_stations.gd` – begehbare Stationen: Aufbau, Luft, Gespräche, Verkauf, Speichern, Abdocken (36)
+- `tests/test_hire.gd` – Crew anheuern: Spannen, Verhandlung, Treuhand, Speichern, Entlassen, Kündigen, Anzeige (13)
 - `tests/test_permit.gd` – Salvage Permit: Stufen, Kauf/Verlängerung, Transponder-Bindung, Speichern, N.A.S.S.-Bußgeld, Anzeige (16)
 - `tests/test_undock.gd` – manuelles Abdocken: Gründe, Sperre gegen Wieder-Andocken, alle Zeitstufen, Speichern (49)
 - `tests/test_docking.gd` – Andocken an der Luftschleuse: ein Port, Station/Wrack Tür an Tür, Wrack als Ziel (Reichweite, Ausrichtung, Tempo), Autodock, alter Spielstand mit früheren Ports (39)

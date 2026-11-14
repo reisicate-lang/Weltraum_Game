@@ -1005,8 +1005,24 @@ func _refresh_window() -> void:
 				var trs: PackedStringArray = []
 				for tid in cand.traits:
 					trs.append(TraitSystem.get_trait(tid).trait_name)
-				window_box.add_child(_row("%s, %d y. · %s · %s · %d Cr/day" % [cand.display_name, cand.age, ", ".join(parts), ", ".join(trs), cand.salary],
-					[_button("Hire", NPCSystem.hire.bind(cand))]))
+				window_box.add_child(_label("%s, %d y. · %s · %s · asks %d Cr/day" % [cand.display_name, cand.age, ", ".join(parts), ", ".join(trs), cand.salary], Color(0.87, 0.9, 0.94), 13))
+				# Negotiate the three terms (Ostranauts Crew 2): salary, signing bonus, death pay
+				var o: Dictionary = NPCSystem.offer_of(cand)
+				var terms := HBoxContainer.new()
+				for tm in [["salary", "Salary %d/day", 25], ["bonus", "Bonus %d", 250], ["death", "Death pay %d", 5000]]:
+					terms.add_child(_label(tm[1] % int(o[tm[0]]), COL_AMBER, 12))
+					for dl in [-int(tm[2]), int(tm[2])]:
+						terms.add_child(_button("%+d" % dl, func():
+							NPCSystem.adjust_offer(cand, tm[0], dl)
+							_last_window = ""
+							_refresh_window()))
+				terms.add_child(_button("Offer (%d Cr now)" % (int(o.bonus) + int(o.death)), func():
+					NPCSystem.make_offer(cand)
+					_last_window = ""
+					_refresh_window()))
+				window_box.add_child(terms)
+			if not st.is_empty():
+				window_box.add_child(_label("Bonus and death pay are paid on signing. The death pay is held in trust and comes back when someone quits or is let go.", COL_MUTED, 12))
 		"ships":
 			var F := FleetSystem
 			window_box.add_child(_row("Current ship", [_label(F.current_name, COL_AMBER, 13)]))

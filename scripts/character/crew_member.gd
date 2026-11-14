@@ -44,6 +44,7 @@ var history: Array[String] = []     ## Lebenslauf
 var contacts: Array[String] = []
 var enemies: Array[String] = []
 var salary := 0                     ## credits per day (crew)
+var death_pay := 0                  ## insurance held in trust (Ostranauts Crew 2.3)
 var away_until := 0.0               ## out on the station until (game time)
 ## work assignment: which kinds of work this character takes on
 ## Auto mode: does the character choose jobs, needs and free time on its own? (default: on)
@@ -1083,7 +1084,7 @@ func to_data() -> Dictionary:
 		"needs": needs.duplicate(), "health": health, "unconscious": unconscious,
 		"is_player": is_player, "items": inv.to_data(), "suit": suit,
 		"skills": skills, "traits": traits, "hobbies": hobbies, "stress": stress, "age": age, "history": history,
-		"contacts": contacts, "enemies": enemies, "salary": salary, "work_prefs": work_prefs, "last_trained": last_trained,
+		"contacts": contacts, "enemies": enemies, "salary": salary, "death_pay": death_pay, "work_prefs": work_prefs, "last_trained": last_trained,
 		"careers": get_meta("careers", []), "risk_tokens": get_meta("risk_tokens", {}), "body_temp": body_temp, "relations": relations, "auto": auto_mode}
 
 static func from_data(d: Dictionary) -> CrewMember:
@@ -1106,6 +1107,7 @@ static func from_data(d: Dictionary) -> CrewMember:
 	c.set_meta("risk_tokens", d.get("risk_tokens", {}))
 	c.enemies.assign(d.get("enemies", []))
 	c.salary = int(d.get("salary", 0))
+	c.death_pay = int(d.get("death_pay", 0))
 	c.last_trained = String(d.get("last_trained", ""))
 	if d.has("work_prefs"):
 		c.work_prefs = d.work_prefs

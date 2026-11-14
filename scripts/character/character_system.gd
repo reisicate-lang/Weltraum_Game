@@ -611,5 +611,8 @@ func generate_npc() -> CrewMember:
 	var total := 0.0
 	for s in c.skills:
 		total += SkillSystem.progress(c, s)
-	c.salary = 20 + int(total / 12.0)
+	# Asking salary 200–500 Cr a day by experience (Ostranauts Crew 2.1)
+	c.salary = clampi(200 + int(total / 3.0) / 10 * 10, NPCSystem.SALARY_MIN, NPCSystem.SALARY_MAX)
+	# Death pay they want held in trust: 10 000–100 000 Cr in steps of 5 000 (Crew 2.3)
+	c.set_meta("want_death", randi_range(NPCSystem.DEATH_MIN / 5000, NPCSystem.DEATH_MAX / 5000) * 5000)
 	return c

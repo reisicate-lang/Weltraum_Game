@@ -32,7 +32,7 @@ func _initialize() -> void:
 	for k in 30:
 		gs.step(1.0 / 60.0)
 	var mira = crew.player()
-	econ.credits = 50000
+	econ.credits = 200000
 
 	# --- Stage 8: crew ---
 	var mate = npc.candidates_here()[0]

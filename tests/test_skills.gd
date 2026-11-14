@@ -210,12 +210,12 @@ func _initialize() -> void:
 	# 9) NPCs: own skills, learn through work
 	var npc: CrewMember = CH.generate_npc()
 	_check("NPC has skills and wages", not npc.skills.is_empty() and npc.salary > 0)
-	econ.credits = 10000
+	econ.credits = 200000
 	var cands: Array = NPC.candidates_here()
 	_check("Applicants at the station", cands.size() == 3)
 	var hire: CrewMember = cands[0]
 	NPC.hire(hire)
-	_check("Angeheuert", hire in crew.crew)
+	_check("Hired", hire in crew.crew)
 	var before_civil: float = SK.progress(hire, "civil") + SK.progress(hire, "spaceship")
 	mira.work_prefs["repair"] = false  # Mira does not repair: only the NPC
 	var x0: int = (ship.grid.width / Config.GRID_SCALE - 16) / 2

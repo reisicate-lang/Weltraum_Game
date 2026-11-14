@@ -107,7 +107,14 @@ func refresh() -> void:
 	head.add_child(ui._button("✕", toggle))
 	box.add_child(head)
 	box.add_child(ui._label("Stress: " + _stress_text(c) + (" · wages %d Cr/day" % c.salary if c.salary > 0 else "") +
+		(" · death pay in trust %d Cr" % c.death_pay if c.death_pay > 0 else "") +
 		(" · last trained: " + SkillSystem.skill(c.last_trained).skill_name if c.last_trained != "" else ""), ui.COL_MUTED, 12))
+	if not c.is_player and not PhysicsSystem.station().is_empty():
+		box.add_child(ui._button("Let go (death pay comes back)", func():
+			if NPCSystem.fire(c):
+				GameState.selected = CrewSystem.player()
+				_last = ""
+				refresh()))
 	var tabs := HBoxContainer.new()
 	for tb in [["skills", "Skills"], ["traits", "Traits"], ["hobbies", "Hobbies"], ["life", "Life story"], ["work", "Tasks"]]:
 		var b: Button = ui._button(tb[1], func():

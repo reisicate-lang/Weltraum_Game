@@ -328,7 +328,7 @@ func _sync_candidates() -> void:
 	npcs.assign(npcs.filter(func(n): return n.kind != "candidate" or n.ref in cands))
 	for c in cands:
 		if not npcs.any(func(n): return n.ref == c):
-			_add_npc(c.display_name, "candidate", hiring, _front(hiring), ["I'm looking for work. %d Cr a day and I'm in." % c.salary], c)
+			_add_npc(c.display_name, "candidate", hiring, _front(hiring), ["I'm looking for work. %d Cr a day, and %d Cr death pay in trust." % [c.salary, NPCSystem.want_death(c)]], c)
 
 func step(dt: float) -> void:
 	if not Config.ENABLE_STATION or not active():
