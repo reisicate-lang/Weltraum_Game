@@ -57,8 +57,8 @@ func _initialize() -> void:
 	# 2) Trading still works, salvage does not
 	var cr: int = econ.credits
 	toasts.clear()
-	econ.buy_claim()
-	_check("Salvage claim refused, with a message", econ.credits == cr and toasts.any(func(t): return "Salvage is temporarily disabled" in t))
+	econ.buy_permit("yellow")
+	_check("Salvage permit refused, with a message", econ.credits == cr and toasts.any(func(t): return "Salvage is temporarily disabled" in t))
 	econ.terminal().inv.add("scrap", 3, 80.0)
 	econ.sell_all()
 	_check("Selling at the terminal works", econ.credits > cr)

@@ -125,6 +125,7 @@ und werden Schritt für Schritt übertragen.
 - [x] Zielführung: 11 Ziele vom ersten Raumanzug bis zur abbezahlten Schuld, mit Belohnungen
 - [x] Balancing: Wochen-Simulation (Hilfsskript inzwischen entfernt) – Bergung allein reicht knapp für die erste Rate (Bergungsrecht 200 Cr, Verkauf 85 %)
 - [ ] Sprites aus Grafikdateien
+- [x] Salvage Permit nach Ostranauts-Wiki (Preise 1:1): Yellow 5.000 Cr/24 h bis Black 1.000.000 Cr/300 d, an den Transponder des Schiffs gebunden, N.A.S.S.-Bußgeld 5.000 Cr beim Andocken an ein Wrack nahe einer Station ohne gültiges Permit (Trümmerfeld frei); ersetzt das Bergungsrecht
 
 ## Tests (Godot, ohne Fenster)
 - `tests/run_tests.gd` – Kernspiel, Etappe 1–6 (54 Prüfungen)
@@ -132,6 +133,7 @@ und werden Schritt für Schritt übertragen.
 - `tests/test_systems.gd` – Temperatur, Feuer, Wasser, Anbau, Chemie (21)
 - `tests/test_world.gd` – Crew-Beziehungen, Aufträge, Fraktionen, Einstellungen, Mods, Speicherplätze, neue Orte, Ziele (32)
 - `tests/test_stations.gd` – begehbare Stationen: Aufbau, Luft, Gespräche, Verkauf, Speichern, Abdocken (36)
+- `tests/test_permit.gd` – Salvage Permit: Stufen, Kauf/Verlängerung, Transponder-Bindung, Speichern, N.A.S.S.-Bußgeld, Anzeige (16)
 - `tests/test_undock.gd` – manuelles Abdocken: Gründe, Sperre gegen Wieder-Andocken, alle Zeitstufen, Speichern (49)
 - `tests/test_docking.gd` – Andocken an der Luftschleuse: ein Port, Station/Wrack Tür an Tür, Wrack als Ziel (Reichweite, Ausrichtung, Tempo), Autodock, alter Spielstand mit früheren Ports (39)
 - `tests/test_core.gd` – Kernspiel mit abgeschalteter Station und abgeschaltetem Wrack (21)

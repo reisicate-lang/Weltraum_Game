@@ -61,7 +61,7 @@ func choose(id: String) -> String:
 		"tip":
 			SkillSystem.train(c, "talk_folk", 15.0)
 			claim_discount = true
-			return "Gus: “For you? You get the next salvage claim at half price.”"
+			return "Gus: “For you? You get the next salvage permit at half price.”"
 		"rate":
 			SkillSystem.train(c, "talk_oligarch", 15.0)
 			SkillSystem.train(c, "negotiate", 10.0)

@@ -175,8 +175,8 @@ func _initialize() -> void:
 	var old_name: String = salv.wreck_name
 	econ.credits = 5000
 	var sites_before: int = root.get_node("FleetSystem").sites.size()
-	econ.buy_claim()
-	_check("New salvage claim: new wreck target next to the station", root.get_node("FleetSystem").sites.size() == sites_before + 1 and econ.credits == 5000 - Config.CLAIM_FEE)
+	econ.buy_permit("yellow")
+	_check("Yellow salvage permit: new wreck target next to the station", root.get_node("FleetSystem").sites.size() == sites_before + 1 and econ.credits == 0)
 	econ.credits = 0
 	root.get_node("Settings").debt_paused = false
 	gs.time = econ.next_payment + 0.01

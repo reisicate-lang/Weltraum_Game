@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = "terminal"
 display_name = "Trade Terminal"
-description = "Link to the station: buy, sell, pay off debt, salvage claims. Put what you want to sell inside (300 L)."
+description = "Link to the station: buy, sell, pay off debt, salvage permits. Put what you want to sell inside (300 L)."
 power = -0.3
 build_time = 5.0
 cost = {"plate": 2, "circuit": 3, "datachip": 1}

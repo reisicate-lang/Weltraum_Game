@@ -619,7 +619,7 @@ func _refresh_nav() -> void:
 	var P := PhysicsSystem
 	var e: Dictionary = P.space.earth
 	var alt := P.pos.distance_to(Vector2(e.x, e.y)) - float(e.r)
-	var rows: Array = [P.target, _flight_rows(), P.xpdr_faults(), P.prox_warning(), P.prox_muted, P.ship_log.size(), P.helm_block_reason(P.operated_helm()), P.autodock_block_reason(),
+	var rows: Array = [P.target, _flight_rows(), P.xpdr_faults(), P.prox_warning(), P.prox_muted, P.ship_log.size(), EconomySystem.permit_text(), P.helm_block_reason(P.operated_helm()), P.autodock_block_reason(),
 		P.operated_helm().inv.to_data() if P.operated_helm() != null and P.operated_helm().inv != null else [], int(ceil(P.redock_wait(P.undock_lock_id))), P.status(), _fmt_speed(P.vel.length()), _fmt_dist(alt), int(P.fuel()), P.max_thrust(), snappedf(P.mass(), 0.1)]
 	for l in P.locations:
 		var r := P.rel_to(l.id)
@@ -640,6 +640,8 @@ func _refresh_nav() -> void:
 	var faults: Array = P.xpdr_faults()
 	if not faults.is_empty():
 		nav_side.add_child(_label("⚠ " + " · ".join(faults) + " – some stations refuse docking", Color(0.9, 0.33, 0.29), 13))
+	# TRANSPONDER/IFF also shows whether there is an active salvage license (Ostranauts Flying 2.1)
+	nav_side.add_child(_label(EconomySystem.permit_text(), COL_AMBER if EconomySystem.permit_valid() else COL_MUTED, 12))
 	var prox: String = P.prox_warning()
 	if prox != "":
 		nav_side.add_child(_row("⚠ " + prox, [_button("Mute", func(): P.prox_muted = true)], Color(0.95, 0.76, 0.31)))
@@ -1050,7 +1052,10 @@ func _refresh_window() -> void:
 				window_box.add_child(_button("Investigate wreck (Forensic Science, character must be on the wreck)", func():
 					station_reply = SalvageSystem.investigate(E.trader())
 					GameState.toast(station_reply)))
-			window_box.add_child(_button("New salvage claim (%d Cr)" % Config.CLAIM_FEE, E.buy_claim))
+			window_box.add_child(_row("Ayotimiwa", [_label(E.permit_text(), COL_AMBER if E.permit_valid() else COL_MUTED, 13)]))
+			window_box.add_child(_label("A permit is bound to this ship's transponder. Without one, N.A.S.S. fines you %d Cr for docking at a derelict near a station." % Config.NASS_FINE, COL_MUTED, 12))
+			for pt in Config.PERMIT_TIERS:
+				window_box.add_child(_button("%s permit · %d h · %d Cr" % [pt.name, int(pt.hours), E.permit_cost(pt.id)], E.buy_permit.bind(pt.id)))
 
 func _put_terminal(type: String, qty: int) -> void:
 	var c: CrewMember = GameState.selected if GameState.selected != null else CrewSystem.player()

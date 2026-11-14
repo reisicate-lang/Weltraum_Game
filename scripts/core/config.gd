@@ -7,7 +7,7 @@ extends RefCounted
 ## Set to true to switch them back on.
 ## Station: walkable station with rooms and characters when docking at stations.
 static var ENABLE_STATION := true
-## Wreck: wreck/asteroid at the docking port, salvage claim, scrapping.
+## Wreck: wreck/asteroid at the docking port, salvage permit, scrapping.
 static var ENABLE_WRECK := true
 
 ## Grid: a build tile is 16 px (formerly 32 px). GRID_SCALE = how many of today's tiles
@@ -110,7 +110,17 @@ const MAX_STRIKES := 3
 const DOCK_FEE := 45
 const BUY_MARKUP := 1.3
 const SELL_FACTOR := 0.85
-const CLAIM_FEE := 200
+## Ayotimiwa Salvage Permit (Ostranauts Trading 2.3, prices 1:1): id, name, cost, hours
+const PERMIT_TIERS := [
+	{"id": "yellow", "name": "Yellow", "cost": 5000, "hours": 24},
+	{"id": "red", "name": "Red", "cost": 13500, "hours": 72},
+	{"id": "blue", "name": "Blue", "cost": 30000, "hours": 168},
+	{"id": "silver", "name": "Silver", "cost": 120000, "hours": 720},
+	{"id": "black", "name": "Black", "cost": 1000000, "hours": 7200},
+]
+## N.A.S.S. fine for docking at a derelict near a station without a valid permit
+## (the wiki names no amount: one Yellow permit)
+const NASS_FINE := 5000
 const HULL_FACTOR := 0.25
 const PRICE_DRIFT := 0.06
 const REFILL_AT := 0.3

@@ -26,7 +26,7 @@ const ROOMS := {
 	"hiring": {"name": "Hiring Office", "desk": "st_hiring", "tab": "crew", "role": "Hiring clerk",
 		"lines": ["Need people? Those over there are looking for a berth.", "Signing money up front, wages every day.", "Good mechanics have become rare."]},
 	"claims": {"name": "Salvage Office", "desk": "st_claims", "tab": "salvage", "role": "Clerk",
-		"lines": ["Salvage claims only for a fee.", "Form B-7, in triplicate. Just kidding.", "Something new is drifting outside again."]},
+		"lines": ["No permit, no salvage. N.A.S.S. checks transponders.", "Form B-7, in triplicate. Just kidding.", "Something new is drifting outside again."]},
 	"bank": {"name": "Credit Office", "desk": "st_bank", "tab": "bank", "role": "Bank clerk",
 		"lines": ["Your next instalment is due soon.", "We like punctual payers best.", "Would you like to pay something off today?"]},
 	"shipyard": {"name": "Shipyard", "desk": "st_shipyard", "tab": "ships", "role": "Shipyard master",
@@ -466,7 +466,7 @@ func _greeting(kind: String, c: CrewMember) -> String:
 		"bank":
 			return "Remaining debt %d Cr. The next instalment is due in %.1f days." % [EconomySystem.debt, maxf(0.0, (EconomySystem.next_payment - GameState.time) / 1440.0)]
 		"claims":
-			return "A new salvage claim costs %d Cr." % Config.CLAIM_FEE
+			return "A Yellow salvage permit costs %d Cr for 24 hours; longer ones are cheaper per day." % Config.PERMIT_TIERS[0].cost
 		"hiring":
 			return "%d people are looking for work right now." % NPCSystem.candidates_here().size()
 		"board":

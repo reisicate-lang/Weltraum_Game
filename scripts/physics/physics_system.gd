@@ -723,6 +723,7 @@ func dock(id: String, force: bool = false) -> bool:
 	ang_vel = 0.0
 	match_target = ""
 	FleetSystem.arrive(loc(id))
+	EconomySystem.check_permit_on_dock(loc(id))
 	NPCSystem.on_docked(id)
 	SkillSystem.train_all_at("helm", "dock", 0.3 if force else 8.0)
 	log_event("Docked: " + loc(id).name)
