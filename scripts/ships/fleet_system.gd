@@ -403,6 +403,27 @@ func ship_value(g: ShipGrid) -> int:
 			v += SalvageSystem.device_value(g.devices[i]) * 1.5 * float(mods.get(i, 1.0))
 	return int(v)
 
+# ---------------- Startschiff aus „Seek Ship“ (Ostranauts 2.4) ----------------
+
+## Spielbeginn mit dem im Lebenslauf gekauften Schiff: ersetzt die Rostlaube, Kredit = Preis.
+## "rostlaube" oder "": Startschiff bleibt, Kredit wie bisher.
+func start_with(id: String) -> void:
+	var t: Dictionary = CharacterSystem.starter_ship(id)
+	if t.is_empty() or id == "rostlaube":
+		return
+	StationSystem.clear()
+	ShipSystem.grid = build_template(t)
+	ShipSystem.retire_legacy_ports()
+	ShipConstructionSystem.jobs.clear()
+	current_name = String(t.name)
+	registered_name = current_name
+	EconomySystem.debt = int(t.price)
+	PhysicsSystem.helm_at = PhysicsSystem.NO_HELM
+	EventBus.ship_changed.emit()
+	ShipPowerSystem.step(0.0)
+	_place_crew()
+	StationSystem.build(PhysicsSystem.docked)
+
 # ---------------- Schiffsname (Ostranauts Ship Building 1.4) ----------------
 
 const NAME_MAX := 32

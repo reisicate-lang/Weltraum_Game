@@ -106,7 +106,7 @@ func trait_block_reason(c: CrewMember, id: String) -> String:
 	if t == null:
 		return "Unknown trait."
 	if creation_ended(c):
-		return "Character creation has ended (age %d)." % max_age
+		return ended_text(c)
 	if id in trait_adds(c) or id in trait_removes(c) or id in c.traits:
 		return ""   # Rückgängig machen bzw. entfernen geht immer
 	var opp := t.opposite
@@ -204,7 +204,10 @@ func begin(c: CrewMember, asteroid_start: bool = true) -> void:
 	c.set_meta("risk_tokens", {})
 	c.set_meta("aged_29", false)
 	c.set_meta("aged_42", false)
+	c.set_meta("ship_offer", "")
+	c.remove_meta("ship_bought")
 	if asteroid_start:
+		c.set_meta("ship_bought", "")   # Spielerfigur: Seek Ship möglich, mit 47 erzwungen
 		for t in START_TRAITS:
 			if TraitSystem.get_trait(t) != null and not t in c.traits:
 				c.traits.append(t)
@@ -226,6 +229,8 @@ func done_careers(c: CrewMember) -> Array:
 func available(c: CrewMember) -> Array:
 	var out: Array = []
 	var done := done_careers(c)
+	if creation_ended(c) or ship_offer(c) != "":
+		return out
 	for k in careers:
 		if c.age < int(k.min_age) or preview_age(c) + int(k.years) > max_age:
 			continue
@@ -309,14 +314,88 @@ func _age_check(c: CrewMember, old_age: int) -> void:
 				var t: String = pool.pick_random()
 				c.traits.append(t)
 				c.history.append("%d: %s – gained %s." % [at, a[1], TraitSystem.get_trait(t).trait_name])
+	# Mit 47 ohne Schiff: Seek Ship erzwungen, das erste Angebot wird angenommen (Wiki 1.2)
+	if c.age >= max_age and String(c.get_meta("ship_bought", "")) == "" and c.has_meta("ship_bought"):
+		var offer := String(c.get_meta("ship_offer", ""))
+		if offer == "":
+			offer = String(starter_ships().pick_random().id)
+		c.set_meta("ship_offer", "")
+		_buy_ship(c, offer, true)
 	if creation_ended(c):
 		c.set_meta("draft_courses", [])
 		c.set_meta("draft_trait_add", [])
 		c.set_meta("draft_trait_remove", [])
 
-## Mit max_age (47) endet die Erstellung
+func ended_text(c: CrewMember) -> String:
+	if ship_bought(c) != "":
+		return "Character creation has ended: you bought a ship."
+	return "Character creation has ended (age %d)." % max_age
+
+## Mit max_age (47) oder einem gekauften Schiff (Seek Ship) endet die Erstellung
 func creation_ended(c: CrewMember) -> bool:
-	return c.age >= max_age
+	return c.age >= max_age or String(c.get_meta("ship_bought", "")) != ""
+
+# ---------------- Seek Ship (Ostranauts 2.4) ----------------
+# 1 Jahr: ein zufälliges Startschiff wird angeboten. Ablehnen (dann erneut suchen, wieder 1 Jahr)
+# oder kaufen: Man übernimmt den Kredit des Schiffs, die Erstellung endet. Wer nie ein Schiff
+# kauft, startet wie bisher mit der Rostlaube.
+
+## Startschiffe: die Rostlaube und die Werftschiffe, Kredit = Preis (Cr)
+func starter_ships() -> Array:
+	var out: Array = [{"id": "rostlaube", "name": "Rostlaube", "price": Config.START_DEBT,
+		"desc": "Your old salvage tug: life support, generator, two thrusters, an airlock."}]
+	for t in PhysicsSystem.space.shipyard:
+		out.append(t)
+	return out
+
+func starter_ship(id: String) -> Dictionary:
+	for t in starter_ships():
+		if t.id == id:
+			return t
+	return {}
+
+func ship_offer(c: CrewMember) -> String:
+	return String(c.get_meta("ship_offer", ""))
+
+func ship_bought(c: CrewMember) -> String:
+	return String(c.get_meta("ship_bought", ""))
+
+## 1 Jahr nach einem Schiff suchen. id leer: zufällig. Gibt die Schiffs-ID zurück ("" = nicht möglich).
+func seek_ship(c: CrewMember, id: String = "") -> String:
+	if adventure_block_reason(c) != "":
+		return ""
+	var t: Dictionary = starter_ship(id) if id != "" else starter_ships().pick_random()
+	if t.is_empty():
+		return ""
+	var age0 := c.age
+	c.age += 1
+	c.set_meta("ship_offer", String(t.id))
+	c.history.append("%d–%d: Looked for a ship – offered the %s (loan %d Cr)." % [age0, c.age, t.name, int(t.price)])
+	_age_check(c, age0)
+	return String(t.id) if ship_bought(c) == "" else ship_bought(c)
+
+func decline_ship(c: CrewMember) -> void:
+	c.set_meta("ship_offer", "")
+
+## Angebot annehmen: Lebenslauf wird bestätigt, die Erstellung endet. false = geht nicht (Bilanz negativ).
+func buy_ship(c: CrewMember) -> bool:
+	var id := ship_offer(c)
+	if id == "" or draft_balance(c) < 0:
+		return false
+	confirm(c)
+	if ship_bought(c) != "":
+		return true   # beim Bestätigen 47 geworden: Angebot schon erzwungen angenommen
+	c.set_meta("ship_offer", "")
+	_buy_ship(c, id, false)
+	return true
+
+func _buy_ship(c: CrewMember, id: String, forced: bool) -> void:
+	var t := starter_ship(id)
+	c.set_meta("ship_bought", id)
+	c.history.append("%d: %s the %s and took on its loan of %d Cr." % [c.age, "Had to take" if forced else "Bought", t.name, int(t.price)])
+	c.set_meta("draft_courses", [])
+	c.set_meta("draft_trait_add", [])
+	c.set_meta("draft_trait_remove", [])
 
 # ---------------- Lebensereignisse („Seek Adventure“, Ostranauts 2.1) ----------------
 # Ein Ereignis kostet 1 Jahr. Man wählt eine von mehreren Antworten; manche brauchen einen Skill
@@ -352,8 +431,10 @@ const SAVE_MONEY_MAX := 600
 func adventure_block_reason(c: CrewMember) -> String:
 	if pending_encounter(c) != "":
 		return "Choose an answer for the current encounter first."
+	if ship_offer(c) != "":
+		return "Buy or decline the ship offer first."
 	if creation_ended(c):
-		return "Character creation has ended (age %d)." % max_age
+		return ended_text(c)
 	if preview_age(c) + int(enc_cfg.get("years", 1)) > max_age:
 		return "Too old for that."
 	return ""

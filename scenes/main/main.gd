@@ -232,7 +232,7 @@ func _key(k: InputEventKey) -> void:
 		KEY_M: UIManager.set_tool("wall")
 		KEY_T: UIManager.set_tool("door")
 		KEY_K: UIManager.set_tool("cable")
-		KEY_X: UIManager.set_tool("remove")
+		KEY_U: UIManager.set_tool("remove")
 		KEY_V: UIManager.set_tool("move")
 		KEY_Q: UIManager.set_tool("haul")
 		KEY_R: UIManager.set_tool("repair")
@@ -241,7 +241,7 @@ func _key(k: InputEventKey) -> void:
 		KEY_L: GameState.view = "normal" if GameState.view == "air" else "air"
 		KEY_P: GameState.view = "normal" if GameState.view == "power" else "power"
 		KEY_O: GameState.view = "normal" if GameState.view == "heat" else "heat"
-		KEY_U: GameState.view = "normal" if GameState.view == "damage" else "damage"
+		KEY_X: GameState.view = "normal" if GameState.view == "damage" else "damage"
 		KEY_Z: UIManager.set_tool("window")
 		KEY_E: UIManager.interact()
 		KEY_H: UIManager.toggle_help()

@@ -12,7 +12,7 @@ const TOOLS := [
 	["move", "Versetzen", "V", "Vom Gerät zum Zielfeld ziehen. Ein Charakter trägt es dorthin."],
 	["haul", "Einsammeln", "Q", "Haufen markieren. Die Crew bringt alles in die nächste Frachtkiste im Schiff."],
 	["repair", "Reparieren", "R", "Auf Beschädigtes klicken. Stark Beschädigtes wird automatisch repariert."],
-	["remove", "Abreißen", "X", "Schicht für Schicht: Gerät, Kabel, Wand/Tür, Boden. Gibt Teile zurück."],
+	["remove", "Abreißen", "U", "Schicht für Schicht: Gerät, Kabel, Wand/Tür, Boden. Gibt Teile zurück."],
 	["cancel", "Plan löschen", "C", "Entfernt Baupläne. Rechtsklick geht auch."],
 	["orders", "Orders", "Y", "Pick an action and filters below, then click a tile or drag over an area. Only objects matching an active filter get the order."],
 ]
@@ -257,7 +257,7 @@ func _build_bottom() -> void:
 	row.add_child(_button("Luft [L]", func(): GameState.view = "normal" if GameState.view == "air" else "air"))
 	row.add_child(_button("Strom [P]", func(): GameState.view = "normal" if GameState.view == "power" else "power"))
 	row.add_child(_button("Wärme [O]", func(): GameState.view = "normal" if GameState.view == "heat" else "heat"))
-	row.add_child(_button("Damage [U]", func(): GameState.view = "normal" if GameState.view == "damage" else "damage"))
+	row.add_child(_button("Damage [X]", func(): GameState.view = "normal" if GameState.view == "damage" else "damage"))
 	_build_orders_bar(box)
 	power_label = _label("", COL_MUTED, 12)
 	box.add_child(power_label)
@@ -315,7 +315,7 @@ Halte sie am Leben: Luft, Essen, Wasser, Schlaf.
 
 WASD: deine Figur steuern (Umschalt: rennen)
 Auswahl + Klick auf Boden: hinlaufen lassen · Klick auf Kiste: Inhalt
-Werkzeuge unten: Boden B, Wand M, Tür T, Kabel K, Abreißen X, Plan löschen C
+Werkzeuge unten: Boden B, Wand M, Tür T, Kabel K, Abreißen U, Plan löschen C, Schadensansicht X
 Geräte-Menü: Generator, Sauerstoff, Betten, Kisten ...
 Rechtsklick auf ein Objekt: Menü (Abbauen, Zerlegen, Zerstören, Einbauen) · auf Figur: Aufgabe abbrechen
 Für Arbeiten im Vakuum holt Mira selbst einen Raumanzug. Die Luftschleuse links
@@ -931,7 +931,7 @@ func _refresh_window() -> void:
 					window_box.add_child(_trade_row("%s ×%d" % [ItemSystem.item(it.type).display_name, it.qty], it, [btn]))
 		"buy":
 			window_box.add_child(_label("Gekauftes landet im Terminal. Preise ändern sich jeden Tag.", COL_MUTED, 12))
-			var ids: Array = ItemSystem.items.keys().filter(func(x): return not RemovalSystem.is_packed(x))
+			var ids: Array = ItemSystem.items.keys().filter(func(x): return not RemovalSystem.is_packed(x) or x in E.SHOP_PACKED)
 			ids.sort()
 			for id in ids:
 				var f: float = E.prices.get(id, 1.0)

@@ -76,7 +76,7 @@ func needs_repair(p: Vector2i) -> bool:
 	# Mehrfeld-Gerät: sein Zustand gilt am Innenfeld; Wand und Düsenfeld haben ihren eigenen
 	var dev := g.device_at(p)
 	if dev != null and dev.pos == p:
-		return dev.cond < 100.0
+		return dev.cond < 100.0 and dev.data().repairable
 	var t := g.get_tile(p)
 	return (t == ShipGrid.Tile.WALL or t == ShipGrid.Tile.DOOR) and g.cond[g.idx(p)] < 100.0
 
@@ -99,6 +99,6 @@ func _auto_repair() -> void:
 		if (t == ShipGrid.Tile.WALL or t == ShipGrid.Tile.DOOR) and g.cond[i] < Config.AUTO_REPAIR_AT and not CS.jobs.has(i):
 			CS.place("repair", g.pos(i))
 	for i in g.devices:
-		if not g.foreign(i) and g.devices[i].cond < Config.AUTO_REPAIR_AT and not CS.jobs.has(i):
+		if not g.foreign(i) and g.devices[i].cond < Config.AUTO_REPAIR_AT and g.devices[i].data().repairable and not CS.jobs.has(i):
 			CS.place("repair", g.pos(i))
 	CS.scan_refills()

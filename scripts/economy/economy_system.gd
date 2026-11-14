@@ -156,6 +156,9 @@ func sell_all() -> void:
 	for type in types:
 		sell(type, 9999)
 
+## Fertige Geräte, die jeder Stationsmarkt verkauft (Ostranauts: Ersatz-Transponder beim Ship Broker)
+const SHOP_PACKED := ["pk_transponder"]
+
 func buy(type: String, qty: int) -> void:
 	var t := terminal()
 	if t == null or not terminal_online():

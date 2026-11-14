@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = "transponder"
 display_name = "XPDR Transponder"
-description = "Broadcasts your ship registration (needs an antenna and power). Some stations only accept docking ships with a working transponder and antenna."
+description = "Broadcasts your ship registration (needs an antenna and power). Some stations only accept docking ships with a working transponder and antenna. Cannot be repaired and often breaks when uninstalled; replacements are sold at every station market."
 power = -0.1
 build_time = 4.0
 cost = {"circuit": 2, "datachip": 1, "copper": 1}
@@ -19,3 +19,6 @@ wears = false
 color = Color(0.35, 0.55, 0.75, 1)
 tech = "electrical"
 category = "sensor"
+repairable = false
+uninstall_break = 0.5
+item_value = 29000

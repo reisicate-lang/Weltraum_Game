@@ -84,10 +84,57 @@ func _initialize() -> void:
 				n += 1
 		_check("Werftschiff %s: Transponder und Antenne am Kabel" % t.name, n == 2)
 
+	# 4b) Wiki-Regel: nicht reparierbar, bricht beim Abbau zu 50 %, Ersatz im Markt
+	var D = root.get_node("DamageSystem")
+	var CS = root.get_node("ShipConstructionSystem")
+	var R = root.get_node("RemovalSystem")
+	var E = root.get_node("EconomySystem")
+	var IS = root.get_node("ItemSystem")
+	_check("Transponder: nicht reparierbar, Bruchchance 0,5, Wert 29 000", not IS.device("transponder").repairable and IS.device("transponder").uninstall_break == 0.5 and IS.device("transponder").item_value == 29000)
+	x.cond = 40.0
+	_check("Beschädigt: kein Reparaturauftrag möglich", not D.needs_repair(x.pos) and not CS.place("repair", x.pos))
+	D._auto_repair()
+	_check("Automatische Reparatur lässt ihn aus", not CS.jobs.has(g.idx(x.pos)))
+	x.cond = 100.0
+	_check("Bergungswert nach Wiki: %d Cr" % root.get_node("SalvageSystem").device_value(x), root.get_node("SalvageSystem").device_value(x) == 29000)
+	_check("Abgebaut-Gegenstand ~29 000 Cr wert (%d)" % IS.item("pk_transponder").value, absi(IS.item("pk_transponder").value - 29000) <= 1)
+	# Abbauen 40-mal: etwa die Hälfte kaputt
+	var broke := 0
+	var tries := 40
+	seed(12345)
+	for n in tries:
+		var tdev: Device = g.place_device("transponder", x.pos + Vector2i(0, 0)) if g.device_at(x.pos) == null else g.device_at(x.pos)
+		var job := {"kind": "uninstall", "x": tdev.pos.x, "y": tdev.pos.y, "target": "dev:transponder", "tool": "", "progress": 1.0, "claimed_by": -1, "retry_at": 0.0, "paid": true, "need": 1.0}
+		R.finish(job, null, tdev.pos)
+		for i in g.piles.keys():
+			var pile = g.piles[i]
+			for it in pile.items.duplicate():
+				if it.type == "pk_transponder":
+					if it.get("data") != null and bool(it.data.get("broken", false)):
+						broke += 1
+					pile.take("pk_transponder", 1)
+	_check("Beim Abbau kaputt: %d von %d (≈ 50 %%)" % [broke, tries], broke >= 10 and broke <= 30)
+	var antenna_broke := 0
+	_check("Antenne bricht nie (Chance 0)", IS.device("antenna").uninstall_break == 0.0 and antenna_broke == 0)
+	if g.device_at(x.pos) == null:
+		x = g.place_device("transponder", x.pos)
+	# Markt: Ersatz-Transponder kaufbar
+	_check("Markt führt Ersatz-Transponder", "pk_transponder" in E.SHOP_PACKED)
+	var term = null
+	for i in g.devices:
+		if g.devices[i].type == "terminal":
+			term = g.devices[i]
+	P.docked = "tycho"
+	E.credits = 100000
+	var c0: int = E.credits
+	E.buy("pk_transponder", 1)
+	_check("Gekauft: im Terminal, %d Cr bezahlt" % (c0 - E.credits), term.inv.count("pk_transponder") == 1 and c0 - E.credits >= 29000)
+
 	# 5) Alter Spielstand ohne beides: Teile liegen an Bord
 	var SS = root.get_node("SaveSystem")
-	g.remove_device(x)
+	g.remove_device(g.device_at(x.pos))
 	g.remove_device(ant)
+	term.inv.take("pk_transponder", 1)
 	SS.save_game()
 	var f := FileAccess.open(SS.path(), FileAccess.READ)
 	var d: Dictionary = JSON.parse_string(f.get_as_text())

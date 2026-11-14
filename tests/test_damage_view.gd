@@ -1,4 +1,4 @@
-## Tests: Schadensansicht zum Lecksuchen (Ostranauts Ideal Atmosphere 2, Taste U)
+## Tests: Schadensansicht zum Lecksuchen (Ostranauts Ideal Atmosphere 2, Taste X)
 ##   godot --headless --path . --script res://tests/boot.gd -- test_damage_view
 extends "res://tests/test_base.gd"
 
@@ -69,12 +69,12 @@ func _initialize() -> void:
 	# Umschalten
 	gs.view = "normal"
 	var ev := InputEventKey.new()
-	ev.keycode = KEY_U
+	ev.keycode = KEY_X
 	ev.pressed = true
 	main._key(ev)
-	_check("Taste U: Schadensansicht an", gs.view == "damage")
+	_check("Taste X: Schadensansicht an", gs.view == "damage")
 	main._key(ev)
-	_check("Nochmal U: aus", gs.view == "normal")
+	_check("Nochmal X: aus", gs.view == "normal")
 
 	print("%d OK, %d Fehler" % [ok_count, fail_count])
 	quit()

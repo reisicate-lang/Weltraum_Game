@@ -292,7 +292,7 @@ func refresh_creation() -> void:
 	for t in c.traits:
 		tr.append(TraitSystem.get_trait(t).trait_name)
 	creation_box.add_child(ui._label("Eigenschaften: " + ", ".join(tr), ui.COL_MUTED, 12))
-	if CharacterSystem.creation_ended(c):
+	if CharacterSystem.creation_ended(c) and c.age >= CharacterSystem.max_age:
 		creation_box.add_child(ui._label("Age %d: character creation ends here. Press „Los geht's“." % CharacterSystem.max_age, ui.COL_AMBER, 13))
 	var top: Array = c.skills.keys()
 	top.sort_custom(func(a, b): return SkillSystem.progress(c, a) > SkillSystem.progress(c, b))
@@ -338,6 +338,36 @@ func refresh_creation() -> void:
 		sav.disabled = why_adv != ""
 		sav.tooltip_text = why_adv if why_adv != "" else "Work and save for a year: about %d–%d Cr start money. Reliable, but little." % [CharacterSystem.SAVE_MONEY_MIN, CharacterSystem.SAVE_MONEY_MAX]
 		creation_box.add_child(sav)
+	# Seek Ship (Ostranauts 2.4): Angebot kaufen oder ablehnen, Kauf beendet die Erstellung
+	var bought := CharacterSystem.ship_bought(c)
+	var offer := CharacterSystem.ship_offer(c)
+	if bought != "":
+		var bt: Dictionary = CharacterSystem.starter_ship(bought)
+		creation_box.add_child(ui._label("SHIP: %s (loan %d Cr). Character creation is done – press „Los geht's“." % [bt.name, int(bt.price)], ui.COL_AMBER, 13))
+	elif offer != "":
+		var ot: Dictionary = CharacterSystem.starter_ship(offer)
+		creation_box.add_child(ui._label("SHIP OFFER: " + String(ot.name).to_upper(), ui.COL_AMBER, 13))
+		creation_box.add_child(_wrap("%s Loan: %d Cr (paid off in instalments)." % [ot.get("desc", ""), int(ot.price)]))
+		var buy: Button = ui._button("Buy (take on the loan, ends character creation)", func():
+			CharacterSystem.buy_ship(c)
+			refresh_creation())
+		buy.set_meta("ship_buy", true)
+		buy.disabled = CharacterSystem.draft_balance(c) < 0
+		buy.tooltip_text = "Your course and trait choices are confirmed first." if not buy.disabled else "The year balance of your drafts is negative."
+		var dec: Button = ui._button("Decline", func():
+			CharacterSystem.decline_ship(c)
+			refresh_creation())
+		dec.set_meta("ship_decline", true)
+		creation_box.add_child(ui._row("", [buy, dec]))
+	elif pend == "" and not CharacterSystem.creation_ended(c):
+		var why_ship := CharacterSystem.adventure_block_reason(c)
+		var seek_b: Button = ui._button("Seek Ship (1 year)", func():
+			CharacterSystem.seek_ship(c)
+			refresh_creation())
+		seek_b.set_meta("seek_ship", true)
+		seek_b.disabled = why_ship != ""
+		seek_b.tooltip_text = why_ship if why_ship != "" else "Spend a year looking for a starter ship: Rostlaube, Shuttle Lumen or Frachter Bairn. Buying it ends character creation. Without one you start with the Rostlaube."
+		creation_box.add_child(seek_b)
 	creation_box.add_child(ui._label("NÄCHSTE LEBENSSTATION", ui.COL_MUTED, 11))
 	for k in CharacterSystem.available(c):
 		var gains: PackedStringArray = []
@@ -447,10 +477,11 @@ func refresh_creation() -> void:
 	var go: Button = ui._button("Los geht's", func():
 		CharacterSystem.confirm(c)
 		EconomySystem.credits = Config.START_CREDITS + CharacterSystem.start_credits(c)
+		FleetSystem.start_with(CharacterSystem.ship_bought(c))
 		creation.visible = false
 		ui.show_help()
 		TimeSystem.set_speed(1))
-	go.disabled = CharacterSystem.preview_age(c) < 18 or CharacterSystem.draft_balance(c) < 0 or CharacterSystem.pending_encounter(c) != ""
+	go.disabled = CharacterSystem.preview_age(c) < 18 or CharacterSystem.draft_balance(c) < 0 or CharacterSystem.pending_encounter(c) != "" or CharacterSystem.ship_offer(c) != ""
 	bottom.add_child(go)
 
 # ---------------- Begegnung mit Plünderern ----------------

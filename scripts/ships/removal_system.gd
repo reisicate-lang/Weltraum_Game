@@ -152,6 +152,8 @@ func _register_packed() -> void:
 				continue
 			v += it.volume * cost[type]
 			val += it.value * cost[type]
+		if key.begins_with("dev:") and ItemSystem.device(key.substr(4)).item_value > 0:
+			val = int(ItemSystem.device(key.substr(4)).item_value / 0.9)
 		var item := ItemData.new()
 		item.id = packed_id(key)
 		item.display_name = name_of(key) + " (abgebaut)"
@@ -393,6 +395,12 @@ func finish(job: Dictionary, worker: CrewMember, worker_pos: Vector2i) -> void:
 				d = dev.to_data()     # mit Inhalt (Kiste) – bleibt im Gegenstand erhalten
 				d.unknown = false
 				d.lock = 0
+				# Manche Teile gehen beim Abbauen oft kaputt (Ostranauts: Transponder VDX-01)
+				if dev.data().uninstall_break > 0.0 and randf() < dev.data().uninstall_break:
+					d.broken = true
+					d.cond = 0.0
+					cond = 0.0
+					GameState.toast("%s broke while being uninstalled." % dev.data().display_name, "bad")
 			packed = [packed_id(key), 1, cond, d]
 		"dismantle":
 			var y := dismantle_yield(key)

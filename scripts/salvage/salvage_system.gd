@@ -264,6 +264,8 @@ func device_value(dev: Device) -> int:
 	var c := dev.data().cost
 	for t in c:
 		base += ItemSystem.item(t).value * c[t]
+	if dev.data().item_value > 0:
+		base = dev.data().item_value
 	return int(base * (0.3 + 0.7 * dev.cond / 100.0))
 
 ## Geschätzter Wert: Je besser die Betriebswirtschaft, desto genauer

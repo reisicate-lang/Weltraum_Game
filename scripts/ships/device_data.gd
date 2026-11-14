@@ -19,6 +19,12 @@ extends Resource
 @export var capacity: float = 0.0
 ## Lade-/Entladegrenze in kW (0 = unbegrenzt), z. B. Ship Battery 81 kW
 @export var max_rate: float = 0.0
+## Lässt sich reparieren (Ostranauts: der Transponder VDX-01 nicht)
+@export var repairable: bool = true
+## Chance, beim Abbauen kaputtzugehen (Transponder: 0,5)
+@export var uninstall_break: float = 0.0
+## Fester Grundwert in Cr (0 = aus den Baukosten), z. B. Transponder 29 000 laut Wiki
+@export var item_value: int = 0
 ## Lagerplatz in Litern (0 = kein Lager)
 @export var storage: float = 0.0
 ## Welches Bedürfnis das Gerät erfüllt ("food", "water", "sleep", "hygiene")
