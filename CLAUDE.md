@@ -36,3 +36,6 @@ Reference data for flying (nav console, piloting stat, controls, docking, RCS, t
 
 Reference data for residential status (visa types/costs/requirements, embassy kiosk locations, home ownership):
 @docs/ostranauts/ostranauts-residential-status.md
+
+Observed start flow (screenshots, build 1.0.1.5): in-world character creation, mirror + career kiosk, hub, result screens, ship offer card, Submit gate, comparison with Weltraum Game:
+@docs/ostranauts/ostranauts-start-flow.md

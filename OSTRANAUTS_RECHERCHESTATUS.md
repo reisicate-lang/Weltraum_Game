@@ -317,3 +317,31 @@ bringt die Relativgeschwindigkeit (VREL) auf 0.
 - **Abbruch:** Ohne Strom am Pult endet die Angleichung (mit Meldung). Ohne Treibstoff
   feuert sie nicht.
 - Das automatische Andocken (Auto-Dock-Modul) ist ein eigener Ablauf und bleibt unberührt.
+
+## Spielstart bis Schiffsregistrierung (Stand: November 2026)
+
+**Quelle:** 29 Screenshots eines Durchlaufs vom Projektinhaber, Ostranauts Release Build 1.0.1.5.
+Ausführlich in `docs/ostranauts/ostranauts-start-flow.md`.
+
+| Befund | Stufe | Quelle |
+|---|---|---|
+| Charaktererstellung läuft in der pausierten Spielwelt; HUD, Uhr (UTC 2079-08-26) und Nachrichtenlog sind sichtbar | gemessen | Screenshot 1 |
+| Zwei Geräte im Raum: Spiegel (Aussehen, Name, Pronomen, Anziehung) und Karriere-Kiosk, umschaltbar über Seitenreiter | gemessen | Screenshots 1–2 |
+| „Flirts with“ wird zu den Traits „Attracted to Men / Women / Non-binary People“ | gemessen | Screenshot 12 |
+| Start: Alter 18, $96.79, Beruf Shipbreaker, zwei zufällig erzeugte Eltern als Kontakte | gemessen | Screenshots 2–3 |
+| „Early Life“-Text erklärt die Start-Traits als Arztszene | gemessen | Screenshots 13, 21 |
+| Sharp Hearing fehlt in der Trait-Liste (das Wiki nennt es als Start-Trait) | gemessen | Screenshots 12, 24 |
+| Hub mit 5 Knöpfen; beim Überfahren erscheinen Erklärung und Kosten rechts | gemessen | Screenshots 4–6, 9, 11 |
+| Tweak: Symbole leer / Daumen / Schloss, Apply / Undo Last / Clear / Cancel, Hinweis „young adult“, Trait Young Adult | gemessen | Screenshots 7–8, 12 |
+| Ergebnisbildschirm zeigt das alte Alter; das Jahr wird mit OK gebucht | gemessen | Screenshots 9–11, 19–20 |
+| Save Some Money: +$563.93 | gemessen | Screenshot 10 |
+| Review Resume kostet nichts | gemessen | Screenshots 12–15 |
+| Schiffsangebot: Bild, Hersteller/Modell, Baujahr, Typ, Maße, Masse, RCS, Torch, Ort, Mortgage, Rate pro Schicht | gemessen | Screenshots 16–17, 22 |
+| Rate pro Schicht = Mortgage ÷ 371,04 bei beiden Angeboten | abgeleitet | Screenshots 17, 22 |
+| Ablehnen kostet 1 Jahr; Annehmen beendet die Karriere, die Lampe wird grün (RESUME READY), danach SUBMIT | gemessen | Screenshots 19–20, 23, 27 |
+
+**Offen:**
+- Programmstart, Hauptmenü, Optionen vor der Charaktererstellung
+- Ablauf eines Live-Life-Ereignisses
+- Alter nach „Take Ship“
+- was nach SUBMIT passiert: Launch Area, Startort, Startinventar, erste Steuerung
