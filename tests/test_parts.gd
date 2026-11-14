@@ -1,5 +1,5 @@
-## Tests: Inventar per Tab, Abbau als ganzer Gegenstand am Boden, Gewicht und Schiffsmasse,
-## 1×3-Triebwerke in der Außenwand, Umstellung alter Spielstände
+## Tests: inventory with Tab, uninstalling as a whole item on the floor, weight and ship mass,
+## 1×3 thrusters in the outer wall, conversion of old saves
 ##   godot --headless --path . --script res://tests/boot.gd -- test_parts
 extends "res://tests/test_base.gd"
 
@@ -39,20 +39,20 @@ func _until_done(p: Vector2i, max_s: int = 3600) -> bool:
 func _mira():
 	return root.get_node("CrewSystem").player()
 
-## Taste so, wie sie die Hauptszene bekommt (gedrückt, gehalten = Echo, losgelassen)
+## Key the way the main scene receives it (pressed, held = echo, released)
 func _key(code: int, pressed: bool = true, echo: bool = false) -> void:
 	var ev := InputEventKey.new()
 	ev.keycode = code
 	ev.physical_keycode = code
 	ev.pressed = pressed
 	ev.echo = echo
-	# Tab nimmt die Hauptszene schon in _input (vor der Oberfläche), alles andere unbehandelt
+	# The main scene takes Tab already in _input (before the UI), everything else unhandled
 	if code == KEY_TAB:
 		main._input(ev)
 	else:
 		main._unhandled_input(ev)
 
-## Alle Inventare an Bord und auf dem Raster (Gepäck, Haufen, Behälter)
+## All inventories aboard and on the grid (packs, piles, containers)
 func _invs() -> Array:
 	var out: Array = []
 	for c in root.get_node("CrewSystem").crew:
@@ -64,7 +64,7 @@ func _invs() -> Array:
 			out.append(d.inv)
 	return out
 
-## Stückzahl einer Sorte überall, auch im erhaltenen Inhalt abgebauter Geräte
+## Count of one kind everywhere, also in the kept contents of uninstalled devices
 func _deep(type: String) -> int:
 	var n := 0
 	for inv in _invs():
@@ -93,7 +93,7 @@ func _pile_with(type: String) -> int:
 			return i
 	return -1
 
-## Stapel vergleichbar machen (nach dem Laden sind Zahlen aus JSON Kommazahlen)
+## Make stacks comparable (after loading, numbers from JSON are floats)
 func _norm(items: Array) -> Array:
 	var out: Array = []
 	for it in items:
@@ -145,16 +145,16 @@ func _initialize() -> void:
 	_fresh()
 	var g = ship.grid
 
-	# ---------------- 1) Tab: persönliches Inventar ----------------
-	_check("1: Inventar zu Beginn geschlossen", not ui.inv_open and not ui.container_panel.visible)
+	# ---------------- 1) Tab: personal inventory ----------------
+	_check("1: Inventory closed at the start", not ui.inv_open and not ui.container_panel.visible)
 	_key(KEY_TAB)
-	_check("1: Tab öffnet das Inventar", ui.inv_open and ui.container_panel.visible)
+	_check("1: Tab opens the inventory", ui.inv_open and ui.container_panel.visible)
 	for k in 8:
 		_key(KEY_TAB, true, true)            # gehalten: Echo-Ereignisse
 	_key(KEY_TAB, false)                     # losgelassen
-	_check("1: Halten und Loslassen wechseln nicht", ui.inv_open and ui.container_panel.visible)
+	_check("1: Holding and releasing do not toggle", ui.inv_open and ui.container_panel.visible)
 	_key(KEY_TAB)
-	_check("1: Erneuter Druck schließt es", not ui.inv_open and not ui.container_panel.visible)
+	_check("1: Pressing again closes it", not ui.inv_open and not ui.container_panel.visible)
 	# Im Cockpit
 	var mira = _mira()
 	var helm = P.ship_devices("helm")[0]
@@ -163,18 +163,18 @@ func _initialize() -> void:
 	_check("1: Im Cockpit", ui.nav_open)
 	var tgt0: String = P.target
 	_key(KEY_TAB)
-	_check("1: Cockpit: Tab öffnet das Inventar, Ziel bleibt", ui.inv_open and ui.container_panel.visible and ui.nav_open and P.target == tgt0)
+	_check("1: Cockpit: Tab opens the inventory, target stays", ui.inv_open and ui.container_panel.visible and ui.nav_open and P.target == tgt0)
 	for k in 8:
 		_key(KEY_TAB, true, true)
 	_key(KEY_TAB, false)
-	_check("1: Cockpit: Halten wechselt nicht", ui.inv_open)
+	_check("1: Cockpit: holding does not toggle", ui.inv_open)
 	_key(KEY_TAB)
-	_check("1: Cockpit: erneuter Druck schließt es, Ziel bleibt", not ui.inv_open and not ui.container_panel.visible and P.target == tgt0)
+	_check("1: Cockpit: pressing again closes it, target stays", not ui.inv_open and not ui.container_panel.visible and P.target == tgt0)
 	_key(KEY_T)
-	_check("1: Cockpit: T wechselt das Ziel (%s → %s)" % [tgt0, P.target], P.target != tgt0)
+	_check("1: Cockpit: T changes the target (%s → %s)" % [tgt0, P.target], P.target != tgt0)
 	var tgt1: String = P.target
 	_key(KEY_T, true, true)
-	_check("1: … T halten wechselt nicht mehrfach", P.target == tgt1)
+	_check("1: … holding T does not change it several times", P.target == tgt1)
 	ui._last_nav = ""
 	ui._refresh_nav()
 	var zb: Button = null
@@ -185,16 +185,16 @@ func _initialize() -> void:
 			if b.text == "Target" and zb == null:
 				zb = b
 	zb.pressed.emit()
-	_check("1: Zielwahl per Maus („Ziel“-Knopf) geht weiter (%s)" % P.target, zb != null and P.target != tgt1)
+	_check("1: Choosing the target with the mouse (“Target” button) still works (%s)" % P.target, zb != null and P.target != tgt1)
 	var hint := false
 	for kk in ui.FLIGHT_KEYS:
 		if kk[0] == "T" and "target" in kk[1]:
 			hint = true
 		if kk[0] == "Tab" and "inventory" in kk[1]:
 			hint = hint and true
-	_check("1: Tastenhinweis im Cockpit: T = Ziel, Tab = Inventar", hint and ui.FLIGHT_KEYS.any(func(kk): return kk[0] == "Tab" and "inventory" in kk[1]))
+	_check("1: Key hint in the cockpit: T = target, Tab = inventory", hint and ui.FLIGHT_KEYS.any(func(kk): return kk[0] == "Tab" and "inventory" in kk[1]))
 	ui.leave_flight()
-	# Behälter offen + Tab: Austausch geht weiter
+	# Container open + Tab: exchange still works
 	var crate_p := C(x0 + 13, y0 + 8)
 	mira.pos = _beside(crate_p)
 	mira.path.clear()
@@ -203,13 +203,13 @@ func _initialize() -> void:
 	var crate = g.device_at(crate_p)
 	var r0: int = crate.inv.count("ration")
 	ui._transfer(true, "ration", 2)
-	_check("1: Mit offenem Behälter: Inventar offen, Austausch geht (%d → %d Rationen)" % [r0, crate.inv.count("ration")], ui.inv_open and ui.open_pos == crate_p and crate.inv.count("ration") == r0 - 2 and mira.inv.count("ration") >= 2)
+	_check("1: With an open container: inventory open, exchange works (%d → %d rations)" % [r0, crate.inv.count("ration")], ui.inv_open and ui.open_pos == crate_p and crate.inv.count("ration") == r0 - 2 and mira.inv.count("ration") >= 2)
 	ui._transfer(false, "ration", 2)
-	_check("1: … und zurück", crate.inv.count("ration") == r0)
+	_check("1: … and back", crate.inv.count("ration") == r0)
 	_key(KEY_TAB)
-	_check("1: Tab schließt das Fenster", not ui.container_panel.visible and not ui.inv_open)
+	_check("1: Tab closes the window", not ui.container_panel.visible and not ui.inv_open)
 
-	# ---------------- 2) Beschädigtes, befülltes Gerät abbauen ----------------
+	# ---------------- 2) Uninstall a damaged, filled device ----------------
 	_fresh()
 	g = ship.grid
 	mira = _mira()
@@ -226,31 +226,31 @@ func _initialize() -> void:
 		gs.step(1.0 / 60.0)
 		if float(job.progress) > 0.0:
 			break
-	_check("2: Abbau läuft (%.2f)" % float(job.progress), float(job.progress) > 0.0 and float(job.progress) < float(job.need))
+	_check("2: Uninstall running (%.2f)" % float(job.progress), float(job.progress) > 0.0 and float(job.progress) < float(job.need))
 	CS.cancel(job)
 	_secs(2)
-	_check("2: Abgebrochen: Gerät bleibt eingebaut, Inhalt gleich, kein Gegenstand", g.device_at(crate_p) == crate and crate.inv.to_data() == content_before
+	_check("2: Cancelled: device stays installed, contents unchanged, no item", g.device_at(crate_p) == crate and crate.inv.to_data() == content_before
 		and _deep("pk_crate") == 0 and g.piles.size() == piles_before)
-	# jetzt vollständig
+	# now completely
 	R.order("uninstall", crate_p)
 	_until_done(crate_p)
 	var pi: int = _pile_with("pk_crate")
 	var it: Dictionary = _find("pk_crate")
-	_check("2: Genau ein vollständiger Gegenstand am Boden", g.device_at(crate_p) == null and _deep("pk_crate") == 1 and pi >= 0 and g.piles[pi].count("pk_crate") == 1)
-	_check("2: … erreichbar (begehbares Feld, Weg vorhanden)", pi >= 0 and g.walkable(g.pos(pi)) and (mira.tile() == g.pos(pi) or not ship.find_path(mira.tile(), g.pos(pi)).is_empty()))
+	_check("2: Exactly one complete item on the floor", g.device_at(crate_p) == null and _deep("pk_crate") == 1 and pi >= 0 and g.piles[pi].count("pk_crate") == 1)
+	_check("2: … reachable (walkable tile, path exists)", pi >= 0 and g.walkable(g.pos(pi)) and (mira.tile() == g.pos(pi) or not ship.find_path(mira.tile(), g.pos(pi)).is_empty()))
 	_check("2: … Zustand 55 %%, Inhalt erhalten (%d Stapel)" % it.get("data", {}).get("items", []).size(), int(it.get("cond", -1)) == 55 and it.data.items == content_before)
 	var w_item: float = R.mass_kg("dev:crate") + content_kg
-	_check("2: … Gewicht = Gerät + Inhalt genau einmal (%.1f kg)" % Inventory.stack_weight(it), absf(Inventory.stack_weight(it) - w_item) < 0.001)
-	_check("2: … Schiffsmasse unverändert", absf(P.mass() - m_before) < 0.000001)
+	_check("2: … weight = device + contents exactly once (%.1f kg)" % Inventory.stack_weight(it), absf(Inventory.stack_weight(it) - w_item) < 0.001)
+	_check("2: … ship mass unchanged", absf(P.mass() - m_before) < 0.000001)
 	# Aufheben (normale Bodeninteraktion: daneben stellen, E/Klick → Nehmen)
 	mira.pos = Vector2(g.pos(pi)) + Vector2(0.5, 0.5)
 	mira.path.clear()
 	mira.order = null
 	ui.interact()
-	_check("2: E öffnet den Haufen", ui.open_pos == g.pos(pi))
+	_check("2: E opens the pile", ui.open_pos == g.pos(pi))
 	ui._transfer(true, "pk_crate", 1)
-	_check("2: Aufgehoben: in den Händen (%s)" % mira.inv.in_hands().get("type", "-"), mira.inv.in_hands().get("type", "") == "pk_crate" and _pile_with("pk_crate") == -1)
-	_check("2: … Masse unverändert, Gewicht gleich", absf(P.mass() - m_before) < 0.000001 and absf(Inventory.stack_weight(mira.inv.in_hands()) - w_item) < 0.001)
+	_check("2: Picked up: in the hands (%s)" % mira.inv.in_hands().get("type", "-"), mira.inv.in_hands().get("type", "") == "pk_crate" and _pile_with("pk_crate") == -1)
+	_check("2: … mass unchanged, weight the same", absf(P.mass() - m_before) < 0.000001 and absf(Inventory.stack_weight(mira.inv.in_hands()) - w_item) < 0.001)
 	ui.close_container()
 	save.save_game(true)
 	gs.new_game()
@@ -258,19 +258,19 @@ func _initialize() -> void:
 	g = ship.grid
 	mira = _mira()
 	var h: Dictionary = mira.inv.in_hands()
-	_check("2: Nach Laden: noch in den Händen, Zustand, Gewicht und Inhalt gleich", h.get("type", "") == "pk_crate" and int(h.cond) == 55 and _norm(h.data.items) == _norm(content_before)
+	_check("2: After loading: still in the hands, condition, weight and contents the same", h.get("type", "") == "pk_crate" and int(h.cond) == 55 and _norm(h.data.items) == _norm(content_before)
 		and absf(Inventory.stack_weight(h) - w_item) < 0.001 and absf(P.mass() - m_before) < 0.001)
 	_check("2: Wiedereinbau beauftragt (%s)" % R.install_reason("pk_crate", crate_p), CS.place("install:pk_crate", crate_p))
 	_until_done(crate_p)
 	var c2 = g.device_at(crate_p)
 	_check("2: Wieder eingebaut: Zustand 55 %%, Inhalt gleich", c2 != null and c2.type == "crate" and int(c2.cond) == 55 and c2.inv.to_data() == content_before)
-	_check("2: … nichts doppelt, Masse wie vorher", _deep("pk_crate") == 0 and absf(P.mass() - m_before) < 0.001)
+	_check("2: … nothing twice, mass as before", _deep("pk_crate") == 0 and absf(P.mass() - m_before) < 0.001)
 
-	# ---------------- 3) Umlagern und Gewicht ----------------
+	# ---------------- 3) Moving things and weight ----------------
 	_fresh()
 	g = ship.grid
 	mira = _mira()
-	var plate_crate := C(x0 + 14, y0 + 8)   # Kiste mit Platten
+	var plate_crate := C(x0 + 14, y0 + 8)   # crate with plates
 	crate = g.device_at(plate_crate)
 	mira.pos = _beside(plate_crate)
 	mira.path.clear()
@@ -286,21 +286,21 @@ func _initialize() -> void:
 	ui.open_container(plate_crate)
 	var pl0: int = _deep("plate")
 	ui._transfer(true, "plate", 1)
-	_check("3: Kiste → Gepäck: 1 Platte (%.1f kg/Stück), Masse gleich" % plate_w.call(), mira.inv.count("plate") == 1 and absf(P.mass() - m3) < 0.000001 and plate_w.call() == w_plate)
+	_check("3: Crate → pack: 1 plate (%.1f kg/piece), mass the same" % plate_w.call(), mira.inv.count("plate") == 1 and absf(P.mass() - m3) < 0.000001 and plate_w.call() == w_plate)
 	ui.close_container()
 	ui._drop_own("plate", 1)
 	var pp := _pile_with("plate")
-	_check("3: Gepäck → Boden: Masse gleich", pp >= 0 and mira.inv.count("plate") == 0 and absf(P.mass() - m3) < 0.000001)
+	_check("3: Pack → floor: mass the same", pp >= 0 and mira.inv.count("plate") == 0 and absf(P.mass() - m3) < 0.000001)
 	ui.open_container(g.pos(pp))
 	ui._transfer(true, "plate", 1)
-	_check("3: Boden → Gepäck: Masse gleich", mira.inv.count("plate") == 1 and absf(P.mass() - m3) < 0.000001)
+	_check("3: Floor → pack: mass the same", mira.inv.count("plate") == 1 and absf(P.mass() - m3) < 0.000001)
 	ui.open_container(plate_crate)
 	ui._transfer(false, "plate", 1)
-	_check("3: Gepäck → Kiste: Masse gleich, nichts verloren", mira.inv.count("plate") == 0 and _deep("plate") == pl0 and absf(P.mass() - m3) < 0.000001)
-	# Von Bord: auf das Wrack (fremder Bereich)
+	_check("3: Pack → crate: mass the same, nothing lost", mira.inv.count("plate") == 0 and _deep("plate") == pl0 and absf(P.mass() - m3) < 0.000001)
+	# Leaving the ship: onto the wreck (foreign zone)
 	Config.ENABLE_WRECK = true
-	root.get_node("StationSystem").clear()   # ein Port: Station lösen, Wrack ankoppeln
-	_check("3: Wrack angehängt", root.get_node("SalvageSystem").generate())
+	root.get_node("StationSystem").clear()   # one port: release the station, couple the wreck
+	_check("3: Wreck attached", root.get_node("SalvageSystem").generate())
 	var m_w: float = P.mass()
 	ui._transfer(true, "plate", 1)
 	var wreck_t := Vector2i(-1, -1)
@@ -310,12 +310,12 @@ func _initialize() -> void:
 			break
 	mira.pos = Vector2(wreck_t) + Vector2(0.5, 0.5)
 	var carried: float = mira.inv.weight() / 1000.0
-	_check("3: Figur mit Gepäck geht aufs Wrack: Masse sinkt um ihr Gepäck (%.3f t)" % carried, absf(m_w - P.mass() - carried) < 0.000001 and carried >= w_plate / 1000.0)
+	_check("3: Character with a pack goes onto the wreck: mass drops by its pack (%.3f t)" % carried, absf(m_w - P.mass() - carried) < 0.000001 and carried >= w_plate / 1000.0)
 	ui._drop_own("plate", 1)
 	mira.pos = _beside(plate_crate)
-	_check("3: Platte auf dem Wrack abgelegt, Figur zurück: Masse um 8 kg kleiner", absf(m_w - P.mass() - w_plate / 1000.0) < 0.000001)
+	_check("3: Plate dropped on the wreck, character back: mass 8 kg less", absf(m_w - P.mass() - w_plate / 1000.0) < 0.000001)
 	Config.ENABLE_WRECK = false
-	# Zu schwer: Gepäck voll → bleibt am Boden
+	# Too heavy: pack full → stays on the floor
 	while mira.inv.room("plate") > 0:
 		mira.inv.add("plate", 1, 90.0)
 	g.drop_items(mira.tile(), "plate", 1, 90.0)
@@ -323,40 +323,40 @@ func _initialize() -> void:
 	ui.open_container(mira.tile())
 	toasts.clear()
 	ui._transfer(true, "plate", 1)
-	_check("3: Gepäck zu schwer (%.0f kg): Platte bleibt am Boden (%s)" % [mira.inv.load_weight(), toasts[-1] if not toasts.is_empty() else ""], g.piles.has(fp) and g.piles[fp].count("plate") == 1 and "carry" in toasts[-1])
-	# Hände belegt: zweites abgebautes Gerät bleibt am Boden
+	_check("3: Pack too heavy (%.0f kg): plate stays on the floor (%s)" % [mira.inv.load_weight(), toasts[-1] if not toasts.is_empty() else ""], g.piles.has(fp) and g.piles[fp].count("plate") == 1 and "carry" in toasts[-1])
+	# Hands taken: a second uninstalled device stays on the floor
 	mira.inv.add("pk_bed", 1, 90.0, {"type": "bed", "x": 0, "y": 0, "cond": 90.0, "broken": false, "stock": -1.0, "charge": 0.0, "items": []})
 	g.drop_items(mira.tile(), "pk_sink", 1, 90.0)
 	ui._transfer(true, "pk_sink", 1)
-	_check("3: Hände voll: zweites Gerät bleibt am Boden", g.piles[fp].count("pk_sink") == 1 and mira.inv.count("pk_sink") == 0 and mira.inv.in_hands().type == "pk_bed")
+	_check("3: Hands full: the second device stays on the floor", g.piles[fp].count("pk_sink") == 1 and mira.inv.count("pk_sink") == 0 and mira.inv.in_hands().type == "pk_bed")
 	ui.close_container()
 
-	# ---------------- 4) Triebwerke 1×3 in der Außenwand ----------------
+	# ---------------- 4) 1×3 thrusters in the outer wall ----------------
 	_fresh()
 	g = ship.grid
 	mira = _mira()
 	_stock_crate()
 	var thr: float = root.get_node("ItemSystem").device("thruster").thrust
-	# Ungültige Plätze (Vorschau = can_place / place_reason, alle drei Felder)
+	# Invalid places (preview = can_place / place_reason, all three tiles)
 	CS.build_rot = 2
-	var inner_wall := inside_wall(x0 + 10, y0 + 2, Vector2i(1, 0))   # Trennwand Kabine/Cockpit, dahinter Boden
+	var inner_wall := inside_wall(x0 + 10, y0 + 2, Vector2i(1, 0))   # partition cabin/cockpit, floor behind it
 	_check("4: Innenwand abgewiesen (%s)" % CS.place_reason("dev:thruster", inner_wall), not CS.can_place("dev:thruster", inner_wall) and "Inner wall" in CS.place_reason("dev:thruster", inner_wall))
 	CS.build_rot = 3
-	var swapped := inside_wall(x0 + 12, y0, Vector2i(0, 1))          # innen draußen im All, außen in der Kabine
-	_check("4: Vertauschte Innen-/Außenseite abgewiesen (%s)" % CS.place_reason("dev:thruster", swapped), not CS.can_place("dev:thruster", swapped) and "inner" in CS.place_reason("dev:thruster", swapped))
+	var swapped := inside_wall(x0 + 12, y0, Vector2i(0, 1))          # inside out in space, outside in the cabin
+	_check("4: Swapped inside/outside refused (%s)" % CS.place_reason("dev:thruster", swapped), not CS.can_place("dev:thruster", swapped) and "inner" in CS.place_reason("dev:thruster", swapped))
 	CS.build_rot = 1
 	var blocked := inside_wall(x0 + 7, y0, Vector2i(0, -1))
 	var nozzle := blocked + Vector2i(0, -2)
-	var junk = g.place_device("solar", nozzle)   # etwas schwebt vor der Düse
-	_check("4: Blockiertes Düsenfeld abgewiesen (%s)" % CS.place_reason("dev:thruster", blocked), not CS.can_place("dev:thruster", blocked) and "nozzle tile" in CS.place_reason("dev:thruster", blocked))
+	var junk = g.place_device("solar", nozzle)   # something floats in front of the nozzle
+	_check("4: Blocked nozzle tile refused (%s)" % CS.place_reason("dev:thruster", blocked), not CS.can_place("dev:thruster", blocked) and "nozzle tile" in CS.place_reason("dev:thruster", blocked))
 	g.remove_device(junk)
-	_check("4: Vorschau umfasst 3 Felder", CS.cells_of("thruster", blocked, 1).size() == 3 and CS.cells_of("thruster", blocked, 1)[2] == nozzle)
-	_check("4: Überschneidung mit vorhandenem Triebwerk abgewiesen", not CS.can_place("dev:thruster", C(x0 + 1, y0 + 2)))
-	# Horizontale Außenwand (oben, schiebt nach rechts) und vertikale (vorn, schiebt zurück)
+	_check("4: Preview covers 3 tiles", CS.cells_of("thruster", blocked, 1).size() == 3 and CS.cells_of("thruster", blocked, 1)[2] == nozzle)
+	_check("4: Overlap with an existing thruster refused", not CS.can_place("dev:thruster", C(x0 + 1, y0 + 2)))
+	# Horizontal outer wall (top, pushes right) and vertical (front, pushes back)
 	var top := inside_wall(x0 + 12, y0, Vector2i(0, -1))
-	cable_line(g, top, C(x0 + 13, y0 + 1))            # Anschluss an die Heizung daneben
+	cable_line(g, top, C(x0 + 13, y0 + 1))            # connection to the heater next to it
 	var front := inside_wall(x0 + 15, y0 + 2, Vector2i(1, 0))
-	cable_line(g, front, C(x0 + 14, y0 + 2))          # Anschluss an die Steuerpult-Leitung
+	cable_line(g, front, C(x0 + 14, y0 + 2))          # connection to the navigation console line
 	var n0: int = P.ship_devices("thruster").size()
 	var right0: float = P.thrust_dir(Vector2i(0, 1))
 	var back0: float = P.thrust_dir(Vector2i(-1, 0))
@@ -369,35 +369,35 @@ func _initialize() -> void:
 	_secs(1)
 	var t_top = g.device_at(top)
 	var t_front = g.device_at(front)
-	_check("4: Oben: 3 Felder, ein Gerät (innen, Wand, Düse)", t_top != null and t_top.type == "thruster" and g.device_at(top + Vector2i(0, -1)) == t_top and g.device_at(top + Vector2i(0, -2)) == t_top
+	_check("4: Top: 3 tiles, one device (inside, wall, nozzle)", t_top != null and t_top.type == "thruster" and g.device_at(top + Vector2i(0, -1)) == t_top and g.device_at(top + Vector2i(0, -2)) == t_top
 		and g.get_tile(top + Vector2i(0, -1)) == ShipGrid.Tile.WALL and g.get_tile(top + Vector2i(0, -2)) == ShipGrid.Tile.SPACE)
-	_check("4: Vorn: 3 Felder, ein Gerät", t_front != null and g.device_at(front + Vector2i(1, 0)) == t_front and g.device_at(front + Vector2i(2, 0)) == t_front)
-	_check("4: Je einmal Schub (rechts +%d, zurück +%d kN), je ein Gerät" % [int(P.thrust_dir(Vector2i(0, 1)) - right0), int(P.thrust_dir(Vector2i(-1, 0)) - back0)],
+	_check("4: Front: 3 tiles, one device", t_front != null and g.device_at(front + Vector2i(1, 0)) == t_front and g.device_at(front + Vector2i(2, 0)) == t_front)
+	_check("4: Thrust once each (right +%d, back +%d kN), one device each" % [int(P.thrust_dir(Vector2i(0, 1)) - right0), int(P.thrust_dir(Vector2i(-1, 0)) - back0)],
 		P.thrust_dir(Vector2i(0, 1)) - right0 == thr and P.thrust_dir(Vector2i(-1, 0)) - back0 == thr and P.ship_devices("thruster").size() == n0 + 2)
 	var m4: float = P.mass()
 	var p_cabin: float = g.pressure(g.idx(top))
-	# Abbau über das mittlere Wandfeld
-	_check("4: Abbau über das Wandfeld", R.order("uninstall", top + Vector2i(0, -1)) == "")
+	# uninstall through the middle wall tile
+	_check("4: Uninstall through the wall tile", R.order("uninstall", top + Vector2i(0, -1)) == "")
 	_until_done(top)
 	_secs(120)
-	_check("4: Ganz entfernt, Schub rechts weg", g.device_at(top) == null and g.device_at(top + Vector2i(0, -1)) == null and g.device_at(top + Vector2i(0, -2)) == null and P.thrust_dir(Vector2i(0, 1)) == right0)
-	_check("4: Wand und Druckhülle intakt (%.1f → %.1f kPa)" % [p_cabin, g.pressure(g.idx(top))], g.get_tile(top + Vector2i(0, -1)) == ShipGrid.Tile.WALL and absf(g.pressure(g.idx(top)) - p_cabin) < 2.0 and p_cabin > 80.0)
+	_check("4: Completely removed, thrust to the right gone", g.device_at(top) == null and g.device_at(top + Vector2i(0, -1)) == null and g.device_at(top + Vector2i(0, -2)) == null and P.thrust_dir(Vector2i(0, 1)) == right0)
+	_check("4: Wall and pressure hull intact (%.1f → %.1f kPa)" % [p_cabin, g.pressure(g.idx(top))], g.get_tile(top + Vector2i(0, -1)) == ShipGrid.Tile.WALL and absf(g.pressure(g.idx(top)) - p_cabin) < 2.0 and p_cabin > 80.0)
 	var tp := _pile_with("pk_thruster")
-	_check("4: Ein vollständiges Triebwerk-Item innen an Bord", _deep("pk_thruster") == 1 and tp >= 0 and g.zone[tp] == 0 and g.tiles[tp] == ShipGrid.Tile.FLOOR and g.walkable(g.pos(tp)))
-	_check("4: Masse unverändert (Item an Bord, %.4f t)" % (P.mass() - m4), absf(P.mass() - m4) < 0.000001)
+	_check("4: One complete thruster item inside aboard", _deep("pk_thruster") == 1 and tp >= 0 and g.zone[tp] == 0 and g.tiles[tp] == ShipGrid.Tile.FLOOR and g.walkable(g.pos(tp)))
+	_check("4: Mass unchanged (item aboard, %.4f t)" % (P.mass() - m4), absf(P.mass() - m4) < 0.000001)
 
-	# ---------------- 5) Alter Spielstand mit 1×1-Triebwerken und Inventaren ----------------
+	# ---------------- 5) Old save with 1×1 thrusters and inventories ----------------
 	_fresh()
 	g = ship.grid
 	mira = _mira()
 	mira.inv.items.clear()
 	mira.inv.add("plate", 2, 80.0)
-	# alter Stand: mehrere leichte abgebaute Teile im Gepäck waren erlaubt
+	# old save: several light uninstalled parts in the pack were allowed
 	mira.inv.items.append({"type": "pk_generator", "qty": 1, "cond": 77.0, "data": g.device_at(C(x0 + 1, y0 + 5)).to_data()})
 	mira.inv.items.append({"type": "pk_tile_wall", "qty": 1, "cond": 64.0})
 	save.save_game(true)
 	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(save.path()))
-	var old_pos := C(x0 + 11, y0 + 8)           # alte Position mitten im Raum
+	var old_pos := C(x0 + 11, y0 + 8)           # old position in the middle of the room
 	var n_thr := 0
 	for dd in data.ship.devices:
 		if dd.type == "thruster":
@@ -422,28 +422,28 @@ func _initialize() -> void:
 	save.load_game(true)
 	g = ship.grid
 	mira = _mira()
-	_check("5: Umstellung: 1 direkt umgebaut, 1 als Gegenstand (%s)" % str(g.migrated), g.migrated.converted == 1 and g.migrated.packed == 1)
+	_check("5: Conversion: 1 rebuilt directly, 1 as an item (%s)" % str(g.migrated), g.migrated.converted == 1 and g.migrated.packed == 1)
 	var thrusters: Array = P.ship_devices("thruster")
-	_check("5: Das passende alte Triebwerk sitzt jetzt 1×3 in der Wand", thrusters.size() == 1 and thrusters[0].pos in [C(x0 + 1, y0 + 2), C(x0 + 1, y0 + 3)] and g.device_at(thrusters[0].pos + Vector2i(-2, 0)) == thrusters[0]
+	_check("5: The matching old thruster now sits 1×3 in the wall", thrusters.size() == 1 and thrusters[0].pos in [C(x0 + 1, y0 + 2), C(x0 + 1, y0 + 3)] and g.device_at(thrusters[0].pos + Vector2i(-2, 0)) == thrusters[0]
 		and g.get_tile(thrusters[0].pos + Vector2i(-1, 0)) == ShipGrid.Tile.WALL)
 	var pkt := _pile_with("pk_thruster")
-	_check("5: Das andere liegt einmal als Gegenstand an seinem Platz (Zustand %d %%)" % int(_find("pk_thruster").get("cond", -1)), _deep("pk_thruster") == 1 and pkt == g.idx(old_pos) and g.walkable(old_pos) and int(_find("pk_thruster").cond) == 66)
+	_check("5: The other one lies once as an item in its place (condition %d %%)" % int(_find("pk_thruster").get("cond", -1)), _deep("pk_thruster") == 1 and pkt == g.idx(old_pos) and g.walkable(old_pos) and int(_find("pk_thruster").cond) == 66)
 	var others2: Array = []
 	for dv in g.devices.values():
 		if dv.type != "thruster":
 			others2.append("%s@%d,%d" % [dv.type, dv.pos.x, dv.pos.y])
 	others2.sort()
-	_check("5: Keine anderen Bauteile überschrieben oder verloren (%d)" % others2.size(), others2 == others)
+	_check("5: No other parts overwritten or lost (%d)" % others2.size(), others2 == others)
 	var same := true
 	for type in counts:
 		if _deep(type) != counts[type]:
 			same = false
-	_check("5: Inventare vollständig (keine Gegenstände verloren oder doppelt)", same and mira.inv.count("pk_generator") == 1 and mira.inv.count("pk_tile_wall") == 1 and mira.inv.count("plate") == 2)
+	_check("5: Inventories complete (no items lost or doubled)", same and mira.inv.count("pk_generator") == 1 and mira.inv.count("pk_tile_wall") == 1 and mira.inv.count("plate") == 2)
 	save.save_game(true)
 	gs.new_game()
 	save.load_game(true)
 	g = ship.grid
-	_check("5: Erneut gespeichert und geladen: Umstellung greift nicht noch einmal", g.migrated.converted == 0 and g.migrated.packed == 0
+	_check("5: Saved and loaded again: the conversion does not happen again", g.migrated.converted == 0 and g.migrated.packed == 0
 		and P.ship_devices("thruster").size() == 1 and _deep("pk_thruster") == 1 and _deep("pk_generator") == 1)
 
 	print("%d OK, %d Fehler" % [ok_count, fail_count])

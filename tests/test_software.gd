@@ -1,4 +1,4 @@
-## Tests: Fähigkeit „Software Engineering“ (ID software) – Kurs 1 Jahr, +4 auf Debuggen der Navigationskonsole
+## Tests: skill "Software Engineering" (ID software) – course 1 year, +4 on debugging the navigation console
 ##   godot --headless --path . --script res://tests/boot.gd -- test_software
 extends "res://tests/test_base.gd"
 
@@ -61,7 +61,7 @@ func _helm() -> Device:
 			return d
 	return null
 
-## Debug-Auftrag wie der Spieler anlegen: Rechtsklick-Menü am Steuerpult, Eintrag „Debug navigation console“
+## Create a debug job as the player would: right-click menu on the navigation console, entry "Debug navigation console"
 func _debug_via_menu(h: Device) -> Dictionary:
 	ui.set_tool("select")
 	ui.open_object_menu(h.pos)
@@ -100,7 +100,7 @@ func _initialize() -> void:
 	var mira: CrewMember = root.get_node("CrewSystem").player()
 	var s: SkillData = SK.skill("software")
 	_check("Skill vorhanden, ID software, englischer Name", s != null and s.skill_name == "Software Engineering")
-	_check("Definition: 1 Jahr, +4 auf Software, alte Wirkungen ersetzt", s.course_years == 1 and s.work_value_bonus == 4.0 and Array(s.work_categories) == ["software"] and s.gameplay_effects.is_empty())
+	_check("Definition: 1 year, +4 on software, old effects replaced", s.course_years == 1 and s.work_value_bonus == 4.0 and Array(s.work_categories) == ["software"] and s.gameplay_effects.is_empty())
 
 	# 1) Charaktererstellung: ±1 Jahr
 	var cui = ui.char_ui
@@ -112,42 +112,42 @@ func _initialize() -> void:
 	var tip: String = _course_row("software").tooltip_text if _course_row("software") != null else ""
 	_check("1: Tooltip: Kosten, Wirkung, Lernwege, Fortschritt (%s)" % tip.replace("\n", " | "),
 		"costs 1 year." in tip and "+4 work value" in tip and "debugging the navigation console" in tip and "Textbook: Software Engineering" in tip and "Learning progress:" in tip)
-	_check("1: Auswählen: Vorschau +1", await _press_course("software", "Add") and CHS.preview_age(mira) == base + 1 and mira.age == base and "(incl. Software Engineering course +1 year)" in _texts(cui.creation_box))
-	_check("1: Entfernen: Vorschau −1", await _press_course("software", "Remove") and CHS.preview_age(mira) == base)
+	_check("1: Choose: preview +1", await _press_course("software", "Add") and CHS.preview_age(mira) == base + 1 and mira.age == base and "(incl. Software Engineering course +1 year)" in _texts(cui.creation_box))
+	_check("1: Remove: preview −1", await _press_course("software", "Remove") and CHS.preview_age(mira) == base)
 	await _press_course("software", "Add")
 	var hist0: int = mira.history.size()
 	CHS.confirm(mira)
 	CHS.confirm(mira)
-	_check("1: Bestätigt: Alter +1 genau einmal, erworben", mira.age == base + 1 and mira.history.size() == hist0 + 1 and SK.acquired(mira, "software"))
+	_check("1: Confirmed: age +1 exactly once, acquired", mira.age == base + 1 and mira.history.size() == hist0 + 1 and SK.acquired(mira, "software"))
 	cui.creation.visible = false
 
-	# 2) Debug-Auftrag an der Navigationskonsole: +4; elektrische Reparatur an derselben Konsole: kein Bonus
+	# 2) Debug job at the navigation console: +4; electrical repair of the same console: no bonus
 	gs.new_game()
 	root.get_node("TimeSystem").set_speed(0)
 	var helm := _helm()
 	var job := _debug_via_menu(helm)
-	_check("2: Debug-Auftrag über das Rechtsklick-Menü am Steuerpult angelegt", not job.is_empty() and job.kind == "debug" and job.paid)
+	_check("2: Debug job created through the right-click menu on the navigation console", not job.is_empty() and job.kind == "debug" and job.paid)
 	var a := _fresh(0.0)
 	var b := _fresh(100.0)
-	_check("2: Debuggen ist Softwarearbeit", SK.job_categories(job) == ["software"])
-	_check("2: Debuggen: Arbeitswert %.2f → %.2f, genau +4" % [SK.work_value(a, job), SK.work_value(b, job)], is_equal_approx(SK.work_value(b, job) - SK.work_value(a, job), 4.0))
-	_check("2: Bei 99,9 % noch kein Bonus", is_equal_approx(SK.work_value(_fresh(99.9), job), SK.work_value(a, job)))
-	_check("2: Zweiter Debug-Auftrag am selben Pult nicht möglich", not CS.can_place("debug", helm.pos))
+	_check("2: Debugging is software work", SK.job_categories(job) == ["software"])
+	_check("2: Debugging: work value %.2f → %.2f, exactly +4" % [SK.work_value(a, job), SK.work_value(b, job)], is_equal_approx(SK.work_value(b, job) - SK.work_value(a, job), 4.0))
+	_check("2: No bonus yet at 99.9 %", is_equal_approx(SK.work_value(_fresh(99.9), job), SK.work_value(a, job)))
+	_check("2: A second debug job at the same console is not possible", not CS.can_place("debug", helm.pos))
 	CS.cancel(job)
 	var rep := {"kind": "repair", "x": helm.pos.x, "y": helm.pos.y}
-	_check("2: Elektrische Reparatur an der Konsole: kein Software-Bonus (%.2f / %.2f)" % [SK.work_value(a, rep), SK.work_value(b, rep)], is_equal_approx(SK.work_value(a, rep), SK.work_value(b, rep)))
+	_check("2: Electrical repair of the console: no software bonus (%.2f / %.2f)" % [SK.work_value(a, rep), SK.work_value(b, rep)], is_equal_approx(SK.work_value(a, rep), SK.work_value(b, rep)))
 	var unin := {"kind": "uninstall", "x": helm.pos.x, "y": helm.pos.y, "target": "dev:helm"}
-	_check("2: Konsole abbauen: kein Software-Bonus", is_equal_approx(SK.work_value(a, unin), SK.work_value(b, unin)))
+	_check("2: Uninstalling the console: no software bonus", is_equal_approx(SK.work_value(a, unin), SK.work_value(b, unin)))
 	var hk := _fresh(100.0)
-	_check("2: Alte Wirkungen weg (Rechner-Tempo, Hackhilfe, Hackwert)", SK.effect(hk, "work_computer") == 0.0 and SK.effect(hk, "hack_assist") == 0.0 and SK.hack_value(hk) == 0.0)
+	_check("2: Old effects gone (computer speed, hacking assistance, hacking value)", SK.effect(hk, "work_computer") == 0.0 and SK.effect(hk, "hack_assist") == 0.0 and SK.hack_value(hk) == 0.0)
 
-	# 3) Durch Debuggen lernen, speichern, laden, mit Lehrbuch weiter
+	# 3) Learn by debugging, save, load, continue with a textbook
 	mira = root.get_node("CrewSystem").player()
 	mira.needs = {"food": 100.0, "water": 100.0, "sleep": 100.0, "hygiene": 100.0, "air": 100.0}
 	SK.set_progress(mira, "software", 0.0)
 	var age0: int = mira.age
 	job = _debug_via_menu(helm)
-	_check("3: Debug-Auftrag angelegt", not job.is_empty())
+	_check("3: Debug job created", not job.is_empty())
 	toasts.clear()
 	var done := false
 	for k in 60 * 30:
@@ -156,15 +156,15 @@ func _initialize() -> void:
 			done = true
 			break
 	var p_work: float = SK.progress(mira, "software")
-	_check("3: Mira debuggt die Konsole (Meldung: %s), Software %.3f %%" % [str(toasts.filter(func(t): return "debugged" in t)), p_work], done and p_work > 0.0 and toasts.has("Navigation console debugged."))
-	_check("3: Debuggen legt keinen neuen Auftrag an und ändert das Pult nicht", not CS.jobs.has(ship.grid.idx(helm.pos)) and ship.grid.device_at(helm.pos) == helm)
+	_check("3: Mira debugs the console (message: %s), software %.3f %%" % [str(toasts.filter(func(t): return "debugged" in t)), p_work], done and p_work > 0.0 and toasts.has("Navigation console debugged."))
+	_check("3: Debugging creates no new job and does not change the console", not CS.jobs.has(ship.grid.idx(helm.pos)) and ship.grid.device_at(helm.pos) == helm)
 	save.save_game(true)
 	gs.new_game()
-	_check("3: Laden", save.load_game(true))
+	_check("3: Load", save.load_game(true))
 	mira = root.get_node("CrewSystem").player()
 	helm = _helm()
 	var dj := {"kind": "debug", "x": helm.pos.x, "y": helm.pos.y}
-	_check("3: Fortschritt nach dem Laden gleich (%.3f %%), noch kein Bonus" % SK.progress(mira, "software"), absf(SK.progress(mira, "software") - p_work) < 0.0001 and is_equal_approx(SK.work_value_bonus(mira, dj), 0.0))
+	_check("3: Progress unchanged after loading (%.3f %%), no bonus yet" % SK.progress(mira, "software"), absf(SK.progress(mira, "software") - p_work) < 0.0001 and is_equal_approx(SK.work_value_bonus(mira, dj), 0.0))
 	toasts.clear()
 	var first := -1.0
 	var early := false
@@ -177,10 +177,10 @@ func _initialize() -> void:
 			if SK.progress(mira, "software") < 100.0 and SK.work_value_bonus(mira, dj) != 0.0:
 				early = true
 			SK.decay_recent(mira, 120.0)
-	_check("3: Lehrbuch setzt am gespeicherten Stand an (%.3f → %.3f %%)" % [p_work, first], first > p_work)
-	_check("3: Bonus erst bei 100 %", not early and SK.acquired(mira, "software") and is_equal_approx(SK.work_value_bonus(mira, dj), 4.0))
-	_check("3: Genau eine Freischaltung", toasts.filter(func(t): return "acquired Software Engineering" in t).size() == 1)
-	_check("3: Alter unverändert", mira.age == age0)
+	_check("3: The textbook starts from the stored progress (%.3f → %.3f %%)" % [p_work, first], first > p_work)
+	_check("3: Bonus only at 100 %", not early and SK.acquired(mira, "software") and is_equal_approx(SK.work_value_bonus(mira, dj), 4.0))
+	_check("3: Exactly one unlock", toasts.filter(func(t): return "acquired Software Engineering" in t).size() == 1)
+	_check("3: Age unchanged", mira.age == age0)
 	var fleet = root.get_node("FleetSystem")
 	var g2 := ShipGrid.new()
 	fleet._build_template(g2, {"id": "lumen", "w": 10, "h": 7})
@@ -192,19 +192,19 @@ func _initialize() -> void:
 	_check("3: Schiffswechsel: erworben", SK.acquired(mira, "software"))
 	fleet.switch_to(old_id)
 
-	# 4) Alter Spielstand mit erworbenem Software Engineering: Bonus direkt beim Debuggen
+	# 4) Old save with Software Engineering acquired: bonus right away when debugging
 	var d: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(OLD_SAVE))
 	d.crew[0].skills["software"] = {"p": 100.0, "xp": 30.0, "hist": []}
 	var f := FileAccess.open(save.path(), FileAccess.WRITE)
 	f.store_string(JSON.stringify(d))
 	f.close()
 	gs.new_game()
-	_check("4: Alter Spielstand geladen", save.load_game(true))
+	_check("4: Old save loaded", save.load_game(true))
 	mira = root.get_node("CrewSystem").player()
 	helm = _helm()
 	job = _debug_via_menu(helm)
-	_check("4: Debug-Auftrag im alten Stand angelegt", not job.is_empty())
-	_check("4: Bonus ohne erneutes Training (Arbeitswert %.2f, +%.0f)" % [SK.work_value(mira, job), SK.work_value_bonus(mira, job)],
+	_check("4: Debug job created in the old save", not job.is_empty())
+	_check("4: Bonus without training again (work value %.2f, +%.0f)" % [SK.work_value(mira, job), SK.work_value_bonus(mira, job)],
 		SK.acquired(mira, "software") and is_equal_approx(SK.work_value_bonus(mira, job), 4.0) and SK.effect(mira, "work_computer") == 0.0)
 
 	print("%d OK, %d Fehler" % [ok_count, fail_count])

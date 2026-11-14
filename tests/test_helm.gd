@@ -1,4 +1,4 @@
-## Tests: Manueller Flug ist an das Steuerpult gebunden, an dem der Pilot steht
+## Tests: manual flight is bound to the navigation console where the pilot stands
 ##   godot --headless --path . --script res://tests/boot.gd -- test_helm
 extends "res://tests/test_base.gd"
 
@@ -19,8 +19,8 @@ func _check(name: String, ok: bool) -> void:
 		fail_count += 1
 		print("FEHLER  " + name)
 
-## Ein Bild bei ×1 mit gehaltenen Tasten, so wie scenes/main/main.gd sie verarbeitet:
-## Nur im Cockpit (und solange der Pilot am Pult bleibt) setzen W/S/A/D/Q/E Eingaben.
+## One frame at ×1 with held keys, the way scenes/main/main.gd processes them:
+## Only in the cockpit (and as long as the pilot stays at the console) do W/S/A/D/Q/E set inputs.
 func _frame(w: float = 0.0, q: bool = false) -> void:
 	if ui.nav_open and ui.keep_pilot():
 		P.thrust = w
@@ -28,7 +28,7 @@ func _frame(w: float = 0.0, q: bool = false) -> void:
 	gs.step(1.0 / 60.0 / 60.0)
 	ui._check_helm_walk()
 
-## Bilder wie TimeSystem bei ×factor (ohne Tasten)
+## Frames like TimeSystem at ×factor (without keys)
 func _frames_f(n: int, factor: float) -> void:
 	for f in n:
 		if ui.nav_open:
@@ -45,7 +45,7 @@ func _frames(n: int, w: float = 0.0, q: bool = false) -> void:
 func _vrel() -> Vector2:
 	return (P.vel - P.rel_to("l4").vel) * 1000.0
 
-## Geschwindigkeitsänderung durch die Schwerkraft allein über n Bilder (zum Abziehen)
+## Velocity change from gravity alone over n frames (to subtract)
 func _grav(n: int) -> Vector2:
 	return P.gravity(P.pos) * 1000.0 * (n / 60.0)
 
@@ -79,8 +79,8 @@ func _wire(h) -> void:
 	ship.grid.cables[ship.grid.idx(h.pos)] = 1
 	_power()
 
-## Knöpfe „Ausrichten“ und „Angleichen“ der aktuell angezeigten Zielliste
-## (alte Zeilen sind nach dem Neuaufbau nur zum Löschen vorgemerkt)
+## "Align" and "Match" buttons of the target list currently shown
+## (old rows are only queued for deletion after the rebuild)
 func _nav_buttons() -> Array:
 	var out: Array = []
 	for row in ui.nav_side.get_children():
@@ -106,16 +106,16 @@ func _initialize() -> void:
 	ui.char_ui.creation.visible = false
 	mira = root.get_node("CrewSystem").player()
 	for k in 3:
-		gs.step(1.0 / 60.0)              # Strom verteilen
+		gs.step(1.0 / 60.0)              # distribute power
 	seat_pilot()
 	P.request_undock()
-	P.helm_at = P.NO_HELM                  # wieder niemand am Pult
+	P.helm_at = P.NO_HELM                  # nobody at the console again
 	for k in 60 * 20:
 		gs.step(1.0 / 60.0 / 60.0)
 	var g = ship.grid
-	_check("Frei im All (%s)" % P.undock_block_reason(), P.docked == "")
+	_check("Free in space (%s)" % P.undock_block_reason(), P.docked == "")
 
-	# Zweites Pult weit weg vom ersten, auf einem Kabelfeld (also mit Strom)
+	# Second console far away from the first, on a cable tile (so with power)
 	var near = P.ship_devices("helm")[0]
 	var far_pos := Vector2i(-1, -1)
 	var best := 0.0
@@ -128,130 +128,130 @@ func _initialize() -> void:
 				far_pos = p
 	var far = g.place_device("helm", far_pos)
 	_power()
-	_check("Zwei Pulte, beide versorgt und intakt (Abstand %.0f Felder)" % best, near.powered and far.powered and best >= 4.0)
+	_check("Two consoles, both powered and intact (distance %.0f tiles)" % best, near.powered and far.powered and best >= 4.0)
 
-	# 1) Erreichbares Pult kaputt bzw. ohne Strom, das entfernte funktioniert
-	for mode in ["kaputt", "ohne Strom"]:
+	# 1) Reachable console broken or without power, the distant one works
+	for mode in ["broken", "unpowered"]:
 		_park()
 		mira.pos = _beside(near)
 		mira.path.clear()
 		mira.order = null
-		if mode == "kaputt":
+		if mode == "broken":
 			near.broken = true
 		else:
 			_cut(near)
-		_check("1 (%s): Pult am Piloten erreichbar, anderes Pult versorgt" % mode, mira.can_reach(near.pos) and not mira.can_reach(far.pos) and far.powered and not far.broken and P.helm_ok())
+		_check("1 (%s): console reachable by the pilot, other console powered" % mode, mira.can_reach(near.pos) and not mira.can_reach(far.pos) and far.powered and not far.broken and P.helm_ok())
 		var v0 := _vrel()
 		var f0: float = P.fuel()
 		toasts.clear()
 		ui.toggle_nav(true)                 # N
-		_check("1 (%s): N wird abgewiesen (%s)" % [mode, toasts[-1] if not toasts.is_empty() else ""], not ui.nav_open and P.helm_at == P.NO_HELM and not toasts.is_empty() and ("broken" in toasts[-1] or "power" in toasts[-1]))
-		ui.request_flight(near)             # Klick aufs Pult
-		_check("1 (%s): Klick wird abgewiesen" % mode, not ui.nav_open and not ui._helm_walk)
-		_frames(120, 1.0, true)             # W und Q halten
-		_check("1 (%s): W/Q erzeugen keinen Schub und keine Drehung" % mode, (_vrel() - v0 - _grav(120)).length() < 0.01 and P.ang_vel == 0.0 and P.fuel() == f0)
-		# Auch wenn das Cockpit an diesem Pult offen wäre: die Physik gibt keinen Schub,
-		# obwohl das andere Pult Strom hat (früher reichte irgendein versorgtes Pult).
+		_check("1 (%s): N is refused (%s)" % [mode, toasts[-1] if not toasts.is_empty() else ""], not ui.nav_open and P.helm_at == P.NO_HELM and not toasts.is_empty() and ("broken" in toasts[-1] or "power" in toasts[-1]))
+		ui.request_flight(near)             # click on the console
+		_check("1 (%s): click is refused" % mode, not ui.nav_open and not ui._helm_walk)
+		_frames(120, 1.0, true)             # hold W and Q
+		_check("1 (%s): W/Q produce no thrust and no rotation" % mode, (_vrel() - v0 - _grav(120)).length() < 0.01 and P.ang_vel == 0.0 and P.fuel() == f0)
+		# Even if the cockpit were open at this console: physics gives no thrust,
+		# although the other console has power (formerly any powered console was enough).
 		P.helm_at = near.pos
 		P.thrust = 1.0
 		P.rot_input = -1.0
 		v0 = _vrel()
 		for k in 120:
 			gs.step(1.0 / 60.0 / 60.0)
-		_check("1 (%s): Physik am gebundenen Pult: kein Schub, keine Drehung" % mode, (_vrel() - v0 - _grav(120)).length() < 0.01 and P.ang_vel == 0.0 and P.thrust == 0.0 and P.fuel() == f0)
+		_check("1 (%s): physics at the bound console: no thrust, no rotation" % mode, (_vrel() - v0 - _grav(120)).length() < 0.01 and P.ang_vel == 0.0 and P.thrust == 0.0 and P.fuel() == f0)
 		P.helm_at = P.NO_HELM
 		near.broken = false
 		_wire(near)
 
-	# 2) Zum funktionierenden Pult wechseln, fliegen, dann fällt dessen Strom unter W aus
+	# 2) Switch to the working console, fly, then its power fails while W is held
 	_park()
 	mira.pos = _beside(near)
-	near.broken = true                      # das nahe Pult bleibt kaputt
-	ui.request_flight(far)                  # Klick aufs entfernte Pult: Mira läuft hin
-	_check("2: Mira geht zum funktionierenden Pult", ui._helm_walk and not ui.nav_open)
+	near.broken = true                      # the near console stays broken
+	ui.request_flight(far)                  # click on the distant console: Mira walks there
+	_check("2: Mira walks to the working console", ui._helm_walk and not ui.nav_open)
 	for k in 60 * 60:
 		_frame()
 		if ui.nav_open:
 			break
-	_check("2: Im Cockpit am entfernten Pult", ui.nav_open and P.helm_at == far.pos and mira.can_reach(far.pos))
-	near.broken = false                     # jetzt sind beide Pulte in Ordnung
+	_check("2: In the cockpit at the distant console", ui.nav_open and P.helm_at == far.pos and mira.can_reach(far.pos))
+	near.broken = false                     # now both consoles are fine
 	_park()
 	var v1 := _vrel()
 	var f1: float = P.fuel()
 	_frames(120, 1.0)                       # W 2 s
 	var dv := _vrel() - v1 - _grav(120)
 	var a_exp: float = (P.max_thrust() + P.rcs_thrust()) / P.mass()   # m/s²
-	_check("2: W gibt Schub (%.2f m/s, erwartet %.2f)" % [dv.length(), a_exp * 2.0], absf(dv.length() - a_exp * 2.0) < 0.1 and P.fuel() < f1)
+	_check("2: W gives thrust (%.2f m/s, expected %.2f)" % [dv.length(), a_exp * 2.0], absf(dv.length() - a_exp * 2.0) < 0.1 and P.fuel() < f1)
 	_frames(30, 0.0, true)                  # Q 0,5 s
 	var w_q: float = P.ang_vel
 	_check("2: Q dreht (%.3f rad/s)" % w_q, w_q < -0.1)
 	P.ang_vel = 0.0
-	# W halten, dann fällt der Strom am bedienten Pult aus; das andere Pult hat weiter Strom
+	# hold W, then power fails at the operated console; the other console still has power
 	_frames(30, 1.0)
 	P.rot_input = 0.0
 	toasts.clear()
 	_cut(far)
-	_check("2: Bedientes Pult ohne Strom, anderes versorgt", not far.powered and near.powered and not near.broken and P.helm_ok())
+	_check("2: Operated console without power, the other powered", not far.powered and near.powered and not near.broken and P.helm_ok())
 	_frame(1.0)
 	var v_cut := _vrel()
 	var f_cut: float = P.fuel()
 	var vel_cut: Vector2 = P.vel
-	_frames(120, 1.0, true)                 # W und Q weiter gehalten
-	_check("2: Schub endet (Δv %.4f m/s, Treibstoff %.3f)" % [(_vrel() - v_cut - _grav(120)).length(), f_cut - P.fuel()],
+	_frames(120, 1.0, true)                 # W and Q still held
+	_check("2: Thrust ends (Δv %.4f m/s, fuel %.3f)" % [(_vrel() - v_cut - _grav(120)).length(), f_cut - P.fuel()],
 		(_vrel() - v_cut - _grav(120)).length() < 0.01 and P.fuel() == f_cut and P.thrust == 0.0)
-	_check("2: Vorhandene Bewegung bleibt (%.2f m/s)" % (vel_cut.length() * 1000.0), vel_cut.length() > 0.0 and absf((P.vel - vel_cut).length() * 1000.0 - _grav(120).length()) < 0.01 and _vrel().length() > 1.0)
-	_check("2: Keine Drehung ohne versorgtes Pult", P.ang_vel == 0.0)
-	_check("2: Meldung „Schub beendet“ (%s)" % ", ".join(toasts), toasts.any(func(t): return t.begins_with("Thrust stopped")))
-	_check("2: Cockpit zeigt den Grund", P.helm_block_reason(P.operated_helm()) == "This navigation console has no power.")
-	# Drehung, die schon läuft, dreht weiter
+	_check("2: Existing motion stays (%.2f m/s)" % (vel_cut.length() * 1000.0), vel_cut.length() > 0.0 and absf((P.vel - vel_cut).length() * 1000.0 - _grav(120).length()) < 0.01 and _vrel().length() > 1.0)
+	_check("2: No rotation without a powered console", P.ang_vel == 0.0)
+	_check("2: Message “Thrust stopped” (%s)" % ", ".join(toasts), toasts.any(func(t): return t.begins_with("Thrust stopped")))
+	_check("2: Cockpit shows the reason", P.helm_block_reason(P.operated_helm()) == "This navigation console has no power.")
+	# A rotation that is already running keeps turning
 	_wire(far)
 	_frames(30, 0.0, true)
 	var w0: float = P.ang_vel
 	_cut(far)
 	var a0: float = P.angle
 	_frames(60, 0.0, true)
-	_check("2: Laufende Drehung geht ohne Strom weiter (%.3f rad/s)" % P.ang_vel, P.ang_vel == w0 and absf(P.angle - a0) > 0.01)
+	_check("2: Ongoing rotation continues without power (%.3f rad/s)" % P.ang_vel, P.ang_vel == w0 and absf(P.angle - a0) > 0.01)
 	P.ang_vel = 0.0
-	# Angleichen endet beim Ausfall, obwohl das andere Pult Strom hat
+	# Matching ends on the failure even though the other console has power
 	_wire(far)
 	_park()
 	P.vel += Vector2(0.01, 0)
 	ui.toggle_match()
 	_frames(30)
-	_check("2: Angleichen läuft am bedienten Pult", P.match_target == "l4")
+	_check("2: Matching runs at the operated console", P.match_target == "l4")
 	toasts.clear()
 	_cut(far)
 	var vm := _vrel()
 	_frames(60)
 	_check("2: Angleichen endet beim Ausfall (%s)" % ", ".join(toasts), P.match_target == "" and toasts.any(func(t): return t.begins_with("Matching stopped")) and (_vrel() - vm - _grav(60)).length() < 0.01)
 	ui.toggle_match()
-	_check("2: Angleichen lässt sich ohne Strom nicht einschalten", P.match_target == "")
+	_check("2: Matching cannot be switched on without power", P.match_target == "")
 	_wire(far)
 	ui.leave_flight()
-	_check("2: Cockpit verlassen gibt das Pult frei", P.helm_at == P.NO_HELM)
+	_check("2: Leaving the cockpit frees the console", P.helm_at == P.NO_HELM)
 
-	# 4) Abdocken, Schnellreise und Auto-Dock nur am bedienten, intakten Pult mit Strom
+	# 4) Undocking, fast travel and Auto-Dock only at the operated, intact, powered console
 	P.dock("l4", true)
 	for k in 60 * 20:
-		gs.step(1.0 / 60.0 / 60.0)          # Sperre gegen Wieder-Andocken spielt hier keine Rolle
+		gs.step(1.0 / 60.0 / 60.0)          # the lock against docking again plays no role here
 	mira.pos = _beside(near)
 	mira.path.clear()
 	mira.order = null
-	_check("4: Angedockt an L4, beide Pulte in Ordnung, niemand am Pult", P.docked == "l4" and P.helm_at == P.NO_HELM and P.helm_ok())
+	_check("4: Docked at L4, both consoles fine, nobody at a console", P.docked == "l4" and P.helm_at == P.NO_HELM and P.helm_ok())
 	toasts.clear()
-	_check("4: Ohne Pilot am Pult: Abdocken verweigert (%s)" % P.undock_block_reason(), not P.request_undock() and P.docked == "l4" and "cockpit" in toasts[-1])
+	_check("4: Without a pilot at the console: undocking refused (%s)" % P.undock_block_reason(), not P.request_undock() and P.docked == "l4" and "cockpit" in toasts[-1])
 	P.travel_to("karman")
 	_check("4: … Schnellreise verweigert", P.travel.is_empty() and P.docked == "l4" and "cockpit" in toasts[-1])
 	P.start_autodock()
 	_check("4: … Auto-Dock verweigert", P.autodock.is_empty() and "cockpit" in toasts[-1])
-	for mode in ["kaputt", "ohne Strom"]:
-		if mode == "kaputt":
+	for mode in ["broken", "unpowered"]:
+		if mode == "broken":
 			near.broken = true
 		else:
 			_cut(near)
-		P.helm_at = near.pos                # Pilot steht am nahen Pult
+		P.helm_at = near.pos                # pilot stands at the near console
 		toasts.clear()
-		_check("4 (%s): Abdocken verweigert, obwohl das andere Pult geht (%s)" % [mode, P.undock_block_reason()], P.helm_ok() and not P.request_undock() and P.docked == "l4" and ("broken" in toasts[-1] or "power" in toasts[-1]))
+		_check("4 (%s): undocking refused although the other console works (%s)" % [mode, P.undock_block_reason()], P.helm_ok() and not P.request_undock() and P.docked == "l4" and ("broken" in toasts[-1] or "power" in toasts[-1]))
 		P.travel_to("karman")
 		_check("4 (%s): Schnellreise verweigert" % mode, P.travel.is_empty() and P.docked == "l4")
 		P.start_autodock()
@@ -261,37 +261,37 @@ func _initialize() -> void:
 	P.helm_at = P.NO_HELM
 	mira.pos = _beside(far)
 	ui.request_flight(far)
-	_check("4: Im Cockpit am funktionierenden Pult", ui.nav_open and P.helm_at == far.pos)
-	_check("4: Abdocken am bedienten Pult klappt", P.request_undock() and P.docked == "")
+	_check("4: In the cockpit at the working console", ui.nav_open and P.helm_at == far.pos)
+	_check("4: Undocking at the operated console works", P.request_undock() and P.docked == "")
 	for k in 60 * 16:
-		gs.step(1.0 / 60.0 / 60.0)          # Sperre gegen sofortiges Wieder-Andocken abwarten
-	near.inv.move_to(far.inv, "mod_autodock", 1)   # Autodock-Modul ins bediente Pult legen
+		gs.step(1.0 / 60.0 / 60.0)          # wait for the lock against docking again right away
+	near.inv.move_to(far.inv, "mod_autodock", 1)   # put the Autodock Module into the operated console
 	toasts.clear()
 	P.start_autodock()
-	_check("4: Auto-Dock am bedienten Pult startet (%s)" % toasts[-1], not P.autodock.is_empty())
+	_check("4: Auto-Dock at the operated console starts (%s)" % toasts[-1], not P.autodock.is_empty())
 	P.autodock = {}
-	# Knöpfe „Ausrichten“ und „Angleichen“ in der Zielliste: nur mit versorgtem Pult
+	# "Align" and "Match" buttons in the target list: only with a powered console
 	P.target = "l4"
 	_cut(far)
 	ui._last_nav = ""
 	ui._refresh_nav()
 	var btns: Array = _nav_buttons()
-	_check("4: Ohne Strom sind „Ausrichten“ und „Angleichen“ gesperrt (%d Knöpfe)" % btns.size(), not btns.is_empty() and btns.all(func(b): return b.disabled))
+	_check("4: Without power “Align” and “Match” are locked (%d buttons)" % btns.size(), not btns.is_empty() and btns.all(func(b): return b.disabled))
 	var ang: float = P.angle
 	for b in btns:
 		b.pressed.emit()
-	_check("4: … und bewirken nichts", P.angle == ang and P.match_target == "")
+	_check("4: … and do nothing", P.angle == ang and P.match_target == "")
 	_wire(far)
 	ui._last_nav = ""
 	ui._refresh_nav()
 	btns = _nav_buttons()
-	_check("4: Mit Strom wieder bedienbar", not btns.is_empty() and btns.all(func(b): return not b.disabled))
+	_check("4: Usable again with power", not btns.is_empty() and btns.all(func(b): return not b.disabled))
 	P.travel_to("karman")
-	_check("4: Schnellreise am bedienten Pult startet", not P.travel.is_empty())
+	_check("4: Fast travel at the operated console starts", not P.travel.is_empty())
 	P.travel = {}
 	ui.leave_flight()
 
-	# 5) Andocken, laufende Schnellreise/Auto-Dock und „Ausrichten“ am bedienten Pult
+	# 5) Docking, running fast travel/Auto-Dock and "Align" at the operated console
 	for k in 60 * 16:
 		gs.step(1.0 / 60.0 / 60.0)
 	var l4: Dictionary = P.loc_state(P.loc("l4"), P.secs())
@@ -300,39 +300,39 @@ func _initialize() -> void:
 	P.ang_vel = 0.0
 	P.angle = P.dock_alignment("l4").angle
 	P.helm_at = P.NO_HELM
-	_check("5: Ohne Pilot am Pult: Andocken verweigert (%s)" % P.dock_block_reason("l4"), not P.can_dock("l4") and not P.dock("l4") and P.docked == "" and "cockpit" in P.dock_block_reason("l4"))
+	_check("5: Without a pilot at the console: docking refused (%s)" % P.dock_block_reason("l4"), not P.can_dock("l4") and not P.dock("l4") and P.docked == "" and "cockpit" in P.dock_block_reason("l4"))
 	near.broken = true
 	P.helm_at = near.pos
-	_check("5: Am kaputten Pult: Andocken verweigert (%s)" % P.dock_block_reason("l4"), not P.dock("l4") and "broken" in P.dock_block_reason("l4"))
+	_check("5: At the broken console: docking refused (%s)" % P.dock_block_reason("l4"), not P.dock("l4") and "broken" in P.dock_block_reason("l4"))
 	near.broken = false
 	mira.pos = _beside(far)
 	ui.request_flight(far)
-	_check("5: Am funktionierenden Pult: Andocken klappt", ui.nav_open and P.dock("l4") and P.docked == "l4")
-	# Schnellreise bricht ab, wenn das startende Pult ausfällt
+	_check("5: At the working console: docking works", ui.nav_open and P.dock("l4") and P.docked == "l4")
+	# Fast travel aborts when the starting console fails
 	for t in P.ship_devices("fueltank"):
 		t.stock = 400.0
 	P.travel_to("karman")
-	_check("5: Schnellreise läuft", not P.travel.is_empty() and P.docked == "")
+	_check("5: Fast travel running", not P.travel.is_empty() and P.docked == "")
 	ui.leave_flight()
 	for k in 60 * 60:
 		gs.step(1.0 / 60.0 / 60.0)
-	_check("5: Cockpit verlassen: Reise läuft weiter", not P.travel.is_empty())
+	_check("5: Leaving the cockpit: the trip continues", not P.travel.is_empty())
 	root.get_node("SaveSystem").save_game(true)
 	root.get_node("SaveSystem").load_game(true)
 	far = ship.grid.device_at(far.pos)
 	near = ship.grid.device_at(near.pos)
-	_check("5: Geladen: Reise läuft weiter, Pult als Position gemerkt", not P.travel.is_empty() and Vector2i(int(P.travel.hx), int(P.travel.hy)) == far.pos)
+	_check("5: Loaded: the trip continues, console stored as a position", not P.travel.is_empty() and Vector2i(int(P.travel.hx), int(P.travel.hy)) == far.pos)
 	toasts.clear()
 	_cut(far)
 	gs.step(1.0 / 60.0 / 60.0)
-	_check("5: Pult fällt aus: Reise abgebrochen (%s)" % (toasts[-1] if not toasts.is_empty() else ""), P.travel.is_empty() and P.docked == "" and toasts.any(func(t): return t.begins_with("Fast travel aborted")))
+	_check("5: Console fails: trip aborted (%s)" % (toasts[-1] if not toasts.is_empty() else ""), P.travel.is_empty() and P.docked == "" and toasts.any(func(t): return t.begins_with("Fast travel aborted")))
 	var v_tr: float = P.vel.length()
 	var p_tr: Vector2 = P.pos
 	for k in 60:
 		gs.step(1.0 / 60.0 / 60.0)
-	_check("5: Schiff fliegt frei mit Reisegeschwindigkeit weiter (%.2f km/s)" % v_tr, v_tr > 1.0 and P.pos.distance_to(p_tr) > 0.5)
+	_check("5: Ship keeps flying free at travel speed (%.2f km/s)" % v_tr, v_tr > 1.0 and P.pos.distance_to(p_tr) > 0.5)
 	_wire(far)
-	# Auto-Dock bricht ab, wenn das startende Pult ausfällt
+	# Auto-Dock aborts when the starting console fails
 	l4 = P.loc_state(P.loc("l4"), P.secs())
 	P.pos = l4.pos + Vector2(0.5, 0)
 	P.vel = l4.vel
@@ -340,29 +340,29 @@ func _initialize() -> void:
 	mira.pos = _beside(far)
 	ui.request_flight(far)
 	P.start_autodock()
-	_check("5: Auto-Dock läuft", not P.autodock.is_empty())
+	_check("5: Auto-Dock running", not P.autodock.is_empty())
 	toasts.clear()
 	_cut(far)
 	gs.step(1.0 / 60.0 / 60.0)
-	_check("5: Pult fällt aus: Auto-Dock abgebrochen (%s)" % (toasts[-1] if not toasts.is_empty() else ""), P.autodock.is_empty() and P.docked == "" and toasts.any(func(t): return t.begins_with("Auto-Dock aborted")))
+	_check("5: Console fails: Auto-Dock aborted (%s)" % (toasts[-1] if not toasts.is_empty() else ""), P.autodock.is_empty() and P.docked == "" and toasts.any(func(t): return t.begins_with("Auto-Dock aborted")))
 	_wire(far)
-	# „Ausrichten“ dreht mit Drehschub statt sofort, bei ×1 und ×16
+	# "Align" turns with rotation thrust instead of instantly, at ×1 and ×16
 	for factor in [1.0, 16.0]:
 		P.angle = 0.0
 		P.ang_vel = 0.0
 		var f5: float = P.fuel()
 		P.start_align(PI / 2.0)
 		_frames_f(1, factor)
-		_check("5 (×%d): Ausrichten springt nicht (%.3f rad nach einem Bild)" % [int(factor), P.angle], P.aligning and P.angle < 0.05)
+		_check("5 (×%d): Align does not jump (%.3f rad after one frame)" % [int(factor), P.angle], P.aligning and P.angle < 0.05)
 		var secs_needed := 0.0
 		for k in 60 * 30:
 			_frames_f(1, factor)
 			secs_needed += factor / 60.0
 			if not P.aligning:
 				break
-		_check("5 (×%d): Ausrichten endet genau auf 90° ohne Restdrehung (%.4f rad, %.1f s)" % [int(factor), P.angle, secs_needed],
+		_check("5 (×%d): Align ends exactly at 90° without residual rotation (%.4f rad, %.1f s)" % [int(factor), P.angle, secs_needed],
 			not P.aligning and absf(P.angle - PI / 2.0) < 0.001 and P.ang_vel == 0.0 and secs_needed > 2.0)
-		_check("5 (×%d): … und verbraucht Treibstoff" % int(factor), P.fuel() < f5)
+		_check("5 (×%d): … and uses fuel" % int(factor), P.fuel() < f5)
 	P.angle = 0.0
 	P.start_align(PI)
 	_frames_f(30, 1.0)
@@ -372,48 +372,48 @@ func _initialize() -> void:
 	P.start_align(PI / 2.0)
 	_cut(far)
 	_frames_f(10, 1.0)
-	_check("5: Pult ohne Strom: Ausrichten endet", not P.aligning)
+	_check("5: Console without power: Align ends", not P.aligning)
 	toasts.clear()
 	P.start_align(0.0)
-	_check("5: … und startet nicht (%s)" % (toasts[-1] if not toasts.is_empty() else ""), not P.aligning and not toasts.is_empty())
+	_check("5: … and does not start (%s)" % (toasts[-1] if not toasts.is_empty() else ""), not P.aligning and not toasts.is_empty())
 	_wire(far)
 	ui.leave_flight()
 
-	# 3) Spielstand mit einem intakten Pult laden: Klick und N gehen weiter
+	# 3) Load a save with one intact console: click and N keep working
 	gs.new_game()
 	root.get_node("TimeSystem").set_speed(0)
 	for k in 3:
-		gs.step(1.0 / 60.0)              # Strom verteilen
+		gs.step(1.0 / 60.0)              # distribute power
 	seat_pilot()
 	P.request_undock()
-	P.helm_at = P.NO_HELM                  # wieder niemand am Pult
+	P.helm_at = P.NO_HELM                  # nobody at the console again
 	for k in 60 * 20:
 		gs.step(1.0 / 60.0 / 60.0)
 	mira = root.get_node("CrewSystem").player()
 	var helm = P.ship_devices("helm")[0]
 	mira.pos = _beside(helm)
 	ui.toggle_nav(true)
-	_check("3: Vor dem Speichern im Cockpit", ui.nav_open and P.helm_at == helm.pos)
+	_check("3: In the cockpit before saving", ui.nav_open and P.helm_at == helm.pos)
 	var save = root.get_node("SaveSystem")
 	save.save_game(true)
 	var txt := FileAccess.get_file_as_string(save.path())
-	_check("3: Spielstand enthält keine Pult-Bindung", txt != "" and not "helm_at" in txt and not "operated" in txt)
+	_check("3: The save contains no console binding", txt != "" and not "helm_at" in txt and not "operated" in txt)
 	gs.new_game()
 	save.load_game(true)
 	mira = root.get_node("CrewSystem").player()
 	helm = P.ship_devices("helm")[0]
-	_check("3: Geladen: genau ein intaktes Pult, keine Bindung", P.ship_devices("helm").size() == 1 and not helm.broken and P.helm_at == P.NO_HELM)
-	_frame()   # altes Cockpit (vor dem Laden geöffnet) schließt sich: Pilot gibt es nicht mehr
-	_check("3: Ohne Einstieg kein Schub", not ui.nav_open and not P.manual_ok())
+	_check("3: Loaded: exactly one intact console, no binding", P.ship_devices("helm").size() == 1 and not helm.broken and P.helm_at == P.NO_HELM)
+	_frame()   # the old cockpit (opened before loading) closes: there is no pilot any more
+	_check("3: No thrust without entering", not ui.nav_open and not P.manual_ok())
 	mira.pos = _beside(helm)
 	ui.toggle_nav(true)                     # N
 	_check("3: N: Einstieg klappt", ui.nav_open and P.helm_at == helm.pos and ui.pilot == mira)
 	_park()
 	var v3 := _vrel()
 	_frames(60, 1.0)
-	_check("3: W gibt Schub", (_vrel() - v3 - _grav(60)).length() > 0.5)
+	_check("3: W gives thrust", (_vrel() - v3 - _grav(60)).length() > 0.5)
 	ui.leave_flight()
-	ui.request_flight(ship.grid.device_at(helm.pos))   # Klick aufs Pult
+	ui.request_flight(ship.grid.device_at(helm.pos))   # click on the console
 	_check("3: Klick: Einstieg klappt", ui.nav_open and P.helm_at == helm.pos)
 	ui.leave_flight()
 

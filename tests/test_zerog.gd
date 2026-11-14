@@ -1,4 +1,4 @@
-## Tests: Fähigkeit „Zero-g Ops“ (ID zerog) – Kurs 1 Jahr, nur Prüf-Flag, Praxis, Speichern
+## Tests: skill "Zero-g Ops" (ID zerog) – course 1 year, check flag only, practice, saving
 ##   godot --headless --path . --script res://tests/boot.gd -- test_zerog
 extends "res://tests/test_base.gd"
 
@@ -81,44 +81,44 @@ func _initialize() -> void:
 	var mira: CrewMember = root.get_node("CrewSystem").player()
 	var s: SkillData = SK.skill("zerog")
 	_check("Skill vorhanden, ID zerog, englischer Name", s != null and s.skill_name == "Zero-g Ops")
-	_check("Definition: 1 Jahr, nur Prüf-Flag, keine Zahlenwirkung", s.course_years == 1 and s.check_flag and s.gameplay_effects.is_empty() and s.work_value_bonus == 0.0 and s.piloting_bonus == 0.0)
+	_check("Definition: 1 year, check flag only, no numeric effect", s.course_years == 1 and s.check_flag and s.gameplay_effects.is_empty() and s.work_value_bonus == 0.0 and s.piloting_bonus == 0.0)
 
 	# 1) Charaktererstellung: ±1 Jahr
 	var cui = ui.char_ui
 	CHS.begin(mira)
-	_check("1: Zero-g Ops ist Start-Skill", SK.acquired(mira, "zerog"))
-	SK.set_progress(mira, "zerog", 0.0)   # für die Kursprüfung zurücksetzen
+	_check("1: Zero-g Ops is a starting skill", SK.acquired(mira, "zerog"))
+	SK.set_progress(mira, "zerog", 0.0)   # reset for the course check
 	cui.open_creation()
 	await process_frame
 	var base: int = mira.age
 	var tip: String = _course_row("zerog").tooltip_text if _course_row("zerog") != null else ""
 	_check("1: Tooltip: 1 Jahr, Flag, Lernwege, Fortschritt (%s)" % tip.replace("\n", " | "),
 		"costs 1 year." in tip and "no numeric modifier" in tip and "moving in vacuum" in tip and "Textbook: Zero-g Ops" in tip and "Learning progress:" in tip)
-	_check("1: Auswählen: Vorschau +1", await _press_course("zerog", "Add") and CHS.preview_age(mira) == base + 1 and mira.age == base and "(incl. Zero-g Ops course +1 year)" in _texts(cui.creation_box))
-	_check("1: Entfernen: Vorschau −1", await _press_course("zerog", "Remove") and CHS.preview_age(mira) == base)
+	_check("1: Choose: preview +1", await _press_course("zerog", "Add") and CHS.preview_age(mira) == base + 1 and mira.age == base and "(incl. Zero-g Ops course +1 year)" in _texts(cui.creation_box))
+	_check("1: Remove: preview −1", await _press_course("zerog", "Remove") and CHS.preview_age(mira) == base)
 	await _press_course("zerog", "Add")
 	var hist0: int = mira.history.size()
 	CHS.confirm(mira)
 	CHS.confirm(mira)
-	_check("1: Bestätigt: Alter +1 genau einmal, erworben", mira.age == base + 1 and mira.history.size() == hist0 + 1 and SK.acquired(mira, "zerog"))
+	_check("1: Confirmed: age +1 exactly once, acquired", mira.age == base + 1 and mira.history.size() == hist0 + 1 and SK.acquired(mira, "zerog"))
 	cui.creation.visible = false
 
-	# 2) Prüf-Flag, keine Zahlenwirkung
+	# 2) Check flag, no numeric effect
 	gs.new_game()
 	root.get_node("TimeSystem").set_speed(0)
 	var a := CrewMember.new(601, "Plain", Color.WHITE, Vector2i.ZERO)
 	var b := CrewMember.new(602, "Zero-g", Color.WHITE, Vector2i.ZERO)
 	SK.set_progress(b, "zerog", 100.0)
-	_check("2: Abfrage über die Prüflogik: mit Skill ja, ohne nein", SK.meets(b, {"zerog": SK.ACQUIRED}) and SK.acquired(b, "zerog") and not SK.meets(a, {"zerog": SK.ACQUIRED}))
+	_check("2: Query through the check logic: yes with the skill, no without", SK.meets(b, {"zerog": SK.ACQUIRED}) and SK.acquired(b, "zerog") and not SK.meets(a, {"zerog": SK.ACQUIRED}))
 	var vac := _vacuum_tile()
 	a.pos = Vector2(vac) + Vector2(0.5, 0.5)
 	b.pos = Vector2(vac) + Vector2(0.5, 0.5)
-	_check("2: Im Vakuum gleiches Tempo mit und ohne Skill (%.2f / %.2f)" % [a.move_factor(), b.move_factor()], is_equal_approx(a.move_factor(), b.move_factor()) and is_equal_approx(a.move_factor(), 0.6))
+	_check("2: Same speed in vacuum with and without the skill (%.2f / %.2f)" % [a.move_factor(), b.move_factor()], is_equal_approx(a.move_factor(), b.move_factor()) and is_equal_approx(a.move_factor(), 0.6))
 	var job := {"kind": "device", "dev": "bed", "x": 0, "y": 0}
-	_check("2: Kein Arbeitswert-Bonus", is_equal_approx(SK.work_value(a, job), SK.work_value(b, job)))
-	_check("2: Keine alte Wirkung (Vakuum-Tempo)", SK.effect(b, "eva_speed") == 0.0)
+	_check("2: No work value bonus", is_equal_approx(SK.work_value(a, job), SK.work_value(b, job)))
+	_check("2: No old effect (vacuum speed)", SK.effect(b, "eva_speed") == 0.0)
 
-	# 3) Praxis: Arbeit im Anzug trainiert, speichern/laden, Lehrbuch weiter
+	# 3) Practice: work in a suit trains, save/load, continue with a textbook
 	mira = root.get_node("CrewSystem").player()
 	mira.needs = {"food": 100.0, "water": 100.0, "sleep": 100.0, "hygiene": 100.0, "air": 100.0}
 	SK.set_progress(mira, "zerog", 0.0)
@@ -128,21 +128,21 @@ func _initialize() -> void:
 	for d in ship.grid.devices.values():
 		if d.type == "bed":
 			bed = d.pos
-	_check("3: Praxis: Abbauauftrag am Bett, Figur trägt Anzug", R.order("uninstall", bed) == "")
+	_check("3: Practice: uninstall job at the bed, the character wears a suit", R.order("uninstall", bed) == "")
 	for k in 60 * 20:
 		gs.step(1.0 / 60.0)
 		if not CS.jobs.has(ship.grid.idx(bed)):
 			break
 	var p_work: float = SK.progress(mira, "zerog")
-	_check("3: Arbeit im Anzug erhöht Zero-g Ops (%.3f %%)" % p_work, p_work > 0.0 and p_work < 100.0)
+	_check("3: Work in a suit raises Zero-g Ops (%.3f %%)" % p_work, p_work > 0.0 and p_work < 100.0)
 	var mover := CrewMember.new(603, "Mover", Color.WHITE, Vector2i.ZERO)
 	SK.train(mover, "eva_move", 30.0)
-	_check("3: Bewegung im Vakuum (eva_move) trainiert Zero-g Ops (%.3f %%)" % SK.progress(mover, "zerog"), SK.progress(mover, "zerog") > 0.0)
+	_check("3: Movement in vacuum (eva_move) trains Zero-g Ops (%.3f %%)" % SK.progress(mover, "zerog"), SK.progress(mover, "zerog") > 0.0)
 	save.save_game(true)
 	gs.new_game()
-	_check("3: Laden", save.load_game(true))
+	_check("3: Load", save.load_game(true))
 	mira = root.get_node("CrewSystem").player()
-	_check("3: Fortschritt nach dem Laden gleich (%.3f %%), Flag noch nicht gesetzt" % SK.progress(mira, "zerog"), absf(SK.progress(mira, "zerog") - p_work) < 0.0001 and not SK.acquired(mira, "zerog"))
+	_check("3: Progress unchanged after loading (%.3f %%), flag not set yet" % SK.progress(mira, "zerog"), absf(SK.progress(mira, "zerog") - p_work) < 0.0001 and not SK.acquired(mira, "zerog"))
 	toasts.clear()
 	var first := -1.0
 	var early := false
@@ -155,21 +155,21 @@ func _initialize() -> void:
 			if SK.progress(mira, "zerog") < 100.0 and SK.meets(mira, {"zerog": SK.ACQUIRED}):
 				early = true
 			SK.decay_recent(mira, 120.0)
-	_check("3: Lehrbuch setzt am gespeicherten Stand an (%.3f → %.3f %%)" % [p_work, first], first > p_work)
-	_check("3: Flag erst bei 100 %", not early and SK.acquired(mira, "zerog"))
-	_check("3: Genau eine Freischaltung (%s)" % str(toasts), toasts.filter(func(t): return "acquired Zero-g Ops" in t).size() == 1)
-	_check("3: Alter unverändert", mira.age == age0)
+	_check("3: The textbook starts from the stored progress (%.3f → %.3f %%)" % [p_work, first], first > p_work)
+	_check("3: Flag only at 100 %", not early and SK.acquired(mira, "zerog"))
+	_check("3: Exactly one unlock (%s)" % str(toasts), toasts.filter(func(t): return "acquired Zero-g Ops" in t).size() == 1)
+	_check("3: Age unchanged", mira.age == age0)
 
-	# 4) Alter Spielstand mit erworbenem Skill; Schiffswechsel
+	# 4) Old save with the skill acquired; switching ships
 	var dd: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(OLD_SAVE))
 	dd.crew[0].skills["zerog"] = {"p": 100.0, "xp": 30.0, "hist": []}
 	var f := FileAccess.open(save.path(), FileAccess.WRITE)
 	f.store_string(JSON.stringify(dd))
 	f.close()
 	gs.new_game()
-	_check("4: Alter Spielstand geladen", save.load_game(true))
+	_check("4: Old save loaded", save.load_game(true))
 	mira = root.get_node("CrewSystem").player()
-	_check("4: Erworben, neue Definition (kein Vakuum-Tempo), andere Skills erhalten",
+	_check("4: Acquired, new definition (no vacuum speed), other skills kept",
 		SK.acquired(mira, "zerog") and SK.effect(mira, "eva_speed") == 0.0 and is_equal_approx(SK.progress(mira, "construction"), 33.0))
 	var fleet = root.get_node("FleetSystem")
 	var g2 := ShipGrid.new()

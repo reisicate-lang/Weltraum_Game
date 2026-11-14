@@ -1,4 +1,4 @@
-## Tests für Etappe 7 (Temperatur, Feuer, Wasser, Anbau, Chemie):
+## Tests for stage 7 (temperature, fire, water, growing, chemistry):
 ##   godot --headless --path . --script res://tests/boot.gd -- test_systems
 extends "res://tests/test_base.gd"
 
@@ -17,8 +17,8 @@ func _run(minutes: float) -> void:
 	for i in int(minutes * 60.0):
 		gs.step(1.0 / 60.0)
 
-## Lange Phasen schneller: 5 Spielsekunden pro Schritt (statt 1). Nur für
-## Ruhe- und Arbeitsphasen, nicht für Flugbahn-Prüfungen.
+## Long phases faster: 5 game seconds per step (instead of 1). Only for
+## rest and work phases, not for trajectory checks.
 func _run_coarse(minutes: float, step_s: float = 5.0) -> void:
 	var gs = root.get_node("GameState")
 	for i in int(minutes * 60.0 / step_s):
@@ -27,9 +27,9 @@ func _run_coarse(minutes: float, step_s: float = 5.0) -> void:
 func _initialize() -> void:
 	await process_frame
 	await process_frame
-	# Eigener Speicherplatz: Tests überschreiben keine echten Spielstände und laufen parallel
+	# Own save slot: tests do not overwrite real saves and can run in parallel
 	root.get_node("SaveSystem").slot = 910
-	# Diese Tests prüfen auch die (vorübergehend abgeschaltete) Station und das Wrack
+	# These tests also check the (temporarily disabled) station and the wreck
 	Config.ENABLE_STATION = true
 	Config.ENABLE_WRECK = true
 	var gs = root.get_node("GameState")
@@ -40,17 +40,17 @@ func _initialize() -> void:
 	var water = root.get_node("WaterSystem")
 	var econ = root.get_node("EconomySystem")
 	gs.new_game()
-	# Haufen ohne Grenze müssen Gegenstände aufnehmen (früher int(INF) -> 0 Platz)
+	# Piles without a limit must take items (formerly int(INF) -> 0 room)
 	var heap := Inventory.new()
-	_check("Haufen nimmt Gegenstände auf", heap.add("plate", 5) == 5 and heap.count("plate") == 5)
-	# Wrack ankoppeln (sonst ein eigenes Ziel): Station lösen, Wrack an den Port
+	_check("A pile takes items", heap.add("plate", 5) == 5 and heap.count("plate") == 5)
+	# Couple the wreck (otherwise its own target): release the station, wreck to the port
 	root.get_node("StationSystem").clear()
 	root.get_node("SalvageSystem").generate()
 	var junk_ok := false
 	for pi in ship.grid.piles:
 		if not ship.grid.piles[pi].items.is_empty() and ship.grid.zone[pi] == 1:
 			junk_ok = true
-	_check("Schrott im Wrack ist nicht leer", junk_ok)
+	_check("Scrap in the wreck is not empty", junk_ok)
 	root.get_node("SalvageSystem").clear()
 	root.get_node("StationSystem").build("tycho")
 	root.get_node("SalvageSystem").clear()
@@ -60,16 +60,16 @@ func _initialize() -> void:
 	var y0: int = (g.height / Config.GRID_SCALE - 10) / 2
 	var mira = crew.player()
 
-	# 1) Temperatur bleibt im Schiff angenehm
-	_run_coarse(24 * 60, 15.0)   # Wärmegleichgewicht: grobe Schritte reichen
+	# 1) The temperature in the ship stays pleasant
+	_run_coarse(24 * 60, 15.0)   # heat balance: coarse steps are enough
 	var cabin: int = g.idx(C(x0 + 4, y0 + 2))
 	var cockpit: int = g.idx(C(x0 + 12, y0 + 3))
-	_check("Wohnkabine warm nach 1 Tag (%.1f °C)" % g.temp[cabin], g.temp[cabin] > 17.0)
-	_check("Cockpit nicht ausgekühlt (%.1f °C)" % g.temp[cockpit], g.temp[cockpit] > 10.0)
-	_check("Mira friert nicht (%.1f °C)" % mira.body_temp, mira.body_temp > 36.0)
-	_check("Strom reicht trotz Heizung", root.get_node("ShipPowerSystem").main_net().ok)
+	_check("Cabin warm after 1 day (%.1f °C)" % g.temp[cabin], g.temp[cabin] > 17.0)
+	_check("Cockpit not cooled down (%.1f °C)" % g.temp[cockpit], g.temp[cockpit] > 10.0)
+	_check("Mira is not freezing (%.1f °C)" % mira.body_temp, mira.body_temp > 36.0)
+	_check("Power is enough despite the heater", root.get_node("ShipPowerSystem").main_net().ok)
 
-	# 2) Kälte: Heizung aus, Fenster nach außen -> Körperwärme sinkt, Jacke hilft
+	# 2) Cold: heater off, window to the outside -> body heat drops, a jacket helps
 	var cold := C(x0 + 12, y0 + 3)
 	for k in 3000:
 		g.temp[g.idx(cold)] = -20.0
@@ -77,13 +77,13 @@ func _initialize() -> void:
 		mira.manual_until = Time.get_ticks_msec() + 100000
 		mira._update_body(1.0 / 60.0 * 2.0)
 	var no_jacket: float = mira.body_temp
-	_check("Kälte senkt die Körperwärme (%.1f °C)" % no_jacket, no_jacket < 36.5)
+	_check("Cold lowers the body heat (%.1f °C)" % no_jacket, no_jacket < 36.5)
 	mira.body_temp = 37.0
 	mira.inv.add("thermojacket", 1)
 	for k in 3000:
 		g.temp[g.idx(cold)] = -20.0
 		mira._update_body(1.0 / 60.0 * 2.0)
-	_check("Thermojacke schützt (%.1f vs %.1f °C)" % [mira.body_temp, no_jacket], mira.body_temp > no_jacket)
+	_check("A thermal jacket protects (%.1f vs %.1f °C)" % [mira.body_temp, no_jacket], mira.body_temp > no_jacket)
 	mira.body_temp = 37.0
 	mira.manual_until = 0
 	mira.health = 100.0
@@ -97,13 +97,13 @@ func _initialize() -> void:
 
 	# 3) Fenster
 	build.place("window", C(x0 + 15, y0 + 2))
-	_check("Fenster ist planbar (Wand wird ersetzt? nein: nur auf Boden/All)", not build.can_place("window", C(x0 + 15, y0 + 2)) or true)
+	_check("A window can be planned (wall replaced? no: only on floor/space)", not build.can_place("window", C(x0 + 15, y0 + 2)) or true)
 	var win := C(x0 - 2, y0 + 2)
 	build.place("floor", win)
-	_check("Fenster kann im All geplant werden", build.can_place("window", C(x0 - 2, y0 + 3)))
+	_check("A window can be planned in space", build.can_place("window", C(x0 - 2, y0 + 3)))
 	build.jobs.clear()
 
-	# 4) Feuer: brennt, verbraucht Sauerstoff, Crew löscht
+	# 4) Fire: burns, uses oxygen, the crew puts it out
 	var fire_tile: int = g.idx(C(x0 + 5, y0 + 6))
 	var o2_before: float = g.o2[fire_tile]
 	temp.ignite(fire_tile)
@@ -111,14 +111,14 @@ func _initialize() -> void:
 	_run(1)
 	_check("Feuer verbraucht Sauerstoff", g.o2[fire_tile] < o2_before)
 	_run(20)
-	_check("Crew hat das Feuer gelöscht (brennend: %d, Mira: %s, hp %d, Stress %d, manuell %s)" % [temp.burning_count(), mira.task, int(mira.health), int(mira.stress), str(mira.is_manual())], temp.burning_count() == 0)
-	# Feuer im Vakuum erlischt
-	var vac: int = g.idx(C(x0 + 17, y0 + 3))   # rechts neben dem Schiff im All (links hängt die Station)
+	_check("The crew put out the fire (burning: %d, Mira: %s, hp %d, stress %d, manual %s)" % [temp.burning_count(), mira.task, int(mira.health), int(mira.stress), str(mira.is_manual())], temp.burning_count() == 0)
+	# Fire in vacuum goes out
+	var vac: int = g.idx(C(x0 + 17, y0 + 3))   # right next to the ship in space (the station hangs on the left)
 	g.fire[vac] = 1
 	_run(0.5)
-	_check("Feuer ohne Luft erlischt", g.fire[vac] == 0)
+	_check("Fire without air goes out", g.fire[vac] == 0)
 
-	# 5) Wasser: Abwasser entsteht und wird aufbereitet
+	# 5) Water: waste water appears and is treated
 	var wf = g.place_device("waterfilter", C(x0 + 3, y0 + 3))
 	cable_line(g, C(x0 + 3, y0 + 3), C(x0 + 9, y0 + 3))
 	root.get_node("EventBus").ship_changed.emit()
@@ -129,7 +129,7 @@ func _initialize() -> void:
 	dispenser.stock = 20.0
 	water.wastewater = 30.0
 	_run_coarse(240)
-	_check("Wasserfilter macht Abwasser zu Trinkwasser (Abwasser %.1f L, Spender %.1f L)" % [water.wastewater, dispenser.stock], water.wastewater < 30.0 and dispenser.stock > 20.0)
+	_check("The water filter turns waste water into drinking water (waste water %.1f L, dispenser %.1f L)" % [water.wastewater, dispenser.stock], water.wastewater < 30.0 and dispenser.stock > 20.0)
 	_check("Filter verbraucht Filterleistung", wf.stock < 20.0)
 
 	# 6) Hydrokultur: Pflege, Wachstum, Ernte
@@ -138,12 +138,12 @@ func _initialize() -> void:
 	root.get_node("EventBus").ship_changed.emit()
 	var rations_before: int = build.available("ration")
 	_run_coarse(60)
-	_check("Pflanzen werden gepflegt", gs.time - hydro.tended_at < 1440.0)
+	_check("Plants are tended", gs.time - hydro.tended_at < 1440.0)
 	hydro.growth = 0.97
 	_run(180)
 	_check("Hydrokultur geerntet (Rationen %d -> %d)" % [rations_before, build.available("ration")], build.available("ration") > rations_before or hydro.growth < 0.5)
 
-	# 7) Auto-Farm mit Gen-Mod und Fleischtank
+	# 7) Auto farm with a gene mod and meat vat
 	var farm = g.place_device("autofarm", C(x0 + 14, y0 + 2))
 	g.cables[g.idx(C(x0 + 14, y0 + 2))] = 1
 	var vat = g.place_device("meatvat", C(x0 + 13, y0 + 2))
@@ -158,8 +158,8 @@ func _initialize() -> void:
 	vat.growth = 0.9
 	farm.growth = 0.5
 	_run_coarse(4 * 60)
-	_check("Auto-Farm hat den Gen-Mod eingesetzt", farm.genemod)
-	_check("Fleischtank hat Fleisch geliefert (Futter %.0f)" % vat.stock, vat.stock < 10.0)
+	_check("The auto farm used the gene mod", farm.genemod)
+	_check("The meat vat delivered meat (feed %.0f)" % vat.stock, vat.stock < 10.0)
 
 	# 8) Chemiestation
 	g.place_device("chemstation", C(x0 + 12, y0 + 3))

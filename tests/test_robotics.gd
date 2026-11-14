@@ -1,4 +1,4 @@
-## Tests: Fähigkeit „Robotics Engineering“ (ID robotics) – Kurs 1 Jahr, +4 auf Controls/Sensors, Praxis, Navigationsstation
+## Tests: skill "Robotics Engineering" (ID robotics) – course 1 year, +4 on controls/sensors, practice, navigation station
 ##   godot --headless --path . --script res://tests/boot.gd -- test_robotics
 extends "res://tests/test_base.gd"
 
@@ -86,9 +86,9 @@ func _initialize() -> void:
 	var mira: CrewMember = root.get_node("CrewSystem").player()
 	var s: SkillData = SK.skill("robotics")
 	_check("Skill vorhanden, ID robotics, englischer Name", s != null and s.skill_name == "Robotics Engineering")
-	_check("Definition: 1 Jahr, +4 auf Controls und Sensors, alte Wirkung und Voraussetzung ersetzt", s.course_years == 1 and s.work_value_bonus == 4.0 and Array(s.work_categories) == ["control", "sensor"] and s.gameplay_effects.is_empty() and s.required_skills.is_empty())
+	_check("Definition: 1 year, +4 on controls and sensors, old effect and prerequisite replaced", s.course_years == 1 and s.work_value_bonus == 4.0 and Array(s.work_categories) == ["control", "sensor"] and s.gameplay_effects.is_empty() and s.required_skills.is_empty())
 
-	# 1) Charaktererstellung: ±1 Jahr, einmal übernommen; Tooltip
+	# 1) Character creation: ±1 year, applied once; tooltip
 	var cui = ui.char_ui
 	CHS.begin(mira)
 	CHS.apply_career(mira, "school")
@@ -99,16 +99,16 @@ func _initialize() -> void:
 	_check("1: Tooltip: Kosten, Bonus, Lernwege, Fortschritt (%s)" % tip.replace("\n", " | "),
 		"costs 1 year." in tip and "+4 work value" in tip and "Affected categories: Controls, Sensors." in tip
 		and "Practical work" in tip and "Repairing the navigation console" in tip and "Textbook: Robotics Engineering" in tip and "Learning progress:" in tip)
-	_check("1: Auswählen: Vorschau +1", await _press_course("robotics", "Add") and CHS.preview_age(mira) == base + 1 and mira.age == base and "(incl. Robotics Engineering course +1 year)" in _texts(cui.creation_box))
-	_check("1: Entfernen: Vorschau −1", await _press_course("robotics", "Remove") and CHS.preview_age(mira) == base)
-	_check("1: Erneut auswählen", await _press_course("robotics", "Add") and CHS.preview_age(mira) == base + 1)
+	_check("1: Choose: preview +1", await _press_course("robotics", "Add") and CHS.preview_age(mira) == base + 1 and mira.age == base and "(incl. Robotics Engineering course +1 year)" in _texts(cui.creation_box))
+	_check("1: Remove: preview −1", await _press_course("robotics", "Remove") and CHS.preview_age(mira) == base)
+	_check("1: Choose again", await _press_course("robotics", "Add") and CHS.preview_age(mira) == base + 1)
 	var hist0: int = mira.history.size()
 	CHS.confirm(mira)
 	CHS.confirm(mira)
-	_check("1: Bestätigt: Alter +1 genau einmal, erworben", mira.age == base + 1 and mira.history.size() == hist0 + 1 and SK.acquired(mira, "robotics"))
+	_check("1: Confirmed: age +1 exactly once, acquired", mira.age == base + 1 and mira.history.size() == hist0 + 1 and SK.acquired(mira, "robotics"))
 	cui.creation.visible = false
 
-	# 2) Dieselbe Arbeit an Steuerung und Sensor, ohne/mit Skill
+	# 2) The same work at a control and a sensor, without/with the skill
 	gs.new_game()
 	root.get_node("TimeSystem").set_speed(0)
 	var a := _fresh(0.0)
@@ -119,12 +119,12 @@ func _initialize() -> void:
 		_check("2: %s (%s bauen): Arbeitswert %.2f → %.2f, erwartet %+.0f, Material gleich" % [cs[0], cs[1], SK.work_value(a, dj), SK.work_value(b, dj), cs[2]],
 			is_equal_approx(SK.work_value(b, dj) - SK.work_value(a, dj), cs[2]) and CS.cost(dj) == ItemSystem.device(cs[1]).cost)
 	var term: Device = _dev("terminal")
-	_check("2: Abbauauftrag am Handelsterminal (Steuerung)", R.order("uninstall", term.pos) == "")
+	_check("2: Uninstall job at the trade terminal (control)", R.order("uninstall", term.pos) == "")
 	var job: Dictionary = CS.jobs[ship.grid.idx(term.pos)]
-	_check("2: Terminal abbauen: genau +4 (%.2f → %.2f), Werkzeugregel gleich" % [SK.work_value(a, job), SK.work_value(b, job)], is_equal_approx(SK.work_value(b, job) - SK.work_value(a, job), 4.0) and R.worker_ok(a, job) == R.worker_ok(b, job))
-	_check("2: Bei 99,9 % noch kein Bonus", is_equal_approx(SK.work_value(_fresh(99.9), job), SK.work_value(a, job)))
+	_check("2: Uninstalling the terminal: exactly +4 (%.2f → %.2f), same tool rule" % [SK.work_value(a, job), SK.work_value(b, job)], is_equal_approx(SK.work_value(b, job) - SK.work_value(a, job), 4.0) and R.worker_ok(a, job) == R.worker_ok(b, job))
+	_check("2: No bonus yet at 99.9 %", is_equal_approx(SK.work_value(_fresh(99.9), job), SK.work_value(a, job)))
 	var cable_job := {"kind": "cable", "x": 0, "y": 0}
-	_check("2: Fachfremd (Kabel verlegen): kein Robotics-Bonus", is_equal_approx(SK.work_value(a, cable_job), SK.work_value(b, cable_job)))
+	_check("2: Outside the field (laying cable): no Robotics bonus", is_equal_approx(SK.work_value(a, cable_job), SK.work_value(b, cable_job)))
 	var wrong: PackedStringArray = []
 	var dir := DirAccess.open("res://resources/components/")
 	for f in dir.get_files():
@@ -134,29 +134,29 @@ func _initialize() -> void:
 		var d := {"kind": "device", "dev": id, "x": 0, "y": 0}
 		if is_equal_approx(SK.work_value(b, d) - SK.work_value(a, d), 4.0) != (id in BONUS_DEVICES):
 			wrong.append(id)
-	_check("2: Zuordnung aller Geräte stimmt (Fehler: %s)" % ", ".join(wrong), wrong.is_empty())
+	_check("2: Mapping of all devices correct (wrong: %s)" % ", ".join(wrong), wrong.is_empty())
 	CS.cancel(job)
 
-	# 3) Praxis beginnen, speichern, laden, mit Lehrbuch weiter
+	# 3) Start practice, save, load, continue with a textbook
 	mira = root.get_node("CrewSystem").player()
 	mira.needs = {"food": 100.0, "water": 100.0, "sleep": 100.0, "hygiene": 100.0, "air": 100.0}
 	SK.set_progress(mira, "robotics", 0.0)
 	var age0: int = mira.age
-	_check("3: Praxis: Abbauauftrag am Handelsterminal", R.order("uninstall", term.pos) == "")
+	_check("3: Practice: uninstall job at the trade terminal", R.order("uninstall", term.pos) == "")
 	var job3: Dictionary = CS.jobs[ship.grid.idx(term.pos)]
-	_check("3: Auftrag trainiert Robotics (%s)" % str(SK.job_profile(job3).actions), "robotics_work" in SK.job_profile(job3).actions)
+	_check("3: The job trains Robotics (%s)" % str(SK.job_profile(job3).actions), "robotics_work" in SK.job_profile(job3).actions)
 	for k in 60 * 30:
 		gs.step(1.0 / 60.0)
 		if not CS.jobs.has(ship.grid.idx(term.pos)):
 			break
 	var p_work: float = SK.progress(mira, "robotics")
-	_check("3: Praxis erhöht den Fortschritt (%.3f %%)" % p_work, p_work > 0.0 and p_work < 100.0)
+	_check("3: Practice raises the progress (%.3f %%)" % p_work, p_work > 0.0 and p_work < 100.0)
 	save.save_game(true)
 	gs.new_game()
-	_check("3: Laden", save.load_game(true))
+	_check("3: Load", save.load_game(true))
 	mira = root.get_node("CrewSystem").player()
 	var hj := {"kind": "device", "dev": "helm", "x": 0, "y": 0}
-	_check("3: Fortschritt nach dem Laden gleich (%.3f %%), noch kein Bonus" % SK.progress(mira, "robotics"), absf(SK.progress(mira, "robotics") - p_work) < 0.0001 and is_equal_approx(SK.work_value_bonus(mira, hj), 0.0))
+	_check("3: Progress unchanged after loading (%.3f %%), no bonus yet" % SK.progress(mira, "robotics"), absf(SK.progress(mira, "robotics") - p_work) < 0.0001 and is_equal_approx(SK.work_value_bonus(mira, hj), 0.0))
 	toasts.clear()
 	var first := -1.0
 	var early := false
@@ -169,10 +169,10 @@ func _initialize() -> void:
 			if SK.progress(mira, "robotics") < 100.0 and SK.work_value_bonus(mira, hj) != 0.0:
 				early = true
 			SK.decay_recent(mira, 120.0)
-	_check("3: Lehrbuch setzt am gespeicherten Stand an (%.3f → %.3f %%)" % [p_work, first], first > p_work)
-	_check("3: Bonus erst bei 100 %", not early and SK.acquired(mira, "robotics") and is_equal_approx(SK.work_value_bonus(mira, hj), 4.0))
-	_check("3: Genau eine Freischaltung (%s)" % str(toasts), toasts.filter(func(t): return "acquired Robotics Engineering" in t).size() == 1)
-	_check("3: Alter unverändert", mira.age == age0)
+	_check("3: The textbook starts from the stored progress (%.3f → %.3f %%)" % [p_work, first], first > p_work)
+	_check("3: Bonus only at 100 %", not early and SK.acquired(mira, "robotics") and is_equal_approx(SK.work_value_bonus(mira, hj), 4.0))
+	_check("3: Exactly one unlock (%s)" % str(toasts), toasts.filter(func(t): return "acquired Robotics Engineering" in t).size() == 1)
+	_check("3: Age unchanged", mira.age == age0)
 	var fleet = root.get_node("FleetSystem")
 	var g2 := ShipGrid.new()
 	fleet._build_template(g2, {"id": "lumen", "w": 10, "h": 7})
@@ -184,7 +184,7 @@ func _initialize() -> void:
 	_check("3: Schiffswechsel: erworben", SK.acquired(mira, "robotics"))
 	fleet.switch_to(old_id)
 
-	# 4) Navigationsstation: Reparatur am Steuerpult (repair_nav) trainiert Robotics
+	# 4) Navigation station: repairing the console (repair_nav) trains Robotics
 	gs.new_game()
 	root.get_node("TimeSystem").set_speed(0)
 	mira = root.get_node("CrewSystem").player()
@@ -193,7 +193,7 @@ func _initialize() -> void:
 	var e0: float = SK.progress(mira, "electrical")
 	var helm: Device = _dev("helm")
 	helm.cond = 40.0
-	_check("4: Reparaturauftrag am Steuerpult (Navigationsstation)", CS.place("repair", helm.pos))
+	_check("4: Repair job at the navigation console (navigation station)", CS.place("repair", helm.pos))
 	var rjob: Dictionary = CS.jobs.get(ship.grid.idx(helm.pos), {})
 	_check("4: Aktionen enthalten repair_nav (%s)" % str(SK.job_profile(rjob).actions), "repair_nav" in SK.job_profile(rjob).actions and "robotics" in SK.actions["repair_nav"].skills)
 	var direct := _fresh(0.0)
@@ -205,19 +205,19 @@ func _initialize() -> void:
 		if not CS.jobs.has(ship.grid.idx(helm.pos)):
 			fixed = true
 			break
-	_check("4: Mira repariert das Steuerpult: Robotics %.3f %%, Elektro %.3f → %.3f %%" % [SK.progress(mira, "robotics"), e0, SK.progress(mira, "electrical")],
+	_check("4: Mira repairs the console: Robotics %.3f %%, electrical %.3f → %.3f %%" % [SK.progress(mira, "robotics"), e0, SK.progress(mira, "electrical")],
 		fixed and SK.progress(mira, "robotics") > 0.0 and SK.progress(mira, "electrical") > e0)
 
-	# 4b) Alter Spielstand mit erworbenem Robotics
+	# 4b) Old save with Robotics acquired
 	var dd: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(OLD_SAVE))
 	dd.crew[0].skills["robotics"] = {"p": 100.0, "xp": 30.0, "hist": []}
 	var fl := FileAccess.open(save.path(), FileAccess.WRITE)
 	fl.store_string(JSON.stringify(dd))
 	fl.close()
 	gs.new_game()
-	_check("4: Alter Spielstand geladen", save.load_game(true))
+	_check("4: Old save loaded", save.load_game(true))
 	mira = root.get_node("CrewSystem").player()
-	_check("4: Bonus ohne erneuten Erwerb (+%.0f), alte Wirkung weg" % SK.work_value_bonus(mira, hj), SK.acquired(mira, "robotics") and is_equal_approx(SK.work_value_bonus(mira, hj), 4.0) and SK.effect(mira, "work_robotic") == 0.0 and is_equal_approx(SK.progress(mira, "construction"), 33.0))
+	_check("4: Bonus without acquiring it again (+%.0f), old effect gone" % SK.work_value_bonus(mira, hj), SK.acquired(mira, "robotics") and is_equal_approx(SK.work_value_bonus(mira, hj), 4.0) and SK.effect(mira, "work_robotic") == 0.0 and is_equal_approx(SK.progress(mira, "construction"), 33.0))
 
 	print("%d OK, %d Fehler" % [ok_count, fail_count])
 	quit()

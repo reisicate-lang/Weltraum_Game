@@ -1,4 +1,4 @@
-## Tests: Fähigkeit „Spaceship Engineering“ (ID spaceship) – Kurs 3 Jahre, Startprofil Werftlehre, +4 auf Strukturarbeit
+## Tests: skill "Spaceship Engineering" (ID spaceship) – course 3 years, starting profile shipyard apprenticeship, +4 on structure work
 ##   godot --headless --path . --script res://tests/boot.gd -- test_spaceship
 extends "res://tests/test_base.gd"
 
@@ -55,7 +55,7 @@ func _fresh(p: float) -> CrewMember:
 	SK.set_progress(c, "spaceship", p)
 	return c
 
-## Wand des eigenen Schiffs: innen (kein All daneben) oder Hülle (All daneben)
+## Wall of your own ship: inside (no space next to it) or hull (space next to it)
 func _wall(hull: bool) -> Vector2i:
 	var g = ship.grid
 	for i in g.tiles.size():
@@ -98,31 +98,31 @@ func _initialize() -> void:
 	var mira: CrewMember = root.get_node("CrewSystem").player()
 	var s: SkillData = SK.skill("spaceship")
 	_check("Skill vorhanden, ID spaceship, englischer Name", s != null and s.skill_name == "Spaceship Engineering")
-	_check("Definition: 3 Jahre, +4 auf Struktur, alte Wirkung und Voraussetzung ersetzt", s.course_years == 3 and s.work_value_bonus == 4.0 and Array(s.work_categories) == ["structure"] and s.gameplay_effects.is_empty() and s.required_skills.is_empty())
+	_check("Definition: 3 years, +4 on structure, old effect and prerequisite replaced", s.course_years == 3 and s.work_value_bonus == 4.0 and Array(s.work_categories) == ["structure"] and s.gameplay_effects.is_empty() and s.required_skills.is_empty())
 
-	# 1a) Manuell wählen und entfernen: ±3 Jahre
+	# 1a) Choose and remove manually: ±3 years
 	var cui = ui.char_ui
 	CHS.begin(mira)
-	SK.set_progress(mira, "spaceship", 0.0)   # Start-Skill: für die Kursprüfung zurücksetzen
+	SK.set_progress(mira, "spaceship", 0.0)   # starting skill: reset for the course check
 	cui.open_creation()
 	await process_frame
 	var base: int = mira.age
 	var tip: String = _course_row("spaceship").tooltip_text if _course_row("spaceship") != null else ""
-	_check("1: Tooltip: 3 Jahre, Strukturbonus, Erwerbswege, Fortschritt (%s)" % tip.replace("\n", " | "),
+	_check("1: Tooltip: 3 years, structure bonus, ways to acquire, progress (%s)" % tip.replace("\n", " | "),
 		"costs 3 years" in tip and "+4 work value" in tip and "Ship Structure" in tip and "Practical work on the ship structure" in tip
 		and "Shipyard Apprenticeship" in tip and "Textbook: Spaceship Engineering" in tip and "Learning progress:" in tip)
-	_check("1: Auswählen: Vorschau +3", await _press_course("spaceship", "Add") and CHS.preview_age(mira) == base + 3 and mira.age == base and "(incl. Spaceship Engineering course +3 years)" in _texts(cui.creation_box))
-	_check("1: Entfernen: Vorschau −3", await _press_course("spaceship", "Remove") and CHS.preview_age(mira) == base)
+	_check("1: Choose: preview +3", await _press_course("spaceship", "Add") and CHS.preview_age(mira) == base + 3 and mira.age == base and "(incl. Spaceship Engineering course +3 years)" in _texts(cui.creation_box))
+	_check("1: Remove: preview −3", await _press_course("spaceship", "Remove") and CHS.preview_age(mira) == base)
 	await _press_course("spaceship", "Add")
 	var hist0: int = mira.history.size()
 	CHS.confirm(mira)
 	CHS.confirm(mira)
-	_check("1: Manuell bestätigt: Alter +3 genau einmal, erworben", mira.age == base + 3 and mira.history.size() == hist0 + 1 and SK.acquired(mira, "spaceship"))
+	_check("1: Confirmed manually: age +3 exactly once, acquired", mira.age == base + 3 and mira.history.size() == hist0 + 1 and SK.acquired(mira, "spaceship"))
 	cui.creation.visible = false
 
-	# 1b) Startprofil Werftlehre (Shipyard Apprenticeship): vergibt den Skill genau einmal, nur seine eigenen Jahre
+	# 1b) Starting profile Shipyard Apprenticeship: grants the skill exactly once, only its own years
 	var k: Dictionary = CHS.career("shipyard")
-	_check("1: Startprofil „%s“: %d Jahre, vergibt spaceship" % [k.name, int(k.years)], k.name == "Shipyard Apprenticeship" and int(k.years) == 3 and k.grants == ["spaceship"] and not k.skills.has("spaceship"))
+	_check("1: Starting profile “%s”: %d years, grants spaceship" % [k.name, int(k.years)], k.name == "Shipyard Apprenticeship" and int(k.years) == 3 and k.grants == ["spaceship"] and not k.skills.has("spaceship"))
 	for pre in [false, true]:
 		var c := CrewMember.new(980, "Profile Test", Color.WHITE, Vector2i.ZERO)
 		CHS.begin(c)
@@ -133,11 +133,11 @@ func _initialize() -> void:
 		var a0: int = c.age
 		toasts.clear()
 		var line: String = CHS.apply_career(c, "shipyard")
-		var label := "schon erworben" if pre else "neu"
-		_check("1: Profil (%s): Skill genau einmal, Alter +3 (%d → %d)" % [label, a0, c.age], line != "" and SK.acquired(c, "spaceship") and c.skills.keys().count("spaceship") == 1 and c.age == a0 + 3)
-		_check("1: Profil (%s): Erwerb im Lebenslauf %s" % [label, "nicht erneut" if pre else "einmal"], ("Acquired Spaceship Engineering" in line) != pre and toasts.is_empty())
+		var label := "already acquired" if pre else "neu"
+		_check("1: Profile (%s): skill exactly once, age +3 (%d → %d)" % [label, a0, c.age], line != "" and SK.acquired(c, "spaceship") and c.skills.keys().count("spaceship") == 1 and c.age == a0 + 3)
+		_check("1: Profile (%s): acquisition in the life story %s" % [label, "not again" if pre else "einmal"], ("Acquired Spaceship Engineering" in line) != pre and toasts.is_empty())
 		var line2: String = CHS.apply_career(c, "shipyard")
-		_check("1: Profil (%s) ein zweites Mal: nichts doppelt" % label, line2 != "" and not "Acquired Spaceship Engineering" in line2 and c.skills.keys().count("spaceship") == 1)
+		_check("1: Profile (%s) a second time: nothing twice" % label, line2 != "" and not "Acquired Spaceship Engineering" in line2 and c.skills.keys().count("spaceship") == 1)
 	var c2 := CrewMember.new(981, "Profile Course", Color.WHITE, Vector2i.ZERO)
 	CHS.begin(c2)
 	SK.set_progress(c2, "spaceship", 0.0)
@@ -145,9 +145,9 @@ func _initialize() -> void:
 	var a2: int = c2.age
 	CHS.apply_career(c2, "shipyard")
 	CHS.confirm(c2)
-	_check("1: Kurs gewählt + Profil: nur die 3 Jahre des Profils (%d → %d)" % [a2, c2.age], c2.age == a2 + 3 and SK.acquired(c2, "spaceship") and not CHS.course_drafted(c2, "spaceship"))
+	_check("1: Course chosen + profile: only the profile's 3 years (%d → %d)" % [a2, c2.age], c2.age == a2 + 3 and SK.acquired(c2, "spaceship") and not CHS.course_drafted(c2, "spaceship"))
 
-	# 2) Strukturarbeit: +4; fachfremde Gerätereparatur: kein Bonus
+	# 2) Structure work: +4; device repair outside the field: no bonus
 	gs.new_game()
 	root.get_node("TimeSystem").set_speed(0)
 	var g = ship.grid
@@ -160,32 +160,32 @@ func _initialize() -> void:
 	var dev: Device = _dev("generator")
 	dev.cond = 40.0
 	var cases := [
-		["Wand bauen", {"kind": "build", "tile": ShipGrid.Tile.WALL, "x": 0, "y": 0, "paid": false}, 4.0],
-		["Boden bauen", {"kind": "build", "tile": ShipGrid.Tile.FLOOR, "x": 0, "y": 0, "paid": false}, 4.0],
-		["Tür bauen", {"kind": "build", "tile": ShipGrid.Tile.DOOR, "x": 0, "y": 0, "paid": false}, 4.0],
+		["Build wall", {"kind": "build", "tile": ShipGrid.Tile.WALL, "x": 0, "y": 0, "paid": false}, 4.0],
+		["Build floor", {"kind": "build", "tile": ShipGrid.Tile.FLOOR, "x": 0, "y": 0, "paid": false}, 4.0],
+		["Build door", {"kind": "build", "tile": ShipGrid.Tile.DOOR, "x": 0, "y": 0, "paid": false}, 4.0],
 		["Innenwand reparieren", {"kind": "repair", "x": inner.x, "y": inner.y}, 4.0],
-		["Hülle reparieren", {"kind": "repair", "x": hull.x, "y": hull.y}, 4.0],
-		["Feuer löschen", {"kind": "extinguish", "x": inner.x, "y": inner.y}, 4.0],
-		["Generator reparieren (Gerät)", {"kind": "repair", "x": dev.pos.x, "y": dev.pos.y}, 0.0],
-		["Batterie bauen (Gerät)", {"kind": "device", "dev": "battery", "x": 0, "y": 0}, 0.0],
-		["Triebwerk bauen (Gerät)", {"kind": "device", "dev": "thruster", "x": 0, "y": 0}, 0.0],
-		["Kabel verlegen", {"kind": "cable", "x": 0, "y": 0}, 0.0],
-		["Wand abreißen", {"kind": "remove", "x": inner.x, "y": inner.y}, 0.0],
+		["Repair hull", {"kind": "repair", "x": hull.x, "y": hull.y}, 4.0],
+		["Put out fire", {"kind": "extinguish", "x": inner.x, "y": inner.y}, 4.0],
+		["Repair generator (device)", {"kind": "repair", "x": dev.pos.x, "y": dev.pos.y}, 0.0],
+		["Build battery (device)", {"kind": "device", "dev": "battery", "x": 0, "y": 0}, 0.0],
+		["Build thruster (device)", {"kind": "device", "dev": "thruster", "x": 0, "y": 0}, 0.0],
+		["Lay cable", {"kind": "cable", "x": 0, "y": 0}, 0.0],
+		["Demolish wall", {"kind": "remove", "x": inner.x, "y": inner.y}, 0.0],
 	]
 	for cs in cases:
 		var d: float = SK.work_value(b, cs[1]) - SK.work_value(a, cs[1])
 		_check("2: %s: Arbeitswert %.2f → %.2f (%+.0f, erwartet %+.0f)" % [cs[0], SK.work_value(a, cs[1]), SK.work_value(b, cs[1]), d, cs[2]], is_equal_approx(d, cs[2]))
 	var wj: Dictionary = cases[0][1]
-	_check("2: Gleiches Material für beide (Wand: %s)" % str(CS.cost(wj)), CS.cost(wj) == CS.cost(wj.duplicate()) and not CS.cost(wj).is_empty())
-	_check("2: Bei 99,9 % noch kein Bonus", is_equal_approx(SK.work_value(_fresh(99.9), wj), SK.work_value(a, wj)))
-	_check("2: Alte Wirkungen weg (Hülle, Triebwerk, Treibstoff)", SK.effect(b, "work_hull") == 0.0 and SK.effect(b, "work_propulsion") == 0.0)
+	_check("2: Same material for both (wall: %s)" % str(CS.cost(wj)), CS.cost(wj) == CS.cost(wj.duplicate()) and not CS.cost(wj).is_empty())
+	_check("2: No bonus yet at 99.9 %", is_equal_approx(SK.work_value(_fresh(99.9), wj), SK.work_value(a, wj)))
+	_check("2: Old effects gone (hull, thruster, fuel)", SK.effect(b, "work_hull") == 0.0 and SK.effect(b, "work_propulsion") == 0.0)
 
 	# 3) Strukturarbeit lernt, speichern, laden, Lehrbuch weiter
 	mira = root.get_node("CrewSystem").player()
 	mira.needs = {"food": 100.0, "water": 100.0, "sleep": 100.0, "hygiene": 100.0, "air": 100.0}
 	SK.set_progress(mira, "spaceship", 0.0)
 	var age0: int = mira.age
-	_check("3: Reparaturauftrag an der Innenwand", CS.place("repair", inner))
+	_check("3: Repair job at the inner wall", CS.place("repair", inner))
 	var rj: Dictionary = CS.jobs.get(g.idx(inner), {})
 	_check("3: Strukturarbeit trainiert Spaceship (%s)" % str(SK.job_profile(rj).actions), "spaceship_work" in SK.job_profile(rj).actions)
 	var done := false
@@ -195,12 +195,12 @@ func _initialize() -> void:
 			done = true
 			break
 	var p_work: float = SK.progress(mira, "spaceship")
-	_check("3: Mira repariert die Wand: Fortschritt %.3f %%" % p_work, done and p_work > 0.0 and p_work < 100.0)
+	_check("3: Mira repairs the wall: progress %.3f %%" % p_work, done and p_work > 0.0 and p_work < 100.0)
 	save.save_game(true)
 	gs.new_game()
-	_check("3: Laden", save.load_game(true))
+	_check("3: Load", save.load_game(true))
 	mira = root.get_node("CrewSystem").player()
-	_check("3: Fortschritt nach dem Laden gleich (%.3f %%), noch kein Bonus" % SK.progress(mira, "spaceship"), absf(SK.progress(mira, "spaceship") - p_work) < 0.0001 and is_equal_approx(SK.work_value_bonus(mira, wj), 0.0))
+	_check("3: Progress unchanged after loading (%.3f %%), no bonus yet" % SK.progress(mira, "spaceship"), absf(SK.progress(mira, "spaceship") - p_work) < 0.0001 and is_equal_approx(SK.work_value_bonus(mira, wj), 0.0))
 	toasts.clear()
 	var first := -1.0
 	var early := false
@@ -213,10 +213,10 @@ func _initialize() -> void:
 			if SK.progress(mira, "spaceship") < 100.0 and SK.work_value_bonus(mira, wj) != 0.0:
 				early = true
 			SK.decay_recent(mira, 120.0)
-	_check("3: Lehrbuch setzt am gespeicherten Stand an (%.3f → %.3f %%)" % [p_work, first], first > p_work)
-	_check("3: Bonus erst bei 100 %", not early and SK.acquired(mira, "spaceship") and is_equal_approx(SK.work_value_bonus(mira, wj), 4.0))
-	_check("3: Genau eine Freischaltung (%s)" % str(toasts), toasts.filter(func(t): return "acquired Spaceship Engineering" in t).size() == 1)
-	_check("3: Alter unverändert", mira.age == age0)
+	_check("3: The textbook starts from the stored progress (%.3f → %.3f %%)" % [p_work, first], first > p_work)
+	_check("3: Bonus only at 100 %", not early and SK.acquired(mira, "spaceship") and is_equal_approx(SK.work_value_bonus(mira, wj), 4.0))
+	_check("3: Exactly one unlock (%s)" % str(toasts), toasts.filter(func(t): return "acquired Spaceship Engineering" in t).size() == 1)
+	_check("3: Age unchanged", mira.age == age0)
 	var fleet = root.get_node("FleetSystem")
 	var g2 := ShipGrid.new()
 	fleet._build_template(g2, {"id": "lumen", "w": 10, "h": 7})
@@ -228,16 +228,16 @@ func _initialize() -> void:
 	_check("3: Schiffswechsel: erworben", SK.acquired(mira, "spaceship"))
 	fleet.switch_to(old_id)
 
-	# 4) Alter Spielstand mit erworbenem Skill: Strukturbonus direkt
+	# 4) Old save with the skill acquired: structure bonus right away
 	var dd: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(OLD_SAVE))
 	dd.crew[0].skills["spaceship"] = {"p": 100.0, "xp": 30.0, "hist": []}
 	var f := FileAccess.open(save.path(), FileAccess.WRITE)
 	f.store_string(JSON.stringify(dd))
 	f.close()
 	gs.new_game()
-	_check("4: Alter Spielstand geladen", save.load_game(true))
+	_check("4: Old save loaded", save.load_game(true))
 	mira = root.get_node("CrewSystem").player()
-	_check("4: Strukturbonus ohne erneuten Erwerb (+%.0f), andere Skills erhalten" % SK.work_value_bonus(mira, wj),
+	_check("4: Structure bonus without acquiring it again (+%.0f), other skills kept" % SK.work_value_bonus(mira, wj),
 		SK.acquired(mira, "spaceship") and is_equal_approx(SK.work_value_bonus(mira, wj), 4.0) and is_equal_approx(SK.progress(mira, "construction"), 33.0) and SK.effect(mira, "work_hull") == 0.0)
 
 	print("%d OK, %d Fehler" % [ok_count, fail_count])

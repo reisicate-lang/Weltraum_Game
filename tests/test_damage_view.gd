@@ -1,4 +1,4 @@
-## Tests: Schadensansicht zum Lecksuchen (Ostranauts Ideal Atmosphere 2, Taste X)
+## Tests: damage view for finding leaks (Ostranauts Ideal Atmosphere 2, key X)
 ##   godot --headless --path . --script res://tests/boot.gd -- test_damage_view
 extends "res://tests/test_base.gd"
 
@@ -30,11 +30,11 @@ func _initialize() -> void:
 	var H: int = g.height - 1
 
 	var m: Dictionary = view.damage_marks(g, 0, 0, W, H)
-	_check("Neues Schiff: nichts beschädigt, keine Lecks", m.damaged.is_empty() and m.leaks.is_empty())
+	_check("New ship: nothing damaged, no leaks", m.damaged.is_empty() and m.leaks.is_empty())
 
-	# Beschädigte Wand und Gerät
+	# Damaged wall and device
 	var wall := -1
-	# Außenwand mit Boden auf der einen und All auf der anderen Seite
+	# Outer wall with floor on one side and space on the other
 	for i in g.tiles.size():
 		if g.tiles[i] != ShipGrid.Tile.WALL or g.foreign(i) or g.device_at(g.pos(i)) != null:
 			continue
@@ -51,12 +51,12 @@ func _initialize() -> void:
 			dev = g.devices[i]
 	dev.cond = 70.0
 	m = view.damage_marks(g, 0, 0, W, H)
-	_check("Wand 40 % und Bett 70 % markiert", m.damaged.get(wall, -1.0) == 40.0 and m.damaged.get(g.idx(dev.pos), -1.0) == 70.0 and m.damaged.size() == 2)
+	_check("Wall 40 % and bed 70 % marked", m.damaged.get(wall, -1.0) == 40.0 and m.damaged.get(g.idx(dev.pos), -1.0) == 70.0 and m.damaged.size() == 2)
 	dev.broken = true
 	m = view.damage_marks(g, 0, 0, W, H)
-	_check("Kaputtes Gerät zählt als 0 %", m.damaged.get(g.idx(dev.pos), -1.0) == 0.0)
+	_check("A broken device counts as 0 %", m.damaged.get(g.idx(dev.pos), -1.0) == 0.0)
 
-	# Loch in der Außenwand: Bodenfeld daneben ist ein Leck
+	# Hole in the outer wall: the floor tile next to it is a leak
 	var p: Vector2i = g.pos(wall)
 	g.tiles[wall] = ShipGrid.Tile.SPACE
 	m = view.damage_marks(g, 0, 0, W, H)
@@ -64,7 +64,7 @@ func _initialize() -> void:
 	for i in m.leaks:
 		if g.pos(i).distance_to(p) <= 1.0:
 			leak_next = true
-	_check("Loch: Nachbarfeld als Leck markiert (%d Leckfelder)" % m.leaks.size(), leak_next)
+	_check("Hole: neighbouring tile marked as a leak (%d leak tiles)" % m.leaks.size(), leak_next)
 
 	# Umschalten
 	gs.view = "normal"
@@ -74,7 +74,7 @@ func _initialize() -> void:
 	main._key(ev)
 	_check("Taste X: Schadensansicht an", gs.view == "damage")
 	main._key(ev)
-	_check("Nochmal X: aus", gs.view == "normal")
+	_check("X again: off", gs.view == "normal")
 
 	print("%d OK, %d Fehler" % [ok_count, fail_count])
 	quit()
