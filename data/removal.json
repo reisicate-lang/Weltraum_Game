@@ -1,5 +1,5 @@
 {
- "_info": "Entfernen per Rechtsklick: Abbauen (uninstall), Zerlegen (dismantle), Zerstören (destroy). Zeiten in Spielminuten, hp = Trefferpunkte bei 100 % Zustand. Fehlende Felder kommen aus 'defaults'. VORLÄUFIGES BALANCING.",
+ "_info": "Removal by right-click: uninstall, dismantle, destroy. Times in game minutes, hp = hit points at 100 % condition. Missing fields come from 'defaults'. PRELIMINARY BALANCING.",
  "defaults": {
   "actions": [
    "uninstall",

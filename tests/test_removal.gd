@@ -297,7 +297,7 @@ func _initialize() -> void:
 	ui.object_menu.hide()
 	mira.inv.take("crowbar", 9)
 	var wall3 := C(x0 + 10, y0 + 2)
-	_check("Ohne Brechstange: Wand abbauen gesperrt (%s)" % R.reason("uninstall", wall3), "Braucht Werkzeug: Brechstange" in R.reason("uninstall", wall3))
+	_check("Ohne Brechstange: Wand abbauen gesperrt (%s)" % R.reason("uninstall", wall3), "Braucht Werkzeug: Crowbar" in R.reason("uninstall", wall3))
 	_check("… Zerstören geht mit bloßen Händen", R.reason("destroy", wall3) == "")
 	var st_desk: Vector2i = root.get_node("StationSystem").rooms[0].desk
 	_check("Stationstresen: gesperrt (%s)" % R.reason("destroy", st_desk), R.reason("destroy", st_desk) == "Gehört der Station.")

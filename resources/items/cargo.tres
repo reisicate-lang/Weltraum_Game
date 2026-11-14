@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "cargo"
-display_name = "Fracht (versiegelt)"
+display_name = "Cargo (sealed)"
 weight = 10.0
 volume = 8.0
 value = 0
-description = "Auftragsfracht. Gehört dir nicht: zum Zielort bringen und dort abliefern."
+description = "Contract cargo. It is not yours: take it to the destination and deliver it there."

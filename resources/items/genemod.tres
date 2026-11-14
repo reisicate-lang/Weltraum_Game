@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "genemod"
-display_name = "Gen-Mod"
+display_name = "Gene Mod"
 weight = 0.1
 volume = 0.2
 value = 180
-description = "Genetische Verbesserung für die Auto-Farm: tägliche Ernte."
+description = "Genetic upgrade for the auto farm: a harvest every day."

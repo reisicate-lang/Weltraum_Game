@@ -96,7 +96,7 @@ func _initialize() -> void:
 	var base: int = mira.age
 	var tip: String = _course_row("pilot").tooltip_text if _course_row("pilot") != null else ""
 	_check("1: Tooltip: 3 Jahre, Piloting +0.5, Lernwege, Fortschritt (%s)" % tip.replace("\n", " | "),
-		"costs 3 years" in tip and "Piloting +0.5" in tip and "docking limits" in tip and "flying the ship at the helm" in tip and "Textbook: Spaceship Piloting" in tip and "Learning progress:" in tip)
+		"costs 3 years" in tip and "Piloting +0.5" in tip and "docking limits" in tip and "flying the ship at the navigation console" in tip and "Textbook: Spaceship Piloting" in tip and "Learning progress:" in tip)
 	_check("1: Auswählen: Vorschau +3", await _press_course("pilot", "Add") and CHS.preview_age(mira) == base + 3 and mira.age == base and "(incl. Spaceship Piloting course +3 years)" in _texts(cui.creation_box))
 	_check("1: Entfernen: Vorschau −3", await _press_course("pilot", "Remove") and CHS.preview_age(mira) == base)
 	await _press_course("pilot", "Add")

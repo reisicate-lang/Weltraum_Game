@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "seeds"
-display_name = "Saatgut"
+display_name = "Seeds"
 weight = 0.2
 volume = 0.3
 value = 15
-description = "Für die Hydrokultur."
+description = "For hydroponics."

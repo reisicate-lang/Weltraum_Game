@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1")
 id = "copper"
-display_name = "Kupferkabel"
+display_name = "Copper Wire"
 weight = 1.5
 volume = 1.0
 value = 12
-description = "Für Stromleitungen."
+description = "For power lines."
 refill = {}

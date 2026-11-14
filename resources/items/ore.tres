@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "ore"
-display_name = "Erz"
+display_name = "Ore"
 weight = 10.0
 volume = 5.0
 value = 22
-description = "Eisen- und Nickelerz. Die Raffinerie Hephaistos zahlt am besten."
+description = "Iron and nickel ore. The Hephaistos Refinery pays best."

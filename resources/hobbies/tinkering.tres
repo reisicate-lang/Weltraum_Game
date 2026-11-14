@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 hobby_id = "tinkering"
-hobby_name = "Basteln"
-description = "Repariert alte Elektronik zum Spaß. Trainiert nebenbei Elektrotechnik."
+hobby_name = "Tinkering"
+description = "Repairs old electronics for fun. Trains Electrical Engineering on the side."
 related_skill = "electrical"
 effects = {"stress_relief": 8}

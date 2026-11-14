@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "st_bar"
-display_name = "Bartresen"
-description = "Die Bar der Station: Leute treffen, plaudern, auftreten, würfeln."
+display_name = "Bar Counter"
+description = "The station bar: meet people, chat, perform, play dice."
 power = 0.0
 build_time = 1.0
 cost = {}

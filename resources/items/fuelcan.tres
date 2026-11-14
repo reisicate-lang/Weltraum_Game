@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1")
 id = "fuelcan"
-display_name = "Brennstoffkanister"
+display_name = "Generator Fuel Can"
 weight = 12.0
 volume = 10.0
 value = 40
-description = "Füllt den Generator um 40 Brennstoff auf."
+description = "Refills the generator with 40 generator fuel."
 refill = {"generator": 40, "fueltank": 40}

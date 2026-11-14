@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "o2gen"
-display_name = "Sauerstoff-Generator"
-description = "Füllt Sauerstoff nach (bis 21 kPa). Braucht 1,5 kW."
+display_name = "Oxygen Generator"
+description = "Refills oxygen (up to 21 kPa). Needs 1.5 kW."
 power = -1.5
 build_time = 5.0
 cost = {"plate": 3, "pipe": 2, "circuit": 2}

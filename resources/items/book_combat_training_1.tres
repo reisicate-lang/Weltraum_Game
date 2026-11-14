@@ -5,10 +5,10 @@
 [resource]
 script = ExtResource("1")
 id = "book_combat_training_1"
-display_name = "Lehrbuch: Kampfausbildung (Grundlagen)"
+display_name = "Textbook: Combat Training (Basics)"
 weight = 0.8
 volume = 1.0
 value = 40
-description = "Bringt Kampfausbildung bis 40 %. Lesen in Ruhezeiten."
+description = "Brings Combat Training to 40 %. Read during rest time."
 teaches = "combat_training"
 book_level = 1

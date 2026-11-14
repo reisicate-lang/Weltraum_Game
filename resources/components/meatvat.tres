@@ -5,13 +5,13 @@
 [resource]
 script = ExtResource("1")
 id = "meatvat"
-display_name = "Fleischtank"
-description = "Züchtet Fleisch in einem Käfig: frisst Rationen, liefert jeden Tag einen Fleischklumpen. Braucht 1 kW."
+display_name = "Meat Vat"
+description = "Grows meat in a cage: eats rations, yields one lump of meat every day. Needs 1 kW."
 power = -1.0
 build_time = 6.0
 cost = {"plate": 3, "pipe": 2, "motor": 1}
 stock = 10.0
-stock_unit = "Futter"
+stock_unit = "feed"
 storage = 0.0
 need = ""
 wears = false

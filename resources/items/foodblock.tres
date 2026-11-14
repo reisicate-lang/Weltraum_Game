@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1")
 id = "foodblock"
-display_name = "Nahrungsblock"
+display_name = "Food Block"
 weight = 2.0
 volume = 1.5
 value = 22
-description = "Gepresste Nahrung: füllt den Vorratsschrank um 5 Rationen."
+description = "Pressed food: fills the food locker with 5 rations."
 refill = {"food": 5}

@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "thermojacket"
-display_name = "Thermojacke"
+display_name = "Thermal Jacket"
 weight = 1.5
 volume = 3.0
 value = 45
-description = "Warme Kleidung. Schützt vor Kälte (im Gepäck tragen)."
+description = "Warm clothing. Protects against cold (carry it in your pack)."

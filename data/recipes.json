@@ -1,7 +1,7 @@
 [
  {
   "id": "plate",
-  "name": "Schrott einschmelzen",
+  "name": "Melt down scrap",
   "in": {
    "scrap": 3
   },
@@ -16,7 +16,7 @@
  },
  {
   "id": "pipe",
-  "name": "Rohre biegen",
+  "name": "Bend pipes",
   "in": {
    "scrap": 2
   },
@@ -31,7 +31,7 @@
  },
  {
   "id": "circuit",
-  "name": "Platine löten",
+  "name": "Solder circuit board",
   "in": {
    "copper": 2,
    "scrap": 1
@@ -47,7 +47,7 @@
  },
  {
   "id": "filter",
-  "name": "Filter flicken",
+  "name": "Patch filter",
   "in": {
    "fabric": 1,
    "scrap": 1
@@ -63,7 +63,7 @@
  },
  {
   "id": "cell",
-  "name": "Akkuzelle aufbereiten",
+  "name": "Recondition battery cell",
   "in": {
    "scrap": 2,
    "copper": 1
@@ -79,7 +79,7 @@
  },
  {
   "id": "fabric",
-  "name": "Stoff aus Resten",
+  "name": "Fabric from scraps",
   "in": {
    "scrap": 1
   },
@@ -94,7 +94,7 @@
  },
  {
   "id": "crowbar",
-  "name": "Brechstange schmieden",
+  "name": "Forge crowbar",
   "in": {
    "plate": 1,
    "scrap": 2
@@ -110,7 +110,7 @@
  },
  {
   "id": "boltgun",
-  "name": "Bolzenpistole bauen",
+  "name": "Build bolt gun",
   "in": {
    "motor": 1,
    "pipe": 2,
@@ -127,7 +127,7 @@
  },
  {
   "id": "foodblock",
-  "name": "Nahrungsblock pressen",
+  "name": "Press food block",
   "in": {
    "ration": 4
   },
@@ -142,7 +142,7 @@
  },
  {
   "id": "jacket",
-  "name": "Thermojacke nähen",
+  "name": "Sew thermal jacket",
   "in": {
    "fabric": 3
   },
@@ -157,7 +157,7 @@
  },
  {
   "id": "chemfilter",
-  "name": "Filterkartusche (Chemie)",
+  "name": "Filter cartridge (chemistry)",
   "in": {
    "scrap": 1,
    "watercan": 1
@@ -173,7 +173,7 @@
  },
  {
   "id": "chemfuel",
-  "name": "Brennstoff synthetisieren",
+  "name": "Synthesize generator fuel",
   "in": {
    "scrap": 2,
    "watercan": 1
@@ -189,7 +189,7 @@
  },
  {
   "id": "genemod",
-  "name": "Gen-Mod herstellen",
+  "name": "Make gene mod",
   "in": {
    "seeds": 2,
    "datachip": 1,
@@ -206,7 +206,7 @@
  },
  {
   "id": "seeds",
-  "name": "Saatgut aus Rationen",
+  "name": "Seeds from rations",
   "in": {
    "ration": 2
   },
@@ -221,7 +221,7 @@
  },
  {
   "id": "melt",
-  "name": "Eis schmelzen",
+  "name": "Melt ice",
   "in": {
    "ice": 1
   },

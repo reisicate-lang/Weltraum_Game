@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "bed"
-display_name = "Bett"
-description = "Zum Schlafen."
+display_name = "Bed"
+description = "For sleeping."
 power = 0.0
 build_time = 4.0
 cost = {"plate": 2, "fabric": 3}

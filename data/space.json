@@ -28,13 +28,13 @@
  "locations": [
   {
    "id": "tycho",
-   "name": "Tycho-Schrottplatz",
+   "name": "Tycho Scrapyard",
    "kind": "station",
    "body": "moon",
    "radius": 3000,
    "phase": 0.5,
    "market": 1.0,
-   "desc": "Schrotthändler im Mondorbit. Hier fing alles an.",
+   "desc": "Scrap dealer in lunar orbit. This is where it all began.",
    "rooms": [
     "market",
     "bar",
@@ -52,14 +52,14 @@
   },
   {
    "id": "karman",
-   "name": "Kármán-Ring",
+   "name": "Kármán Ring",
    "kind": "station",
    "body": "earth",
    "radius": 14000,
    "phase": 2.0,
    "market": 1.1,
    "shipyard": true,
-   "desc": "Große Handelsstation im Erdorbit mit Werft.",
+   "desc": "Large trading station in Earth orbit, with a shipyard.",
    "rooms": [
     "market",
     "bar",
@@ -83,7 +83,7 @@
    "y": -51962,
    "market": 0.9,
    "black": true,
-   "desc": "Abgelegenes Habitat. Hier fragt keiner, woher die Ware stammt.",
+   "desc": "Remote habitat. Nobody asks where the goods come from.",
    "rooms": [
     "market",
     "bar",
@@ -98,32 +98,32 @@
   },
   {
    "id": "debris",
-   "name": "Trümmerfeld Achilles",
+   "name": "Achilles Debris Field",
    "kind": "debris",
    "x": 42000,
    "y": 26000,
-   "desc": "Reste der Kriegsflotte. Wracks gratis, aber kein Händler."
+   "desc": "Remains of the war fleet. Free wrecks, but no traders."
   },
   {
    "id": "kx7",
-   "name": "Eisbrocken KX-7",
+   "name": "Ice Chunk KX-7",
    "kind": "asteroid",
    "x": -22000,
    "y": 31000,
-   "desc": "Asteroid aus Eis und Erz. Abbauen (Abreißen) bringt Wassereis und Erz."
+   "desc": "Asteroid of ice and ore. Mining it (demolish) yields water ice and ore."
   },
   {
    "id": "kepler",
-   "name": "Außenposten Kepler",
+   "name": "Kepler Outpost",
    "kind": "outpost",
    "body": "moon",
    "radius": 9000,
    "phase": 3.6,
-   "desc": "Verlassene Forschungsbasis. Viel Beute, viele Schlösser, niemand zum Handeln."
+   "desc": "Abandoned research base. Lots of loot, lots of locks, nobody to trade with."
   },
   {
    "id": "hephaistos",
-   "name": "Raffinerie Hephaistos",
+   "name": "Hephaistos Refinery",
    "kind": "station",
    "x": -35000,
    "y": -20000,
@@ -133,7 +133,7 @@
     "scrap": 1.6,
     "ice": 1.4
    },
-   "desc": "Industrieanlage. Zahlt gut für Erz, Eis und Schrott.",
+   "desc": "Industrial plant. Pays well for ore, ice and scrap.",
    "rooms": [
     "market",
     "bar",
@@ -154,15 +154,15 @@
    "price": 9000,
    "w": 10,
    "h": 7,
-   "desc": "Klein und sparsam. Zwei Räume, ein Triebwerk."
+   "desc": "Small and economical. Two rooms, one thruster."
   },
   {
    "id": "bairn",
-   "name": "Frachter Bairn",
+   "name": "Freighter Bairn",
    "price": 26000,
    "w": 18,
    "h": 11,
-   "desc": "Viel Frachtraum, drei Triebwerke, Platz für Crew."
+   "desc": "Lots of cargo space, three thrusters, room for crew."
   }
  ],
  "rcs_thrust": 12,

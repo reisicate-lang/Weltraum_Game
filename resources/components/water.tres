@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "water"
-display_name = "Wasserspender"
-description = "Trinkwasser."
+display_name = "Water Dispenser"
+description = "Drinking water."
 power = 0.0
 build_time = 3.0
 cost = {"plate": 2, "pipe": 2}

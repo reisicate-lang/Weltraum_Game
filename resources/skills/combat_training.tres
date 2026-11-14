@@ -5,11 +5,11 @@
 [resource]
 script = ExtResource("1")
 skill_id = "combat_training"
-skill_name = "Kampfausbildung"
-description = "Taktik, Reaktion, Deckung, Belastbarkeit im Kampf. Verbessert Verteidigung und Bedrohungswirkung."
+skill_name = "Combat Training"
+description = "Tactics, reflexes, cover, resilience in combat. Improves defense and threat."
 category = "kampf"
-learning_sources = PackedStringArray("Jeder Kampf", "Training am Trainingsgerät")
+learning_sources = PackedStringArray("Every fight", "Training at the training rig")
 training_actions = PackedStringArray("fight_armed", "fight_unarmed", "fight_ranged", "train_combat", "train_combat_armed", "train_shooting", "study_combat_training")
 required_skills = {}
 gameplay_effects = {"defense": 0.5, "threat": 0.5}
-mastery_text = "Meister: Gegner überlegen es sich zweimal (Plünderer greifen seltener an)."
+mastery_text = "Master: enemies think twice (plunderers attack less often)."

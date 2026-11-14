@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "dockport"
-display_name = "Andockschleuse"
-description = "Frühere Andockschleuse (5×2), wird nicht mehr gebaut: angedockt wird an der Außentür einer Luftschleuse. Alte Exemplare verschwinden, sobald sie nicht mehr gekoppelt sind. Bauweise: 5×2, längs an einer geraden Außenwand: außen 5 Felder Wand mit der Außentür in der Mitte (hier koppeln Station und Wrack, Tür an Tür), innen eine Reihe Wand mit der Innentür. Ungekoppelt ist die Außentür dicht und gesperrt. Baupunkt: die Außentür in der Wand."
+display_name = "Docking Port (legacy)"
+description = "Former docking port (5×2), no longer built: ships now dock at the outer door of an airlock. Old ones disappear as soon as they are no longer coupled. Layout: 5×2, along a straight outer wall: outside 5 wall tiles with the outer door in the middle (station and wreck couple here, door to door), inside a row of wall with the inner door. Uncoupled, the outer door is sealed and locked. Build point: the outer door in the wall."
 power = 0.0
 build_time = 4.0
 cost = {"plate": 2, "circuit": 1}

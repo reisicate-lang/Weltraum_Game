@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1")
 id = "meat"
-display_name = "Fleischklumpen"
+display_name = "Lump of Meat"
 weight = 1.0
 volume = 1.0
 value = 10
-description = "Aus dem Fleischtank. Füllt den Vorratsschrank um 2 Rationen."
+description = "From the meat vat. Fills the food locker with 2 rations."
 refill = {"food": 2}

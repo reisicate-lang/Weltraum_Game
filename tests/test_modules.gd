@@ -131,12 +131,12 @@ func _initialize() -> void:
 	_secs(20)
 	_near_tycho()
 	var why: String = P.autodock_block_reason()
-	_check("1: Auto-Dock gesperrt, mit Grund (%s)" % why, why.begins_with("Kein Autodock-Modul in diesem Steuerpult"))
+	_check("1: Auto-Dock gesperrt, mit Grund (%s)" % why, why.begins_with("Kein Autodock Module in diesem Steuerpult"))
 	var btn = _autodock_button()
 	_check("1: Cockpit-Knopf Auto-Dock gesperrt", btn != null and btn.disabled)
 	toasts.clear()
 	P.start_autodock()
-	_check("1: Start verweigert, Meldung nennt den Grund", P.autodock.is_empty() and not toasts.is_empty() and "Autodock-Modul" in toasts[-1])
+	_check("1: Start verweigert, Meldung nennt den Grund", P.autodock.is_empty() and not toasts.is_empty() and "Autodock Module" in toasts[-1])
 	ui._drop_own("mod_autodock", 1)
 	_check("1: Modul am Boden schaltet nichts frei", mira.inv.count("mod_autodock") == 0 and P.autodock_block_reason() != "")
 	ui.interact()
@@ -178,11 +178,11 @@ func _initialize() -> void:
 	P.helm_at = helm_a.pos
 	_check("2: An A verfügbar", P.autodock_block_reason() == "")
 	P.helm_at = helm_b.pos
-	_check("2: An B gesperrt (%s)" % P.autodock_block_reason(), P.autodock_block_reason().begins_with("Kein Autodock-Modul"))
+	_check("2: An B gesperrt (%s)" % P.autodock_block_reason(), P.autodock_block_reason().begins_with("Kein Autodock Module"))
 	P.helm_at = helm_a.pos
 	_open_helm(helm_a)
 	ui._transfer(true, "mod_autodock", 1)
-	_check("2: A nach Entnahme gesperrt", P.autodock_block_reason().begins_with("Kein Autodock-Modul"))
+	_check("2: A nach Entnahme gesperrt", P.autodock_block_reason().begins_with("Kein Autodock Module"))
 	ui._transfer(false, "mod_autodock", 1)
 	helm_a.inv.add("mod_autodock", 1, 60.0)
 	_check("2: Zwei Module in A: eine Funktion, frei", helm_a.inv.count("mod_autodock") == 2 and P.autodock_block_reason() == "")

@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 hobby_id = "cards"
-hobby_name = "Kartenspiel"
-description = "Spielt gern Karten. Kennt Spieler auf jeder Station, trainiert Glücksspiel."
+hobby_name = "Card Games"
+description = "Likes to play cards. Knows players on every station, trains Gambling."
 related_skill = "gambling"
 effects = {"stress_relief": 6, "unlock": "talk_street"}

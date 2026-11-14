@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "workbench"
-display_name = "Werkbank"
-description = "Hier wird aus Schrott Neues gemacht: Platten, Rohre, Platinen, Filter."
+display_name = "Workbench"
+description = "Turns scrap into new things: plates, pipes, circuit boards, filters."
 power = -0.5
 build_time = 5.0
 cost = {"plate": 3, "motor": 1}

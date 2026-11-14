@@ -5,13 +5,13 @@
 [resource]
 script = ExtResource("1")
 id = "waterfilter"
-display_name = "Wasserfilter"
-description = "Bereitet Abwasser aus Waschbecken und Toilette wieder zu Trinkwasser auf. Braucht 0,5 kW und Filterkartuschen."
+display_name = "Water Filter"
+description = "Turns waste water from sinks back into drinking water. Needs 0.5 kW and filter cartridges."
 power = -0.5
 build_time = 5.0
 cost = {"plate": 2, "pipe": 3, "filter": 1}
 stock = 20.0
-stock_unit = "Filterleistung"
+stock_unit = "filter capacity"
 storage = 0.0
 need = ""
 wears = true

@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "ice"
-display_name = "Wassereis"
+display_name = "Water Ice"
 weight = 8.0
 volume = 8.0
 value = 6
-description = "Gefrorenes Wasser vom Asteroiden. In der Chemiestation wird daraus Trinkwasser."
+description = "Frozen water from an asteroid. The chemistry station turns it into drinking water."

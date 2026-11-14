@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "trainer"
-display_name = "Trainingsgerät"
-description = "Sandsack und Zielscheibe. Hier trainiert die Crew Kampf und baut Stress ab."
+display_name = "Training Rig"
+description = "Punching bag and target. The crew trains combat here and works off stress."
 build_time = 4.0
 cost = {"plate": 2, "fabric": 4}
 color = Color(0.4, 0.25, 0.25, 1)

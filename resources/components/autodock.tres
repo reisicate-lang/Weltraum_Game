@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "autodock"
-display_name = "Auto-Dock-Modul"
-description = "Dockt automatisch an, wenn du nah genug und langsam genug bist."
+display_name = "Auto-Dock (legacy)"
+description = "Former stand-alone auto-dock device. Becomes the Autodock Module in the navigation console when a save is loaded."
 power = -0.2
 build_time = 6.0
 cost = {"circuit": 4, "motor": 1, "datachip": 1}
@@ -18,4 +18,3 @@ color = Color(0.25, 0.35, 0.3, 1)
 tech = "robotic"
 category = "sensor"
 buildable = false
-description = "Früheres eigenständiges Auto-Dock-Gerät. Wird beim Laden zum Autodock-Modul im Steuerpult."

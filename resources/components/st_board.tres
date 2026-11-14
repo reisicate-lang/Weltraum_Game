@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "st_board"
-display_name = "Auftragsbrett"
-description = "Aushänge und Aufträge der Fraktionen."
+display_name = "Job Board"
+description = "Notices and jobs from the factions."
 power = 0.0
 build_time = 1.0
 cost = {}

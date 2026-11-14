@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1")
 id = "contraband"
-display_name = "Schmuggelware"
+display_name = "Contraband"
 weight = 1.0
 volume = 1.0
 value = 90
-description = "Versiegelte Kisten ohne Papiere. Am Schwarzmarkt viel wert."
+description = "Sealed crates without papers. Worth a lot on the black market."
 contraband = true

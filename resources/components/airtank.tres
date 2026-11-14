@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "airtank"
-display_name = "Lufttank"
-description = "Füllt Luft nach, wenn der Druck unter 95 kPa fällt."
+display_name = "Air Tank"
+description = "Refills air when the pressure drops below 95 kPa."
 power = 0.0
 build_time = 4.0
 cost = {"plate": 4, "pipe": 2}

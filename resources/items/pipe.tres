@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1")
 id = "pipe"
-display_name = "Rohrstück"
+display_name = "Pipe Section"
 weight = 2.0
 volume = 2.0
 value = 10
-description = "Für Luft- und Wasserleitungen."
+description = "For air and water lines."
 refill = {}

@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "locker"
-display_name = "Anzugschrank"
-description = "Bewahrt einen Raumanzug auf und füllt Sauerstoff und Akku auf. Braucht 0,5 kW."
+display_name = "Suit Locker"
+description = "Stores one space suit and refills its oxygen and battery. Needs 0.5 kW."
 power = -0.5
 build_time = 4.0
 cost = {"plate": 3, "pipe": 1, "circuit": 1}

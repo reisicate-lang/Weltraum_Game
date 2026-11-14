@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1")
 id = "watercan"
-display_name = "Wasserkanister"
+display_name = "Water Can"
 weight = 10.0
 volume = 10.0
 value = 8
-description = "Füllt Wasserspender oder Waschbecken um 10 L auf."
+description = "Refills a water dispenser or sink by 10 L."
 refill = {"water": 10, "sink": 10, "hydro": 10}

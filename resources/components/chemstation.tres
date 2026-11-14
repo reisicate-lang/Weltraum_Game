@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "chemstation"
-display_name = "Chemiestation"
-description = "Stellt Filterkartuschen, Brennstoff und Gen-Mods her."
+display_name = "Chemistry Station"
+description = "Makes filter cartridges, generator fuel and gene mods."
 power = -0.8
 build_time = 6.0
 cost = {"plate": 3, "pipe": 2, "glass": 1, "circuit": 1}

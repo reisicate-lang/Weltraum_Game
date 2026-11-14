@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1")
 id = "cell"
-display_name = "Akkuzelle"
+display_name = "Battery Cell"
 weight = 2.0
 volume = 1.0
 value = 60
-description = "Speichert Strom. Für Batterien."
+description = "Stores power. For batteries."
 refill = {}

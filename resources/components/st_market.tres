@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "st_market"
-display_name = "Markttresen"
-description = "Händler der Station. Hier kaufst und verkaufst du direkt aus dem Gepäck."
+display_name = "Market Counter"
+description = "The station's trader. Buy and sell straight from your pack."
 power = 0.0
 build_time = 1.0
 cost = {}

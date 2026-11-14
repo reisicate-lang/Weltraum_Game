@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1")
 id = "filter"
-display_name = "Filterkartusche"
+display_name = "Filter Cartridge"
 weight = 1.0
 volume = 1.5
 value = 35
-description = "Für CO₂-Filter und Wasseraufbereitung."
+description = "For CO₂ scrubbers and water treatment."
 refill = {"waterfilter": 20}

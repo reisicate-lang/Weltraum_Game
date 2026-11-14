@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "st_bank"
-display_name = "Kreditbüro"
-description = "Raten, Tilgung und Kontoauszug."
+display_name = "Credit Office"
+description = "Instalments, repayment and account statement."
 power = 0.0
 build_time = 1.0
 cost = {}

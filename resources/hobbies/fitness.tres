@@ -6,6 +6,6 @@
 script = ExtResource("1")
 hobby_id = "fitness"
 hobby_name = "Fitness"
-description = "Trainiert jeden Tag. Trainiert Kampfausbildung, mehr Belastbarkeit."
+description = "Works out every day. Trains Combat Training and adds toughness."
 related_skill = "combat_training"
 effects = {"stress_relief": 10, "toughness": 0.1}

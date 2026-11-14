@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "helm"
-display_name = "Steuerpult"
-description = "Zum Fliegen und Navigieren (Taste N). Braucht 0,3 kW."
+display_name = "Navigation Console"
+description = "Fly the ship from the cockpit (N or click). Has a module bay (E at the console): modules placed in it, such as the Autodock Module, unlock functions at this console. Needs 0.3 kW."
 power = -0.3
 build_time = 6.0
 cost = {"plate": 2, "circuit": 3, "glass": 1}
@@ -18,4 +18,3 @@ color = Color(0.2, 0.3, 0.42, 1)
 tech = "computer"
 category = "control"
 storage = 6.0
-description = "Steuerpult: Fliegen im Cockpit (N oder Klick). Hat ein Modulfach (E am Pult): eingelegte Module wie das Autodock-Modul schalten an diesem Pult Funktionen frei."

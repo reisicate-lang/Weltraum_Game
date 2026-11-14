@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "charger"
-display_name = "Tragbare Ladestation"
-description = "Akku mit 10 kWh. Lädt Raumanzüge auch draußen. Mit "Versetzen" umstellbar."
+display_name = "Portable Charger"
+description = "Battery with 10 kWh. Charges space suits, even outside. Can be relocated with the Move tool."
 power = 0.0
 build_time = 3.0
 cost = {"plate": 1, "cell": 2, "circuit": 1}

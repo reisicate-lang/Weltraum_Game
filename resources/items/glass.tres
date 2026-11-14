@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1")
 id = "glass"
-display_name = "Panzerglas"
+display_name = "Armored Glass"
 weight = 5.0
 volume = 3.0
 value = 30
-description = "Für Solarpanels und Fenster."
+description = "For solar panels and windows."
 refill = {}

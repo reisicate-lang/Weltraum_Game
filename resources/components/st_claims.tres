@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "st_claims"
-display_name = "Bergungsamt"
-description = "Bergungsrechte für neue Wracks, Untersuchungen, Verschrottung."
+display_name = "Salvage Office"
+description = "Salvage claims for new wrecks, investigations, scrapping."
 power = 0.0
 build_time = 1.0
 cost = {}

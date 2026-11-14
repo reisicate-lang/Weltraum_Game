@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1")
 id = "boltgun"
-display_name = "Bolzenpistole"
+display_name = "Bolt Gun"
 weight = 1.5
 volume = 1.0
 value = 160
-description = "Umgebautes Bolzenschussgerät. Fernkampfwaffe."
+description = "Modified captive bolt gun. Ranged weapon."
 weapon = "ranged"

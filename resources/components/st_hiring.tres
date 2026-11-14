@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "st_hiring"
-display_name = "Heuerbüro"
-description = "Hier suchen Raumfahrer eine Koje."
+display_name = "Hiring Office"
+description = "Spacers looking for a berth."
 power = 0.0
 build_time = 1.0
 cost = {}

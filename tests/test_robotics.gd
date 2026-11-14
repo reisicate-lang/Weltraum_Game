@@ -98,7 +98,7 @@ func _initialize() -> void:
 	var tip: String = _course_row("robotics").tooltip_text if _course_row("robotics") != null else ""
 	_check("1: Tooltip: Kosten, Bonus, Lernwege, Fortschritt (%s)" % tip.replace("\n", " | "),
 		"costs 1 year." in tip and "+4 work value" in tip and "Affected categories: Controls, Sensors." in tip
-		and "Practical work" in tip and "navigation station" in tip and "Textbook: Robotics Engineering" in tip and "Learning progress:" in tip)
+		and "Practical work" in tip and "Repairing the navigation console" in tip and "Textbook: Robotics Engineering" in tip and "Learning progress:" in tip)
 	_check("1: Auswählen: Vorschau +1", await _press_course("robotics", "Add") and CHS.preview_age(mira) == base + 1 and mira.age == base and "(incl. Robotics Engineering course +1 year)" in _texts(cui.creation_box))
 	_check("1: Entfernen: Vorschau −1", await _press_course("robotics", "Remove") and CHS.preview_age(mira) == base)
 	_check("1: Erneut auswählen", await _press_course("robotics", "Add") and CHS.preview_age(mira) == base + 1)

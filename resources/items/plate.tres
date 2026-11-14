@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1")
 id = "plate"
-display_name = "Stahlplatte"
+display_name = "Steel Plate"
 weight = 8.0
 volume = 4.0
 value = 18
-description = "Für Böden, Wände und Gehäuse."
+description = "For floors, walls and housings."
 refill = {}

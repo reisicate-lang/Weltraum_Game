@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "heater"
-display_name = "Heizung"
-description = "Hält den Raum warm (bis 21 °C). Braucht 1 kW, aber nur wenn es kalt ist."
+display_name = "Heater"
+description = "Keeps the room warm (up to 21 °C). Needs 1 kW, but only while it is cold."
 power = -1.0
 build_time = 4.0
 cost = {"plate": 2, "copper": 2, "circuit": 1}

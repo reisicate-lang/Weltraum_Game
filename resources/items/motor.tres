@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1")
 id = "motor"
-display_name = "Elektromotor"
+display_name = "Electric Motor"
 weight = 6.0
 volume = 4.0
 value = 90
-description = "Für Pumpen, Lüfter und Generatoren."
+description = "For pumps, fans and generators."
 refill = {}

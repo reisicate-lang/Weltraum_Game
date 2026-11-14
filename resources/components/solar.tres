@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "solar"
-display_name = "Solarpanel"
-description = "Erzeugt 1,5 kW ohne Brennstoff. Funktioniert nur draußen im Vakuum."
+display_name = "Solar Panel"
+description = "Produces 1.5 kW without fuel. Only works outside in vacuum."
 power = 1.5
 build_time = 5.0
 cost = {"glass": 2, "copper": 2, "circuit": 1}

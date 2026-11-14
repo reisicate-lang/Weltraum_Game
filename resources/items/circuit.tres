@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1")
 id = "circuit"
-display_name = "Platine"
+display_name = "Circuit Board"
 weight = 0.4
 volume = 0.5
 value = 45
-description = "Steuerelektronik für Türen und Geräte."
+description = "Control electronics for doors and devices."
 refill = {}

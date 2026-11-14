@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1")
 id = "fabric"
-display_name = "Stoff"
+display_name = "Fabric"
 weight = 1.0
 volume = 2.0
 value = 8
-description = "Für Betten und Anzüge."
+description = "For beds and suits."
 refill = {}

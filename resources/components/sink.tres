@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "sink"
-display_name = "Waschbecken"
-description = "Zum Waschen."
+display_name = "Sink"
+description = "For washing."
 power = 0.0
 build_time = 3.0
 cost = {"plate": 2, "pipe": 2}

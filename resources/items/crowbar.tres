@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1")
 id = "crowbar"
-display_name = "Brechstange"
+display_name = "Crowbar"
 weight = 2.5
 volume = 1.5
 value = 30
-description = "Werkzeug und Nahkampfwaffe."
+description = "Tool and melee weapon."
 weapon = "armed"

@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "crate"
-display_name = "Frachtkiste"
-description = "Lagert Gegenstände (400 Liter)."
+display_name = "Cargo Crate"
+description = "Stores items (400 liters)."
 power = 0.0
 build_time = 3.0
 cost = {"plate": 3}

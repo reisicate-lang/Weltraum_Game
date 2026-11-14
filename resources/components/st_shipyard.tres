@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "st_shipyard"
-display_name = "Werftbüro"
-description = "Schiffe kaufen, verkaufen und anmelden."
+display_name = "Shipyard Office"
+description = "Buy, sell and register ships."
 power = 0.0
 build_time = 1.0
 cost = {}

@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "autofarm"
-display_name = "Auto-Farm"
-description = "Teuer und begrenzt: erntet selbstständig. Mit Gen-Mod jeden Tag 2 Rationen. Braucht 2 kW."
+display_name = "Auto Farm"
+description = "Expensive and limited: harvests on its own. With a gene mod, 2 rations every day. Needs 2 kW."
 power = -2.0
 build_time = 8.0
 cost = {"plate": 4, "motor": 2, "circuit": 3, "glass": 2}

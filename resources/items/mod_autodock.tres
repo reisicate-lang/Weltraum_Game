@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1")
 id = "mod_autodock"
-display_name = "Autodock-Modul"
+display_name = "Autodock Module"
 weight = 3.0
 volume = 2.0
 value = 420
-description = "Steuerpultmodul. Ins Modulfach eines Steuerpults gelegt (E am Pult), schaltet es dort im Cockpit das Auto-Dock frei. Wirkt nur in dem Pult, in dem es steckt."
+description = "Navigation console module. Placed in the module bay of a navigation console (E at the console), it unlocks Auto-Dock in the cockpit there. Only works in the console it is in."
 helm_module = "autodock"

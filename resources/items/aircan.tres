@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1")
 id = "aircan"
-display_name = "Druckluftflasche"
+display_name = "Compressed Air Bottle"
 weight = 15.0
 volume = 12.0
 value = 50
-description = "Füllt einen Lufttank um 800 kPa auf."
+description = "Refills an air tank by 800 kPa."
 refill = {"airtank": 800}

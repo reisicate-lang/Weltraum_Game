@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1")
 id = "scrap"
-display_name = "Schrott"
+display_name = "Scrap"
 weight = 3.0
 volume = 3.0
 value = 4
-description = "Verbogenes Metall. Taugt zum Einschmelzen."
+description = "Bent metal. Good for melting down."
 refill = {}

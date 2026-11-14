@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "extinguisher"
-display_name = "Feuerlöscher-Station"
-description = "Die Crew löscht Brände in der Nähe schneller."
+display_name = "Fire Extinguisher Station"
+description = "The crew puts out nearby fires faster."
 power = 0.0
 build_time = 2.0
 cost = {"plate": 1, "pipe": 1}

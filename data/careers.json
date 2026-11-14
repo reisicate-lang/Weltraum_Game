@@ -39,7 +39,7 @@
   },
   {
    "id": "military",
-   "name": "Militärdienst",
+   "name": "Military Service",
    "years": 4,
    "min_age": 18,
    "requires": [],
@@ -60,11 +60,11 @@
     "tough"
    ],
    "enemy_chance": 0.4,
-   "text": "Diente im Krieg auf einer Fregatte. Sah mehr, als ihr lieb war."
+   "text": "Served on a frigate in the war. Saw more than anyone should."
   },
   {
    "id": "street",
-   "name": "Jahre auf der Straße",
+   "name": "Years on the Street",
    "years": 3,
    "min_age": 18,
    "requires": [],
@@ -79,12 +79,12 @@
    "traits_add": [
     "craven"
    ],
-   "contact": "Schieberin Vex (Habitat L4)",
-   "text": "Schlug sich in den Gängen von L4 durch."
+   "contact": "Fixer Vex (Habitat L4)",
+   "text": "Got by in the corridors of L4."
   },
   {
    "id": "university",
-   "name": "Universität: Physik",
+   "name": "University: Physics",
    "years": 4,
    "min_age": 18,
    "requires": [],
@@ -98,11 +98,11 @@
    "traits_add": [
     "genius"
    ],
-   "text": "Studierte Bahnmechanik am Kármán-Ring. Hat noch Studienschulden."
+   "text": "Studied orbital mechanics at the Kármán Ring. Still has student debt."
   },
   {
    "id": "trader",
-   "name": "Handelskontor",
+   "name": "Trading House",
    "years": 3,
    "min_age": 18,
    "requires": [],
@@ -112,12 +112,12 @@
     "oligarch_et": 20
    },
    "credits": 1200,
-   "contact": "Bankier Aurel Lindqvist (Kármán-Ring)",
-   "text": "Arbeitete im Kontor einer Handelsgesellschaft."
+   "contact": "Banker Aurel Lindqvist (Kármán Ring)",
+   "text": "Worked in the counting house of a trading company."
   },
   {
    "id": "miner",
-   "name": "Bergbaukolonie",
+   "name": "Mining Colony",
    "years": 3,
    "min_age": 18,
    "requires": [],
@@ -131,11 +131,11 @@
    "traits_add": [
     "strong"
    ],
-   "text": "Baute Eis und Erz auf einem Asteroiden ab."
+   "text": "Mined ice and ore on an asteroid."
   },
   {
    "id": "pilot_school",
-   "name": "Pilotenschule",
+   "name": "Pilot School",
    "years": 3,
    "min_age": 18,
    "requires": [],
@@ -146,11 +146,11 @@
     "robotics": 8
    },
    "credits": -200,
-   "text": "Lernte fliegen und andocken auf Schulschuttles."
+   "text": "Learned to fly and dock on training shuttles."
   },
   {
    "id": "medic",
-   "name": "Sanitätsdienst",
+   "name": "Medical Service",
    "years": 3,
    "min_age": 18,
    "requires": [],
@@ -163,11 +163,11 @@
    "traits_add": [
     "brave"
    ],
-   "text": "Versorgte Verletzte nach Unfällen und Gefechten."
+   "text": "Treated the injured after accidents and battles."
   },
   {
    "id": "hacker",
-   "name": "Datenhändlerin",
+   "name": "Data Broker",
    "years": 3,
    "min_age": 18,
    "requires": [],
@@ -179,11 +179,11 @@
    },
    "credits": 400,
    "enemy_chance": 0.5,
-   "text": "Knackte Datenchips für zwielichtige Kunden."
+   "text": "Cracked data chips for shady clients."
   },
   {
    "id": "bar",
-   "name": "Barmusikerin",
+   "name": "Bar Musician",
    "years": 2,
    "min_age": 18,
    "requires": [],
@@ -198,11 +198,11 @@
    "traits_add": [
     "gregarious"
    ],
-   "text": "Sang in den Bars der Stationen für ein paar Credits."
+   "text": "Sang in station bars for a few credits."
   },
   {
    "id": "cook",
-   "name": "Schiffsköchin",
+   "name": "Ship's Cook",
    "years": 2,
    "min_age": 18,
    "requires": [],
@@ -212,11 +212,11 @@
     "psychology": 8
    },
    "credits": 200,
-   "text": "Kochte für die Crew eines Erzfrachters."
+   "text": "Cooked for the crew of an ore freighter."
   },
   {
    "id": "salvager",
-   "name": "Bergungscrew",
+   "name": "Salvage Crew",
    "years": 3,
    "min_age": 18,
    "requires": [],
@@ -228,7 +228,7 @@
     "civil": 10
    },
    "credits": 500,
-   "text": "Schlachtete Wracks im Trümmerfeld aus."
+   "text": "Stripped wrecks in the debris field."
   }
  ],
  "start_age": 18,

@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "thruster"
-display_name = "Triebwerk"
-description = "Schub 40 kN, Masse 1,5 t. Belegt 3 Felder in einer Linie: innen auf dem Schiffsboden, Mitte auf einer Außenwand, Düse draußen im All. Schiebt das Schiff von der Düse weg. Richtung beim Bauen mit G wählen. Mehrere gleich ausgerichtete Triebwerke addieren ihren Schub. Verbraucht Treibstoff."
+display_name = "Thruster"
+description = "Thrust 40 kN, mass 1.5 t. Takes 3 tiles in a line: inside on the ship floor, the middle on an outer wall, the nozzle outside in space. Pushes the ship away from the nozzle. Pick the direction with G while building. Thrusters facing the same way add up their thrust. Uses fuel."
 power = -0.2
 build_time = 8.0
 cost = {"plate": 4, "motor": 1, "pipe": 3}

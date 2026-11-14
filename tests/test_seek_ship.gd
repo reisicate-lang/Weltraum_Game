@@ -65,7 +65,7 @@ func _initialize() -> void:
 	_check("Kurs bestätigt (+3), Schiff gekauft, Erstellung beendet", c.age == age_b + 1 + 3 and CHS.ship_bought(c) == "bairn" and CHS.creation_ended(c))
 	_check("Danach nichts mehr: kein Ereignis, kein Kurs, kein neues Schiff",
 		CHS.adventure_block_reason(c) != "" and not CHS.set_course(c, true, "business") and CHS.seek_ship(c) == "" and CHS.available(c).is_empty())
-	_check("Lebenslauf: „Bought the Frachter Bairn …“", c.history.any(func(h): return String(h).contains("Bought the Frachter Bairn")))
+	_check("Lebenslauf: „Bought the Freighter Bairn …“", c.history.any(func(h): return String(h).contains("Bought the Freighter Bairn")))
 
 	# 3) Mit 47 erzwungen: erstes Angebot wird angenommen
 	var d := CrewMember.new(991, "Late", Color.WHITE, Vector2i.ZERO)

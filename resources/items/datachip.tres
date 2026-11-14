@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1")
 id = "datachip"
-display_name = "Datenchip"
+display_name = "Data Chip"
 weight = 0.05
 volume = 0.1
 value = 150
-description = "Gespeicherte Daten. Manche zahlen viel dafür."
+description = "Stored data. Some people pay a lot for it."
 refill = {}
