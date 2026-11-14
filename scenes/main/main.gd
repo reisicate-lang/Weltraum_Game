@@ -1,7 +1,7 @@
-## Hauptszene: Kamera, Maus und Tastatur.
-## Linke Maustaste: Werkzeug benutzen (ziehen = Fläche).
-## Rechte Maustaste: Bauplan oder Aufgabe abbrechen, sonst zurück zur Auswahl.
-## Mittlere Maustaste oder Ziehen mit "Auswahl": Ansicht verschieben.
+## Main scene: camera, mouse and keyboard.
+## Left mouse button: use the tool (drag = area).
+## Right mouse button: cancel a build plan or task, otherwise back to Select.
+## Middle mouse button or dragging with "Select": pan the view.
 extends Node2D
 
 @onready var view = $ShipView  # ship_view.gd
@@ -16,7 +16,7 @@ func _ready() -> void:
 	cam.position = Vector2(Config.WORLD_W, Config.WORLD_H) * Config.TILE_SIZE * 0.5
 	cam.zoom = Vector2(1.4, 1.4)
 	UIManager.world_view = self
-	# Zu Spielbeginn den Lebenslauf wählen lassen
+	# Let the player choose the life story at the start of the game
 	UIManager.char_ui.open_creation.call_deferred()
 	EventBus.game_loaded.connect(func(): _drag_start = Vector2i(-1, -1))
 
@@ -28,15 +28,15 @@ func _process(delta: float) -> void:
 	view.hover = _tile_at_mouse()
 	var empty: Array[Vector2i] = []
 	view.preview = _drag_tiles() if _drag_start.x >= 0 else empty
-	# Ansicht mit Pfeiltasten
+	# Pan the view with the arrow keys
 	var pan := Vector2.ZERO
 	if Input.is_physical_key_pressed(KEY_LEFT): pan.x -= 1
 	if Input.is_physical_key_pressed(KEY_RIGHT): pan.x += 1
 	if Input.is_physical_key_pressed(KEY_UP): pan.y -= 1
 	if Input.is_physical_key_pressed(KEY_DOWN): pan.y += 1
 	cam.position += pan * 600.0 * delta / cam.zoom.x
-	# Cockpit (Flugmodus): die Flugtasten steuern das Schiff, die Figur bleibt am Pult.
-	# Die Tasten setzen nur Eingaben; Schub und Drehung rechnet PhysicsSystem in Spielzeit.
+	# Cockpit (flight mode): the flight keys steer the ship, the character stays at the console.
+	# The keys only set inputs; PhysicsSystem computes thrust and rotation in game time.
 	if UIManager.nav_open:
 		if not UIManager.keep_pilot():
 			return
@@ -49,7 +49,7 @@ func _process(delta: float) -> void:
 		else:
 			P.stop_inputs()
 		return
-	# Deine Figur mit WASD (echte Geschwindigkeit, nicht in der Pause)
+	# Your character with WASD (real speed, not while paused)
 	var p := CrewSystem.player()
 	if p != null and TimeSystem.speed_index > 0:
 		var dir := Vector2.ZERO
@@ -62,7 +62,7 @@ func _process(delta: float) -> void:
 			p.manual_move(dir, Config.WALK_SPEED / 60.0 * delta * sprint)
 			cam.position = cam.position.lerp(p.pos * Config.TILE_SIZE, minf(1.0, delta * 4.0))
 
-## Achse aus zwei Tasten: +1, -1 oder 0
+## Axis from two keys: +1, -1 or 0
 func _axis(plus: Key, minus: Key) -> float:
 	return (1.0 if Input.is_physical_key_pressed(plus) else 0.0) - (1.0 if Input.is_physical_key_pressed(minus) else 0.0)
 
@@ -75,14 +75,14 @@ func _drag_tiles() -> Array[Vector2i]:
 		return out
 	for y in range(mini(a.y, b.y), maxi(a.y, b.y) + 1):
 		for x in range(mini(a.x, b.x), maxi(a.x, b.x) + 1):
-			# Wand: nur der Rand des Rechtecks
+			# Wall: only the outline of the rectangle
 			if GameState.tool == "wall" and x != mini(a.x, b.x) and x != maxi(a.x, b.x) and y != mini(a.y, b.y) and y != maxi(a.y, b.y):
 				continue
 			out.append(Vector2i(x, y))
 	return out
 
-## Tab: persönliches Inventar – überall, auch im Cockpit. Hier statt in _unhandled_input,
-## damit die Oberfläche Tab nicht für den Fokuswechsel verschluckt. Halten (Echo) wechselt nicht.
+## Tab: personal inventory – everywhere, also in the cockpit. Handled here instead of in _unhandled_input
+## so the UI does not swallow Tab for focus switching. Holding it (echo) does not toggle.
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.is_pressed() and not event.is_echo() and (event as InputEventKey).keycode == KEY_TAB:
 		var focus := get_viewport().gui_get_focus_owner()
@@ -188,7 +188,7 @@ func _right_click(t: Vector2i) -> void:
 		c.cancel_all()
 		GameState.toast(c.display_name + ": task cancelled.")
 		return
-	# Mit dem Auswahl-Werkzeug: Kontextmenü für das Objekt (Abbauen, Zerlegen, Zerstören ...)
+	# With the Select tool: context menu for the object (Uninstall, Dismantle, Destroy ...)
 	if GameState.tool == "select" and UIManager.open_object_menu(t):
 		return
 	if g.in_bounds(t) and ShipConstructionSystem.jobs.has(g.idx(t)):
@@ -201,7 +201,7 @@ func _key(k: InputEventKey) -> void:
 	if k.ctrl_pressed and k.keycode == KEY_S:
 		SaveSystem.save_game()
 		return
-	# Im Cockpit gehören die Tasten dem Schiff (keine Werkzeuge, keine Figur)
+	# In the cockpit the keys belong to the ship (no tools, no character)
 	if UIManager.nav_open:
 		var P := PhysicsSystem
 		match k.keycode:

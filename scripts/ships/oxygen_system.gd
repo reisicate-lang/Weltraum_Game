@@ -1,5 +1,5 @@
-## Lebenserhaltung: Sauerstoff-Generator, CO2-Filter und Lufttank
-## verändern die Luft auf ihrem Feld. Die Verteilung übernimmt das
+## Life support: oxygen generator, CO2 scrubber and air tank
+## change the air on their tile. The distribution is handled by the
 ## AtmosphereSystem.
 extends Node
 

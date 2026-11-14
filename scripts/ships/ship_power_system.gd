@@ -1,12 +1,12 @@
-## Stromnetz: Kabel, die sich berühren, bilden ein Netz. Geräte auf
-## einem Kabel hängen daran. Überschuss lädt Batterien, Mangel leert sie.
-## Stromschalter leiten nur eingeschaltet. Beschädigte Batterien speichern
-## weniger (Kapazität × Zustand) und verlieren unter LEAK_COND langsam Ladung.
+## Power grid: cables that touch form a network. Devices on
+## a cable hang on it. A surplus charges batteries, a deficit drains them.
+## Power switches only conduct while on. Damaged batteries store
+## less (capacity × condition) and slowly lose charge below LEAK_COND.
 extends Node
 
-## Unter diesem Zustand (%) kriecht die Ladung einer Batterie weg
+## Below this condition (%) a battery's charge creeps away
 const LEAK_COND := 75.0
-## Verlust pro Stunde bei Zustand 0, als Anteil der Nennkapazität
+## Loss per hour at condition 0, as a fraction of the rated capacity
 const LEAK_PER_H := 0.1
 
 var nets: Array[Dictionary] = []
@@ -21,7 +21,7 @@ func _rebuild() -> void:
 	net_of.resize(g.tiles.size())
 	net_of.fill(-1)
 	nets.clear()
-	# Stromschalter: an = leitet (auch ohne Kabel), aus = trennt (auch mit Kabel)
+	# Power switches: on = conducts (even without a cable), off = splits (even with a cable)
 	var switches := {}
 	for i in g.devices:
 		if g.devices[i].type == "power_switch":
@@ -67,11 +67,11 @@ func step(dt: float) -> void:
 		var net: Dictionary = nets[dev.net]
 		if d.power > 0.0 and not dev.broken:
 			if dev.type == "solar":
-				dev.producing = g.pressure(i) < 5.0  # nur draußen im Vakuum
+				dev.producing = g.pressure(i) < 5.0  # only outside in vacuum
 			elif d.stock >= 0.0:
 				dev.producing = dev.stock > 0.0
 				if dev.producing:
-					dev.stock = maxf(0.0, dev.stock - dt / 60.0)  # 1 Brennstoff pro Stunde
+					dev.stock = maxf(0.0, dev.stock - dt / 60.0)  # 1 generator fuel per hour
 			else:
 				dev.producing = true
 			if dev.producing:
@@ -80,7 +80,7 @@ func step(dt: float) -> void:
 			if dev.broken:
 				dev.powered = false
 			else:
-				# Heizung und Schleusenpumpe brauchen nur Strom, wenn sie arbeiten
+				# The heater and the airlock pump only need power while they work
 				var idle: bool = (dev.type == "heater" and g.temp[i] >= Config.ROOM_TEMP - 0.5) or (dev.type == "pump" and not AirlockSystem.is_pumping(dev))
 				if not idle:
 					net.demand += -d.power
@@ -107,7 +107,7 @@ func step(dt: float) -> void:
 				b.charge += maxf(0.0, add)
 				left -= maxf(0.0, add)
 		else:
-			# Jede Batterie gibt höchstens ihre Entladegrenze (kW) ab
+			# Each battery delivers at most its discharge limit (kW)
 			var avail := 0.0
 			var give := []
 			for b in bats:
@@ -123,18 +123,18 @@ func step(dt: float) -> void:
 		for c in consumers.get(id, []):
 			c.powered = net.ok
 
-## Nutzbare Kapazität: Nennkapazität × Zustand, kaputt = 0
+## Usable capacity: rated capacity × condition, broken = 0
 func capacity_of(dev: Device) -> float:
 	if dev.broken:
 		return 0.0
 	return dev.data().capacity * clampf(dev.cond, 0.0, 100.0) / 100.0
 
-## Wie viel kWh eine Batterie in dt (Minuten) höchstens laden/abgeben kann
+## How many kWh a battery can charge/deliver at most in dt (minutes)
 func rate_limit(dev: Device, dt: float) -> float:
 	var r := dev.data().max_rate
 	return INF if r <= 0.0 else r * dt / 60.0
 
-## Stromschalter umlegen; Netze werden neu aufgebaut
+## Flip a power switch; the networks are rebuilt
 func toggle_switch(dev: Device) -> void:
 	dev.switch_on = not dev.switch_on
 	_dirty = true

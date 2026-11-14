@@ -1,9 +1,9 @@
-## Speichern und Laden als JSON-Datei (user://savegame.json).
-## Autosave jede Minute (echte Zeit).
+## Saving and loading as a JSON file (user://savegame.json).
+## Autosave every minute (real time).
 extends Node
 
 var _autosave := 0.0
-## Aktueller Speicherplatz (1–3)
+## current save slot (1–3)
 var slot := 1
 
 func path(s: int = -1) -> String:
@@ -15,7 +15,7 @@ func _process(delta: float) -> void:
 		_autosave = 0.0
 		save_game(true)
 
-## Kurzinfo zu einem Speicherplatz (für das Menü)
+## Short info about a save slot (for the menu)
 func slot_info(s: int) -> String:
 	if not FileAccess.file_exists(path(s)):
 		return "empty"
@@ -52,8 +52,8 @@ func save_game(silent: bool = false) -> bool:
 		GameState.toast("Game saved.")
 	return true
 
-## Früherer Spielstand (doppelt so große Felder): gespeicherte Positionen ins feine Raster.
-## Das Schiff selbst hat ShipGrid.from_data schon verfeinert (coarse_map: grob -> fein).
+## Earlier save (twice as large tiles): convert stored positions to the fine grid.
+## ShipGrid.from_data has already refined the ship itself (coarse_map: coarse -> fine).
 func _upscale_positions(data: Dictionary) -> void:
 	var g := ShipSystem.grid
 	var cw := g.coarse_width
@@ -123,9 +123,9 @@ func load_game(silent: bool = false) -> bool:
 		GameState.toast("Game loaded.")
 	return true
 
-## Ältere Spielstände: Transponder und Antenne gab es noch nicht. Fehlen sie am eigenen Schiff,
-## liegen beide als einbaubare Teile an Bord (Ostranauts Ship Ownership: manche Stationen
-## lassen nur Schiffe mit beidem andocken).
+## Older saves: transponders and antennas did not exist yet. If they are missing on your own ship,
+## both lie aboard as installable parts (Ostranauts Ship Ownership: some stations
+## only let ships with both dock).
 func _migrate_xpdr() -> void:
 	var missing: PackedStringArray = []
 	for t in ["transponder", "antenna"]:

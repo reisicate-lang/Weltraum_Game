@@ -1,13 +1,13 @@
-## Raumfahrt: Das Schiff ist ein Punkt im verkleinerten Erde-Mond-System
-## mit Position, Geschwindigkeit und Ausrichtung. Erde und Mond ziehen
-## es an. Triebwerke beschleunigen in Blickrichtung (Trägheit!).
-## Einheiten: km, km/s, Sekunden. Daten: res://data/space.json
+## Space flight: the ship is a point in a scaled-down Earth–Moon system
+## with position, velocity and heading. Earth and Moon pull
+## on it. Thrusters accelerate in the facing direction (inertia!).
+## Units: km, km/s, seconds. Data: res://data/space.json
 extends Node
 
 var space: Dictionary = {}
 var locations: Array = []
 
-## Schiffszustand
+## Ship state
 var pos := Vector2.ZERO
 var vel := Vector2.ZERO
 var angle := 0.0
@@ -15,32 +15,32 @@ var docked := "tycho"
 var travel: Dictionary = {}     ## {to, t0, t1, from}
 var autodock: Dictionary = {}   ## {to, t0, t1}
 var match_target := ""          ## Geschwindigkeit an dieses Ziel angleichen
-var thrust := 0.0               ## vor (+1) / zurück (-1), relativ zur Ausrichtung
-var strafe := 0.0               ## rechts (+1) / links (-1), relativ zur Ausrichtung
-var rot_input := 0.0            ## Drehschub: im Uhrzeigersinn (+1) / gegen (-1)
-var rot_stop := false           ## Drehung abbremsen (Gegenschub der Lagedüsen)
-var ang_vel := 0.0              ## Drehgeschwindigkeit in rad/s (bleibt ohne Gegenschub erhalten)
-var target := ""                ## ausgewähltes Ziel (Ort) für Anzeige und Andocken
-## Angleichen: aktuelle Schub-Eingabe der Angleichung (für Anzeige und Flammen)
+var thrust := 0.0               ## forward (+1) / back (-1), relative to the heading
+var strafe := 0.0               ## right (+1) / left (-1), relative to the heading
+var rot_input := 0.0            ## Rotation thrust: clockwise (+1) / counter-clockwise (-1)
+var rot_stop := false           ## Brake the rotation (counter-thrust of the RCS)
+var ang_vel := 0.0              ## Angular velocity in rad/s (kept without counter-thrust)
+var target := ""                ## selected target (place) for display and docking
+## Matching: current thrust input of the matching (for display and flames)
 var match_input := Vector2.ZERO
-## Feld des Steuerpults, an dem der Pilot gerade steht (NO_HELM = niemand fliegt).
-## Nur eine Position, keine Geräte-Instanz; wird nicht gespeichert.
+## Tile of the navigation console where the pilot is standing (NO_HELM = nobody is flying).
+## Only a position, no device instance; not saved.
 const NO_HELM := Vector2i(-1, -1)
 var helm_at := NO_HELM
-var aligning := false            ## „Ausrichten“: mit Drehschub auf align_angle drehen
+var aligning := false            ## "Align": rotate onto align_angle with rotation thrust
 var align_angle := 0.0
 var _helm_fail_warned := false
-const MATCH_DEADBAND := 0.00005  ## 0,05 m/s: darunter feuert die Angleichung nicht
+const MATCH_DEADBAND := 0.00005  ## 0.05 m/s: below this the matching does not fire
 var crashed := false
 var _warned := false
-## Sperre gegen sofortiges Wieder-Andocken am selben Ort (technische Entscheidung):
-## nach dem Abdocken REDOCK_LOCK_SECS Spielsekunden kein Andocken an diesem Ort
+## Lock against immediately docking again at the same place (technical decision):
+## after undocking, no docking at this place for REDOCK_LOCK_SECS game seconds
 const REDOCK_LOCK_SECS := 15.0
-const UNDOCK_PUSH := 0.003          ## Abstoß beim Abdocken in km/s (3 m/s, weit unter collide_speed)
+const UNDOCK_PUSH := 0.003          ## Push-off when undocking in km/s (3 m/s, far below collide_speed)
 var undock_lock_id := ""
-## Flugbahn intern in doppelter Genauigkeit: Vector2 hat nur 32 Bit, bei
-## 60 000 km sind das ~4 m Raster. Viele kleine Schritte (1×) würden sich
-## sonst zu großen Fehlern aufsummieren. pos/vel bleiben die lesbaren Werte.
+## The trajectory is kept in double precision internally: Vector2 only has 32 bits, at
+## 60 000 km that is a ~4 m grid. Many small steps (1×) would otherwise
+## add up to large errors. pos/vel stay the readable values.
 var _px := 0.0
 var _py := 0.0
 var _vx := 0.0
@@ -56,7 +56,7 @@ func _ready() -> void:
 	space = JSON.parse_string(f.get_as_text())
 	locations = space.locations.duplicate()
 
-## Zusätzliche Orte (Wracks als eigene Ziele, siehe FleetSystem.sites) zu den festen Orten
+## Additional places (wrecks as their own targets, see FleetSystem.sites) on top of the fixed places
 func set_extra_locations(extra: Array) -> void:
 	locations = space.locations.duplicate()
 	locations.append_array(extra)
@@ -72,7 +72,7 @@ func reset() -> void:
 	match_target = ""
 	stop_inputs()
 	helm_at = NO_HELM
-	angle = 0.0          # neues Spiel: Nase nach vorn (nicht vom vorigen Spiel erben)
+	angle = 0.0          # new game: nose forward (do not inherit it from the previous game)
 	ang_vel = 0.0
 	target = ""
 	crashed = false
@@ -86,13 +86,13 @@ func loc(id: String) -> Dictionary:
 			return l
 	return {}
 
-# ---------------- Nav-Konsole: PROX WARN und Ship logs (Ostranauts Flying 2.1) ----------------
+# ---------------- Nav console: PROX WARN and ship logs (Ostranauts Flying 2.1) ----------------
 
-## Näher als das an einem anderen Objekt → PROX WARN (km)
+## Closer than this to another object → PROX WARN (km)
 const PROX_KM := 5.0
 const LOG_MAX := 50
 var prox_muted := false
-## Ship logs: Andock- und Kollisionsereignisse [{t: Spielminuten, text}]
+## Ship logs: docking and collision events [{t: game minutes, text}]
 var ship_log: Array = []
 
 func log_event(text: String) -> void:
@@ -100,7 +100,7 @@ func log_event(text: String) -> void:
 	if ship_log.size() > LOG_MAX:
 		ship_log = ship_log.slice(ship_log.size() - LOG_MAX)
 
-## Nächstes Objekt innerhalb von 5 km, solange nicht angedockt: {id, name, dist} oder leer
+## Nearest object within 5 km while not docked: {id, name, dist} or empty
 func proximity() -> Dictionary:
 	if docked != "":
 		return {}
@@ -109,7 +109,7 @@ func proximity() -> Dictionary:
 		return {}
 	return {"id": n.id, "name": loc(n.id).name, "dist": float(n.dist)}
 
-## Warntext für die Konsole ("" = keine Warnung oder stummgeschaltet)
+## Warning text for the console ("" = no warning or muted)
 func prox_warning() -> String:
 	if prox_muted:
 		return ""
@@ -122,9 +122,9 @@ func secs() -> float:
 func _body(name: String) -> Dictionary:
 	return space[name]
 
-## Position und Geschwindigkeit eines Ortes (Stationen kreisen um Erde oder Mond)
+## Position and velocity of a place (stations orbit Earth or Moon)
 func loc_state(l: Dictionary, t: float) -> Dictionary:
-	# Wrack neben einem Ort: fester Abstand, bewegt sich mit diesem Ort
+	# Wreck next to a place: fixed offset, moves with that place
 	if l.has("near"):
 		var base := loc(String(l.near))
 		if not base.is_empty():
@@ -147,7 +147,7 @@ func gravity(p: Vector2) -> Vector2:
 		a += d.normalized() * float(b.gm) / r2
 	return a
 
-# ---------------- Schiff ----------------
+# ---------------- Ship ----------------
 
 func ship_devices(type: String) -> Array:
 	var g := ShipSystem.grid
@@ -157,14 +157,14 @@ func ship_devices(type: String) -> Array:
 			out.append(g.devices[i])
 	return out
 
-## Masse in Tonnen: Rumpffelder (Config.TILE_MASS), Geräte (DeviceData.mass,
-## z. B. Triebwerk 1,5 t), Ladung in Behältern und lose Ladung auf dem eigenen
-## Schiffsboden. Jede Ladung zählt genau einmal: Umlagern zwischen eigenem Behälter
-## und eigenem Boden ändert die Masse nicht. Fremde Bereiche (Wrack, Station) und
-## Haufen im All neben dem Rumpf zählen nicht. Was eine Figur an Bord trägt (Gepäck,
-## Hände, ein getragenes Gerät), zählt ebenfalls genau einmal mit – mit demselben
-## Einzelgewicht wie im Inventar (ItemData.weight, abgebaute Geräte = Gerätemasse).
-## Verlässt es das Schiff (Station, Wrack), fällt sein Beitrag weg.
+## Mass in tonnes: hull tiles (Config.TILE_MASS), devices (DeviceData.mass,
+## e.g. thruster 1.5 t), cargo in containers and loose cargo on your own
+## ship floor. Every piece of cargo counts exactly once: moving it between your own container
+## and your own floor does not change the mass. Foreign zones (wreck, station) and
+## piles in space next to the hull do not count. What a character carries aboard (pack,
+## hands, a carried device) also counts exactly once – with the same
+## weight as in the inventory (ItemData.weight, uninstalled devices = device mass).
+## If it leaves the ship (station, wreck), its share drops out.
 func mass() -> float:
 	var g := ShipSystem.grid
 	var m := 0.0
@@ -188,7 +188,7 @@ func mass() -> float:
 			m += c.carrying.data().mass + (c.carrying.inv.weight() / 1000.0 if c.carrying.inv != null else 0.0)
 	return m
 
-## Liegt ein Haufen auf dem eigenen Schiffsboden? (eigenes Feld, kein Weltraum)
+## Is a pile on your own ship floor? (own tile, not space)
 func _own_floor(g: ShipGrid, i: int) -> bool:
 	return not g.foreign(i) and g.tiles[i] != ShipGrid.Tile.SPACE
 
@@ -209,16 +209,16 @@ func use_fuel(amount: float) -> void:
 		t.stock -= n
 		amount -= n
 
-## Aktive Triebwerke: eingebaut, mit Strom, nicht kaputt
+## Active thrusters: installed, powered, not broken
 func active_thrusters() -> Array:
 	return ship_devices("thruster").filter(func(t): return t.powered and not t.broken)
 
 func working_thrusters() -> int:
 	return active_thrusters().size()
 
-## Verfügbarer Schub der Triebwerke in eine Richtung (Schiffskoordinaten:
-## (1,0) nach vorn zur Nase, (0,1) nach rechts, (-1,0) nach hinten, (0,-1) nach links).
-## Gleich ausgerichtete Triebwerke addieren ihren Schub.
+## Available thrust of the thrusters in one direction (ship coordinates:
+## (1,0) forward towards the nose, (0,1) to the right, (-1,0) backward, (0,-1) to the left).
+## Thrusters facing the same way add up their thrust.
 func thrust_dir(d: Vector2i) -> float:
 	var s := 0.0
 	for t in active_thrusters():
@@ -226,24 +226,24 @@ func thrust_dir(d: Vector2i) -> float:
 			s += t.data().thrust
 	return s
 
-## Schub nach vorn (Haupttriebwerke)
+## Forward thrust (main thrusters)
 func max_thrust() -> float:
 	return thrust_dir(Vector2i(1, 0))
 
-## Welche Triebwerksrichtungen eine Eingabe anfordert (Schiffskoordinaten).
-## Ohne Angabe: die aktuellen Eingaben (Tasten oder Angleichung).
+## Which thruster directions an input requests (ship coordinates).
+## Without an argument: the current inputs (keys or matching).
 func _requested(inp = null) -> Dictionary:
 	var v: Vector2 = inp if inp != null else _input_now()
 	return {Vector2i(1, 0): maxf(0.0, v.x), Vector2i(-1, 0): maxf(0.0, -v.x),
 		Vector2i(0, 1): maxf(0.0, v.y), Vector2i(0, -1): maxf(0.0, -v.y)}
 
-## Wirksame Translationseingabe: Tasten haben Vorrang, sonst die Angleichung
+## Effective translation input: keys take priority, otherwise the matching
 func _input_now() -> Vector2:
 	if thrust != 0.0 or strafe != 0.0:
 		return Vector2(thrust, strafe)
 	return match_input
 
-## Schubvektor in Schiffskoordinaten (kN) aus Triebwerken und Lagedüsen für eine Eingabe
+## Thrust vector in ship coordinates (kN) from thrusters and RCS for an input
 func thrust_vector_local(inp = null) -> Vector2:
 	var v: Vector2 = inp if inp != null else _input_now()
 	var f := v * rcs_thrust()
@@ -254,27 +254,27 @@ func thrust_vector_local(inp = null) -> Vector2:
 			f += Vector2(d) * t.data().thrust * req[d]
 	return f
 
-## Feuert gerade ein Triebwerk in diese Richtung? (für die Anzeige)
+## Is a thruster firing in this direction right now? (for the display)
 func firing(d: Vector2i) -> bool:
 	return docked == "" and manual_ok() and _requested()[d] > 0.0
 
-## Lagedüsen (RCS): jedes Schiff hat sie, solange das Steuerpult Strom hat
-## (Ostranauts: alle Schiffe haben RCS, manche zusätzlich ein Haupttriebwerk).
+## RCS: every ship has it as long as the navigation console has power
+## (Ostranauts: all ships have RCS, some also have a main drive).
 func rcs_thrust() -> float:
 	return float(space.rcs_thrust) * pilot_factor() if helm_ok() else 0.0
 
-## Beschleunigungen in km/s² (Haupttriebwerk, Lagedüsen) = Schub (kN) ÷ Masse (t) ÷ 1000
+## Accelerations in km/s² (main drive, RCS) = thrust (kN) ÷ mass (t) ÷ 1000
 func main_accel() -> float:
 	return max_thrust() / maxf(1.0, mass()) / 1000.0
 
-## Beschleunigung, die die aktuellen Eingaben gerade erzeugen (km/s², Schiffskoordinaten)
+## Acceleration the current inputs are producing right now (km/s², ship coordinates)
 func accel_local() -> Vector2:
 	return thrust_vector_local() / maxf(1.0, mass()) / 1000.0
 
 func rcs_accel() -> float:
 	return rcs_thrust() / maxf(1.0, mass()) / 1000.0
 
-## Alle Flugeingaben auf null (Schub endet beim Verlassen der Steuerung)
+## Set all flight inputs to zero (thrust ends when leaving the controls)
 func stop_inputs() -> void:
 	thrust = 0.0
 	strafe = 0.0
@@ -282,8 +282,8 @@ func stop_inputs() -> void:
 	rot_stop = false
 	aligning = false
 
-## „Ausrichten“: Schiff mit den Lagedüsen auf diese Richtung drehen (bremst rechtzeitig).
-## Q, E oder R brechen ab. Nur am bedienten, versorgten Pult.
+## "Align": turn the ship to this direction with the RCS (brakes in time).
+## Q, E or R abort it. Only at the operated, powered console.
 func start_align(a: float) -> void:
 	var why := pilot_block_reason()
 	if why != "":
@@ -292,14 +292,14 @@ func start_align(a: float) -> void:
 	align_angle = wrapf(a, -PI, PI)
 	aligning = true
 
-## Hat das Schiff irgendein versorgtes, intaktes Steuerpult? (Abdocken, Schnellreise, Anzeige)
+## Does the ship have any powered, intact navigation console? (undocking, fast travel, display)
 func helm_ok() -> bool:
 	for h in ship_devices("helm"):
 		if h.powered and not h.broken:
 			return true
 	return false
 
-## Das Steuerpult, an dem der Pilot steht (oder null)
+## The navigation console where the pilot stands (or null)
 func operated_helm() -> Device:
 	if helm_at == NO_HELM:
 		return null
@@ -309,7 +309,7 @@ func operated_helm() -> Device:
 		return null
 	return d
 
-## Wer fliegt gerade? Die Figur am bedienten Steuerpult (deine Figur zuerst), sonst null
+## Who is flying right now? The character at the operated console (your character first), otherwise null
 func pilot_crew() -> CrewMember:
 	var h := operated_helm()
 	if h == null:
@@ -322,19 +322,19 @@ func pilot_crew() -> CrewMember:
 			return c
 	return null
 
-## Piloting-Faktor (1 + Piloting der fliegenden Figur): Andockgrenzen, Lagedüsenschub, Drehung
+## Piloting factor (1 + Piloting of the flying character): docking limits, RCS thrust, rotation
 func pilot_factor() -> float:
 	return 1.0 + SkillSystem.piloting(pilot_crew())
 
-## Drehbeschleunigung beim Steuern (mit Piloting-Faktor); 0 ohne bedientes, intaktes Pult
+## Rotational acceleration while steering (with the Piloting factor); 0 without an operated, intact console
 func rot_accel() -> float:
 	return float(space.rot_accel) * pilot_factor() if manual_ok() else 0.0
 
-## Andockgrenzen (Abstand, Geschwindigkeit) mit dem Piloting-Faktor
+## Docking limits (distance, speed) with the Piloting factor
 func dock_factor() -> float:
 	return pilot_factor()
 
-## Warum ein Steuerpult nicht geflogen werden kann ("" = es geht)
+## Why a navigation console cannot be flown ("" = it can)
 func helm_block_reason(h: Device) -> String:
 	if h == null:
 		return "Nobody is at a navigation console."
@@ -344,8 +344,8 @@ func helm_block_reason(h: Device) -> String:
 		return "This navigation console has no power."
 	return ""
 
-## Grund, warum der Pilot gerade keine Flugbefehle geben kann (Abdocken, Schnellreise,
-## Auto-Dock): Es braucht das bediente Pult, intakt und mit Strom. "" = es geht.
+## Reason why the pilot cannot give flight commands right now (undocking, fast travel,
+## Auto-Dock): it needs the operated console, intact and powered. "" = possible.
 func pilot_block_reason() -> String:
 	if ship_devices("helm").is_empty():
 		return "No navigation console aboard."
@@ -357,8 +357,8 @@ func pilot_block_reason() -> String:
 		return why + (" Repair it first." if h.broken else "")
 	return ""
 
-## Pult, das eine Schnellreise oder ein Auto-Dock gestartet hat ({hx, hy} im Auftrag):
-## "" = noch in Ordnung. Ältere Spielstände ohne Pult-Angabe: irgendein versorgtes Pult.
+## Console that started a fast travel or an Auto-Dock ({hx, hy} in the order):
+## "" = still fine. Older saves without a console entry: any powered console.
 func _cmd_helm_reason(d: Dictionary) -> String:
 	if not d.has("hx"):
 		return "" if helm_ok() else "No navigation console with power."
@@ -367,25 +367,25 @@ func _cmd_helm_reason(d: Dictionary) -> String:
 		return "The navigation console is gone."
 	return helm_block_reason(h)
 
-## Manueller Flug (Schub, Drehen, Angleichen) nur über das bediente Pult,
-## und nur, wenn genau dieses Pult intakt ist und Strom hat.
+## Manual flight (thrust, turning, matching) only through the operated console,
+## and only if exactly this console is intact and powered.
 func manual_ok() -> bool:
 	return helm_block_reason(operated_helm()) == ""
 
-## Auto-Dock ist freigeschaltet, wenn am bedienten Pult (intakt, mit Strom) ein
-## funktionsfähiges Autodock-Modul im Modulfach steckt. Module anderswo (Gepäck, Boden,
-## anderes Pult) zählen nicht; mehrere gleiche Module schalten dieselbe Funktion frei.
+## Auto-Dock is unlocked when a working Autodock Module sits in the module bay of the
+## operated console (intact, powered). Modules elsewhere (pack, floor,
+## another console) do not count; several identical modules unlock the same function.
 func autodock_ok() -> bool:
 	return autodock_block_reason() == ""
 
-## Grund, warum Auto-Dock hier gesperrt ist ("" = freigeschaltet)
+## Reason why Auto-Dock is locked here ("" = unlocked)
 func autodock_block_reason() -> String:
 	var why := pilot_block_reason()
 	if why != "":
 		return why
 	return module_block_reason(operated_helm(), "autodock")
 
-## Steckt im Pult h ein funktionsfähiges Modul dieser Art? "" = ja, sonst der Grund
+## Is a working module of this kind in console h? "" = yes, otherwise the reason
 func module_block_reason(h: Device, kind: String) -> String:
 	if h == null:
 		return "The navigation console is gone."
@@ -396,21 +396,21 @@ func module_block_reason(h: Device, kind: String) -> String:
 		return "The %s in this navigation console is broken." % name
 	return "No %s in this navigation console. Put the module in the module bay (E at the console)." % name
 
-## Anzeigename des Moduls für eine Funktion (z. B. "Autodock-Modul")
+## Display name of the module for a function (e.g. "Autodock Module")
 func module_name(kind: String) -> String:
 	for id in ItemSystem.items:
 		if ItemSystem.item(id).helm_module == kind:
 			return ItemSystem.item(id).display_name
 	return kind
 
-## Kann ein laufendes Auto-Dock-Manöver weitergehen? (Pult, Strom, Modul im startenden Pult)
+## Can a running Auto-Dock manoeuvre continue? (console, power, module in the starting console)
 func _autodock_reason() -> String:
 	var why := _cmd_helm_reason(autodock)
 	if why != "" or not autodock.has("hx"):
 		return why
 	return module_block_reason(ShipSystem.grid.device_at(Vector2i(int(autodock.hx), int(autodock.hy))), "autodock")
 
-## Pilot-Fähigkeit spart Treibstoff (siehe SkillSystem)
+## The pilot skill saves fuel (see SkillSystem)
 func fuel_factor() -> float:
 	return SkillSystem.pilot_fuel_factor()
 
@@ -427,15 +427,15 @@ func step(dt: float) -> void:
 		vel = st.vel
 		return
 	if not travel.is_empty() and _cmd_helm_reason(travel) != "":
-		# Pult ausgefallen: Reise endet, das Schiff fliegt mit der Reisegeschwindigkeit weiter
+		# Console failed: the trip ends, the ship keeps flying at travel speed
 		var dest_now: Vector2 = loc_state(loc(travel.to), t).pos
 		vel = (dest_now - travel.from) / maxf(1.0, travel.t1 - travel.t0)
 		GameState.toast("Fast travel aborted: %s The ship keeps flying at %.2f km/s." % [_cmd_helm_reason(travel), vel.length()], "bad")
 		travel = {}
 		return
 	if not autodock.is_empty() and _autodock_reason() != "":
-		# Kontrolliert abbrechen: freier Flug mit der erreichten Lage und Geschwindigkeit,
-		# keine Kopplung
+		# Abort in a controlled way: free flight with the reached heading and velocity,
+		# no coupling
 		GameState.toast("Auto-Dock aborted: " + _autodock_reason(), "bad")
 		autodock = {}
 		return
@@ -461,7 +461,7 @@ func step(dt: float) -> void:
 			if not dock(dest, true):
 				GameState.toast("Auto-Dock: coupling failed, the ship is drifting free.", "bad")
 		return
-	# Wurde pos/vel von außen gesetzt (Abdocken, Laden, Zusammenstoß)? Dann übernehmen.
+	# Was pos/vel set from outside (undocking, loading, collision)? Then take it over.
 	if pos != _p32:
 		_px = pos.x
 		_py = pos.y
@@ -469,8 +469,8 @@ func step(dt: float) -> void:
 		_vx = vel.x
 		_vy = vel.y
 	var acc := gravity(pos)
-	# Fällt das bediente Pult aus, enden Schub, Drehschub und Angleichung sofort.
-	# Die vorhandene Bewegung (Geschwindigkeit, Drehung) läuft physikalisch weiter.
+	# If the operated console fails, thrust, rotation thrust and matching stop at once.
+	# The existing motion (velocity, rotation) continues physically.
 	var manual := manual_ok()
 	if not manual and (thrust != 0.0 or strafe != 0.0 or rot_input != 0.0 or rot_stop or aligning or match_target != ""):
 		var why := helm_block_reason(operated_helm())
@@ -484,8 +484,8 @@ func step(dt: float) -> void:
 	elif manual:
 		_helm_fail_warned = false
 	_rotate(s, dt)
-	# Manueller Schub hat Vorrang. Ohne Tasten arbeitet eine aktive Angleichung mit
-	# denselben Triebwerken und Lagedüsen auf die Zielgeschwindigkeit hin.
+	# Manual thrust takes priority. Without keys an active matching uses
+	# the same thrusters and RCS to reach the target velocity.
 	match_input = Vector2.ZERO
 	if (thrust != 0.0 or strafe != 0.0) and manual:
 		acc += _thrust_accel(dt, Vector2(thrust, strafe))
@@ -493,7 +493,7 @@ func step(dt: float) -> void:
 		match_input = _match_input(s)
 		if match_input != Vector2.ZERO:
 			acc += _thrust_accel(dt, match_input)
-	# Halb-implizites Euler-Verfahren: stabil für Umlaufbahnen
+	# Semi-implicit Euler method: stable for orbits
 	_vx += acc.x * s
 	_vy += acc.y * s
 	_px += _vx * s
@@ -504,9 +504,9 @@ func step(dt: float) -> void:
 	_v32 = vel
 	_check_hazards()
 
-## Schub relativ zur Ausrichtung: Summe der Schubvektoren aller aktiven Triebwerke,
-## deren Richtung zur Eingabe passt (W vorn, S hinten, D rechts, A links), plus
-## Lagedüsen. Beschleunigung = Gesamtschub ÷ Schiffsmasse. Verbraucht Treibstoff.
+## Thrust relative to the heading: sum of the thrust vectors of all active thrusters
+## whose direction matches the input (W forward, S back, D right, A left), plus
+## RCS. Acceleration = total thrust ÷ ship mass. Uses fuel.
 func _thrust_accel(dt: float, inp: Vector2) -> Vector2:
 	var req := _requested(inp)
 	var engines := 0.0
@@ -525,10 +525,10 @@ func _thrust_accel(dt: float, inp: Vector2) -> Vector2:
 	SkillSystem.train_all_at("helm", "pilot", dt * 0.5)
 	return (f / maxf(1.0, mass()) / 1000.0).rotated(angle)
 
-## Angleichen: Eingabe (vor/zurück, rechts/links, je -1..1), die die Relativgeschwindigkeit
-## zum Ziel in diesem Schritt so weit wie möglich abbaut – ohne das Schiff zu drehen.
-## Nutzt pro Achse die Triebwerke dieser Richtung plus Lagedüsen. Unterhalb der
-## Totzone MATCH_DEADBAND wird nicht gefeuert (eigene Festlegung).
+## Matching: input (forward/back, right/left, each -1..1) that removes as much of the relative velocity
+## to the target as possible in this step – without turning the ship.
+## Uses the thrusters of that direction plus RCS on each axis. Below the
+## dead band MATCH_DEADBAND it does not fire (our own choice).
 func _match_input(s: float) -> Vector2:
 	var dv: Vector2 = rel_to(match_target).vel - Vector2(_vx, _vy)
 	if dv.length() < MATCH_DEADBAND:
@@ -547,8 +547,8 @@ func _match_input(s: float) -> Vector2:
 		out[axis] = signf(want) * minf(1.0, absf(want) / s / a_max)
 	return out
 
-## Drehung mit Schwung: Drehschub beschleunigt die Drehung, ohne Gegenschub dreht
-## das Schiff weiter. R bremst die Drehung. Eine Drehung ändert die Flugrichtung nicht.
+## Rotation with momentum: rotation thrust accelerates the turn, without counter-thrust
+## the ship keeps turning. R brakes the rotation. A rotation does not change the flight direction.
 func _rotate(s: float, dt: float) -> void:
 	var acc := rot_accel()
 	var want := ang_vel
@@ -560,7 +560,7 @@ func _rotate(s: float, dt: float) -> void:
 	elif rot_stop:
 		want = move_toward(ang_vel, 0.0, acc * s)
 	elif aligning and acc > 0.0:
-		# Ausrichten: beschleunigen, dann so bremsen, dass die Drehung am Ziel endet
+		# Align: accelerate, then brake so that the rotation ends at the target
 		var err := wrapf(align_angle - angle, -PI, PI)
 		if absf(err) <= maxf(0.002, absf(ang_vel) * s) and absf(ang_vel) <= acc * s:
 			want = 0.0
@@ -581,10 +581,10 @@ func _rotate(s: float, dt: float) -> void:
 		return
 	angle = wrapf(angle + ang_vel * s, -PI, PI)
 
-# ---------------- Anflug: Ausrichtung und Annäherung ----------------
+# ---------------- Approach: alignment and closing ----------------
 
-## Wie gut zeigt eine freie Andockschleuse auf das Ziel? {ok, deg, angle}
-## angle = Ausrichtung des Schiffs, bei der die beste Schleuse genau zum Ziel zeigt.
+## How well does a free docking port point at the target? {ok, deg, angle}
+## angle = ship heading at which the best airlock points exactly at the target.
 func dock_alignment(id: String) -> Dictionary:
 	var r := rel_to(id)
 	var to_target: Vector2 = r.pos - pos
@@ -598,7 +598,7 @@ func dock_alignment(id: String) -> Dictionary:
 				"angle": wrapf(to_target.angle() - d.angle(), -PI, PI), "port": true, "dir": d.rotated(angle), "i": int(p.i)}
 	return best
 
-## Anflugdaten zum Ziel: Entfernung, Relativgeschwindigkeit, Annäherung, Bremswege
+## Approach data for the target: distance, relative velocity, closing, stopping distances
 func approach(id: String) -> Dictionary:
 	var r := rel_to(id)
 	var to_target: Vector2 = r.pos - pos
@@ -640,7 +640,7 @@ func _check_hazards() -> void:
 			vel = st.vel
 			GameState.toast("Collision with " + l.name + "! The hull is damaged.", "bad")
 
-# ---------------- Andocken, Reisen ----------------
+# ---------------- Docking, travel ----------------
 
 func rel_to(id: String) -> Dictionary:
 	var st := loc_state(loc(id), secs())
@@ -655,14 +655,14 @@ func nearest() -> Dictionary:
 			best.id = l.id
 	return best
 
-## Ist das Andocken an diesem Ort gerade wegen frischen Abdockens gesperrt?
+## Is docking at this place locked right now because of a fresh undock?
 func redock_locked(id: String) -> bool:
 	return id == undock_lock_id and secs() < undock_lock_until
 
 func redock_wait(id: String) -> float:
 	return maxf(0.0, undock_lock_until - secs()) if id == undock_lock_id else 0.0
 
-## Grund, warum man hier nicht andocken kann ("" = es geht)
+## Reason why you cannot dock here ("" = possible)
 func dock_block_reason(id: String) -> String:
 	var why := pilot_block_reason()
 	if why != "":
@@ -689,11 +689,11 @@ func can_dock(id: String) -> bool:
 	if pilot_block_reason() != "" or redock_locked(id) or xpdr_dock_reason(id) != "":
 		return false
 	var r := rel_to(id)
-	# Piloting (Spaceship Piloting): größere Andockgrenzen
+	# Piloting (Spaceship Piloting): larger docking limits
 	var m := dock_factor()
 	if not (r.dist < float(space.dock_dist) * m and r.speed < float(space.dock_speed) * m):
 		return false
-	# Schleuse muss zum Ziel zeigen (Ostranauts: Andockringe ausrichten)
+	# The airlock must face the target (Ostranauts: line up the docking rings)
 	return dock_alignment(id).ok
 
 func dock(id: String, force: bool = false) -> bool:
@@ -701,21 +701,21 @@ func dock(id: String, force: bool = false) -> bool:
 		return false
 	if docked == id:
 		return true
-	# Manche Stationen nehmen nur Schiffe mit Transponder und Antenne an (Ostranauts Ship Ownership)
+	# Some stations only accept ships with a transponder and antenna (Ostranauts Ship Ownership)
 	var xwhy := xpdr_dock_reason(id)
 	if xwhy != "":
 		GameState.toast(xwhy, "bad")
 		return false
-	# Andocken nur mit Andockschleuse (Tür an Tür, keine Gänge)
+	# Docking only with a docking port (door to door, no corridors)
 	if ShipSystem.ports().is_empty():
 		GameState.toast("No docking port: ships dock at the outer door of an airlock (a room with a pump and a door to space).", "bad")
 		return false
-	# Klammern am ausgerichteten Port: dort entsteht der Übergang
+	# Clamps at the aligned port: that is where the passage is created
 	var al := dock_alignment(id)
 	ShipSystem.dock_pref = int(al.get("i", -1))
 	if String(loc(id).get("kind", "")) == "station" and Config.ENABLE_STATION and not StationSystem.build(id):
 		return false
-	# Wrack als eigenes Ziel: erst jetzt an den Port hängen (vorher kein Wrackbereich am Schiff)
+	# Wreck as its own target: only attach it to the port now (no wreck zone at the ship before)
 	if String(loc(id).get("kind", "")) == "wreck" and Config.ENABLE_WRECK and not FleetSystem.attach_site(loc(id)):
 		return false
 	docked = id
@@ -731,9 +731,9 @@ func dock(id: String, force: bool = false) -> bool:
 		GameState.toast("Security Services (N.A.S.S.) take a closer look at your unidentified ship (%s)." % ", ".join(xpdr_faults()), "bad")
 	return true
 
-# ---------------- Transponder und Antenne (Ostranauts Ship Ownership) ----------------
+# ---------------- Transponder and antenna (Ostranauts Ship Ownership) ----------------
 
-## Zustand eines Teils: "" = in Ordnung, sonst "missing", "damaged" oder "unpowered"
+## State of a part: "" = fine, otherwise "missing", "damaged" or "unpowered"
 func _part_fault(type: String) -> String:
 	var best := "missing"
 	for d in ship_devices(type):
@@ -745,7 +745,7 @@ func _part_fault(type: String) -> String:
 			return ""
 	return best
 
-## Warnungen der Navigationskonsole: ["XPDR FAULT", "ANT FAULT"] (leer = alles in Ordnung)
+## Warnings of the navigation console: ["XPDR FAULT", "ANT FAULT"] (empty = all fine)
 func xpdr_faults() -> Array:
 	var out: Array = []
 	if _part_fault("transponder") != "":
@@ -754,7 +754,7 @@ func xpdr_faults() -> Array:
 		out.append("ANT FAULT")
 	return out
 
-## Grund, warum diese Station das Andocken ablehnt ("" = erlaubt)
+## Reason why this station refuses docking ("" = allowed)
 func xpdr_dock_reason(id: String) -> String:
 	if not bool(loc(id).get("requires_xpdr", false)):
 		return ""
@@ -769,7 +769,7 @@ func xpdr_dock_reason(id: String) -> String:
 		parts.append("antenna %s" % a)
 	return "%s only accepts ships with a working transponder and antenna (%s)." % [loc(id).name, ", ".join(parts)]
 
-## Grund, der das Abdocken verhindert ("" = Abdocken möglich)
+## Reason that prevents undocking ("" = undocking possible)
 func undock_block_reason() -> String:
 	if docked == "":
 		return "The ship is not docked."
@@ -798,14 +798,14 @@ func undock_block_reason() -> String:
 		return "%s is standing in the hatch to the station." % ", ".join(in_hatch)
 	return ""
 
-## Abdocken über die Bedienung (Knopf, Taste U): meldet immer Erfolg oder Grund
+## Undocking through the controls (button, key U): always reports success or the reason
 func request_undock() -> bool:
 	if docked == "":
 		GameState.toast(undock_block_reason())
 		return false
 	return undock()
 
-## Abdocken. Nicht angedockt gilt als erledigt (für Reisen).
+## Undock. Not being docked counts as done (for travel).
 func undock() -> bool:
 	if docked == "":
 		return true
@@ -814,7 +814,7 @@ func undock() -> bool:
 		GameState.toast(why, "bad")
 		return false
 	var from := docked
-	# Ohne Sprung: genau Lage und Bewegung des Ortes übernehmen, Ausrichtung bleibt
+	# Without a jump: take over exactly the position and motion of the place, the heading stays
 	var st := loc_state(loc(from), secs())
 	pos = st.pos
 	vel = st.vel
@@ -823,9 +823,9 @@ func undock() -> bool:
 	StationSystem.clear()
 	FleetSystem.leave(loc(from))
 	docked = ""
-	# Frühere Andockschleusen (5×2) nach dem Lösen entfernen und abdichten
+	# Remove and seal former docking ports (5×2) after releasing
 	ShipSystem.retire_legacy_ports()
-	# Sanfter Abstoß nach hinten
+	# Gentle push backwards
 	vel += Vector2.from_angle(angle + PI) * UNDOCK_PUSH
 	undock_lock_id = from
 	undock_lock_until = secs() + REDOCK_LOCK_SECS
@@ -902,7 +902,7 @@ func status() -> String:
 		return "Docking at: " + loc(autodock.to).name
 	return "In free flight"
 
-## Station, an der gerade angedockt ist (sonst leer)
+## Station where the ship is docked right now (otherwise empty)
 func station() -> Dictionary:
 	if docked == "":
 		return {}

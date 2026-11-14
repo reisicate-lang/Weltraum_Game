@@ -1,6 +1,6 @@
-## Das Schiff als Raster aus Feldern.
-## Jedes Feld hat eine Bauart, evtl. ein Kabel, evtl. ein Gerät
-## und seine eigene Luft (O2, N2, CO2 in kPa).
+## The ship as a grid of tiles.
+## Every tile has a type, maybe a cable, maybe a device
+## and its own air (O2, N2, CO2 in kPa).
 class_name ShipGrid
 extends RefCounted
 
@@ -15,17 +15,17 @@ var n2 := PackedFloat32Array()
 var co2 := PackedFloat32Array()
 var cond := PackedFloat32Array()
 var door_open_until := PackedFloat64Array()
-## Bereich: 0 = dein Schiff, 1 = Wrack, 2 = Bergungsleine
+## Zone: 0 = your ship, 1 = wreck, 2 = salvage line
 var zone := PackedByteArray()
-## Temperatur in °C und Feuer (1 = brennt)
+## Temperature in °C and fire (1 = burning)
 var temp := PackedFloat32Array()
 var fire := PackedByteArray()
-## Türen: Lüftungsschlitz geschlossen (1) – dann ist die geschlossene Tür ganz dicht
+## Doors: vent closed (1) – then the closed door is fully airtight
 var vent_closed := PackedByteArray()
-var devices: Dictionary = {}  ## Feld-Index -> Device
-## Andockschleusen, die gerade mit einer Station oder einem Wrack verbunden sind (Feld-Index -> true)
+var devices: Dictionary = {}  ## tile index -> Device
+## Docking ports currently connected to a station or a wreck (tile index -> true)
 var linked: Dictionary = {}
-var piles: Dictionary = {}    ## Feld-Index -> Inventory (Haufen auf dem Boden)
+var piles: Dictionary = {}    ## tile index -> Inventory (pile on the floor)
 
 func _init(w: int = Config.WORLD_W, h: int = Config.WORLD_H) -> void:
 	width = w
@@ -66,15 +66,15 @@ func set_tile(p: Vector2i, t: int) -> void:
 
 const MAX_DEVICE_LEN := 3
 
-## Gerät auf diesem Feld. Mehrfeldrige Geräte (Triebwerk 1×3) stehen nur einmal in
-## devices (am Innenfeld); ihre übrigen Felder werden hier auf dieselbe Instanz abgebildet.
+## Device on this tile. Multi-tile devices (thruster 1×3) are listed only once in
+## devices (at the inner tile); their other tiles map to the same instance here.
 func device_at(p: Vector2i) -> Device:
 	if not in_bounds(p):
 		return null
 	var d = devices.get(idx(p))
 	if d != null:
 		return d
-	# Mehrfeld-Geräte im Umkreis von 2 Feldern (Triebwerk 1×3, Andockschleuse 5×2)
+	# Multi-tile devices within 2 tiles (thruster 1×3, docking port 5×2)
 	for dy in range(-MAX_DEVICE_LEN + 1, MAX_DEVICE_LEN):
 		for dx in range(-MAX_DEVICE_LEN + 1, MAX_DEVICE_LEN):
 			if dx == 0 and dy == 0:
@@ -89,8 +89,8 @@ func device_at(p: Vector2i) -> Device:
 
 # ---------------- Andockschleuse 5×2 ----------------
 
-## Felder einer Andockschleuse mit Außentür p und Richtung out (nach außen): erst p, dann die
-## übrigen Felder der Außenreihe (in der Wand) und die Innenreihe dahinter
+## Tiles of a docking port with outer door p and direction out (outwards): first p, then the
+## other tiles of the outer row (in the wall) and the inner row behind it
 static func dock_cells(p: Vector2i, out: Vector2i, w: int = 5) -> Array[Vector2i]:
 	var along := Vector2i(out.y, out.x)
 	var cells: Array[Vector2i] = [p]
@@ -101,10 +101,10 @@ static func dock_cells(p: Vector2i, out: Vector2i, w: int = 5) -> Array[Vector2i
 				cells.append(q)
 	return cells
 
-## Kann hier (p = Außentür) eine Andockschleuse sitzen? {"dir": nach außen, "reason": ""}.
-## Außenreihe: 5 Wandfelder einer geraden Außenwand (Mitte darf schon Tür sein), außen frei;
-## Innenreihe: 5 freie Bodenfelder; hinter der Innentür ein freies Bodenfeld.
-## allow_foreign: außen darf schon eine Station/ein Wrack anliegen (Umstellung alter Stände).
+## Can a docking port sit here (p = outer door)? {"dir": outwards, "reason": ""}.
+## Outer row: 5 wall tiles of a straight outer wall (the middle may already be a door), free outside;
+## inner row: 5 free floor tiles; a free floor tile behind the inner door.
+## allow_foreign: a station/wreck may already be attached outside (converting old saves).
 func dock_check(p: Vector2i, ignore: Device = null, allow_foreign: bool = false) -> Dictionary:
 	var why := "The docking port (5×2) needs a straight outer wall: 5 wall tiles, free space outside, 5 free floor tiles inside and room behind them."
 	if not in_bounds(p) or zone[idx(p)] != 0 or (get_tile(p) != Tile.WALL and get_tile(p) != Tile.DOOR):
@@ -136,7 +136,7 @@ func _dock_fits(p: Vector2i, d: Vector2i, ignore: Device, allow_foreign: bool) -
 	var behind := p - d * 2
 	return in_bounds(behind) and get_tile(behind) == Tile.FLOOR and zone[idx(behind)] == 0 and not busy.call(behind)
 
-## Andockschleuse einsetzen: Felder setzen (Außentür, Innentür, Seitenwände) und Gerät eintragen
+## Insert a docking port: set the tiles (outer door, inner door, side walls) and register the device
 func apply_dock(dev: Device, d: Vector2i) -> void:
 	dev.rot = Device.PUSH_DIRS.find(-d)
 	var p := dev.pos
@@ -158,7 +158,7 @@ func apply_dock(dev: Device, d: Vector2i) -> void:
 	temp[idx(p)] = temp[idx(inner)]
 	put_device(dev)
 
-## Andockschleuse entfernen: Außentür wird wieder Wand, die Innenreihe wieder Boden
+## Remove a docking port: the outer door becomes wall again, the inner row floor again
 func remove_dock(dev: Device) -> void:
 	var d := dev.outward()
 	var p := dev.pos
@@ -173,7 +173,7 @@ func remove_dock(dev: Device) -> void:
 		var b := idx(behind)
 		o2[idx(r)] = o2[b]; n2[idx(r)] = n2[b]; co2[idx(r)] = co2[b]; temp[idx(r)] = temp[b]
 
-## Neue Andockschleuse mit Außentür p bauen (falls es passt), sonst null
+## Build a new docking port with outer door p (if it fits), otherwise null
 func build_dock(p: Vector2i, allow_foreign: bool = false) -> Device:
 	var chk := dock_check(p, null, allow_foreign)
 	if chk.reason != "":
@@ -182,7 +182,7 @@ func build_dock(p: Vector2i, allow_foreign: bool = false) -> Device:
 	apply_dock(dev, chk.dir)
 	return dev
 
-## Ist das Feld von einem Gerät belegt (auch von einem Teil eines Mehrfeld-Geräts)?
+## Is the tile occupied by a device (also by part of a multi-tile device)?
 func occupied(p: Vector2i) -> bool:
 	return device_at(p) != null
 
@@ -193,9 +193,9 @@ func remove_device(dev: Device) -> void:
 	if devices.get(idx(dev.pos)) == dev:
 		devices.erase(idx(dev.pos))
 
-## Kann ein Gerät dieser Art mit dieser Drehung an p (Innenfeld) sitzen? "" = ja.
-## 1×3: Innenfeld = freier Schiffsboden, Mitte = Außenwand (bleibt Wand und dicht),
-## Außenfeld = freies All. ignore: dieses Gerät beim Belegt-Test übergehen.
+## Can a device of this type with this rotation sit at p (inner tile)? "" = yes.
+## 1×3: inner tile = free ship floor, middle = outer wall (stays wall and airtight),
+## outer tile = open space. ignore: skip this device in the occupied test.
 func mount_reason(type: String, p: Vector2i, rot: int, ignore: Device = null) -> String:
 	var n: int = ItemSystem.device(type).length
 	var out: Vector2i = -Device.PUSH_DIRS[rot % 4]
@@ -229,10 +229,10 @@ func place_device(type: String, p: Vector2i, rot: int = 0) -> Device:
 	put_device(dev)
 	return dev
 
-## Umstellung: Wie viele alte 1×1-Geräte beim Laden umgebaut bzw. als Gegenstand abgelegt wurden
+## Conversion: how many old 1×1 devices were rebuilt or dropped as items when loading
 var migrated := {"converted": 0, "packed": 0, "refined": false, "modules": 0}
-## Nach refine(): grober Feld-Index -> feiner Feld-Index (Vertreter: Wandfeld, Gerät oder Boden).
-## Damit rechnen andere Systeme gespeicherte Positionen alter Spielstände um.
+## After refine(): coarse tile index -> fine tile index (representative: wall tile, device or floor).
+## Other systems use it to convert stored positions of old saves.
 var coarse_map := PackedInt32Array()
 var coarse_width := 0
 
@@ -241,14 +241,14 @@ func walkable(p: Vector2i) -> bool:
 	if t != Tile.FLOOR and t != Tile.DOOR:
 		return false
 	var i := idx(p)
-	# Eine Andockschleuse ist nur begehbar, solange sie angedockt ist
+	# A docking port is only walkable while it is docked
 	return not devices.has(i) or (devices[i].type == "dockport" and linked.has(i))
 
 func wall_like(p: Vector2i) -> bool:
 	var t := get_tile(p)
 	return t == Tile.WALL or t == Tile.DOOR or t == Tile.WINDOW
 
-## Gehört das Feld nicht zum eigenen Schiff? (1 = Wrack, 3 = Station)
+## Does the tile not belong to your own ship? (1 = wreck, 3 = station)
 func foreign(i: int) -> bool:
 	return zone[i] == 1 or zone[i] == 3
 
@@ -305,8 +305,8 @@ static func from_data(d: Dictionary) -> ShipGrid:
 	var coarse := int(d.get("scale", 1)) < Config.GRID_SCALE
 	for dd in d.devices:
 		var dev := Device.from_data(dd)
-		# Alter Spielstand: Mehrfeld-Gerät (Triebwerk, Andockschleuse) war noch 1×1 → unten
-		# umstellen. Andockschleusen grober Stände stellt erst refine() im feinen Raster um.
+		# Old save: multi-tile device (thruster, docking port) was still 1×1 → convert
+		# below. Docking ports of coarse saves are only converted by refine() in the fine grid.
 		if dev.data().length > 1 and int(dd.get("shape", 1)) != dev.data().length and not (coarse and dev.type == "dockport"):
 			legacy.append(dev)
 			continue
@@ -322,16 +322,16 @@ static func from_data(d: Dictionary) -> ShipGrid:
 		g.vent_closed[int(i)] = 1
 	for i in d.get("linked", []):
 		g.linked[int(i)] = true
-	# Früherer Spielstand mit doppelt so großen Feldern: ins feine Raster überführen
+	# Earlier save with twice as large tiles: convert to the fine grid
 	if int(d.get("scale", 1)) < Config.GRID_SCALE:
 		return refine(g)
 	return g
 
-## Altes 1×1-Triebwerk aus einem Spielstand: Passt die neue 1×3-Bauform genau hier
-## (gleiche Schubrichtung, alle drei Felder gültig und frei), wird es direkt umgestellt.
-## Sonst liegt es einmal als vollständiger Gegenstand (Zustand, Daten) auf seinem Feld
-## bzw. dem nächsten freien Boden. Gespeichert wird danach die neue Form ("shape"),
-## die Umstellung greift also nur einmal.
+## Old 1×1 thruster from a save: if the new 1×3 shape fits exactly here
+## (same thrust direction, all three tiles valid and free), it is converted directly.
+## Otherwise it is dropped once as a complete item (condition, data) on its tile
+## or the nearest free floor. The new shape ("shape") is saved afterwards,
+## so the conversion only happens once.
 func _migrate_legacy(dev: Device) -> void:
 	if dev.type == "dockport":
 		_migrate_dock(dev)
@@ -349,9 +349,9 @@ func _migrate_legacy(dev: Device) -> void:
 	drop_items(spot, "pk_" + dev.type, 1, dev.cond, dd)
 	migrated.packed += 1
 
-## Alte 1-Feld-Andockschleuse (Tür in der Außenwand) → 5×2 an derselben Stelle, wenn innen
-## Platz ist (Kopplung bleibt an derselben Außentür). Sonst: Wand schließen, die Schleuse
-## einmal als vollständiger Gegenstand an Bord ablegen.
+## Old 1-tile docking port (door in the outer wall) → 5×2 in the same place if there is room
+## inside (coupling stays at the same outer door). Otherwise: close the wall and drop the port
+## once aboard as a complete item.
 func _migrate_dock(dev: Device) -> void:
 	var chk := dock_check(dev.pos, dev, true)
 	if chk.reason == "":
@@ -366,9 +366,9 @@ func _migrate_dock(dev: Device) -> void:
 	drop_items(_free_floor_near(dev.pos), "pk_" + dev.type, 1, dev.cond, dd)
 	migrated.packed += 1
 
-## Früheres eigenständiges Auto-Dock-Gerät → Autodock-Modul (Zustand bleibt).
-## Es kommt ins Modulfach eines Steuerpults im selben Bereich, das noch keins hat; sonst
-## liegt es einmal als Gegenstand an seinem Platz. So entsteht kein doppeltes Modul.
+## Former stand-alone auto-dock device → Autodock Module (condition is kept).
+## It goes into the module bay of a navigation console in the same zone that has none yet; otherwise
+## it is left once as an item in its place. So no module is duplicated.
 func _migrate_autodock() -> void:
 	for i in devices.keys():
 		var dev: Device = devices[i]
@@ -398,22 +398,22 @@ func _free_floor_near(p: Vector2i) -> Vector2i:
 	return p
 
 
-# ---------------- Verfeinerung (Felder früherer Spielstände halbieren) ----------------
+# ---------------- Refinement (halving the tiles of earlier saves) ----------------
 
 const _PENDING := 255
 
 static func _barrier(t: int) -> bool:
 	return t == Tile.WALL or t == Tile.DOOR or t == Tile.WINDOW
 
-## Feineres Raster aus einem groben (jedes Feld wird 2×2). Räumliche Anordnung bleibt:
-## - Boden und All werden 2×2 Boden bzw. All, Luft, Temperatur, Zustand, Zone, Kabel bleiben.
-## - Wände, Türen und Fenster werden zu einer 1 Feld dicken Linie auf der Außenseite
-##   (zum All hin; Innenwände an einer festen Seite). Benachbarte Wandstücke werden lückenlos
-##   verbunden, die Druckhülle bleibt also dicht. Die übrigen Teilfelder werden Boden (innen)
-##   oder All (außen); abgeschlossene Taschen ohne Luftanschluss werden Wand.
-## - Türen bleiben genau ein Feld breit und begehbar, Andockschleusen sitzen auf ihrer Tür.
-## - Geräte bleiben dieselben Instanzen (Zustand, Inventar); 1-Feld-Geräte auf einem der vier
-##   Teilfelder, Triebwerke 1×3 durch die neue, dünne Wand. Haufen bleiben erhalten.
+## Finer grid from a coarse one (every tile becomes 2×2). The spatial layout is kept:
+## - floor and space become 2×2 floor or space; air, temperature, condition, zone and cables are kept.
+## - walls, doors and windows become a line 1 tile thick on the outer side
+##   (towards space; inner walls on a fixed side). Neighbouring wall pieces are joined
+##   without gaps, so the pressure hull stays airtight. The remaining sub-tiles become floor (inside)
+##   or space (outside); enclosed pockets without an air connection become wall.
+## - doors stay exactly one tile wide and walkable, docking ports sit on their door.
+## - devices stay the same instances (condition, inventory); 1-tile devices on one of the four
+##   sub-tiles, 1×3 thrusters through the new, thin wall. Piles are kept.
 static func refine(c: ShipGrid) -> ShipGrid:
 	var k := 2
 	var g := ShipGrid.new(c.width * k, c.height * k)
@@ -424,7 +424,7 @@ static func refine(c: ShipGrid) -> ShipGrid:
 	g.coarse_map.resize(n)
 	var orig_air := PackedByteArray()
 	orig_air.resize(g.tiles.size())
-	# 1) Felder übernehmen
+	# 1) copy the tiles
 	for i in n:
 		var p := c.pos(i)
 		var t := int(c.tiles[i])
@@ -438,12 +438,12 @@ static func refine(c: ShipGrid) -> ShipGrid:
 			if not _barrier(t):
 				g.o2[j] = c.o2[i]; g.n2[j] = c.n2[i]; g.co2[j] = c.co2[i]
 				orig_air[j] = 1 if t == Tile.FLOOR else 0
-	# 2) Wandlinie: ein Ankerfeld je grobem Wandstück, zur Außenseite hin
+	# 2) wall line: one anchor tile per coarse wall piece, towards the outer side
 	var anchor := PackedInt32Array()
 	anchor.resize(n)
 	anchor.fill(-1)
-	# „Außen“ von p aus: All, Rasterrand oder ein anderer Bereich (Wrack/Station an der Schleuse).
-	# So sitzen Schleuse und angedockte Tür nach dem Verfeinern weiter direkt aneinander.
+	# "Outside" seen from p: space, grid edge or another zone (wreck/station at the airlock).
+	# So the airlock and the docked door still sit right next to each other after refining.
 	var space_at := func(p: Vector2i, q: Vector2i) -> bool:
 		return not c.in_bounds(q) or c.tiles[c.idx(q)] == Tile.SPACE or c.zone[c.idx(q)] != c.zone[c.idx(p)]
 	for i in n:
@@ -460,7 +460,7 @@ static func refine(c: ShipGrid) -> ShipGrid:
 		if c.tiles[i] == Tile.DOOR:
 			g.o2[a] = c.o2[i]; g.n2[a] = c.n2[i]; g.co2[a] = c.co2[i]
 			orig_air[a] = 1
-	# Verbindungen zu Nachbar-Wandstücken rechts und unten (L-förmig, 4er-Nachbarschaft)
+	# Connections to neighbouring wall pieces to the right and below (L-shaped, 4-neighbourhood)
 	for i in n:
 		if anchor[i] < 0:
 			continue
@@ -487,9 +487,9 @@ static func refine(c: ShipGrid) -> ShipGrid:
 				var j := g.idx(cell)
 				if g.tiles[j] == _PENDING:
 					g.tiles[j] = ct
-	# 3) Restliche Teilfelder: auf der Außenseite der Wandlinie (am All) → All, sonst Boden.
-	#    Nur innerhalb desselben früheren Feldes, damit ein Leck nicht entlang der Wand
-	#    „durchläuft“ und Streifen aus All in Räume zieht.
+	# 3) remaining sub-tiles: on the outer side of the wall line (towards space) → space, otherwise floor.
+	#    Only within the same former tile, so a leak does not "run" along the wall
+	#    and pull strips of space into rooms.
 	var seen := PackedByteArray()
 	seen.resize(g.tiles.size())
 	var queue: Array[int] = []
@@ -529,7 +529,7 @@ static func refine(c: ShipGrid) -> ShipGrid:
 		else:
 			g.tiles[j] = Tile.FLOOR
 			new_floor.append(j)
-	# Luft für neue Bodenfelder vom angrenzenden Raum übernehmen; Taschen ohne Anschluss → Wand
+	# Take air for new floor tiles from the adjacent room; pockets without a connection → wall
 	var got := PackedByteArray()
 	got.resize(g.tiles.size())
 	var front: Array[int] = []
@@ -556,11 +556,11 @@ static func refine(c: ShipGrid) -> ShipGrid:
 	for j in new_floor:
 		if got[j] == 0:
 			g.tiles[j] = Tile.WALL
-	# 4) Vertreterfelder (grob -> fein)
+	# 4) representative tiles (coarse -> fine)
 	for i in n:
 		var p := c.pos(i)
 		g.coarse_map[i] = anchor[i] if anchor[i] >= 0 else g.idx(p * k)
-	# Kabel: eine einfache Linie über die Vertreterfelder, zu Nachbarkabeln lückenlos verbunden
+	# Cables: a simple line over the representative tiles, joined to neighbouring cables without gaps
 	for i in n:
 		if c.cables[i] == 0:
 			continue
@@ -581,7 +581,7 @@ static func refine(c: ShipGrid) -> ShipGrid:
 			for cell in cells:
 				if g.get_tile(cell) != Tile.SPACE:
 					g.cables[g.idx(cell)] = 1
-	# 5) Geräte: dieselben Instanzen. Erst Mehrfeld-Geräte (durch die Wand), dann die übrigen.
+	# 5) devices: the same instances. Multi-tile devices first (through the wall), then the rest.
 	var order: Array = c.devices.keys()
 	order.sort_custom(func(a, b): return int(c.devices[a].data().length > 1) > int(c.devices[b].data().length > 1))
 	var docks: Array[Device] = []
@@ -589,7 +589,7 @@ static func refine(c: ShipGrid) -> ShipGrid:
 		var dev: Device = c.devices[ci]
 		var p := dev.pos
 		if dev.type == "dockport":
-			# Andockschleuse: erst auf ihre Tür setzen, nach allen Geräten auf 5×2 umstellen
+			# Docking port: first place it on its door, convert to 5×2 after all devices
 			var a := g.pos(anchor[ci]) if anchor[ci] >= 0 else p * k
 			dev.pos = a
 			g.put_device(dev)
@@ -607,15 +607,15 @@ static func refine(c: ShipGrid) -> ShipGrid:
 					g.put_device(dev)
 					g.coarse_map[ci] = g.idx(inner)
 					if c.cables[ci] == 1:
-						g.cables[g.idx(inner)] = 1   # Stromanschluss wie am alten Platz
+						g.cables[g.idx(inner)] = 1   # power connection as in the old place
 					continue
-			# passt nicht mehr: einmal als vollständiger Gegenstand an Bord ablegen
+			# no longer fits: drop it once aboard as a complete item
 			dev.pos = g._free_floor_near(p * k)
 			g._migrate_legacy(dev)
 			continue
 		var spot := Vector2i(-1, -1)
 		if anchor[ci] >= 0:
-			spot = g.pos(anchor[ci])           # z. B. Andockschleuse auf ihrer Tür
+			spot = g.pos(anchor[ci])           # e.g. a docking port on its door
 		else:
 			for sub in 4:
 				var q := Vector2i(p.x * k + sub % 2, p.y * k + sub / 2)
@@ -627,7 +627,7 @@ static func refine(c: ShipGrid) -> ShipGrid:
 		dev.pos = spot
 		g.put_device(dev)
 		if c.cables[ci] == 1 and g.cables[g.idx(spot)] == 0:
-			# Gerät nicht auf der Kabellinie: kurzes Stück zum Vertreterfeld legen
+			# Device not on the cable line: lay a short piece to the representative tile
 			var r := g.pos(g.coarse_map[ci])
 			for x in range(mini(r.x, spot.x), maxi(r.x, spot.x) + 1):
 				g.cables[g.idx(Vector2i(x, r.y))] = 1
@@ -639,7 +639,7 @@ static func refine(c: ShipGrid) -> ShipGrid:
 	for dev in docks:
 		g.remove_device(dev)
 		g._migrate_dock(dev)
-	# 6) Haufen auf ein freies Teilfeld
+	# 6) piles onto a free sub-tile
 	for ci in c.piles:
 		var p := c.pos(ci)
 		var spot := Vector2i(-1, -1)
@@ -655,14 +655,14 @@ static func refine(c: ShipGrid) -> ShipGrid:
 			g.drop_items(spot, it.type, int(it.qty), float(it.cond), it.get("data"))
 	return g
 
-## Vertreter-Feld eines groben Feldes nach refine() (für gespeicherte Positionen)
+## Representative tile of a coarse tile after refine() (for stored positions)
 func fine_of_coarse(cp: Vector2i) -> Vector2i:
 	if coarse_map.is_empty() or coarse_width <= 0:
 		return cp
 	return pos(coarse_map[cp.y * coarse_width + cp.x])
 
-## Gespeicherte Figurenposition (grobe Feld-Einheiten) ins feine Raster: gleiche Stelle,
-## auf ein begehbares Feld
+## Stored character position (coarse tile units) into the fine grid: same place,
+## on a walkable tile
 func fine_pos(cpos: Vector2) -> Vector2:
 	var f := cpos * 2.0
 	var q := Vector2i(floori(f.x), floori(f.y))

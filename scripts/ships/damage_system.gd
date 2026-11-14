@@ -1,14 +1,14 @@
-## Schäden: Verschleiß laufender Geräte, Mikrometeoriten auf die
-## Außenhülle und automatische Reparatur-Aufträge.
+## Damage: wear of running devices, micrometeorites on the
+## outer hull and automatic repair jobs.
 extends Node
 
-## Einschlag-Blitze zum Zeichnen: [{pos, start_ms}]
+## Impact flashes for drawing: [{pos, start_ms}]
 var effects: Array[Dictionary] = []
 var _scan := 0.0
 
 func step(dt: float) -> void:
 	var g := ShipSystem.grid
-	# Verschleiß
+	# Wear
 	for i in g.devices:
 		var dev: Device = g.devices[i]
 		var running := (dev.needs_power() and dev.powered) or dev.producing
@@ -20,7 +20,7 @@ func step(dt: float) -> void:
 				dev.broken = true
 				if not g.foreign(i):
 					GameState.toast(dev.data().display_name + " broke down!", "bad")
-	# Mikrometeoriten
+	# Micrometeorites
 	if Settings.meteors and GameState.time / 1440.0 >= Config.FIRST_METEOR_DAY and randf() < Config.METEORS_PER_DAY * dt / 1440.0:
 		strike()
 	_scan -= dt
@@ -28,7 +28,7 @@ func step(dt: float) -> void:
 		_scan = 1.0
 		_auto_repair()
 
-## Ein Mikrometeorit trifft eine zufällige Stelle der Außenhülle
+## A micrometeorite hits a random spot of the outer hull
 func strike() -> void:
 	var g := ShipSystem.grid
 	var hull: Array[Vector2i] = []
@@ -53,7 +53,7 @@ func strike() -> void:
 			dev.cond = maxf(0.0, dev.cond - randf() * 30.0)
 			if dev.cond <= 0.0:
 				dev.broken = true
-	# Einschläge können Feuer auslösen (auf einem Nachbarfeld mit Luft)
+	# Impacts can start fires (on a neighbouring tile with air)
 	if randf() < 0.2:
 		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
 			var q: Variant = p + d
@@ -73,7 +73,7 @@ func needs_repair(p: Vector2i) -> bool:
 	var g := ShipSystem.grid
 	if not g.in_bounds(p):
 		return false
-	# Mehrfeld-Gerät: sein Zustand gilt am Innenfeld; Wand und Düsenfeld haben ihren eigenen
+	# Multi-tile device: its condition counts at the inner tile; the wall and nozzle tiles have their own
 	var dev := g.device_at(p)
 	if dev != null and dev.pos == p:
 		return dev.cond < 100.0 and dev.data().repairable
@@ -95,7 +95,7 @@ func _auto_repair() -> void:
 	for i in g.tiles.size():
 		var t := g.tiles[i]
 		if g.foreign(i):
-			continue  # Wracks und Stationen werden nicht repariert
+			continue  # Wrecks and stations are not repaired
 		if (t == ShipGrid.Tile.WALL or t == ShipGrid.Tile.DOOR) and g.cond[i] < Config.AUTO_REPAIR_AT and not CS.jobs.has(i):
 			CS.place("repair", g.pos(i))
 	for i in g.devices:

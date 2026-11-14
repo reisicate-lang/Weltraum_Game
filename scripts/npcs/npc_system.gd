@@ -1,13 +1,13 @@
-## NPCs: Bewerber auf den Stationen (anheuern, Lohn) und Begegnungen
-## mit Plünderern (kämpfen, verhandeln, bezahlen).
+## NPCs: applicants on the stations (hiring, wages) and encounters
+## with plunderers (fight, negotiate, pay).
 extends Node
 
 signal encounter_started(enc: Dictionary)
 
 var candidates: Dictionary = {}   ## Station -> Array[CrewMember]
 var _cand_day := -1
-var encounter: Dictionary = {}    ## aktuelle Begegnung oder leer
-var unpaid := {}                  ## crew id -> Tage ohne Lohn
+var encounter: Dictionary = {}    ## current encounter or empty
+var unpaid := {}                  ## crew id -> days without wages
 
 func reset() -> void:
 	candidates.clear()
@@ -15,7 +15,7 @@ func reset() -> void:
 	encounter = {}
 	unpaid.clear()
 
-## Bewerber an der aktuellen Station (jeden Tag neue)
+## Applicants at the current station (new ones every day)
 func candidates_here() -> Array:
 	var st := PhysicsSystem.station()
 	if st.is_empty():
@@ -45,7 +45,7 @@ func hire(c: CrewMember) -> void:
 	c.push_out_if_stuck()
 	GameState.toast(c.display_name + " is now part of the crew (%d Cr per day)." % c.salary)
 
-## Jeden Tag Lohn zahlen. Wer 3 Tage keinen Lohn bekommt, geht.
+## Pay wages every day. Whoever gets no wages for 3 days leaves.
 func pay_wages() -> void:
 	for c in CrewSystem.crew.duplicate():
 		if c.is_player or c.salary <= 0:
@@ -65,7 +65,7 @@ func pay_wages() -> void:
 
 # ---------------- Begegnungen ----------------
 
-## Beim Andocken im Trümmerfeld oder an L4 können Plünderer auftauchen
+## Plunderers can show up when docking in the debris field or at L4
 func on_docked(loc_id: String) -> void:
 	var chance := {"debris": 0.35, "l4": 0.2}.get(loc_id, 0.0) as float
 	chance *= 1.0 - minf(0.6, SkillSystem.best_effect("threat"))
@@ -77,7 +77,7 @@ func start_plunderers() -> void:
 	TimeSystem.set_speed(0)
 	encounter_started.emit(encounter)
 
-## Kämpfer: die drei stärksten an Bord
+## Fighters: the three strongest aboard
 func fighters() -> Array:
 	var list := CrewSystem.crew.filter(func(c): return not c.unconscious)
 	list.sort_custom(func(a, b): return SkillSystem.combat_power(a) > SkillSystem.combat_power(b))

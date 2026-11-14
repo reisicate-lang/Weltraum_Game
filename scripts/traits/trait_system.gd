@@ -1,16 +1,16 @@
-## Charaktereigenschaften (Traits) nach der Ostranauts-Liste (73 Traits mit Jahreskosten und
-## Gegenstücken). Sie ändern sich nicht durch Training, nur durch den Lebenslauf.
+## Character traits after the Ostranauts list (73 traits with year costs and
+## counterparts). They do not change through training, only through the life story.
 extends Node
 
 const DIR := "res://resources/traits/"
-## Additive Wirkungen (Summe statt Produkt)
+## Additive effects (sum instead of product)
 const ADDITIVE := ["piloting"]
-## Wirkungen, die im Spiel verrechnet werden (für den Tooltip)
+## Effects that are applied in the game (for the tooltip)
 const EFFECT_NAMES := {"learn_speed": "Learning speed", "work_speed": "Work speed", "work_fine": "Fine work",
 	"book_speed": "Reading speed", "stress_resist": "Stress resistance", "toughness": "Toughness",
 	"recovery": "Healing", "combat": "Combat power", "social": "Social", "hunger": "Food consumption",
 	"thirst": "Water consumption", "sleep_gain": "Sleep recovery", "piloting": "Piloting"}
-## Frühere eigene Traits → Ostranauts-Traits (alte Spielstände, Lebenslauf-Daten)
+## Former own traits → Ostranauts traits (old saves, life story data)
 const LEGACY := {"calm": "brave", "distracted": "obtuse", "frugal": "slow_metabolism", "hardy": "tough",
 	"introvert": "shy", "lazy": "complacent", "nervous": "craven", "nimble": "coordinated", "smart": "genius",
 	"social": "gregarious", "weak": "feeble"}
@@ -34,7 +34,7 @@ func _load_from(path: String) -> void:
 func get_trait(id: String) -> TraitData:
 	return traits.get(resolve(id))
 
-## Alte ID → neue ID (unbekannte bleiben, wie sie sind)
+## old ID → new ID (unknown ones stay as they are)
 func resolve(id: String) -> String:
 	return LEGACY.get(id, id)
 
@@ -44,7 +44,7 @@ func ordered_ids() -> Array:
 	ids.sort_custom(func(a, b): return traits[a].order < traits[b].order)
 	return ids
 
-## Trait-Liste eines alten Spielstands umstellen (alte IDs → neue, ohne Dopplungen)
+## Convert the trait list of an old save (old IDs → new, without duplicates)
 func migrate(list: Array) -> Array[String]:
 	var out: Array[String] = []
 	for id in list:
@@ -53,7 +53,7 @@ func migrate(list: Array) -> Array[String]:
 			out.append(n)
 	return out
 
-## Produkt eines Faktors über alle Traits eines Charakters (1.0 = normal)
+## Product of a factor over all traits of a character (1.0 = normal)
 func factor(c: CrewMember, key: String) -> float:
 	if c == null:
 		return 1.0
@@ -64,7 +64,7 @@ func factor(c: CrewMember, key: String) -> float:
 			f *= float(t.modifiers[key])
 	return f
 
-## Summe einer additiven Wirkung (z. B. piloting) über alle Traits
+## Sum of an additive effect (e.g. piloting) over all traits
 func sum(c: CrewMember, key: String) -> float:
 	if c == null:
 		return 0.0
@@ -75,7 +75,7 @@ func sum(c: CrewMember, key: String) -> float:
 			v += float(t.modifiers[key])
 	return v
 
-## Gegenstück, das die Figur gerade hat ("" = keins)
+## Counterpart the character has right now ("" = none)
 func held_opposite(c: CrewMember, id: String) -> String:
 	var t := get_trait(id)
 	if t == null:
@@ -92,9 +92,9 @@ func can_add(c: CrewMember, id: String) -> bool:
 	id = resolve(id)
 	return traits.has(id) and not id in c.traits and held_opposite(c, id) == ""
 
-## Trait durch den Lebenslauf (Station, Ereignis) bekommen. Hat die Figur das negative Gegenstück,
-## verschwindet stattdessen dieses (Ostranauts-Regel); ein negativer Trait gegen ein positives
-## Gegenstück wird nicht vergeben. true = etwas hat sich geändert.
+## Get a trait through the life story (life step, encounter). If the character has the negative counterpart,
+## that one disappears instead (Ostranauts rule); a negative trait against a positive
+## counterpart is not given. true = something has changed.
 func add(c: CrewMember, id: String) -> bool:
 	id = resolve(id)
 	if not traits.has(id) or id in c.traits:
@@ -111,7 +111,7 @@ func add(c: CrewMember, id: String) -> bool:
 func remove(c: CrewMember, id: String) -> void:
 	c.traits.erase(resolve(id))
 
-## Tooltip (englisch): Kosten, Gegenstück, Wirkung im Spiel, Wiki-Wirkung
+## Tooltip: cost, counterpart, effect in the game, wiki effect
 func tooltip(id: String) -> String:
 	var t := get_trait(id)
 	if t == null:

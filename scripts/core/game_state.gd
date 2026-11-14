@@ -1,17 +1,17 @@
-## Hält den Zustand des laufenden Spiels und verteilt jeden
-## Simulationsschritt an die einzelnen Systeme (in fester Reihenfolge).
+## Holds the state of the running game and hands every
+## simulation step to the individual systems (in a fixed order).
 extends Node
 
-## vergangene Spielminuten seit Spielbeginn
+## game minutes passed since the start of the game
 var time: float = 0.0
-## gewähltes Werkzeug ("select", "floor", "wall", ...)
+## selected tool ("select", "floor", "wall", ...)
 var tool: String = "select"
-## Ansicht: "normal", "air", "power"
+## view: "normal", "air", "power", "heat", "damage"
 var view: String = "normal"
 var selected = null
 
 func _ready() -> void:
-	# Erst starten, wenn alle Autoloads bereit sind
+	# Only start once all autoloads are ready
 	call_deferred("new_game")
 
 func new_game() -> void:
@@ -29,11 +29,11 @@ func new_game() -> void:
 	QuestSystem.reset()
 	GoalSystem.reset()
 	DialogueSystem.reset()
-	# Station an die Luftschleuse; das Wrack liegt als eigenes Ziel neben Tycho
+	# Station at the airlock; the wreck is its own target next to Tycho
 	StationSystem.build(PhysicsSystem.docked)
 	if Config.ENABLE_WRECK:
 		FleetSystem.add_site(PhysicsSystem.docked)
-	# Standard-Lebenslauf für Mira (im Startbildschirm änderbar)
+	# Default life story for Mira (can be changed on the start screen)
 	var mira := CrewSystem.player()
 	CharacterSystem.begin(mira)
 	CharacterSystem.apply_career(mira, "shipyard")
@@ -43,7 +43,7 @@ func new_game() -> void:
 	EventBus.game_loaded.emit()
 	EventBus.ship_changed.emit()
 
-## Ein Simulationsschritt (dt in Spielminuten)
+## One simulation step (dt in game minutes)
 func step(dt: float) -> void:
 	time += dt
 	PhysicsSystem.step(dt)

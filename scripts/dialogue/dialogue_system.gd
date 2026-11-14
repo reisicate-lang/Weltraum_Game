@@ -1,6 +1,6 @@
-## Gespräche und Tätigkeiten auf den Stationen. Geschichten kommen über
-## Menschen: Kontakte antworten in kurzen Sätzen, nicht in Textbildschirmen.
-## Jede Option braucht passende Fähigkeiten (Etikette, Überzeugen ...) oder Hobbys.
+## Conversations and activities on the stations. Stories come through
+## people: contacts answer in short lines, not in text screens.
+## Every option needs matching skills (etiquette, persuasion ...) or hobbies.
 extends Node
 
 const CONTACTS := {
@@ -19,7 +19,7 @@ func reset() -> void:
 func speaker() -> CrewMember:
 	return EconomySystem.trader()
 
-## Optionen an der aktuellen Station: [{id, text, ok, why}]
+## Options at the current station: [{id, text, ok, why}]
 func options() -> Array:
 	var st := PhysicsSystem.station()
 	if st.is_empty():
@@ -45,7 +45,7 @@ func options() -> Array:
 	out.append({"id": "gamble", "text": "Play dice for 50 Cr", "ok": EconomySystem.credits >= 50, "why": "Needs 50 Cr"})
 	return out
 
-## Option ausführen. Gibt die Antwort (Dialogzeile) zurück.
+## Carry out an option. Returns the answer (dialogue line).
 func choose(id: String) -> String:
 	var st := PhysicsSystem.station()
 	var c := speaker()
@@ -106,7 +106,7 @@ func choose(id: String) -> String:
 			return "%s loses 50 Cr at dice." % c.display_name
 	return ""
 
-## Schmuggelware verkaufen: Kontrolle möglich (Heimlichkeit, Schauspiel helfen)
+## Selling contraband: inspection possible (Stealth and Acting help)
 func smuggle_check(c: CrewMember) -> bool:
 	var st := PhysicsSystem.station()
 	var risk := 0.15 if st.get("black", false) else 0.45
@@ -117,7 +117,7 @@ func smuggle_check(c: CrewMember) -> bool:
 	SkillSystem.train(c, "bluff", 5.0)
 	return randf() >= risk
 
-## Psychologie: Gespräch mit einem Crewmitglied senkt dessen Stress
+## Psychology: a talk with a crew member lowers their stress
 func counsel(counselor: CrewMember, target: CrewMember) -> String:
 	var amount := 8.0 + SkillSystem.effect(counselor, "counsel") * 40.0
 	if SkillSystem.mastered(counselor, "psychology"):

@@ -1,4 +1,4 @@
-## Ein eingebautes Gerät auf einem Feld des Schiffs (Zustand zur Laufzeit).
+## An installed device on a tile of the ship (runtime state).
 class_name Device
 extends RefCounted
 
@@ -13,37 +13,37 @@ var stock := -1.0
 var charge := 0.0
 var claimed_by := -1
 var inv: Inventory = null
-## Anzugschrank: gelagerter Raumanzug {"o2", "battery"} oder null
+## Suit locker: stored space suit {"o2", "battery"} or null
 var suit = null
-## Schleusenpumpe: gespeicherte Luft (kPa)
+## Airlock pump: stored air (kPa)
 var store := 0.0
-## Wrack-Geräte sind unbekannt, bis jemand nah herangeht
+## Wreck devices are unknown until someone gets close
 var unknown := false
-## Schloss: 0 = offen, 1–3 = Sicherheitsstufe (Hacken nötig)
+## Lock: 0 = open, 1–3 = security level (hacking needed)
 var lock_level := 0
-## Anbau und Fleischtank
+## Growing and meat vat
 var growth := 0.0
 var tended_at := 0.0
 var genemod := false
-## Drehung in 90°-Schritten (0 = schiebt das Schiff nach vorn zur Nase, 1 = nach rechts,
-## 2 = nach hinten, 3 = nach links). Nur für drehbare Geräte wie Triebwerke.
+## Rotation in 90° steps (0 = pushes the ship forward towards the nose, 1 = to the right,
+## 2 = backward, 3 = to the left). Only for rotatable devices such as thrusters.
 var rot := 0
-## Stromschalter: an = leitet wie ein Kabel, aus = trennt die Netze
+## Power switch: on = conducts like a cable, off = splits the networks
 var switch_on := true
 
 const PUSH_DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1)]
 
-## In welche Richtung schiebt das Gerät das Schiff (Schiffskoordinaten: x = Nase, y = rechts)
+## Which way the device pushes the ship (ship coordinates: x = nose, y = right)
 func push_dir() -> Vector2i:
 	return PUSH_DIRS[rot % 4]
 
-## Einbaurichtung von innen nach außen (zur Düse); entgegen der Schubrichtung
+## Mounting direction from inside to outside (towards the nozzle); against the thrust direction
 func outward() -> Vector2i:
 	return -push_dir()
 
-## Alle Felder des Geräts, pos zuerst.
-## Triebwerk 1×3: pos ist das Innenfeld, dann nach außen (innen, Wand, Düse).
-## Andockschleuse 5×2: pos ist die Außentür; Außenreihe in der Wand, dahinter die Innenreihe.
+## All tiles of the device, pos first.
+## Thruster 1×3: pos is the inner tile, then outwards (inside, wall, nozzle).
+## Docking port 5×2: pos is the outer door; outer row in the wall, the inner row behind it.
 func cells() -> Array[Vector2i]:
 	if data().width > 1:
 		return ShipGrid.dock_cells(pos, outward(), data().width)
@@ -70,7 +70,7 @@ func _init(t: String, p: Vector2i) -> void:
 func data() -> DeviceData:
 	return ItemSystem.device(type)
 
-## Funktionsfähiges Steuerpultmodul dieser Art im Modulfach ({} = keins)
+## Working navigation console module of this kind in the module bay ({} = none)
 func module(kind: String) -> Dictionary:
 	if inv == null or not inv.only_modules:
 		return {}
@@ -79,7 +79,7 @@ func module(kind: String) -> Dictionary:
 			return it
 	return {}
 
-## Steckt ein (auch kaputtes) Modul dieser Art im Fach?
+## Is a module of this kind (even a broken one) in the bay?
 func has_module_item(kind: String) -> bool:
 	if inv == null or not inv.only_modules:
 		return false
@@ -91,7 +91,7 @@ func has_module_item(kind: String) -> bool:
 func needs_power() -> bool:
 	return data().power < 0.0
 
-## Kann ein Charakter das Gerät gerade benutzen?
+## Can a character use the device right now?
 func usable() -> bool:
 	if broken:
 		return false

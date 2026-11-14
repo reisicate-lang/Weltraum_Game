@@ -1,12 +1,12 @@
-## Schiffsbewertung nach Ostranauts „Ship Building“ 2.2: W-X-Y-ZZZZ =
-## Zustand – Anzahl verschiedener Raumtypen – Schub (Masse je Triebwerk) – Größe (Breite × Länge).
+## Ship rating after Ostranauts "Ship Building" 2.2: W-X-Y-ZZZZ =
+## condition – number of different room types – thrust (mass per thruster) – size (width × length).
 class_name ShipRating
 extends RefCounted
 
 const SIZE_CLASSES := [[250, "Small"], [900, "Medium"], [1600, "Lunamax"], [2300, "Ceresmax"],
 	[3000, "Titanmax"], [3700, "Very Large"]]
 
-## Durchschnittszustand aller eingebauten Teile (Geräte und Rumpffelder) in %
+## Average condition of all installed parts (devices and hull tiles) in %
 static func condition(g: ShipGrid) -> float:
 	var sum := 0.0
 	var n := 0
@@ -31,7 +31,7 @@ static func condition_rank(c: float) -> String:
 		return "D"
 	return "E"
 
-## Masse je Triebwerk in kg → A (< 300) bis E (> 1500); ohne Triebwerk E
+## Mass per thruster in kg → A (< 300) to E (> 1500); without a thruster E
 static func thrust_rank(mass_kg: float, thrusters: int) -> String:
 	if thrusters <= 0:
 		return "E"
@@ -46,7 +46,7 @@ static func thrust_rank(mass_kg: float, thrusters: int) -> String:
 		return "D"
 	return "E"
 
-## Fläche des umschließenden Rechtecks aller eigenen Felder (Breite × Länge)
+## Area of the bounding rectangle of all your own tiles (width × length)
 static func area(g: ShipGrid) -> int:
 	var lo := Vector2i(g.width, g.height)
 	var hi := Vector2i(-1, -1)
@@ -67,7 +67,7 @@ static func size_class(a: int) -> String:
 			return sc[1]
 	return "Ultra Large"
 
-## Masse ohne Ladung (für gespeicherte Schiffe): Rumpffelder und Geräte, in kg
+## Mass without cargo (for stored ships): hull tiles and devices, in kg
 static func dry_mass_kg(g: ShipGrid) -> float:
 	var m := 0.0
 	for i in g.tiles.size():
@@ -78,7 +78,7 @@ static func dry_mass_kg(g: ShipGrid) -> float:
 			m += g.devices[i].data().mass
 	return m * 1000.0
 
-## Bewertung als Text, z. B. "C-3-E-0960". mass_kg < 0: Trockenmasse des Rasters
+## Rating as text, e.g. "C-3-E-0960". mass_kg < 0: dry mass of the grid
 static func rating(g: ShipGrid, mass_kg: float = -1.0) -> String:
 	var thr := 0
 	for i in g.devices:

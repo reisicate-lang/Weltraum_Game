@@ -1,10 +1,10 @@
-## Baupläne (Aufträge): bauen, abreißen, Kabel, Geräte.
-## Der Spieler plant, die Crew holt Material und arbeitet die Pläne ab.
+## Build plans (jobs): build, demolish, cables, devices.
+## The player plans, the crew fetches material and works through the plans.
 extends Node
 
-## Feld-Index -> Auftrag (Dictionary)
+## tile index -> job (Dictionary)
 var jobs: Dictionary = {}
-## Drehung für das nächste gebaute drehbare Gerät (0–3, je 90°; Taste G)
+## Rotation for the next rotatable device built (0–3, 90° each; key G)
 var build_rot := 0
 
 const TOOL_TILE := {"floor": 1, "wall": 2, "door": 3, "window": 4}
@@ -16,11 +16,11 @@ func can_place(tool: String, p: Vector2i) -> bool:
 	var i := g.idx(p)
 	var t := g.tiles[i]
 	var has_dev := g.occupied(p)
-	# Die Station gehört dir nicht (die Luke in der Schiffswand auch nicht)
+	# The station is not yours (neither is the hatch in the ship wall)
 	if (StationSystem.reserved(p) or StationSystem.is_hatch(i)) and not tool in ["haul", "cancel"]:
 		return false
 	if tool == "dev:dockport":
-		# Andockschleuse 5×2: Außentür mitten in einer geraden Außenwand (siehe ShipGrid.dock_check)
+		# Docking port 5×2: outer door in the middle of a straight outer wall (see ShipGrid.dock_check)
 		return place_reason(tool, p) == ""
 	if tool.begins_with("dev:"):
 		var dd := ItemSystem.device(tool.substr(4))
@@ -49,13 +49,13 @@ func can_place(tool: String, p: Vector2i) -> bool:
 		"cancel": return jobs.has(i)
 		"rotate": return has_dev and g.device_at(p).data().rotatable and g.device_at(p).data().length == 1 and not jobs.has(i) and not g.foreign(i)
 		"debug":
-			# Navigationskonsole (Steuerpult) des eigenen Schiffs debuggen
+			# Debug the navigation console of your own ship
 			var dd = g.device_at(p)
 			return has_dev and dd.type in SkillSystem.NAV_STATIONS and not dd.unknown and not g.foreign(g.idx(dd.pos)) and not jobs.has(g.idx(dd.pos))
 	return false
 
-## Grund, warum ein Mehrfeld-Gerät (Triebwerk 1×3) hier nicht gebaut werden kann ("" = geht).
-## p = Innenfeld, Richtung = build_rot.
+## Reason why a multi-tile device (thruster 1×3) cannot be built here ("" = possible).
+## p = inner tile, direction = build_rot.
 func place_reason(tool: String, p: Vector2i) -> String:
 	var g := ShipSystem.grid
 	var type := tool.substr(4)
@@ -81,7 +81,7 @@ func place_reason(tool: String, p: Vector2i) -> String:
 			return "Belongs to the station."
 	return ""
 
-## Felder eines Geräts dieser Art an p (Innenfeld) mit Drehung rot
+## Tiles of a device of this type at p (inner tile) with rotation rot
 func cells_of(type: String, p: Vector2i, rot: int) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
 	if type == "dockport":
@@ -148,7 +148,7 @@ func g_lock(p: Vector2i) -> int:
 	var dev := ShipSystem.grid.device_at(p)
 	return dev.lock_level if dev != null else 1
 
-## Gerät versetzen: von src nach dst (ein Charakter trägt es)
+## Move a device: from src to dst (a character carries it)
 func place_move(src: Vector2i, dst: Vector2i) -> bool:
 	var g := ShipSystem.grid
 	if not can_place("move", src):
@@ -163,7 +163,7 @@ func place_move(src: Vector2i, dst: Vector2i) -> bool:
 		"need": 0.3, "progress": 0.0, "claimed_by": -1, "retry_at": 0.0, "paid": true}
 	return true
 
-## Wo muss gerade gearbeitet werden?
+## Where does work need to be done right now?
 func target_of(job: Dictionary) -> Vector2i:
 	if (job.kind == "move" or job.kind == "haul") and job.phase == "deliver":
 		return Vector2i(int(job.tx), int(job.ty))
@@ -179,8 +179,8 @@ func cost(job: Dictionary) -> Dictionary:
 		"install": return {job.item: 1}
 	return {}
 
-## Was für den Auftrag noch fehlt (Kosten minus schon am Bauplatz abgelegtes Material).
-## Schwere Bauteile (z. B. Triebwerk, 44 kg) holt die Crew so in mehreren Gängen.
+## What the job is still missing (cost minus material already dropped at the build site).
+## The crew fetches heavy parts (e.g. a thruster, 44 kg) in several trips this way.
 func remaining_cost(job: Dictionary) -> Dictionary:
 	var out := {}
 	var got: Dictionary = job.get("delivered", {})
@@ -191,7 +191,7 @@ func remaining_cost(job: Dictionary) -> Dictionary:
 			out[type] = n
 	return out
 
-## Vorräte (Essen, Wasser, Brennstoff, Luft) automatisch aus dem Lager nachfüllen lassen
+## Have supplies (food, water, generator fuel, air) refilled automatically from storage
 func scan_refills() -> void:
 	var g := ShipSystem.grid
 	for i in g.devices:
@@ -213,11 +213,11 @@ func scan_refills() -> void:
 func pos_of(job: Dictionary) -> Vector2i:
 	return Vector2i(int(job.x), int(job.y))
 
-## Abbrechen: schon verbautes Material kommt zurück
+## Cancel: material already used comes back
 func cancel(job: Dictionary) -> void:
 	var g := ShipSystem.grid
 	jobs.erase(g.idx(pos_of(job)))
-	# Einbau abgebrochen: genau das abgebaute Stück (mit Zustand und Daten) zurücklegen
+	# Installing cancelled: put back exactly the uninstalled part (with condition and data)
 	if job.has("packed"):
 		var st: Dictionary = job.packed
 		g.drop_items(drop_spot(pos_of(job)), st.type, 1, float(st.cond), st.get("data"))
@@ -228,12 +228,12 @@ func cancel(job: Dictionary) -> void:
 		for type in c:
 			g.drop_items(spot, type, int(c[type]), 80.0)
 	elif not job.get("delivered", {}).is_empty():
-		# Schon abgelegtes Material kommt zurück
+		# Material already dropped comes back
 		var spot2 := drop_spot(pos_of(job))
 		for type in job.delivered:
 			g.drop_items(spot2, type, int(job.delivered[type]), 80.0)
 
-## Ein Bodenfeld in der Nähe, auf dem man etwas ablegen kann
+## A floor tile nearby where something can be put down
 func drop_spot(p: Vector2i) -> Vector2i:
 	var g := ShipSystem.grid
 	for r in 6:
@@ -246,7 +246,7 @@ func drop_spot(p: Vector2i) -> Vector2i:
 					return q
 	return p
 
-## Teile, die man beim Abreißen zurückbekommt
+## Parts you get back when demolishing
 func salvage(p: Vector2i, worker: CrewMember = null) -> Array:
 	var g := ShipSystem.grid
 	var i := g.idx(p)
@@ -259,7 +259,7 @@ func salvage(p: Vector2i, worker: CrewMember = null) -> Array:
 			if n > 0:
 				out.append([type, n, randf_range(25.0, 90.0) * maxf(0.3, dev.cond / 100.0)])
 		out.append(["scrap", 1 + randi() % 2, 40.0])
-		# Kampftechnik: Kriegswracks im Trümmerfeld geben mehr her
+		# Combat engineering: war wrecks in the debris field yield more
 		if worker != null and g.zone[i] == 1 and PhysicsSystem.docked == "debris" and randf() < SkillSystem.effect(worker, "military_salvage"):
 			out.append([["motor", "circuit", "cell", "boltgun"].pick_random(), 1, randf_range(40.0, 85.0)])
 		if dev.inv != null:
@@ -269,9 +269,9 @@ func salvage(p: Vector2i, worker: CrewMember = null) -> Array:
 	var t := g.tiles[i]
 	if g.cables[i] == 1 and t == ShipGrid.Tile.FLOOR:
 		return [["copper", 1, randf_range(50.0, 90.0)]]
-	# Ausbeute-Wirkung (demolish_yield), falls eine Fähigkeit sie hat
+	# Yield effect (demolish_yield), if a skill has it
 	var yield_bonus := SkillSystem.effect(worker, "demolish_yield") if worker != null else 0.0
-	# Asteroid: Fels gibt Eis und Erz
+	# Asteroid: rock yields ice and ore
 	if t == ShipGrid.Tile.WALL and g.zone[i] == 1 and SalvageSystem.is_asteroid():
 		out.append(["ice" if randf() < 0.55 else "ore", 1 + (1 if randf() < yield_bonus else 0), randf_range(70.0, 100.0)])
 		return out
@@ -285,7 +285,7 @@ func salvage(p: Vector2i, worker: CrewMember = null) -> Array:
 		ShipGrid.Tile.WINDOW: out.append(["glass", 2, randf_range(40.0, 90.0)])
 	return out
 
-## Auftrag fertig: Schiff verändern. worker_pos = wo der Arbeiter steht.
+## Job done: change the ship. worker_pos = where the worker stands.
 func complete(job: Dictionary, worker_pos: Vector2i, worker: CrewMember = null) -> void:
 	var g := ShipSystem.grid
 	var p := pos_of(job)
@@ -323,7 +323,7 @@ func complete(job: Dictionary, worker_pos: Vector2i, worker: CrewMember = null) 
 				why = g.dock_check(p).reason
 			elif ItemSystem.device(job.dev).length > 1:
 				why = g.mount_reason(job.dev, p, rot)
-			# Mehrfeld-Gerät: Platz inzwischen ungültig? Material kommt zurück
+			# Multi-tile device: is the place invalid by now? The material comes back
 			if why != "":
 				GameState.toast("%s: cannot build – %s material is lying next to it." % [ItemSystem.device(job.dev).display_name, why], "bad")
 				var back := drop_spot(worker_pos)
@@ -373,19 +373,19 @@ func _move_pile_away(i: int, to: Vector2i) -> void:
 	for it in pile.items:
 		g.drop_items(to, it.type, it.qty, it.cond, it.get("data"))
 
-## Wie viel gibt es von einer Sorte in Kisten und Haufen?
+## How much of one kind is there in crates and piles?
 func available(type: String) -> int:
 	var s := 0
 	for src in sources():
 		s += src.inv.count(type)
 	return s
 
-## Alle Lager: Kisten und Haufen. [{pos, inv}]
+## All storage: crates and piles. [{pos, inv}]
 func sources() -> Array:
 	var g := ShipSystem.grid
 	var out: Array = []
 	for i in g.devices:
-		# Nicht: Handelsterminal, Modulfach des Steuerpults, Mehrfeld-Geräte
+		# Not: trade terminal, the console's module bay, multi-tile devices
 		if g.devices[i].inv != null and g.devices[i].lock_level == 0 and g.devices[i].type != "terminal" and g.devices[i].type != "helm" and g.devices[i].data().length == 1:
 			out.append({"pos": g.pos(i), "inv": g.devices[i].inv})
 	for i in g.piles:
@@ -426,7 +426,7 @@ func to_data() -> Array:
 	var out: Array = []
 	for j in jobs.values():
 		if (j.kind == "move" or j.kind == "haul") and j.get("phase", "") == "deliver":
-			continue  # wird gerade getragen
+			continue  # is being carried right now
 		var d: Dictionary = j.duplicate()
 		d.claimed_by = -1
 		out.append(d)

@@ -1,23 +1,23 @@
-## Deine Flotte und was an den Orten liegt.
-## - Wracks bleiben an ihrem Ort, wenn du wegfliegst
-## - Schiffe kaufen (Werft am Kármán-Ring), wechseln, verkaufen
-## - Ein Wrack als eigenes Schiff anmelden
+## Your fleet and what lies at the places.
+## - wrecks stay at their place when you fly away
+## - buy ships (shipyard at the Kármán Ring), switch, sell
+## - register a wreck as your own ship
 extends Node
 
 const REGISTER_FEE := 600
 
-var ships: Array[Dictionary] = []   ## geparkte Schiffe {id, name, location, data}
-var places: Dictionary = {}         ## Ort -> {"wreck": Daten oder null}
-## Wracks als eigene Navigationsziele: Orte {id, kind: "wreck", name, near, off, desc}.
-## Das Wrack selbst liegt in places[id]; ans Schiff kommt es erst beim Ankoppeln.
+var ships: Array[Dictionary] = []   ## parked ships {id, name, location, data}
+var places: Dictionary = {}         ## place -> {"wreck": data or null}
+## Wrecks as their own navigation targets: places {id, kind: "wreck", name, near, off, desc}.
+## The wreck itself is in places[id]; it is only attached to the ship when coupling.
 var sites: Array = []
 var next_site := 1
 const WRECK_KINDS := ["wreck", "debris", "outpost", "asteroid"]
 var current_name := "Rustbucket"
-## Name im öffentlichen Register (Ostranauts: Ogiso's Register). Umbenennen an der
-## Navigationskonsole ändert erst den Schiffsnamen; eingetragen wird er beim Ship-Rating-Service der Werft.
+## Name in the public register (Ostranauts: Ogiso's Register). Renaming at the
+## navigation console only changes the ship's name; it is registered with the shipyard's Ship Rating service.
 var registered_name := "Rustbucket"
-## Hull registry ID (Ostranauts Ship Building 2), z. B. „J-YV16“: fest, auch beim Umbenennen
+## Hull registry ID (Ostranauts Ship Building 2), e.g. "J-YV16": fixed, also when renaming
 var registry_id := ""
 var current_id := 1
 var next_id := 2
@@ -34,11 +34,11 @@ func reset() -> void:
 	next_site = 1
 	PhysicsSystem.set_extra_locations(sites)
 
-# ---------------- Wrack am Ort ablegen / anhängen ----------------
+# ---------------- Storing / attaching the wreck at a place ----------------
 
-## Wrack am Ort ablegen. Gespeichert relativ zur Wracktür (x entlang des Ports, y nach außen),
-## damit es beim Wiederkommen an jeden freien Port passt. Hing es an einer Station
-## (alter Spielstand), wird es ein eigenes Wrackziel neben dieser Station.
+## Store the wreck at the place. Saved relative to the wreck door (x along the port, y outwards),
+## so it fits any free port when you come back. If it hung at a station
+## (old save), it becomes its own wreck target next to this station.
 func leave(l: Dictionary) -> void:
 	var w = capture()
 	if String(l.get("kind", "")) in WRECK_KINDS:
@@ -47,7 +47,7 @@ func leave(l: Dictionary) -> void:
 		add_site(String(l.id), w)
 	SalvageSystem.clear()
 
-## Neues Wrackziel neben dem Ort near (etwa 8 km entfernt), optional mit fertigem Wrack
+## New wreck target next to the place near (about 8 km away), optionally with a finished wreck
 func add_site(near: String, data = null) -> Dictionary:
 	var ang := randf() * TAU
 	var name := String(data.get("name", "")) if data is Dictionary else ""
@@ -61,8 +61,8 @@ func add_site(near: String, data = null) -> Dictionary:
 	PhysicsSystem.set_extra_locations(sites)
 	return l
 
-## Ankoppeln an ein Wrackziel: gespeichertes Wrack an den Port hängen oder ein neues erzeugen.
-## false = kein freier Port bzw. kein Platz (dann kein Wrackbereich am Schiff)
+## Coupling to a wreck target: attach the stored wreck to the port or create a new one.
+## false = no free port or no room (then no wreck zone at the ship)
 func attach_site(l: Dictionary) -> bool:
 	var place: Dictionary = places.get(l.id, {})
 	var w = place.get("wreck")
@@ -78,13 +78,13 @@ func attach_site(l: Dictionary) -> bool:
 	EventBus.ship_changed.emit()
 	return true
 
-## Das aktuelle Wrack als Daten (relativ zur Wracktür), oder null
+## The current wreck as data (relative to the wreck door), or null
 func capture():
 	var g := ShipSystem.grid
 	var e := SalvageSystem.entry
 	if e.x < 0:
 		e = LEGACY_ENTRY
-	# Port-Rahmen: d = vom Schiff weg (Port → Wracktür), a = entlang
+	# Port frame: d = away from the ship (port → wreck door), a = along it
 	var d := Vector2i(0, 1)
 	if SalvageSystem.port >= 0 and SalvageSystem.entry.x >= 0:
 		var dd := SalvageSystem.entry - g.pos(SalvageSystem.port)
@@ -112,10 +112,10 @@ func capture():
 	return {"name": SalvageSystem.wreck_name if SalvageSystem.wreck_name != "" else "Old wreck", "rel": true, "scale": Config.GRID_SCALE, "tiles": tiles,
 		"devices": devs, "piles": piles, "investigated": SalvageSystem.investigated, "cause": SalvageSystem.cause}
 
-## Alte Spielstände (vor den Andockschleusen) bereinigen:
-## 1) Außensteg und Bergungsleine (Zone 2) entfernen, Haufen darauf ins Schiff legen
-## 2) Schiff ohne Andockschleuse: rechts und unten je eine nachrüsten
-## 3) Wrack ohne Verbindung als eigenes Wrackziel ablegen; alte Andockschleusen abdichten
+## Clean up old saves (from before the docking ports):
+## 1) remove the outer gangway and the salvage line (zone 2), put piles on them into the ship
+## 2) ship without a docking port: retrofit one each on the right and at the bottom
+## 3) store an unconnected wreck as its own wreck target; seal old docking ports
 func migrate_docking() -> void:
 	var g := ShipSystem.grid
 	var changed := false
@@ -137,7 +137,7 @@ func migrate_docking() -> void:
 	if changed:
 		GameState.toast("Old save: gangway removed. Ships now dock at the airlock.")
 	var here_id := PhysicsSystem.docked if PhysicsSystem.docked != "" else "tycho"
-	# Wrack abgeschaltet oder ohne Verbindung (sehr alter Stand): als eigenes Wrackziel ablegen
+	# Wreck disabled or without a connection (very old save): store it as its own wreck target
 	if not Config.ENABLE_WRECK or SalvageSystem.port < 0:
 		var parked = capture()
 		if parked != null:
@@ -147,18 +147,18 @@ func migrate_docking() -> void:
 			else:
 				add_site(here_id, parked)
 			changed = true
-	# Wracks, die früher an einer Station lagen: eigene Wrackziele daneben
+	# Wrecks that used to lie at a station: their own wreck targets next to it
 	for id in places.keys():
 		var pw = places[id].get("wreck") if places[id] is Dictionary else null
 		if pw != null and not id in sites.map(func(x): return x.id) and not String(PhysicsSystem.loc(String(id)).get("kind", "")) in WRECK_KINDS:
 			places[id].wreck = null
 			add_site(String(id), pw)
-	# Frühere Andockschleusen ohne Verbindung gleich abdichten (verbundene nach dem Lösen)
+	# Seal former docking ports without a connection right away (connected ones after releasing)
 	ShipSystem.retire_legacy_ports()
 	if changed:
 		EventBus.ship_changed.emit()
 
-## Bester Platz für eine Schleuse in Richtung d: gültige Außenwand, Innenfeld frei, möglichst mittig
+## Best place for an airlock in direction d: valid outer wall, inner tile free, as central as possible
 func _port_spot(g: ShipGrid, d: Vector2i) -> Vector2i:
 	var best := Vector2i(-1, -1)
 	var center := Vector2.ZERO
@@ -178,12 +178,12 @@ func _port_spot(g: ShipGrid, d: Vector2i) -> Vector2i:
 			best = p
 	return best
 
-## Frühere Spielstände: Wracktür lag fest bei (20, 30)
+## Earlier saves: the wreck door was fixed at (20, 30)
 const LEGACY_ENTRY := Vector2i(20, 30)
 
-## Gespeichertes Wrack an einen freien Andockport hängen (jede Richtung). false = passt nicht.
+## Attach a stored wreck to a free docking port (any direction). false = does not fit.
 func _attach_stored(w: Dictionary) -> bool:
-	# Abgelegt in einem früheren Spielstand (doppelt so große Felder): erst verfeinern
+	# Stored in an earlier save (twice as large tiles): refine first
 	if int(w.get("scale", 1)) < Config.GRID_SCALE:
 		w = refine_stored(w)
 	var g := ShipSystem.grid
@@ -193,11 +193,11 @@ func _attach_stored(w: Dictionary) -> bool:
 	var d: Vector2i = pt.dir
 	var a := Vector2i(d.y, -d.x)
 	var e: Vector2i = pt.pos + d
-	# Port-Rahmen → Raster (x entlang, y nach außen)
+	# Port frame → grid (x along, y outwards)
 	var to_grid := func(r: Vector2i) -> Vector2i:
 		return e + a * r.x + d * r.y
 	var rel: bool = w.get("rel", false)
-	# Alte Daten: absolute Feld-Indizes, Tür bei LEGACY_ENTRY
+	# Old data: absolute tile indices, door at LEGACY_ENTRY
 	var cells: Array = []
 	for t in w.tiles:
 		var q: Vector2i = to_grid.call(Vector2i(int(t[0]), int(t[1])) if rel else g.pos(int(t[0])) - LEGACY_ENTRY)
@@ -233,7 +233,7 @@ func _attach_stored(w: Dictionary) -> bool:
 	SalvageSystem.cause = String(w.get("cause", ""))
 	return true
 
-## Abgelegtes Wrack aus einem früheren Spielstand ins feine Raster (relativ zur Wracktür)
+## Stored wreck from an earlier save into the fine grid (relative to the wreck door)
 func refine_stored(w: Dictionary) -> Dictionary:
 	var k := Config.GRID_SCALE
 	var rel: bool = w.get("rel", false)
@@ -295,8 +295,8 @@ func refine_stored(w: Dictionary) -> Dictionary:
 	out.piles = piles
 	return out
 
-## Angekommen (angedockt). Stationen bringen kein Wrack mit: Wracks sind eigene Ziele
-## (kind "wreck", schon beim Klammern angehängt) bzw. hängen an Trümmerfeld, Außenposten, Asteroid.
+## Arrived (docked). Stations bring no wreck: wrecks are their own targets
+## (kind "wreck", already attached when clamping) or hang at the debris field, outpost, asteroid.
 func arrive(l: Dictionary) -> void:
 	if not Config.ENABLE_WRECK or not String(l.get("kind", "")) in WRECK_KINDS or l.kind == "wreck":
 		return
@@ -314,7 +314,7 @@ func arrive(l: Dictionary) -> void:
 	elif l.kind == "outpost":
 		if not SalvageSystem.generate():
 			return
-		# Außenposten: mehr Schlösser, mehr Beute
+		# Outpost: more locks, more loot
 		for dev in ShipSystem.grid.devices.values():
 			if dev.type == "crate" and ShipSystem.grid.zone[ShipSystem.grid.idx(dev.pos)] == 1:
 				dev.lock_level = maxi(dev.lock_level, randi_range(1, 3))
@@ -333,7 +333,7 @@ func ships_here() -> Array:
 	return ships.filter(func(s): return s.location == here())
 
 func switch_to(id: int) -> void:
-	# Schiffe wechseln geht nur angedockt (dort liegen die anderen Schiffe)
+	# Switching ships only while docked (that is where the other ships are)
 	if here() == "":
 		GameState.toast("You can only switch ships while docked.")
 		return
@@ -396,17 +396,17 @@ func ship_value(g: ShipGrid) -> int:
 		if g.tiles[i] == 0 or g.foreign(i):
 			continue
 		v += 25.0 if g.tiles[i] == ShipGrid.Tile.FLOOR else 45.0
-	# Raumtypen (Ostranauts Rooms) multiplizieren den Wert der darin eingebauten Geräte
+	# Room types (Ostranauts Rooms) multiply the value of the devices installed in them
 	var mods := RoomTypes.modifiers(g)
 	for i in g.devices:
 		if not g.foreign(i):
 			v += SalvageSystem.device_value(g.devices[i]) * 1.5 * float(mods.get(i, 1.0))
 	return int(v)
 
-# ---------------- Startschiff aus „Seek Ship“ (Ostranauts 2.4) ----------------
+# ---------------- Starter ship from "Seek Ship" (Ostranauts 2.4) ----------------
 
-## Spielbeginn mit dem im Lebenslauf gekauften Schiff: ersetzt die Rostlaube, Kredit = Preis.
-## "rostlaube" oder "": Startschiff bleibt, Kredit wie bisher.
+## Start the game with the ship bought in the life story: replaces the Rustbucket, loan = price.
+## "rostlaube" or "": the starter ship stays, loan as before.
 func start_with(id: String) -> void:
 	var t: Dictionary = CharacterSystem.starter_ship(id)
 	if t.is_empty() or id == "rostlaube":
@@ -424,12 +424,12 @@ func start_with(id: String) -> void:
 	_place_crew()
 	StationSystem.build(PhysicsSystem.docked)
 
-# ---------------- Schiffsname (Ostranauts Ship Building 1.4) ----------------
+# ---------------- Ship name (Ostranauts Ship Building 1.4) ----------------
 
 const NAME_MAX := 32
 const REG_LETTERS := "ABCDEFGHJKLMNPRSTUVWXYZ"
 
-## Neue Rumpfkennung wie „J-YV16“ (Buchstabe, Bindestrich, zwei Buchstaben, zwei Ziffern), eindeutig
+## New hull ID like "J-YV16" (letter, hyphen, two letters, two digits), unique
 func new_registry_id() -> String:
 	var used := {registry_id: true}
 	for s in ships:
@@ -441,14 +441,14 @@ func new_registry_id() -> String:
 			return id
 	return ""
 
-## Grund gegen das Umbenennen ("" = möglich): braucht ein eigenes Steuerpult mit Strom
+## Reason against renaming ("" = possible): needs your own navigation console with power
 func rename_block_reason() -> String:
 	for d in PhysicsSystem.ship_devices("helm"):
 		if not d.broken and d.powered and not d.unknown:
 			return ""
 	return "Renaming needs a powered navigation console aboard."
 
-## Schiffsnamen an der Navigationskonsole ändern. Gibt "" bei Erfolg zurück, sonst den Grund.
+## Change the ship's name at the navigation console. Returns "" on success, otherwise the reason.
 func rename(new_name: String) -> String:
 	var n := new_name.strip_edges().substr(0, NAME_MAX)
 	if n == "":
@@ -460,7 +460,7 @@ func rename(new_name: String) -> String:
 	GameState.toast("Vessel renamed to %s. Register the new name with the Ship Rating service at a shipyard." % n if n != registered_name else "Vessel name: %s." % n)
 	return ""
 
-## Ship-Rating-Service der Werft: neue Bewertung und Name ins Register. "" = erledigt.
+## The shipyard's Ship Rating service: new rating and name into the register. "" = done.
 func register_name() -> String:
 	var st := PhysicsSystem.station()
 	if st.is_empty() or not st.get("shipyard", false):
@@ -502,7 +502,7 @@ func register_wreck() -> void:
 	SalvageSystem.clear()
 	GameState.toast("Registered! Switch aboard in the trade terminal under “Ships”.")
 
-## on_credit: mit Schiffskredit (Preis +20 % auf die Schulden)
+## on_credit: with a ship loan (price +20 % on the debt)
 func buy(kind: String, on_credit: bool = false) -> void:
 	var st := PhysicsSystem.station()
 	if st.is_empty() or not st.get("shipyard", false):
@@ -539,13 +539,13 @@ func sell(id: int) -> void:
 			ships = ships.filter(func(x): return x.id != id)
 			return
 
-## Werftschiff fertig im feinen Raster (Vorlage in früheren Feldern, dann verfeinert)
+## Shipyard ship ready in the fine grid (template in former tiles, then refined)
 func build_template(t: Dictionary) -> ShipGrid:
 	var cg := ShipGrid.new(Config.WORLD_W / Config.GRID_SCALE, Config.WORLD_H / Config.GRID_SCALE)
 	_build_template(cg, t)
 	return ShipGrid.refine(cg)
 
-## Vorlage in den Feldern früherer Versionen (doppelt so groß)
+## Template in the tiles of earlier versions (twice as large)
 func _build_template(g: ShipGrid, t: Dictionary) -> void:
 	var w := int(t.w)
 	var h := int(t.h)
@@ -574,14 +574,14 @@ func _build_template(g: ShipGrid, t: Dictionary) -> void:
 		g.cables[g.idx(Vector2i(x, y0 + h - 2))] = 1
 	for y in range(y0 + 1, y0 + h - 1):
 		g.cables[g.idx(Vector2i(x0 + 1, y))] = 1
-	# Luftschleuse links (Raum mit Pumpe): ihre Außentür ist der Andockport für Station und Wrack
+	# Airlock on the left (room with a pump): its outer door is the docking port for station and wreck
 	var top := y0 + h - 4 - (1 if h > 8 else 0)
 	for y in range(top, top + 4):
 		for x in range(x0 - 3, x0):
 			var edge := x == x0 - 3 or y == top or y == top + 3
 			g.set_tile(Vector2i(x, y), ShipGrid.Tile.WALL if edge else ShipGrid.Tile.FLOOR)
-	g.set_tile(Vector2i(x0, top + 1), ShipGrid.Tile.DOOR)       # Innentür
-	g.set_tile(Vector2i(x0 - 3, top + 1), ShipGrid.Tile.DOOR)   # Außentür = Andockport
+	g.set_tile(Vector2i(x0, top + 1), ShipGrid.Tile.DOOR)       # inner door
+	g.set_tile(Vector2i(x0 - 3, top + 1), ShipGrid.Tile.DOOR)   # outer door = docking port
 	g.place_device("pump", Vector2i(x0 - 1, top + 2))
 	for x in range(x0 - 1, x0 + 1):
 		g.cables[g.idx(Vector2i(x, top + 2))] = 1

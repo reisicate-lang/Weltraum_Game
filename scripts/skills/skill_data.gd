@@ -1,6 +1,6 @@
-## Eine Fähigkeit (Datenvorlage). Der Fortschritt pro Charakter liegt im
-## Charakter selbst (CharacterSkills). Neue Fähigkeit = neue .tres-Datei
-## in res://resources/skills/ – ohne Code-Änderung.
+## A skill (data template). The progress per character is stored in the
+## character itself (CharacterSkills). New skill = new .tres file
+## in res://resources/skills/ – without code changes.
 class_name SkillData
 extends Resource
 
@@ -9,33 +9,33 @@ extends Resource
 @export_multiline var description: String = ""
 ## "technik", "kampf", "praxis", "sozial"
 @export var category: String = ""
-## Startwerte der Vorlage (pro Charakter wird eigener Fortschritt gespeichert)
+## Starting values of the template (each character stores its own progress)
 @export var progress: float = 0.0
 @export var experience: float = 0.0
-## Wodurch man lernt (Text für die Anzeige), z. B. ["Reparaturen an Motoren", "Lehrbuch"]
+## How you learn it (text for the display), e.g. ["Repairing engines", "Textbook"]
 @export var learning_sources: PackedStringArray = []
-## Aktionen aus res://data/skill_actions.json, die diese Fähigkeit trainieren
+## Actions from res://data/skill_actions.json that train this skill
 @export var training_actions: PackedStringArray = []
-## Voraussetzungen: {skill_id: Mindestfortschritt}. Ohne sie bleibt die Fähigkeit bei 40 % stehen.
+## Prerequisites: {skill_id: minimum progress}. Without them the skill stops at 40 %.
 @export var required_skills: Dictionary = {}
-## Wirkung bei 100 %: {effekt_id: wert}. Die Wirkung wächst mit dem Fortschritt.
+## Effect at 100 %: {effect_id: value}. The effect grows with the progress.
 @export var gameplay_effects: Dictionary = {}
-## Beschreibung der vollständigen Wirkung (freigeschaltet bei 100 %)
+## Description of the full effect (unlocked at 100 %)
 @export_multiline var mastery_text: String = ""
-## Charaktererstellung: als Kurs wählbar, kostet so viele Lebensjahre (0 = kein Kurs)
+## Character creation: can be chosen as a course, costs this many years of life (0 = no course)
 @export var course_years: int = 0
-## Erworben (100 %): additiver Arbeitswert für Aufträge an Geräten dieser Kategorien
-## (DeviceData.category). Arbeitswert = Arbeitstempo × 10, siehe SkillSystem.work_value().
+## Acquired (100 %): additive work value for jobs at devices of these categories
+## (DeviceData.category). Work value = work speed × 10, see SkillSystem.work_value().
 @export var work_value_bonus: float = 0.0
 @export var work_categories: PackedStringArray = []
-## Erworben: hebt den EVA-Arbeitsmalus auf (Arbeit im Raumanzug, siehe SkillSystem.EVA_WORK_FACTOR)
+## Acquired: removes the EVA work penalty (work in a space suit, see SkillSystem.EVA_WORK_FACTOR)
 @export var removes_eva_malus: bool = false
-## Erworben: erhöht den Piloting-Wert der Figur am Steuerpult (siehe SkillSystem.piloting)
+## Acquired: raises the character's Piloting at the navigation console (see SkillSystem.piloting)
 @export var piloting_bonus: float = 0.0
-## Reines Prüf-Flag ohne Zahlenwirkung: erworben über SkillSystem.acquired / meets abfragbar
+## Pure check flag without a numeric effect: query it via SkillSystem.acquired / meets
 @export var check_flag: bool = false
-## Ostranauts-Hobby (Wiki 2.2.2): im Lebenslauf in der Hobby-Leiste statt als Kurszeile
+## Ostranauts hobby (wiki 2.2.2): in the hobby row of the life story instead of a course row
 @export var is_hobby: bool = false
-## Erworben: Angriff + attack_bonus mit dieser Waffenart ("armed" = Nahkampfwaffe, "unarmed" = ohne Waffe)
+## Acquired: attack + attack_bonus with this weapon type ("armed" = melee weapon, "unarmed" = no weapon)
 @export var attack_bonus: float = 0.0
 @export var attack_weapon: String = ""

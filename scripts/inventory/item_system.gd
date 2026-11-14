@@ -1,6 +1,6 @@
-## Lädt alle Gegenstände (ItemData) und Geräte (DeviceData) aus den
-## Resource-Ordnern. Neue Sorten brauchen keine Code-Änderung:
-## einfach eine .tres-Datei in den Ordner legen.
+## Loads all items (ItemData) and devices (DeviceData) from the
+## resource folders. New kinds need no code changes:
+## just put a .tres file into the folder.
 extends Node
 
 const ITEM_DIR := "res://resources/items/"
@@ -12,7 +12,7 @@ var devices: Dictionary = {}  ## id -> DeviceData
 func _ready() -> void:
 	_load_dir(ITEM_DIR, items)
 	_load_dir(DEVICE_DIR, devices)
-	# Mods: eigene .tres-Dateien in user://mods/items/ und user://mods/components/
+	# Mods: your own .tres files in user://mods/items/ and user://mods/components/
 	_load_dir("user://mods/items/", items, true)
 	_load_dir("user://mods/components/", devices, true)
 
@@ -23,7 +23,7 @@ func _load_dir(path: String, into: Dictionary, optional: bool = false) -> void:
 			push_error("Folder missing: " + path)
 		return
 	for file in dir.get_files():
-		# Im exportierten Spiel heißen die Dateien *.tres.remap
+		# In the exported game the files are called *.tres.remap
 		var f := file.trim_suffix(".remap")
 		if not f.ends_with(".tres"):
 			continue

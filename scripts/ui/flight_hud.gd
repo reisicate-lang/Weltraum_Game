@@ -1,13 +1,13 @@
-## Fluglage-Instrument im Cockpit: Ausrichtung des Schiffs, tatsächliche
-## Bewegungsrichtung (relativ zum Ziel), Richtung zum Ziel und die beste
-## Andockschleuse. Oben ist immer „Norden“ der Karte, damit die Pfeile direkt
-## mit der Navigationskarte übereinstimmen.
+## Attitude instrument in the cockpit: heading of the ship, actual
+## direction of motion (relative to the target), direction to the target and the best
+## docking port. Up is always "north" of the map, so the arrows match
+## the navigation map directly.
 extends Control
 
-const COL_SHIP := Color(0.95, 0.64, 0.23)     ## Ausrichtung (Nase)
-const COL_MOVE := Color(0.44, 0.81, 0.56)     ## Bewegung relativ zum Ziel
-const COL_TARGET := Color(0.35, 0.78, 0.9)    ## Richtung zum Ziel
-const COL_PORT := Color(0.95, 0.85, 0.4)      ## beste Andockschleuse
+const COL_SHIP := Color(0.95, 0.64, 0.23)     ## heading (nose)
+const COL_MOVE := Color(0.44, 0.81, 0.56)     ## motion relative to the target
+const COL_TARGET := Color(0.35, 0.78, 0.9)    ## direction to the target
+const COL_PORT := Color(0.95, 0.85, 0.4)      ## best docking port
 const COL_DIM := Color(0.5, 0.55, 0.62)
 
 func _process(_delta: float) -> void:
@@ -27,12 +27,12 @@ func _draw() -> void:
 		var inner := r - (8.0 if k % 3 == 0 else 4.0)
 		draw_line(c + Vector2.from_angle(a) * inner, c + Vector2.from_angle(a) * r, COL_DIM, 1.0)
 	draw_string(font, c + Vector2(-4, -r - 4), "N", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COL_DIM)
-	# Schiff: Rumpf und Nase in Ausrichtung, Nasenmarke außen am Kreis
+	# Ship: hull and nose in the heading, nose mark outside on the circle
 	var dir := Vector2.from_angle(P.angle)
 	var side := dir.orthogonal()
 	draw_colored_polygon(PackedVector2Array([c + dir * 18, c - dir * 10 + side * 8, c - dir * 5, c - dir * 10 - side * 8]), COL_SHIP)
 	draw_colored_polygon(PackedVector2Array([c + dir * (r - 2), c + dir * (r - 14) + side * 6, c + dir * (r - 14) - side * 6]), COL_SHIP)
-	# Aktiver Schub als Flammen
+	# Active thrust as flames
 	if P.docked == "":
 		if P.thrust > 0.0:
 			draw_line(c - dir * 10, c - dir * (24 + randf() * 6), Color(1, 0.82, 0.48), 4.0)
@@ -45,24 +45,24 @@ func _draw() -> void:
 		var ap: Dictionary = P.approach(tid)
 		var st: Dictionary = P.rel_to(tid)
 		var to_t: Vector2 = st.pos - P.pos
-		# Richtung zum Ziel
+		# Direction to the target
 		if to_t.length() > 0.0:
 			var td := to_t.normalized()
 			draw_circle(c + td * r, 6.0, COL_TARGET)
 			draw_string(font, c + td * (r + 4) + Vector2(-4, 4), "Z", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COL_TARGET)
-		# Tatsächliche Bewegung relativ zum Ziel (Länge ~ Tempo, logarithmisch)
+		# Actual motion relative to the target (length ~ speed, logarithmic)
 		var v: Vector2 = ap.vrel
 		if v.length() > 0.0000005:
 			var vlen := clampf(log(1.0 + v.length() * 1000.0) / log(1.0 + 2000.0), 0.08, 1.0) * (r - 4)
 			var vd := v.normalized()
 			draw_line(c, c + vd * vlen, COL_MOVE, 3.0)
 			draw_circle(c + vd * vlen, 4.0, COL_MOVE)
-		# Beste Andockschleuse
+		# Best docking port
 		var al: Dictionary = P.dock_alignment(tid)
 		if al.port:
 			var port_dir: Vector2 = al.dir
 			draw_line(c + port_dir * (r * 0.55), c + port_dir * (r * 0.85), COL_PORT if al.ok else Color(0.9, 0.33, 0.29), 3.0)
-	# Legende
+	# Legend
 	var y := size.y - 4.0
 	draw_string(font, Vector2(4, y), "▲ Nose", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COL_SHIP)
 	draw_string(font, Vector2(62, y), "— motion rel. target", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COL_MOVE)

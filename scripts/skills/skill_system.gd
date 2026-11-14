@@ -1,23 +1,23 @@
-## Fähigkeiten: Lernen durch Tätigkeit, Lehrbücher, Voraussetzungen, Wirkungen.
+## Skills: learning by doing, textbooks, prerequisites, effects.
 ##
 ## Prinzipien:
-## - Jede Spielhandlung ist eine Aktion (res://data/skill_actions.json),
-##   die nur die zugehörigen Fähigkeiten trainiert.
-## - Schwierige Aufgaben bringen mehr. Ist man schon viel besser als die
-##   Aufgabe schwer ist, bringt sie kaum noch etwas.
-## - Wiederholt man dieselbe Aktion ständig, lernt man immer weniger
-##   (erholt sich mit der Zeit).
-## - Ohne Voraussetzungen bleibt eine Fähigkeit bei 40 % stehen.
-## - Fortschritt 0–100 %. Bei 100 % wird die volle Wirkung freigeschaltet.
+## - Every game action is an action (res://data/skill_actions.json)
+##   that only trains the skills that belong to it.
+## - Hard tasks give more. If you are already much better than the
+##   task is hard, it hardly gives anything.
+## - If you repeat the same action all the time, you learn less and less
+##   (it recovers over time).
+## - Without prerequisites a skill stops at 40 %.
+## - Progress 0–100 %. At 100 % the full effect is unlocked.
 extends Node
 
 const DIR := "res://resources/skills/"
-const BASE_GAIN := 0.3          ## Prozent pro Minute passender Arbeit (vor allen Faktoren)
+const BASE_GAIN := 0.3          ## percent per minute of matching work (before all factors)
 const CAP_WITHOUT_REQ := 40.0
-const MASTERY_BONUS := 0.2      ## zusätzliche Wirkung bei 100 %
+const MASTERY_BONUS := 0.2      ## additional effect at 100 %
 
 var skills: Dictionary = {}     ## id -> SkillData
-var actions: Dictionary = {}    ## Aktion -> {skills, difficulty, gain}
+var actions: Dictionary = {}    ## action -> {skills, difficulty, gain}
 
 func _ready() -> void:
 	_load_from(DIR)
@@ -46,7 +46,7 @@ func ids_by_category(cat: String) -> Array:
 	out.sort_custom(func(a, b): return skills[a].skill_name < skills[b].skill_name)
 	return out
 
-# ---------------- Fortschritt eines Charakters ----------------
+# ---------------- Progress of a character ----------------
 
 func _entry(c: CrewMember, id: String) -> Dictionary:
 	if not c.skills.has(id):
@@ -60,39 +60,39 @@ func set_progress(c: CrewMember, id: String, value: float) -> void:
 	var e := _entry(c, id)
 	e.p = clampf(value, 0.0, 100.0)
 	if e.p < ACQUIRED:
-		e.erase("unlocked")   # Freischaltung gilt nur, solange 100 % erreicht sind
+		e.erase("unlocked")   # The unlock only counts as long as 100 % is reached
 
-## Sind die Voraussetzungen erfüllt?
+## Are the prerequisites met?
 func requirements_met(c: CrewMember, id: String) -> bool:
 	return meets(c, skill(id).required_skills)
 
-## Prüflogik für Voraussetzungen: {skill_id: Mindestfortschritt}. Auch für Interaktionen nutzbar,
-## z. B. meets(c, {"business": ACQUIRED}) = Business Admin erworben.
+## Check logic for prerequisites: {skill_id: minimum progress}. Also usable for interactions,
+## e.g. meets(c, {"business": ACQUIRED}) = Business Admin acquired.
 func meets(c: CrewMember, req: Dictionary) -> bool:
 	for r in req:
 		if progress(c, r) < float(req[r]):
 			return false
 	return true
 
-## Ab diesem Fortschritt gilt eine Fähigkeit als erworben (gemeistert)
+## From this progress on a skill counts as acquired (mastered)
 const ACQUIRED := 100.0
 const BUSINESS := "business"
 
-## Hat die Figur die Fähigkeit erworben?
+## Has the character acquired the skill?
 func acquired(c: CrewMember, id: String) -> bool:
 	return c != null and meets(c, {id: ACQUIRED})
 
 func cap(c: CrewMember, id: String) -> float:
 	return 100.0 if requirements_met(c, id) else CAP_WITHOUT_REQ
 
-## Lernen durch eine Aktion. amount = Minuten Arbeit (oder Gewicht der Handlung).
-## Gibt den gesamten Fortschritt zurück (Summe über alle trainierten Fähigkeiten).
+## Learning through an action. amount = minutes of work (or weight of the action).
+## Returns the total progress (sum over all trained skills).
 func train(c: CrewMember, action: String, amount: float) -> float:
 	if c == null or not actions.has(action) or amount <= 0.0:
 		return 0.0
 	var a: Dictionary = actions[action]
 	var difficulty: float = a.difficulty
-	# Wiederholung: dieselbe Aktion bringt immer weniger
+	# Repetition: the same action gives less and less
 	var rep: float = c.recent_actions.get(action, 0.0)
 	var rep_factor := 1.0 / (1.0 + rep / 30.0)
 	c.recent_actions[action] = rep + amount
@@ -108,7 +108,7 @@ func train(c: CrewMember, action: String, amount: float) -> float:
 		var limit := cap(c, id)
 		if p >= limit:
 			continue
-		# Zu einfache Aufgaben bringen kaum etwas
+		# Tasks that are too easy hardly give anything
 		var challenge := clampf(1.2 - maxf(0.0, p / 100.0 - difficulty) * 3.0, 0.03, 1.2)
 		var gain := BASE_GAIN * amount * float(a.gain) * challenge * rep_factor * learn * (1.0 - p / 125.0)
 		var new_p := minf(limit, p + gain)
@@ -124,7 +124,7 @@ func train(c: CrewMember, action: String, amount: float) -> float:
 			_unlock(c, id)
 	return total
 
-## Fähigkeit beim ersten Erreichen von 100 % freischalten (genau einmal pro Figur)
+## Unlock a skill the first time it reaches 100 % (exactly once per character)
 func _unlock(c: CrewMember, id: String) -> void:
 	var e := _entry(c, id)
 	if e.get("unlocked", false):
@@ -149,7 +149,7 @@ func _add_history(e: Dictionary, action: String, delta: float) -> void:
 		if h.size() > 20:
 			h.remove_at(0)
 
-## Wiederholungen klingen mit der Zeit ab (dt in Minuten)
+## Repetitions fade over time (dt in minutes)
 func decay_recent(c: CrewMember, dt: float) -> void:
 	for k in c.recent_actions.keys():
 		c.recent_actions[k] = float(c.recent_actions[k]) * pow(0.995, dt)
@@ -158,7 +158,7 @@ func decay_recent(c: CrewMember, dt: float) -> void:
 
 # ---------------- Wirkungen ----------------
 
-## Summe einer Wirkung über alle Fähigkeiten des Charakters
+## Sum of an effect over all skills of the character
 func effect(c: CrewMember, effect_id: String) -> float:
 	if c == null:
 		return 0.0
@@ -176,7 +176,7 @@ func effect(c: CrewMember, effect_id: String) -> float:
 func mastered(c: CrewMember, id: String) -> bool:
 	return progress(c, id) >= 100.0
 
-## Bester Wert in der Crew
+## Best value in the crew
 func best_effect(effect_id: String) -> float:
 	var best := 0.0
 	for c in CrewSystem.crew:
@@ -189,11 +189,11 @@ func any_mastered(id: String) -> bool:
 			return true
 	return false
 
-# ---------------- Arbeit: welche Aktion, wie schnell ----------------
+# ---------------- Work: which action, how fast ----------------
 
-## Welche Aktionen und Tempo-Wirkungen gehören zu einem Auftrag? Arbeit an einem Gerät einer
-## Kategorie, auf die eine Fähigkeit wirkt (work_categories), trainiert zusätzlich deren
-## Aktion "<skill_id>_work" (z. B. civil_work), falls die übrigen Aktionen sie noch nicht trainieren.
+## Which actions and speed effects belong to a job? Work at a device of a
+## category a skill acts on (work_categories) also trains its
+## action "<skill_id>_work" (e.g. civil_work), if the other actions do not train it yet.
 func job_profile(job: Dictionary) -> Dictionary:
 	var prof := _base_profile(job)
 	var cats := job_categories(job)
@@ -212,7 +212,7 @@ func job_profile(job: Dictionary) -> Dictionary:
 			prof.actions = prof.actions + [act]
 	return prof
 
-## Gerätekategorien in Worten (für Tooltips und Meldungen)
+## Device categories in words (for tooltips and messages)
 const CATEGORY_NAMES := {"appliance": "Appliances", "control": "Controls", "furniture": "Furniture", "hvac": "Climate & Ventilation",
 	"misc": "Miscellaneous", "power": "Power Systems", "propulsion": "Propulsion", "docking": "Docking", "water": "Water",
 	"farming": "Farming", "production": "Production", "station": "Station", "sensor": "Sensors", "weapon": "Weapons", "suit": "Suits",
@@ -224,10 +224,10 @@ func category_list(cats: PackedStringArray) -> String:
 		names.append(CATEGORY_NAMES.get(k, k))
 	return ", ".join(names)
 
-## Auftragsarten, die an einem Gerät arbeiten (bauen, einbauen, reparieren, abbauen, zerlegen, drehen, versetzen)
+## Job kinds that work at a device (build, install, repair, uninstall, dismantle, rotate, move)
 const DEVICE_JOB_KINDS := ["device", "install", "repair", "remove", "uninstall", "dismantle", "destroy", "rotate", "move"]
 
-## Geräteart, an der ein Auftrag arbeitet ("" = kein Gerät, z. B. Wand, Boden, Kabel)
+## Device type a job works at ("" = no device, e.g. wall, floor, cable)
 func job_device_id(job: Dictionary) -> String:
 	if not String(job.get("kind", "")) in DEVICE_JOB_KINDS:
 		return ""
@@ -237,18 +237,18 @@ func job_device_id(job: Dictionary) -> String:
 		var key: String = RemovalSystem.key_of_packed(String(job.item))
 		return key.substr(4) if key.begins_with("dev:") else ""
 	if job.has("target") and not String(job.target).begins_with("dev:"):
-		return ""   # Abbau einer anderen Ebene (Kabel, Boden) auf demselben Feld
+		return ""   # Removing another layer (cable, floor) on the same tile
 	var g := ShipSystem.grid
 	var dev := g.device_at(ShipConstructionSystem.pos_of(job)) if g != null else null
 	return dev.type if dev != null else ""
 
-## Kategorie eines Auftrags: Gerätekategorie, oder "weapon" für das Herstellen einer Waffe
-## an der Werkbank ("" = nichts davon, z. B. Wand, Boden, Kabel, andere Rezepte)
+## Category of a job: device category, or "weapon" for making a weapon
+## at the workbench ("" = none of these, e.g. wall, floor, cable, other recipes)
 func job_category(job: Dictionary) -> String:
 	if is_mining(job):
 		return "mining"
 	if String(job.get("kind", "")) == "debug":
-		return "software"   # Softwarearbeit (nicht die Gerätekategorie der Konsole)
+		return "software"   # Software work (not the device category of the console)
 	if is_structure(job):
 		return "structure"
 	if String(job.get("kind", "")) == "craft":
@@ -259,14 +259,14 @@ func job_category(job: Dictionary) -> String:
 		return ""
 	return ItemSystem.device(id).category
 
-## Strukturarbeit: Aufträge, die die vorhandenen Struktur-Wirkungen (work_structure, work_hull)
-## bekommen – Wände, Böden, Türen, Fenster bauen oder einbauen, Wände/Böden und Hülle reparieren,
-## Feuer löschen. Geräteaufträge zählen nur, wenn ihr Profil so klassifiziert ist (derzeit keiner).
+## Structure work: jobs that get the existing structure effects (work_structure, work_hull)
+## – building or installing walls, floors, doors, windows, repairing walls/floors and the hull,
+## putting out fires. Device jobs only count if their profile is classified that way (none at the moment).
 func is_structure(job: Dictionary) -> bool:
 	var effs: Array = _base_profile(job).effects
 	return "work_structure" in effs or "work_hull" in effs
 
-## Bergbau: Abtragen von Asteroidenfels (Wand im fremden Bereich, solange ein Asteroid angedockt ist)
+## Mining: removing asteroid rock (wall in the foreign zone while an asteroid is docked)
 const MINING_KINDS := ["remove", "uninstall", "dismantle", "destroy"]
 
 func is_mining(job: Dictionary) -> bool:
@@ -281,7 +281,7 @@ func is_mining(job: Dictionary) -> bool:
 	var i := g.idx(p)
 	return g.tiles[i] == ShipGrid.Tile.WALL and g.zone[i] == 1 and SalvageSystem.is_asteroid()
 
-## Alle Kategorien eines Auftrags: Hauptkategorie und Zusatzkategorien des Geräts (z. B. "suit")
+## All categories of a job: main category and additional categories of the device (e.g. "suit")
 func job_categories(job: Dictionary) -> Array:
 	var cat := job_category(job)
 	if cat == "":
@@ -319,7 +319,7 @@ func _base_profile(job: Dictionary) -> Dictionary:
 		"repair":
 			if dev != null:
 				var racts := [_repair_action(tech)]
-				# Navigationsstation (Steuerpult) reparieren: vorhandene Aktion repair_nav (Elektro + Robotik)
+				# Repairing the navigation station (console): existing action repair_nav (electrical + robotics)
 				if dev.type in NAV_STATIONS:
 					racts.append("repair_nav")
 				return {"actions": racts, "effects": [_work_effect(tech)], "fine": tech in ["electrical", "computer", "robotic"]}
@@ -361,7 +361,7 @@ func _base_profile(job: Dictionary) -> Dictionary:
 			return {"actions": ["repair_structure"], "effects": ["work_structure"]}
 	return {"actions": [], "effects": []}
 
-## Geräte, die als Navigationsstation gelten
+## Devices that count as a navigation station
 const NAV_STATIONS := ["helm"]
 
 func _install_action(tech: String) -> String:
@@ -391,13 +391,13 @@ func _work_effect(tech: String) -> String:
 		"propulsion": return "work_propulsion"
 	return "work_furniture"
 
-## Arbeitswert-Skala: Arbeitswert = Arbeitstempo × 10. Grundwert 7 (Tempo 0,7), Tempo-Wirkungen
-## der Fähigkeiten zählen ×10, feste Boni erworbener Fähigkeiten (work_value_bonus) kommen
-## additiv dazu. Eigenschaften, Anzug und Stress wirken danach als Faktoren aufs Tempo.
+## Work value scale: work value = work speed × 10. Base value 7 (speed 0.7), speed effects
+## of the skills count ×10, fixed bonuses of acquired skills (work_value_bonus) are
+## added on top. Traits, suit and stress then act as factors on the speed.
 const WORK_VALUE_SCALE := 10.0
 const BASE_WORK_VALUE := 7.0
 
-## Additiver Arbeitswert aus erworbenen Fähigkeiten für die Gerätekategorie dieses Auftrags
+## Additive work value from acquired skills for the device category of this job
 func work_value_bonus(c: CrewMember, job: Dictionary) -> float:
 	var cats := job_categories(job)
 	if cats.is_empty():
@@ -409,8 +409,8 @@ func work_value_bonus(c: CrewMember, job: Dictionary) -> float:
 			total += s.work_value_bonus
 	return total
 
-## EVA-Arbeitsmalus: Wer im Raumanzug arbeitet, schafft ohne erworbenen Skill (removes_eva_malus,
-## z. B. EVA Suits) nur 55 % der normalen Rate. Maßgeblich ist die Ausrüstung der Figur, nicht das Ziel.
+## EVA work penalty: whoever works in a space suit only manages 55 % of the normal rate without an
+## acquired skill (removes_eva_malus, e.g. EVA Suits). What counts is the character's gear, not the target.
 const EVA_WORK_FACTOR := 0.55
 
 func eva_factor(c: CrewMember) -> float:
@@ -421,14 +421,14 @@ func eva_factor(c: CrewMember) -> float:
 			return 1.0
 	return EVA_WORK_FACTOR
 
-## Arbeitswert eines Charakters für einen Auftrag (vor Eigenschaften, Anzug und Stress)
+## Work value of a character for a job (before traits, suit and stress)
 func work_value(c: CrewMember, job: Dictionary) -> float:
 	var bonus := 0.0
 	for e in job_profile(job).effects:
 		bonus += effect(c, e)
 	return BASE_WORK_VALUE + bonus * WORK_VALUE_SCALE + work_value_bonus(c, job)
 
-## Arbeitstempo eines Charakters für einen Auftrag (1.0 = normal)
+## Work speed of a character for a job (1.0 = normal)
 func work_speed(c: CrewMember, job: Dictionary) -> float:
 	var prof := job_profile(job)
 	var speed := work_value(c, job) / WORK_VALUE_SCALE * TraitSystem.factor(c, "work_speed")
@@ -441,33 +441,33 @@ func work_speed(c: CrewMember, job: Dictionary) -> float:
 		speed *= 3.0
 	return maxf(0.2, speed)
 
-## Arbeit an einem Auftrag trainiert die passenden Fähigkeiten
+## Work on a job trains the matching skills
 func train_job(c: CrewMember, job: Dictionary, minutes: float) -> void:
 	for a in job_profile(job).actions:
 		train(c, a, minutes)
 	if c.suit != null:
 		train(c, "eva_work", minutes)
 
-## Piloting-Wert einer Figur: Summe der piloting_bonus erworbener Fähigkeiten (z. B. Spaceship
-## Piloting +0,5). Später können Eigenschaften hier dazukommen. Nie unter −0,9.
+## Piloting value of a character: sum of the piloting_bonus of acquired skills (e.g. Spaceship
+## Piloting +0.5). Traits can be added here later. Never below −0.9.
 func piloting(c: CrewMember) -> float:
 	if c == null:
 		return 0.0
-	var v := TraitSystem.sum(c, "piloting")   # Traits (z. B. Coordinated +0,1, Visually Impaired −0,2)
+	var v := TraitSystem.sum(c, "piloting")   # Traits (e.g. Coordinated +0.1, Visually Impaired −0.2)
 	for id in skills:
 		if skills[id].piloting_bonus != 0.0 and acquired(c, id):
 			v += skills[id].piloting_bonus
 	return maxf(-0.9, v)
 
-## Treibstoffersparnis (bester an Bord zählt; derzeit hat keine Fähigkeit diese Wirkung)
+## Fuel saving (the best aboard counts; currently no skill has this effect)
 func pilot_fuel_factor() -> float:
 	return 1.0 - minf(0.35, best_effect("fuel_saving"))
 
-## Physik verkürzt Schnellreisen
+## Physics shortens fast travel
 func travel_factor() -> float:
 	return 1.0 - minf(0.3, best_effect("travel_saving"))
 
-## Charaktere am Steuerpult (oder die Spielerfigur) trainieren eine Aktion
+## Characters at the navigation console (or the player character) train an action
 func train_all_at(device_type: String, action: String, amount: float) -> void:
 	var trained := false
 	for c in CrewSystem.crew:
@@ -479,22 +479,22 @@ func train_all_at(device_type: String, action: String, amount: float) -> void:
 	if not trained:
 		train(CrewSystem.player(), action, amount)
 
-## Hacken: Wert aus Hacken und Software. Stufe 1 geht immer, 2 ab 35, 3 ab 75.
+## Hacking: value from Hacking and Software. Level 1 always works, 2 from 35, 3 from 75.
 func hack_value(c: CrewMember) -> float:
 	return progress(c, "hacking")
 
 func hack_needed(level: int) -> float:
 	return [0.0, 0.0, 35.0, 75.0][clampi(level, 0, 3)]
 
-## Kampfkraft (für Begegnungen mit Plünderern)
+## Combat strength (for encounters with plunderers)
 func combat_power(c: CrewMember) -> float:
 	var weapon := ""
 	for it in c.inv.items:
 		var w: String = ItemSystem.item(it.type).weapon
 		if w == "ranged" or (w == "armed" and weapon == ""):
 			weapon = w
-	# Angriff: Grundwert der Waffenart plus anteilige Wirkungen plus Bonus erworbener Skills
-	# (Armed/Unarmed Melee: +0,5 = „Attack dmg +50 %“)
+	# Attack: base value of the weapon type plus partial effects plus the bonus of acquired skills
+	# (Armed/Unarmed Melee: +0.5 = "Attack dmg +50 %")
 	var attack := effect(c, "combat_unarmed") + attack_bonus(c, "unarmed")
 	if weapon == "armed":
 		attack = maxf(attack, 0.15 + effect(c, "combat_armed") + attack_bonus(c, "armed"))
@@ -506,7 +506,7 @@ func combat_power(c: CrewMember) -> float:
 		power *= 0.8
 	return power * (c.health / 100.0)
 
-## Angriffsbonus erworbener Skills für eine Waffenart ("armed", "unarmed")
+## Attack bonus of acquired skills for a weapon type ("armed", "unarmed")
 func attack_bonus(c: CrewMember, weapon: String) -> float:
 	var v := 0.0
 	for id in skills:
@@ -515,20 +515,20 @@ func attack_bonus(c: CrewMember, weapon: String) -> float:
 			v += s.attack_bonus
 	return v
 
-## Wertschätzung: wie genau ein geschätzter Wert angezeigt wird (0 = grob, 1 = exakt)
+## Appraisal: how precisely an estimated value is shown (0 = rough, 1 = exact)
 func appraisal() -> float:
 	return clampf(best_effect("appraise"), 0.0, 1.0)
 
-# ---------------- Lehrbücher ----------------
+# ---------------- Textbooks ----------------
 
-## Liest ein Buch: Lernfortschritt bis zur Stufe des Buches
+## Reads a book: learning progress up to the level of the book
 func study(c: CrewMember, book_id: String, minutes: float) -> float:
 	var b := ItemSystem.item(book_id)
 	if b == null or b.teaches == "":
 		return 0.0
 	var limit: float = [0.0, 40.0, 75.0, 100.0][clampi(b.book_level, 0, 3)]
 	if b.book_level >= 2 and progress(c, b.teaches) < 30.0:
-		return 0.0  # Fortgeschrittene Bücher brauchen Vorwissen
+		return 0.0  # Advanced books need prior knowledge
 	if progress(c, b.teaches) >= limit:
 		return 0.0
 	var before := progress(c, b.teaches)
@@ -537,7 +537,7 @@ func study(c: CrewMember, book_id: String, minutes: float) -> float:
 		set_progress(c, b.teaches, limit)
 	return progress(c, b.teaches) - before
 
-## Welche Lehrbücher kann der Charakter gerade sinnvoll lesen? (eigenes Gepäck und Kisten)
+## Which textbooks can the character usefully read right now? (own pack and crates)
 func readable_book(c: CrewMember) -> String:
 	var invs: Array = [c.inv]
 	for src in ShipConstructionSystem.sources():
@@ -554,10 +554,10 @@ func readable_book(c: CrewMember) -> String:
 				return it.type
 	return ""
 
-# ---------------- Texte für die Oberfläche ----------------
+# ---------------- Texts for the UI ----------------
 
 
-## Tooltip einer Fähigkeit (englisch): Kurskosten, Bonus, Kategorien, Lernwege, aktueller Fortschritt
+## Tooltip of a skill: course cost, bonus, categories, ways to learn, current progress
 func skill_tooltip(c: CrewMember, id: String) -> String:
 	var s: SkillData = skill(id)
 	var lines: PackedStringArray = [s.skill_name, s.description]
@@ -577,7 +577,7 @@ func skill_tooltip(c: CrewMember, id: String) -> String:
 		lines.append("Bonus when acquired (100 %%): %+d work value." % int(s.work_value_bonus))
 		lines.append("Affected categories: %s." % category_list(s.work_categories))
 	var p := progress(c, id) if c != null else 0.0
-	# Nur Wirkungen, die im Spiel tatsächlich verrechnet werden (gameplay_effects)
+	# Only effects that are actually applied in the game (gameplay_effects)
 	for e in s.gameplay_effects:
 		var full := float(s.gameplay_effects[e]) * (1.0 + MASTERY_BONUS)
 		var now := float(s.gameplay_effects[e]) * p / 100.0 + (float(s.gameplay_effects[e]) * MASTERY_BONUS if p >= ACQUIRED else 0.0)
@@ -592,11 +592,11 @@ func skill_tooltip(c: CrewMember, id: String) -> String:
 	lines.append("Learning progress: %.1f %%%s" % [p, " (acquired)" if p >= ACQUIRED else ""])
 	return "\n".join(lines)
 
-## Tempo-Wirkungen (zählen als Arbeitswert ×10, siehe work_value)
+## Speed effects (count as work value ×10, see work_value)
 const WORK_EFFECTS := ["work_structure", "work_furniture", "work_build", "work_electrical", "cable_speed", "work_robotic",
 	"work_computer", "work_hull", "work_propulsion", "work_mechanical", "work_demolish"]
 
-## Namen der Wirkungen für Tooltips
+## Names of the effects for tooltips
 const EFFECT_NAMES := {
 	"work_structure": "Walls and floors", "work_furniture": "Furniture work", "work_build": "Building (walls, floors, cables, new devices, crafting, installing)",
 	"work_electrical": "Electrical work", "cable_speed": "Laying cables", "work_robotic": "Automation work", "work_computer": "Computer work",

@@ -1,5 +1,5 @@
-## Hobbys: senken Stress, schalten Gespräche frei, verbessern Beziehungen
-## und trainieren nebenbei eine Fähigkeit. Hobbys sind keine Skills.
+## Hobbies: lower stress, unlock conversations, improve relationships
+## and train a skill on the side. Hobbies are not skills.
 extends Node
 
 const DIR := "res://resources/hobbies/"
@@ -22,14 +22,14 @@ func _load_from(path: String) -> void:
 func get_hobby(id: String) -> HobbyData:
 	return hobbies.get(id)
 
-## Hat der Charakter ein Hobby, das dieses Gespräch freischaltet?
+## Does the character have a hobby that unlocks this conversation?
 func unlocks(c: CrewMember, talk: String) -> bool:
 	for id in c.hobbies:
 		if get_hobby(id).effects.get("unlock", "") == talk:
 			return true
 	return false
 
-## Lernen einer Fähigkeit, die zu einem Hobby passt, geht 25 % schneller
+## Learning a skill that matches a hobby is 25 % faster
 func learn_bonus(c: CrewMember, action: String) -> float:
 	var skills_of: Array = SkillSystem.actions.get(action, {}).get("skills", [])
 	for id in c.hobbies:
@@ -49,14 +49,14 @@ func stress_relief(c: CrewMember) -> float:
 		s += float(get_hobby(id).effects.get("stress_relief", 0.0))
 	return s
 
-## Freizeit mit dem Hobby: Stress sinkt, passende Fähigkeit wird trainiert
+## Free time with the hobby: stress drops, the matching skill is trained
 func practice(c: CrewMember, minutes: float) -> void:
 	for id in c.hobbies:
 		var h := get_hobby(id)
 		if h.related_skill != "":
 			SkillSystem.train(c, "study_" + h.related_skill, minutes * 0.3)
 	c.stress = maxf(0.0, c.stress - stress_relief(c) * minutes / 60.0)
-	# Musik und Gesang heben die Stimmung der Crew in der Nähe
+	# Music and song lift the mood of the crew nearby
 	if "music" in c.hobbies:
 		SkillSystem.train(c, "perform_song", minutes * 0.3)
 		var mood := 3.0 + SkillSystem.effect(c, "crew_mood") * 15.0

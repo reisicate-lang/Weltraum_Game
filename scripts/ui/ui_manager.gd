@@ -1,5 +1,5 @@
-## Baut die Benutzeroberfläche auf und hält sie aktuell.
-## Die Anzeigen werden 5-mal pro Sekunde aufgefrischt (nicht jedes Bild).
+## Builds the user interface and keeps it up to date.
+## The displays refresh 5 times per second (not every frame).
 extends Node
 
 const TOOLS := [
@@ -22,24 +22,24 @@ const COL_MUTED := Color(0.51, 0.57, 0.65)
 
 var layer: CanvasLayer
 var auto_button: Button
-## Cockpit: Flugmodus am Steuerpult
+## Cockpit: flight mode at the navigation console
 var flight_hud: Control
 var pilot: CrewMember = null
 var _helm_walk := false
-var _walk_helm := Vector2i(-1, -1)   ## Pult, zu dem die Spielfigur gerade läuft
-## Tatsächliche Tastenbelegung im Flugmodus (wird im Cockpit angezeigt)
+var _walk_helm := Vector2i(-1, -1)   ## Console the player character is walking to right now
+## Actual key bindings in flight mode (shown in the cockpit)
 const FLIGHT_KEYS := [["W / S", "Thrust forward / back (thrusters in that direction + RCS)"], ["A / D", "Thrust left / right (thrusters in that direction + RCS)"],
 	["Q / E", "rotate counter-clockwise / clockwise"], ["R", "stop rotation"], ["X", "match velocity with the target"],
 	["T", "next target (or click “Target” in the list)"], ["F", "dock"], ["U", "undock"], ["Tab", "open / close inventory"],
 	["Mouse wheel", "zoom the map"], ["Esc / N", "leave the cockpit"]]
-## Persönliches Inventar offen (Tab)
+## Personal inventory open (Tab)
 var inv_open := false
-## Rechtsklick-Auswahl: Kachel und Ebene ("cable", "dev:…", "tile:…"), siehe RemovalSystem.next_layer
+## Right-click selection: tile and layer ("cable", "dev:…", "tile:…"), see RemovalSystem.next_layer
 var sel_tile := Vector2i(-1, -1)
-## Hauptszene (meldet sich in ihrem _ready an), bekommt weitergereichte Rechtsklicks
+## Main scene (registers itself in its _ready), receives forwarded right-clicks
 var world_view: Node = null
 var sel_key := ""
-## Rechtsklick-Menü für Objekte (Abbauen, Zerlegen, Zerstören, Einbauen)
+## Right-click menu for objects (Uninstall, Dismantle, Destroy, Install)
 var object_menu: PopupMenu
 var menu_pos := Vector2i(-1, -1)
 var menu_actions: Array = []
@@ -67,7 +67,7 @@ var window_panel: PanelContainer
 var window_box: VBoxContainer
 var window_kind := ""
 var trade_tab := "sell"
-## Gespräch an einem Stationstresen: wer redet und an welchem Tresen
+## Conversation at a station counter: who is talking and at which counter
 var talk_line := ""
 var talk_role := ""
 var _last_window := ""
@@ -185,7 +185,7 @@ func _build_left() -> void:
 	box.add_child(name_label)
 	task_label = _label("", COL_MUTED, 12)
 	box.add_child(task_label)
-	# Auto-Modus der ausgewählten Figur (Taste J)
+	# Auto mode of the selected character (key J)
 	auto_button = _button("Auto: ON", toggle_auto)
 	auto_button.tooltip_text = "ON: the character picks jobs, eats, sleeps and has free time on their own.\nOFF: they stop at once and only do what you order (click, WASD). Key J."
 	box.add_child(auto_button)
@@ -244,7 +244,7 @@ func _build_bottom() -> void:
 	var keys := ItemSystem.devices.keys()
 	keys.sort()
 	for k in keys:
-		# Stationstresen und frühere Geräte (z. B. eigenständiges Auto-Dock) kann man nicht bauen
+		# Station counters and former devices (e.g. the stand-alone auto-dock) cannot be built
 		if ItemSystem.device(k).tech == "station" or not ItemSystem.device(k).buildable:
 			continue
 		device_ids.append(k)
@@ -297,14 +297,14 @@ func _build_help() -> void:
 	layer.add_child(help_panel)
 	var outer := VBoxContainer.new()
 	help_panel.add_child(outer)
-	# Kopfzeile mit Schließen-Knopf
+	# Header row with a close button
 	var head := HBoxContainer.new()
 	var title := _label("CONTROLS", COL_AMBER, 18)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
 	head.add_child(_button("✕", close_help))
 	outer.add_child(head)
-	# Auf kleinen Bildschirmen scrollbar
+	# Scrollable on small screens
 	help_scroll = ScrollContainer.new()
 	help_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	outer.add_child(help_scroll)
@@ -372,7 +372,7 @@ func _build_nav() -> void:
 	var outer := VBoxContainer.new()
 	outer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(outer)
-	# Fluglage-Instrument (fest, wird nicht bei jeder Aktualisierung neu gebaut)
+	# Attitude instrument (fixed, not rebuilt on every refresh)
 	flight_hud = Control.new()
 	flight_hud.set_script(load("res://scripts/ui/flight_hud.gd"))
 	flight_hud.custom_minimum_size = Vector2(360, 230)
@@ -381,7 +381,7 @@ func _build_nav() -> void:
 	nav_side.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	outer.add_child(nav_side)
 
-## N / Klick aufs Steuerpult: ins Cockpit (Figur geht hin) oder es verlassen
+## N / click on the navigation console: enter the cockpit (the character walks there) or leave it
 func toggle_nav(show = null) -> void:
 	var want: bool = (not nav_open) if show == null else bool(show)
 	if want:
@@ -389,8 +389,8 @@ func toggle_nav(show = null) -> void:
 	else:
 		leave_flight()
 
-## Das Steuerpult, an dem geflogen wird: im Cockpit das bediente Pult,
-## sonst das nächste zur Spielfigur (Ziel für N)
+## The navigation console being flown: in the cockpit the operated console,
+## otherwise the one nearest to the player character (target for N)
 func helm_device() -> Device:
 	if nav_open:
 		return PhysicsSystem.operated_helm()
@@ -401,8 +401,8 @@ func helm_device() -> Device:
 			best = h
 	return best
 
-## Ins Cockpit an diesem Pult (Klick) oder am nächsten (N): steht die Spielfigur
-## dort, sofort; sonst läuft sie hin. Kaputte oder stromlose Pulte weisen ab.
+## Into the cockpit at this console (click) or the nearest one (N): if the player character
+## stands there, at once; otherwise it walks there. Broken or unpowered consoles refuse.
 func request_flight(helm: Device = null) -> void:
 	if helm == null:
 		helm = helm_device()
@@ -428,7 +428,7 @@ func request_flight(helm: Device = null) -> void:
 	_walk_helm = helm.pos
 	GameState.toast(p.display_name + " walks to the navigation console.")
 
-## Flugmodus an diesem Pult: Flugeingaben steuern das Schiff, die Figur bleibt am Pult
+## Flight mode at this console: flight inputs steer the ship, the character stays at the console
 func enter_flight(helm: Device = null) -> void:
 	_helm_walk = false
 	if helm == null:
@@ -453,7 +453,7 @@ func enter_flight(helm: Device = null) -> void:
 	_refresh_nav()
 	GameState.toast("%s takes the helm. Esc or N: leave the cockpit." % pilot.display_name)
 
-## Flugmodus aus: Schub endet, die Figur wird wieder normal gesteuert
+## Flight mode off: thrust ends, the character is controlled normally again
 func leave_flight() -> void:
 	_helm_walk = false
 	var was := nav_open
@@ -469,7 +469,7 @@ func leave_flight() -> void:
 	if was:
 		GameState.toast("Left the cockpit – character control.")
 
-## Läuft die Figur zum Pult? Angekommen: Flugmodus. Unterbrochen: abbrechen.
+## Is the character walking to the console? Arrived: flight mode. Interrupted: cancel.
 func _check_helm_walk() -> void:
 	if not _helm_walk:
 		return
@@ -482,9 +482,9 @@ func _check_helm_walk() -> void:
 	elif p.order == null and p.path.is_empty():
 		_helm_walk = false
 
-## Jeden Frame im Flugmodus: Pilot bleibt am bedienten Pult. Fällt er aus, geht weg
-## oder ist das Pult weg, endet der Flugmodus. Hat das Pult keinen Strom oder ist kaputt,
-## bleibt das Cockpit offen, aber die Physik gibt keinen Schub (siehe PhysicsSystem.manual_ok).
+## Every frame in flight mode: the pilot stays at the operated console. If they drop out, walk away
+## or the console is gone, flight mode ends. If the console has no power or is broken,
+## the cockpit stays open, but physics gives no thrust (see PhysicsSystem.manual_ok).
 func keep_pilot() -> bool:
 	var helm := PhysicsSystem.operated_helm()
 	if pilot == null or pilot.unconscious or not pilot in CrewSystem.crew or helm == null or not pilot.can_reach(helm.pos):
@@ -497,7 +497,7 @@ func keep_pilot() -> bool:
 func _course(v: Vector2) -> String:
 	return "%03d°" % int(fposmod(rad_to_deg(v.angle()) + 90.0, 360.0))
 
-## Zahlen für die Fluganzeige (auch zum Erkennen, ob neu gezeichnet werden muss)
+## Numbers for the flight display (also to detect whether it must be redrawn)
 func _flight_rows() -> Array:
 	var P := PhysicsSystem
 	var out: Array = [_course(Vector2.from_angle(P.angle)), int(rad_to_deg(P.ang_vel)), P.thrust, P.strafe, P.rot_input, P.aligning, P.match_target, P.match_input != Vector2.ZERO,
@@ -507,7 +507,7 @@ func _flight_rows() -> Array:
 		out.append_array([_fmt_dist(ap.dist), snappedf(ap.speed * 1000.0, 0.1), snappedf(ap.closing * 1000.0, 0.1), int(P.dock_alignment(P.target).deg)])
 	return out
 
-## Cockpit-Anzeige: Fluglage, Ziel, Annäherung, Andock-Ampel, Tasten
+## Cockpit display: attitude, target, approach, docking lights, keys
 func _build_flight_info() -> void:
 	var P := PhysicsSystem
 	var bad := Color(0.9, 0.33, 0.29)
@@ -557,7 +557,7 @@ func _build_flight_info() -> void:
 				nav_side.add_child(_label("TOO FAST – brake now!", bad, 13))
 			elif ap.brake_rcs >= ap.dist * 0.9:
 				nav_side.add_child(_label("Brake now (turn around and W, or hold S).", COL_AMBER, 13))
-		# Andock-Ampel
+		# Docking lights
 		var m := P.dock_factor()
 		var al: Dictionary = P.dock_alignment(P.target)
 		var lights := HBoxContainer.new()
@@ -582,19 +582,19 @@ func _build_flight_info() -> void:
 	for k in FLIGHT_KEYS:
 		nav_side.add_child(_row(k[1], [_label(k[0], COL_AMBER, 12)], COL_MUTED))
 
-## Nächstes Ziel auswählen
+## Select the next target
 func cycle_target() -> void:
 	var P := PhysicsSystem
 	var ids: Array = P.locations.map(func(l): return l.id)
 	var i := ids.find(P.target)
 	P.target = ids[(i + 1) % ids.size()]
-	# Läuft das Angleichen, gilt es ab jetzt dem neuen Ziel
+	# If matching is running, it now applies to the new target
 	if P.match_target != "":
 		P.match_target = P.target
 	_last_nav = ""
 	_refresh_nav()
 
-## Geschwindigkeit ans Ziel angleichen (ein/aus)
+## Match velocity with the target (on/off)
 func toggle_match() -> void:
 	var P := PhysicsSystem
 	if P.docked != "" or P.target == "":
@@ -663,7 +663,7 @@ func _refresh_nav() -> void:
 		nav_side.add_child(b)
 		if ad_why != "":
 			nav_side.add_child(_label("Auto-Dock locked: " + ad_why, Color(0.9, 0.33, 0.29), 11))
-	# Modulfach des bedienten Steuerpults
+	# Module bay of the operated navigation console
 	var oh := P.operated_helm()
 	if oh != null and oh.inv != null:
 		var mods: PackedStringArray = []
@@ -672,7 +672,7 @@ func _refresh_nav() -> void:
 		var mrow := _row("Modules in the console", [_label(", ".join(mods) if not mods.is_empty() else "none", COL_AMBER if not mods.is_empty() else COL_MUTED, 12)])
 		mrow.add_child(_button("Module bay [E]", func(): open_container(PhysicsSystem.operated_helm().pos)))
 		nav_side.add_child(mrow)
-	# Ship logs (Diagnostik): letzte Andock- und Kollisionsereignisse
+	# Ship logs (diagnostics): last docking and collision events
 	if not P.ship_log.is_empty():
 		nav_side.add_child(_label("SHIP LOGS", COL_MUTED, 11))
 		for le in P.ship_log.slice(maxi(0, P.ship_log.size() - 4)):
@@ -750,7 +750,7 @@ func show_game_over(title: String, text: String) -> void:
 	gameover_label.text = title.to_upper() + "\n\n" + text
 	gameover_panel.visible = true
 
-# ---------------- Speicherplätze und Einstellungen ----------------
+# ---------------- Save slots and settings ----------------
 
 var _dialog: PanelContainer
 
@@ -831,7 +831,7 @@ func open_window(kind: String) -> void:
 	_refresh_nav()
 	char_ui.refresh()
 
-## Gespräch an der Station: Fenster mit passendem Reiter, Begrüßung oben
+## Conversation at the station: window with the matching tab, greeting at the top
 func open_talk(tab: String, line: String, role: String) -> void:
 	trade_tab = tab
 	station_reply = ""
@@ -923,7 +923,7 @@ func _refresh_window() -> void:
 			else:
 				window_box.add_child(_label("The terminal is empty.", COL_MUTED, 12))
 			if c != null and not c.inv.items.is_empty():
-				# Am Markttresen direkt aus dem Gepäck verkaufen
+				# Sell straight from the pack at the market counter
 				var at_market := talk_role == "market"
 				window_box.add_child(_label(("%s's pack – straight to the trader" if at_market else "%s's pack") % c.display_name, COL_MUTED, 11))
 				for it in c.inv.items:
@@ -1065,9 +1065,9 @@ func _put_terminal(type: String, qty: int) -> void:
 
 # ---------------- Aktionen ----------------
 
-# ---------------- Auto-Modus ----------------
+# ---------------- Auto mode ----------------
 
-## Auto-Modus der ausgewählten Figur umschalten
+## Toggle the auto mode of the selected character
 func toggle_auto() -> void:
 	var c: CrewMember = GameState.selected if GameState.selected != null else CrewSystem.player()
 	if c == null:
@@ -1082,11 +1082,11 @@ func _refresh_auto(c: CrewMember) -> void:
 	auto_button.text = "Auto: ON" if c.auto_mode else "Auto: OFF"
 	auto_button.add_theme_color_override("font_color", Color(0.44, 0.81, 0.56) if c.auto_mode else Color(0.9, 0.33, 0.29))
 
-# ---------------- Rechtsklick-Menü ----------------
+# ---------------- Right-click menu ----------------
 
-## Menü für das Objekt auf Feld p öffnen. false = hier gibt es nichts.
-## Rechtsklick auf p: nächste vorhandene Ebene dieser Kachel auswählen (Kabel → Gerät →
-## Boden, dann wieder von oben). Andere Kachel: oben beginnen. Gibt die Ebene zurück.
+## Open the menu for the object on tile p. false = nothing here.
+## Right-click on p: select the next existing layer of this tile (cable → device →
+## floor, then from the top again). Another tile: start at the top. Returns the layer.
 func select_at(p: Vector2i) -> String:
 	sel_key = RemovalSystem.next_layer(p, sel_tile, sel_key)
 	sel_tile = p if sel_key != "" else Vector2i(-1, -1)
@@ -1096,11 +1096,11 @@ func clear_selection() -> void:
 	sel_tile = Vector2i(-1, -1)
 	sel_key = ""
 
-## Ist die Auswahl noch da? (abgebaute Ebene zeigt nichts mehr an)
+## Is the selection still there? (an uninstalled layer no longer shows anything)
 func selection_valid() -> bool:
 	return sel_key != "" and RemovalSystem.layers_at(sel_tile).has(sel_key)
 
-## Ausgewählte Figur (sonst deine), wenn sie einen fortsetzbaren unterbrochenen Auftrag hat
+## Selected character (otherwise yours) if it has an interrupted job that can be resumed
 func _resume_crew() -> CrewMember:
 	var c: CrewMember = GameState.selected if GameState.selected != null and is_instance_valid(GameState.selected) and GameState.selected in CrewSystem.crew else CrewSystem.player()
 	if c == null or c.resume_job == null or c.resume_route().why != "":
@@ -1115,7 +1115,7 @@ func open_object_menu(p: Vector2i) -> bool:
 	var key := select_at(p)
 	var i := g.idx(p)
 	var job = ShipConstructionSystem.jobs.get(i)
-	# Abgebaute Stücke, die hier passen würden (aus Gepäck und Lager)
+	# Uninstalled parts that would fit here (from packs and storage)
 	var installs := {}
 	var invs: Array = CrewSystem.crew.map(func(c): return c.inv)
 	for s in ShipConstructionSystem.sources():
@@ -1130,7 +1130,7 @@ func open_object_menu(p: Vector2i) -> bool:
 	object_menu.clear()
 	menu_actions.clear()
 	menu_pos = p
-	# Von WASD unterbrochener Auftrag der ausgewählten Figur: dort weitermachen
+	# Job of the selected character interrupted by WASD: continue there
 	if rc != null:
 		object_menu.add_item("Resume Task", menu_actions.size())
 		object_menu.set_item_tooltip(object_menu.item_count - 1, "%s: %s" % [rc.display_name, ShipConstructionSystem.label(rc.resume_job)])
@@ -1163,29 +1163,29 @@ func open_object_menu(p: Vector2i) -> bool:
 			object_menu.set_item_disabled(idx, why != "")
 			object_menu.set_item_tooltip(idx, why)
 			menu_actions.append({"kind": kind, "key": key})
-	# Drehbare Geräte (Triebwerke): um 90° drehen lassen
+	# Rotatable devices (thrusters): have them rotated by 90°
 	var rdev := g.device_at(p) if key.begins_with("dev:") else null
 	if rdev != null and rdev.data().rotatable and not g.foreign(i):
 		object_menu.add_item("Rotate (90° clockwise) – now pushes %s" % _push_name(rdev.push_dir()), menu_actions.size())
 		object_menu.set_item_disabled(object_menu.item_count - 1, not ShipConstructionSystem.can_place("rotate", p))
 		menu_actions.append({"kind": "rotate"})
-	# Navigationskonsole (Steuerpult): Debuggen als Arbeitsauftrag (Software Engineering)
+	# Navigation console: debugging as a work job (Software Engineering)
 	var ndev := g.device_at(p)
 	if ndev != null and ndev.type in SkillSystem.NAV_STATIONS and not ndev.unknown and not g.foreign(g.idx(ndev.pos)):
 		object_menu.add_item("Debug navigation console (%.1f min)" % Config.DEBUG_TIME, menu_actions.size())
 		object_menu.set_item_disabled(object_menu.item_count - 1, not ShipConstructionSystem.can_place("debug", p))
 		menu_actions.append({"kind": "debug"})
-	# Stromschalter: ein-/ausschalten (aus = trennt die Netze)
+	# Power switch: turn on/off (off = splits the networks)
 	if ndev != null and ndev.type == "power_switch" and not g.foreign(g.idx(ndev.pos)):
 		object_menu.add_item("Turn power switch off" if ndev.switch_on else "Turn power switch on", menu_actions.size())
 		menu_actions.append({"kind": "switch", "dev": ndev})
-	# Navigationskonsole: Schiff umbenennen (Ostranauts Ship Building 1.4)
+	# Navigation console: rename the ship (Ostranauts Ship Building 1.4)
 	if ndev != null and ndev.type == "helm" and not ndev.unknown and not g.foreign(g.idx(ndev.pos)):
 		object_menu.add_item("Rename vessel…", menu_actions.size())
 		object_menu.set_item_disabled(object_menu.item_count - 1, FleetSystem.rename_block_reason() != "")
 		object_menu.set_item_tooltip(object_menu.item_count - 1, FleetSystem.rename_block_reason())
 		menu_actions.append({"kind": "rename"})
-	# Türen: Lüftungsschlitz (geschlossene Tür lässt sonst etwas Luft durch)
+	# Doors: vent (a closed door otherwise lets a little air through)
 	if key == "tile:door" and not StationSystem.reserved(p):
 		var lock := AirlockSystem.is_lock_door(i) or StationSystem.is_hatch(i)
 		var closed := g.vent_closed[i] == 1
@@ -1204,9 +1204,9 @@ func open_object_menu(p: Vector2i) -> bool:
 	object_menu.popup()
 	return true
 
-## Offenes Menü verschluckt sonst jeden weiteren Rechtsklick (die Auswahl „hängt“).
-## Rechtsklick außerhalb des Menüs: Menü zu und als neuen Rechtsklick ans Spiel geben –
-## auf derselben Kachel wählt das die nächste Ebene.
+## An open menu would otherwise swallow every further right-click (the selection "hangs").
+## Right-click outside the menu: close the menu and pass it to the game as a new right-click –
+## on the same tile that selects the next layer.
 func _on_object_menu_input(e: InputEvent) -> void:
 	if not (e is InputEventMouseButton) or e.button_index != MOUSE_BUTTON_RIGHT or not e.pressed:
 		return
@@ -1232,7 +1232,7 @@ func _menu_detail(kind: String, key: String) -> String:
 func _push_name(d: Vector2i) -> String:
 	return {Vector2i(1, 0): "forward (towards the nose)", Vector2i(0, 1): "to the right", Vector2i(-1, 0): "backward", Vector2i(0, -1): "to the left"}.get(d, "?")
 
-## Taste G: Bau-Drehung für drehbare Geräte weiterschalten
+## Key G: cycle the build rotation for rotatable devices
 func rotate_build() -> void:
 	var dev_id := ""
 	if GameState.tool.begins_with("dev:"):
@@ -1260,7 +1260,7 @@ func _on_object_menu(id: int) -> void:
 	var g := ShipSystem.grid
 	match a.kind:
 		"resume":
-			# Beim Auswählen neu prüfen: Menü kann veraltet sein (Auftrag fertig, Ziel weg)
+			# Check again when choosing: the menu can be outdated (job done, target gone)
 			var c = a.crew
 			if c == null or not is_instance_valid(c) or not is_same(c.resume_job, a.job):
 				GameState.toast("Task is no longer available.")
@@ -1297,7 +1297,7 @@ func _on_object_menu(id: int) -> void:
 		"none":
 			pass
 		_:
-			# Genau die ausgewählte Ebene (Kabel, Gerät oder Boden)
+			# Exactly the selected layer (cable, device or floor)
 			var key := String(a.get("key", RemovalSystem.key_at(menu_pos)))
 			var name := RemovalSystem.name_of(key)
 			var why := RemovalSystem.order(String(a.kind), menu_pos, key)
@@ -1346,7 +1346,7 @@ func show_help() -> void:
 func close_help() -> void:
 	help_panel.visible = false
 
-## Höhe an den Bildschirm anpassen (Knopf bleibt immer sichtbar)
+## Fit the height to the screen (the button always stays visible)
 func _fit_help() -> void:
 	if help_scroll == null:
 		return
@@ -1359,8 +1359,8 @@ func interact() -> void:
 	var p := CrewSystem.player()
 	if p == null:
 		return
-	# Nächstgelegener Behälter oder Haufen (ein Haufen unter den Füßen zuerst);
-	# dazu das Modulfach eines Steuerpults daneben
+	# Nearest container or pile (a pile under the feet first);
+	# plus the module bay of a navigation console next to it
 	var best := Vector2i(-1, -1)
 	var cands: Array = ShipConstructionSystem.sources()
 	for dv in ShipSystem.grid.devices.values():
@@ -1380,16 +1380,16 @@ func open_container(p: Vector2i) -> void:
 	_last_container = ""
 	_refresh_container()
 
-## Behälter schließen (das persönliche Inventar bleibt offen, wenn es mit Tab geöffnet ist)
+## Close the container (the personal inventory stays open if it was opened with Tab)
 func close_container() -> void:
 	open_pos = Vector2i(-1, -1)
 	if container_panel != null:
 		container_panel.visible = inv_open
 		_last_container = ""
 
-## Tab: persönliches Inventar der gesteuerten Figur öffnen bzw. schließen.
-## Ein offener Behälter bleibt beim Öffnen daneben sichtbar (Austausch wie bisher);
-## beim Schließen geht das ganze Fenster zu.
+## Tab: open or close the personal inventory of the controlled character.
+## An open container stays visible next to it when opening (exchange as before);
+## closing closes the whole window.
 func toggle_inventory() -> void:
 	inv_open = not inv_open
 	if not inv_open:
@@ -1399,7 +1399,7 @@ func toggle_inventory() -> void:
 	_last_container = ""
 	_refresh_container()
 
-## Aus dem eigenen Gepäck auf den Boden legen (unter der Figur bzw. daneben)
+## Put something from your own pack on the floor (under the character or next to it)
 func _drop_own(type: String, qty: int) -> void:
 	var c: CrewMember = GameState.selected if GameState.selected != null else CrewSystem.player()
 	if c == null:
@@ -1541,7 +1541,7 @@ func _refresh_container() -> void:
 		child.queue_free()
 	var box_open := ShipSystem.grid.in_bounds(open_pos)
 	if not box_open:
-		# Nur das persönliche Inventar (Tab)
+		# Only the personal inventory (Tab)
 		_own_section(c, false)
 		return
 	var head := HBoxContainer.new()
@@ -1553,7 +1553,7 @@ func _refresh_container() -> void:
 	head.add_child(_button("✕", close_container))
 	container_box.add_child(head)
 	if helm_box:
-		# Was dieses Pult freischaltet (nur dieses Pult, nur funktionsfähige Module)
+		# What this console unlocks (only this console, only working modules)
 		var why := PhysicsSystem.module_block_reason(dev, "autodock")
 		container_box.add_child(_label("Only takes navigation console modules. Auto-Dock at this console: " + ("unlocked" if why == "" else why), COL_MUTED, 11))
 	if dev != null and dev.lock_level > 0:
@@ -1571,8 +1571,8 @@ func _refresh_container() -> void:
 	if c != null:
 		_own_section(c, true)
 
-## Persönliches Inventar: Gewicht, Hände, Gegenstände. Mit offenem Behälter „Hineinlegen“,
-## sonst „Ablegen“ (auf den Boden).
+## Personal inventory: weight, hands, items. With an open container "Put in",
+## otherwise "Drop" (onto the floor).
 func _own_section(c: CrewMember, box_open: bool) -> void:
 	if c == null:
 		return
@@ -1598,7 +1598,7 @@ func _best_hack() -> float:
 		best = maxf(best, SkillSystem.hack_value(c))
 	return best
 
-## Abgebaute Stücke bekommen einen Knopf „Einbauen“ (Werkzeug: nächster Klick setzt den Auftrag)
+## Uninstalled parts get an "Install" button (tool: the next click places the job)
 func _install_btn(row: HBoxContainer, type: String) -> HBoxContainer:
 	if RemovalSystem.is_packed(type):
 		row.add_child(_button("Install", func():
@@ -1606,14 +1606,14 @@ func _install_btn(row: HBoxContainer, type: String) -> HBoxContainer:
 			close_container()))
 	return row
 
-## Handelszeile: Gegenstandswert (nur mit Business Admin) und Angebot getrennt
+## Trade row: item value (only with Business Admin) and offer separately
 func _trade_row(text: String, it: Dictionary, controls: Array) -> HBoxContainer:
 	var v := EconomySystem.value_text(EconomySystem.trader(), it)
 	var row := _row(text + (" · " + v if v != "" else ""), controls)
 	row.tooltip_text = item_tooltip(it)
 	return row
 
-## Knopf mit dem konkreten Händlerangebot (kann über oder unter dem Gegenstandswert liegen)
+## Button with the concrete trader offer (can be above or below the item value)
 func _offer_button(kind: String, price: int, cb: Callable) -> Button:
 	var b := _button("%d Cr" % price, cb)
 	b.tooltip_text = "%s: %d Cr (the trader's offer, independent of the Item Value)" % [kind, price]
@@ -1629,14 +1629,14 @@ func _item_row(it: Dictionary, action: String, cb: Callable, hand: bool = false)
 	row.add_child(_button(action, cb))
 	return row
 
-## Tooltip eines Gegenstands für die betrachtende Figur (ausgewählt, sonst deine):
-## mit Business Admin zusätzlich der exakte Gegenstandswert
+## Tooltip of an item for the viewing character (selected, otherwise yours):
+## with Business Admin also the exact item value
 func item_tooltip(it: Dictionary) -> String:
 	var text := ItemSystem.item(it.type).description
 	var v := EconomySystem.value_text(EconomySystem.trader(), it)
 	return text + ("\n" + v if v != "" else "")
 
-## Laufzeit beim aktuellen Verbrauch: "" wenn das Netz nicht entlädt
+## Runtime at the current consumption: "" if the network is not draining
 func runtime_text(net: Dictionary) -> String:
 	var h: float = net.get("hours", INF)
 	if h == INF or net.charge <= 0.0:
@@ -1645,20 +1645,20 @@ func runtime_text(net: Dictionary) -> String:
 		return " · batteries last about %d min" % int(round(h * 60.0))
 	return " · batteries last about %.1f h" % h
 
-## Schiffsbewertung W-X-Y-ZZZZ mit Erklärung (Ostranauts Ship Rating)
+## Ship rating W-X-Y-ZZZZ with an explanation (Ostranauts Ship Rating)
 func ship_rating_text(g: ShipGrid, mass_kg: float) -> String:
 	var r := ShipRating.rating(g, mass_kg)
 	return "Ship Rating %s (condition %d %%, %d unique rooms, thrust class %s, %s) · Ship value %d Cr" % [r,
 		int(ShipRating.condition(g)), RoomTypes.unique_count(g), r.split("-")[2], ShipRating.size_class(ShipRating.area(g)), FleetSystem.ship_value(g)]
 
-## Raumliste des Schiffs: Typ ×Wertfaktor (Ostranauts Rooms)
+## Room list of the ship: type ×value factor (Ostranauts Rooms)
 func rooms_text(g: ShipGrid) -> String:
 	var parts: PackedStringArray = []
 	for room in RoomTypes.classify(g):
 		parts.append("%s ×%.2f (%d tiles)" % [room.name, room.modifier, room.size])
 	return "Rooms: " + (", ".join(parts) if not parts.is_empty() else "none enclosed")
 
-# ---------------- Orders-Menü (Ostranauts Orders 4): Aktion + Filter ----------------
+# ---------------- Orders menu (Ostranauts Orders 4): action + filters ----------------
 var orders_bar: HBoxContainer
 var order_buttons := {}
 var filter_buttons := {}
@@ -1700,7 +1700,7 @@ func _sync_orders_bar() -> void:
 	for f in filter_buttons:
 		filter_buttons[f].set_pressed_no_signal(bool(Orders.filters[f]))
 
-# ---------------- Schiff umbenennen ----------------
+# ---------------- Renaming the ship ----------------
 var rename_dialog: ConfirmationDialog
 var rename_edit: LineEdit
 

@@ -1,8 +1,8 @@
-## Ziele (roter Faden für neue Spieler). Jedes Ziel wird automatisch
-## erkannt, gibt eine kleine Belohnung und schaltet das nächste frei.
+## Goals (a guiding thread for new players). Every goal is detected
+## automatically, gives a small reward and unlocks the next one.
 extends Node
 
-## Ziel-Prüfungen. "check" ist der Name einer Funktion unten.
+## Goal checks. "check" is the name of a function below.
 const GOALS := [
 	{"id": "suit", "text": "Have Mira put on a space suit (undock, then plan something outside in space, e.g. a floor diagonally next to the airlock's outer door – ships dock right in front of it)", "check": "_g_suit", "reward": 50},
 	{"id": "junk", "text": "Collect scrap from the wreck (Haul tool, Q)", "check": "_g_junk", "reward": 80, "needs": "wreck"},
@@ -19,8 +19,8 @@ const GOALS := [
 
 var done: Array[String] = []
 var _contracts_done := 0
-var stripped := 0              ## im Wrack abgerissene Geräte
-var junk := 0                  ## aus dem Wrack eingesammelte Haufen
+var stripped := 0              ## devices demolished in the wreck
+var junk := 0                  ## piles collected from the wreck
 var _timer := 0.0
 
 func reset() -> void:
@@ -35,7 +35,7 @@ func current() -> Dictionary:
 			return g
 	return {}
 
-## Ziele, die einen abgeschalteten Spielteil brauchen, werden übersprungen
+## Goals that need a disabled game part are skipped
 func _available(g: Dictionary) -> bool:
 	match String(g.get("needs", "")):
 		"wreck": return Config.ENABLE_WRECK
@@ -61,7 +61,7 @@ func step(dt: float) -> void:
 func on_contract_done() -> void:
 	_contracts_done += 1
 
-# ---------------- Prüfungen ----------------
+# ---------------- Checks ----------------
 
 func _g_suit() -> bool:
 	for c in CrewSystem.crew:

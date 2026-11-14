@@ -1,9 +1,9 @@
-## Verwaltet das aktuelle Schiff (ShipGrid) und die Wegfindung darauf.
+## Manages the current ship (ShipGrid) and pathfinding on it.
 extends Node
 
 var grid: ShipGrid
 var astar := AStarGrid2D.new()
-## Abbildung der Startschiff-Vorlage (frühere Felder) aufs feine Raster, siehe template_cell
+## Mapping of the starter ship template (former tiles) onto the fine grid, see template_cell
 var template_map := PackedInt32Array()
 var template_w := 0
 var _astar_dirty := true
@@ -11,9 +11,9 @@ var _astar_dirty := true
 func _ready() -> void:
 	EventBus.ship_changed.connect(func(): _astar_dirty = true)
 
-## Baut das Startschiff "Rostlaube" in die Mitte des Rasters. Die Vorlage ist in den
-## Feldern früherer Versionen beschrieben (doppelt so groß) und wird mit ShipGrid.refine
-## ins feine Raster übertragen – genauso wie ein alter Spielstand.
+## Builds the starter ship "Rustbucket" in the middle of the grid. The template is described in
+## the tiles of earlier versions (twice as large) and is transferred to the fine grid with
+## ShipGrid.refine – exactly like an old save.
 func create_start_ship() -> void:
 	grid = ShipGrid.new(Config.WORLD_W / Config.GRID_SCALE, Config.WORLD_H / Config.GRID_SCALE)
 	var T := ShipGrid.Tile
@@ -25,7 +25,7 @@ func create_start_ship() -> void:
 		for x in range(x0, x0 + sw):
 			var edge := x == x0 or y == y0 or x == x0 + sw - 1 or y == y0 + sh - 1
 			grid.set_tile(Vector2i(x, y), T.WALL if edge else T.FLOOR)
-	# Trennwand zum Cockpit und Wohnkabine oben links
+	# Partition to the cockpit and the cabin at the top left
 	var mid := x0 + 10
 	for y in range(y0, y0 + sh):
 		grid.set_tile(Vector2i(mid, y), T.WALL)
@@ -33,16 +33,16 @@ func create_start_ship() -> void:
 	for x in range(x0, mid + 1):
 		grid.set_tile(Vector2i(x, y0 + 4), T.WALL)
 	grid.set_tile(Vector2i(x0 + 8, y0 + 4), T.DOOR)
-	grid.set_tile(Vector2i(x0, y0 + 7), T.DOOR)  # Innentür der Schleuse
-	# Luftschleuse links (2x2 innen) mit Außentür
+	grid.set_tile(Vector2i(x0, y0 + 7), T.DOOR)  # inner door of the airlock
+	# Airlock on the left (2x2 inside) with an outer door
 	for y in range(y0 + 5, y0 + 9):
 		for x in range(x0 - 3, x0):
 			var edge := x == x0 - 3 or y == y0 + 5 or y == y0 + 8
 			grid.set_tile(Vector2i(x, y), T.WALL if edge else T.FLOOR)
 	grid.set_tile(Vector2i(x0 - 3, y0 + 7), T.DOOR)
-	# Angedockt wird an der Außentür der Luftschleuse links (Station und Wrack)
+	# Station and wreck dock at the outer door of the airlock on the left
 
-	# Einrichtung
+	# Furnishing
 	grid.place_device("bed", Vector2i(x0 + 1, y0 + 1))
 	grid.place_device("sink", Vector2i(x0 + 3, y0 + 1))
 	grid.place_device("food", Vector2i(x0 + 5, y0 + 1))
@@ -52,14 +52,14 @@ func create_start_ship() -> void:
 	grid.place_device("generator", Vector2i(x0 + 1, y0 + 5))
 	grid.place_device("battery", Vector2i(x0 + 2, y0 + 5))
 	grid.place_device("airtank", Vector2i(x0 + 7, y0 + 5))
-	# Flugsystem
+	# Flight system
 	grid.place_device("helm", Vector2i(x0 + 14, y0 + 1))
-	# Transponder und Antenne an der Steuerpult-Leitung (Ostranauts Ship Ownership)
+	# Transponder and antenna on the navigation console line (Ostranauts Ship Ownership)
 	grid.place_device("transponder", Vector2i(x0 + 14, y0 + 3))
 	grid.place_device("antenna", Vector2i(x0 + 14, y0 + 4))
 	grid.place_device("fueltank", Vector2i(x0 + 11, y0 + 1))
-	# Zwei Triebwerke (1×3) durch die hintere Außenwand: innen in der Wohnkabine,
-	# Düse hinten ins All, Schub nach vorn
+	# Two thrusters (1×3) through the rear outer wall: inside in the cabin,
+	# nozzle out the back into space, thrust forward
 	grid.place_device("thruster", Vector2i(x0 + 1, y0 + 2), 0)
 	grid.place_device("thruster", Vector2i(x0 + 1, y0 + 3), 0)
 	for y in range(y0 + 2, y0 + 5):
@@ -83,7 +83,7 @@ func create_start_ship() -> void:
 	c1.inv.add("plate", 12, 80); c1.inv.add("copper", 8, 90); c1.inv.add("circuit", 3, 70); c1.inv.add("pipe", 4, 85)
 	c2.inv.add("ration", 10); c2.inv.add("watercan", 3); c2.inv.add("fuelcan", 2); c2.inv.add("filter", 2, 90)
 
-	# Kabel
+	# Cables
 	for x in range(x0 + 1, x0 + 15):
 		grid.cables[grid.idx(Vector2i(x, y0 + 5))] = 1
 	for y in range(y0 + 1, y0 + 6):
@@ -98,7 +98,7 @@ func create_start_ship() -> void:
 		if grid.holds_air(i):
 			grid.fill_air(i)
 	grid = ShipGrid.refine(grid)
-	# Steuerpult mit Autodock-Modul im Modulfach (früher ein eigenes Gerät im Cockpit)
+	# Navigation console with the Autodock Module in the module bay (formerly a separate device in the cockpit)
 	for dev in grid.devices.values():
 		if dev.type == "helm":
 			dev.inv.add("mod_autodock", 1, 100.0)
@@ -111,16 +111,16 @@ func create_start_ship() -> void:
 
 const DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 
-## Feld gehört zum Innenraum des eigenen Schiffs (Boden mit Luftverbindung)
+## The tile belongs to the interior of your own ship (floor with an air connection)
 func _interior(p: Vector2i) -> bool:
 	if not grid.in_bounds(p):
 		return false
 	var i := grid.idx(p)
 	return grid.tiles[i] == ShipGrid.Tile.FLOOR and grid.zone[i] == 0
 
-## Richtung nach außen für eine Schleuse auf Feld p, sonst Vector2i.ZERO.
-## Gültig: auf der einen Seite Innenraum, gegenüber All (oder Station/Wrack),
-## links und rechts Wand – also mitten in einer Außenwand.
+## Outward direction for an airlock on tile p, otherwise Vector2i.ZERO.
+## Valid: interior on one side, space (or station/wreck) opposite,
+## wall to the left and right – i.e. in the middle of an outer wall.
 func port_dir(p: Vector2i) -> Vector2i:
 	for d in DIRS:
 		var outside: Vector2i = p + d
@@ -134,11 +134,11 @@ func port_dir(p: Vector2i) -> Vector2i:
 			return d
 	return Vector2i.ZERO
 
-## Andockschleusen des eigenen Schiffs: [{pos, dir, i}]
-## Andockports: die Außentüren der Luftschleusen (Raum mit Pumpe, Tür zum All).
-## Station und Wrack koppeln Tür an Tür an einer solchen Außentür, egal in welche Richtung.
-## Frühere Andockschleusen-Geräte zählen nur noch, solange das Schiff keine Luftschleuse hat.
-## pos = Außentür, dir = nach außen, i = Feld-Index. Der beim Klammern gewählte Port zuerst.
+## Docking ports of your own ship: [{pos, dir, i}]
+## Docking ports: the outer doors of the airlocks (a room with a pump and a door to space).
+## Station and wreck couple door to door at such an outer door, in any direction.
+## Former docking port devices only count while the ship has no airlock.
+## pos = outer door, dir = outwards, i = tile index. The port chosen when clamping comes first.
 func ports() -> Array:
 	var out: Array = []
 	if grid == null:
@@ -151,8 +151,8 @@ func ports() -> Array:
 			continue
 		if grid.tiles[o] == ShipGrid.Tile.SPACE or grid.foreign(o):
 			out.append({"pos": grid.pos(di), "dir": grid.pos(o) - grid.pos(di), "i": di})
-	# Frühere Andockschleusen (5×2): nur ohne Luftschleuse, oder solange sie noch gekoppelt
-	# sind bzw. ein geladener Spielstand dort wieder ankoppelt (dock_pref)
+	# Former docking ports (5×2): only without an airlock, or while they are still coupled
+	# or a loaded save couples there again (dock_pref)
 	var no_lock := out.is_empty()
 	for i in grid.devices:
 		var dev: Device = grid.devices[i]
@@ -165,11 +165,11 @@ func ports() -> Array:
 		out.sort_custom(func(a, b): return int(a.i == dock_pref) > int(b.i == dock_pref))
 	return out
 
-## Beim Klammern ausgerichteter Port (Feld-Index), wird bevorzugt belegt
+## Port aligned when clamping (tile index), used first
 var dock_pref := -1
 
-## Frühere Andockschleusen-Geräte (5×2) entfernen, sobald sie nicht mehr gekoppelt sind und das
-## Schiff eine Luftschleuse als Port hat: Außentür wird Wand, Innenreihe Boden – dicht.
+## Remove former docking port devices (5×2) as soon as they are no longer coupled and the
+## ship has an airlock as its port: the outer door becomes wall, the inner row floor – airtight.
 func retire_legacy_ports() -> int:
 	if grid == null:
 		return 0
@@ -191,18 +191,18 @@ func retire_legacy_ports() -> int:
 		GameState.toast("Old docking port removed, outer wall sealed. Ships now dock at the airlock.")
 	return n
 
-## Freie (nicht verbundene) Schleusen, optional nur in eine Richtung
+## Free (unconnected) airlocks, optionally only in one direction
 func free_ports(dir := Vector2i.ZERO) -> Array:
 	return ports().filter(func(p): return not grid.linked.has(p.i) and (dir == Vector2i.ZERO or p.dir == dir))
 
-## Feld der Startschiff-Vorlage (Koordinaten der früheren, doppelt so großen Felder) im
-## feinen Raster: Wandstück → seine Wandlinie, Gerät → sein Feld, Boden → linkes oberes Teilfeld
+## Tile of the starter ship template (coordinates of the former, twice as large tiles) in the
+## fine grid: wall piece → its wall line, device → its tile, floor → top-left sub-tile
 func template_cell(cp: Vector2i) -> Vector2i:
 	if template_w <= 0:
 		return cp * Config.GRID_SCALE
 	return grid.pos(template_map[cp.y * template_w + cp.x])
 
-## Startplatz der Crew: Mitte des früheren Feldes (4, 7) der Schiffsvorlage, auf begehbarem Boden
+## Crew start position: middle of the former tile (4, 7) of the ship template, on walkable floor
 func spawn_point() -> Vector2i:
 	var k := Config.GRID_SCALE
 	var cw := grid.width / k
@@ -217,7 +217,7 @@ func spawn_point() -> Vector2i:
 					return p + Vector2i(dx, dy)
 	return p
 
-# ---------------- Wegfindung (AStarGrid2D) ----------------
+# ---------------- Pathfinding (AStarGrid2D) ----------------
 
 func _rebuild_astar() -> void:
 	astar.region = Rect2i(0, 0, grid.width, grid.height)
@@ -230,7 +230,7 @@ func _rebuild_astar() -> void:
 			astar.set_point_solid(p, not grid.walkable(p))
 	_astar_dirty = false
 
-## Weg von a nach b (ohne Startfeld). Leeres Array = kein Weg.
+## Path from a to b (without the start tile). Empty array = no path.
 func find_path(a: Vector2i, b: Vector2i) -> Array[Vector2i]:
 	if _astar_dirty:
 		_rebuild_astar()
@@ -239,7 +239,7 @@ func find_path(a: Vector2i, b: Vector2i) -> Array[Vector2i]:
 		return out
 	if a == b:
 		return out
-	# Steht der Charakter gerade auf einem blockierten Feld, kurz freigeben
+	# If the character is standing on a blocked tile, free it briefly
 	var was_solid := astar.is_point_solid(a)
 	astar.set_point_solid(a, false)
 	var path := astar.get_id_path(a, b)
@@ -248,9 +248,9 @@ func find_path(a: Vector2i, b: Vector2i) -> Array[Vector2i]:
 		out.append(path[k])
 	return out
 
-## Sucht unter mehreren Zielfeldern das nächste, neben dem man stehen kann.
-## Antwort: {"target": Vector2i, "path": Array[Vector2i], "ok": bool}
-## reach: wie weit entfernt man arbeiten darf (1 = direkt daneben, 2 = mit langem Werkzeug)
+## Finds the nearest of several target tiles that you can stand next to.
+## Result: {"target": Vector2i, "path": Array[Vector2i], "ok": bool}
+## reach: how far away you may work (1 = right next to it, 2 = with a long tool)
 func nearest_adjacent(from: Vector2i, targets: Array, reach: int = 1) -> Dictionary:
 	var best := {"ok": false}
 	var best_len := INF

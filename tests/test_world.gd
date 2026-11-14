@@ -109,12 +109,18 @@ func _initialize() -> void:
 
 	# --- Etappe 10: Feinschliff ---
 	var S = root.get_node("Settings")
+	S.depth = "simple"
+	S.save()
+	S.depth = "normal"
+	S._ready()
+	_check("Einstellungen gespeichert und geladen", S.depth == "simple")
+	_check("Simulationstiefe wirkt", S.sim_factor() > 1.0)
+	# Ältere Einstellungsdatei mit deutschem Stufennamen
 	S.depth = "einfach"
 	S.save()
 	S.depth = "normal"
 	S._ready()
-	_check("Einstellungen gespeichert und geladen", S.depth == "einfach")
-	_check("Simulationstiefe wirkt", S.sim_factor() > 1.0)
+	_check("Alte Stufe „einfach“ wird zu „simple“", S.depth == "simple" and S.sim_factor() > 1.0)
 	S.depth = "normal"
 	S.save()
 	# Mod: neuer Gegenstand aus user://mods/items

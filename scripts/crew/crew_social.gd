@@ -1,9 +1,9 @@
-## Beziehungen, Moral, Konflikte und Gespräche in der Crew.
-## Wer viel Zeit nah beieinander verbringt, lernt sich kennen:
-## gesellige Leute und gemeinsame Hobbys verbessern Beziehungen,
-## Stress verschlechtert sie. Gestresste Crew mit schlechter Beziehung
-## gerät in Streit. Psychologie und Überzeugen schlichten.
-## Kurze Sätze der Crew erzählen ihre Geschichte (keine Textbildschirme).
+## Relationships, morale, conflicts and conversations in the crew.
+## Whoever spends a lot of time close together gets to know each other:
+## sociable people and shared hobbies improve relationships,
+## stress worsens them. A stressed crew with bad relationships
+## starts arguing. Psychology and Persuasion settle it.
+## Short lines from the crew tell their story (no text screens).
 class_name CrewSocial
 extends RefCounted
 
@@ -14,7 +14,7 @@ static func change(a: CrewMember, b: CrewMember, amount: float) -> void:
 	a.relations[str(b.id)] = clampf(relation(a, b) + amount, -100.0, 100.0)
 	b.relations[str(a.id)] = clampf(relation(b, a) + amount, -100.0, 100.0)
 
-## Moral der Crew: 0–100 (Stress und Beziehungen)
+## Crew morale: 0–100 (stress and relationships)
 static func morale() -> float:
 	var crew: Array = CrewSystem.crew
 	if crew.is_empty():
@@ -27,7 +27,7 @@ static func morale() -> float:
 				s += relation(c, o) * 0.1
 	return clampf(s / crew.size(), 0.0, 100.0)
 
-## Stündlich: Beziehungen entwickeln sich, Streit, Gespräche
+## Hourly: relationships develop, arguments, conversations
 static func hourly() -> void:
 	var crew: Array = CrewSystem.crew
 	for i in crew.size():
@@ -43,7 +43,7 @@ static func hourly() -> void:
 			if a.stress > 60.0 or b.stress > 60.0:
 				d -= 1.5
 			change(a, b, d)
-			# Streit
+			# Arguments
 			if a.stress > 60.0 and b.stress > 60.0 and relation(a, b) < 0.0 and randf() < 0.3:
 				_argument(a, b)
 	if not crew.is_empty() and randf() < 0.15:
@@ -54,7 +54,7 @@ static func _argument(a: CrewMember, b: CrewMember) -> void:
 	a.stress = minf(100.0, a.stress + 8.0)
 	b.stress = minf(100.0, b.stress + 8.0)
 	GameState.toast("%s: “Leave me alone!” – %s: “Then do your job!”" % [a.display_name.split(" ")[0], b.display_name.split(" ")[0]], "bad")
-	# Wer kann schlichten?
+	# Who can settle it?
 	var best: CrewMember = null
 	for c in CrewSystem.crew:
 		if c != a and c != b and (best == null or SkillSystem.effect(c, "calm") > SkillSystem.effect(best, "calm")):
@@ -64,7 +64,7 @@ static func _argument(a: CrewMember, b: CrewMember) -> void:
 		SkillSystem.train(best, "calm", 10.0)
 		GameState.toast("%s settles the argument." % best.display_name)
 
-## Kurze Sätze aus dem Leben der Crew
+## Short lines from the crew's lives
 static func _chatter(c: CrewMember) -> void:
 	var lines: Array = []
 	for h in c.history:
@@ -86,7 +86,7 @@ static func _chatter(c: CrewMember) -> void:
 		lines.append("Another day in this tin can.")
 	GameState.toast("%s: “%s”" % [c.display_name.split(" ")[0], lines.pick_random()])
 
-## Charakter in eine Datei exportieren (für andere Spielstände)
+## Export a character to a file (for other saves)
 static func export_character(c: CrewMember) -> String:
 	DirAccess.make_dir_recursive_absolute("user://characters")
 	var path := "user://characters/%s.json" % c.display_name.replace(" ", "_")
@@ -99,7 +99,7 @@ static func exported_list() -> PackedStringArray:
 	var dir := DirAccess.open("user://characters")
 	return dir.get_files() if dir != null else PackedStringArray()
 
-## Exportierten Charakter als Spielerfigur übernehmen
+## Use an exported character as the player character
 static func import_character(file: String) -> bool:
 	var f := FileAccess.open("user://characters/" + file, FileAccess.READ)
 	if f == null:

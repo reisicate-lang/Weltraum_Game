@@ -1,10 +1,10 @@
-## Zeichnet das Schiff von oben: Felder, Kabel, Geräte, Haufen,
-## Baupläne, Charaktere und Werkzeug-Vorschau. Ohne Grafikdateien,
-## nur mit einfachen Formen (draw_rect, draw_circle, ...).
+## Draws the ship from above: tiles, cables, devices, piles,
+## build plans, characters and the tool preview. No image files,
+## only simple shapes (draw_rect, draw_circle, ...).
 extends Node2D
 
 const S := Config.TILE_SIZE
-## Figurengröße in Pixeln (bleibt beim feineren Raster gleich)
+## Character size in pixels (unchanged by the finer grid)
 const CS := Config.CHAR_PX
 const COL_FLOOR := Color(0.165, 0.204, 0.259)
 const COL_FLOOR_ALT := Color(0.153, 0.192, 0.251)
@@ -14,7 +14,7 @@ const COL_DOOR := Color(0.788, 0.541, 0.173)
 const COL_PLAN := Color(0.349, 0.78, 0.902)
 const COL_REMOVE := Color(0.898, 0.329, 0.294)
 
-## Vom Hauptskript gesetzt: Feld unter der Maus und markierte Felder
+## Set by the main script: tile under the mouse and marked tiles
 var hover := Vector2i(-1, -1)
 var preview: Array[Vector2i] = []
 
@@ -25,7 +25,7 @@ func _draw() -> void:
 	var g := ShipSystem.grid
 	if g == null:
 		return
-	# Nur sichtbare Felder zeichnen
+	# Only draw visible tiles
 	var view := get_viewport().get_canvas_transform().affine_inverse() * get_viewport_rect()
 	var x0 := maxi(0, floori(view.position.x / S))
 	var y0 := maxi(0, floori(view.position.y / S))
@@ -66,7 +66,7 @@ func _draw_effects() -> void:
 		var f: float = (now - e.start) / 1500.0
 		var c := (Vector2(e.pos) + Vector2(0.5, 0.5)) * S
 		if e.get("small", false):
-			# Schlag beim Zerstören: kurzer, kleiner Funke
+			# Hit while destroying: a short, small spark
 			if f < 0.3:
 				var k := f / 0.3
 				draw_circle(c, S * (0.12 + k * 0.3), Color(1, 0.9, 0.6, 1.0 - k))
@@ -92,7 +92,7 @@ func _draw_tile(g: ShipGrid, p: Vector2i) -> void:
 		floor_col = Color(0.2, 0.235, 0.27) if (p.x + p.y) % 2 == 0 else Color(0.19, 0.225, 0.26)
 	draw_rect(_rect(p), floor_col)
 	draw_rect(_rect(p, 0.02), Color(0.11, 0.145, 0.19), false, 1.0)
-	# Schleusenboden: Warnstreifen
+	# Airlock floor: warning stripes
 	if t == ShipGrid.Tile.FLOOR and AirlockSystem.is_lock_tile(g.idx(p)):
 		var o := Vector2(p) * S
 		for k in 3:
@@ -181,7 +181,7 @@ func _draw_device(dev: Device, ghost: bool = false) -> void:
 	_draw_icon(dev, r, 0.45 if ghost else 1.0)
 	if ghost:
 		return
-	# Füllstand / Ladung
+	# Fill level / charge
 	var f := -1.0
 	if d.stock > 0.0:
 		f = dev.stock / d.stock
@@ -201,7 +201,7 @@ func _draw_device(dev: Device, ghost: bool = false) -> void:
 	if problem and int(Time.get_ticks_msec() / 400) % 2 == 0:
 		draw_circle(Vector2(dev.pos) * S + Vector2(0.82, 0.18) * S, S * 0.09, COL_REMOVE)
 
-## Mehrfeld-Gerät (Triebwerk 1×3): Gehäuse innen, Halterung auf der Wand, Düse im All
+## Multi-tile device (thruster 1×3): housing inside, mount on the wall, nozzle in space
 func _draw_long_device(dev: Device, ghost: bool) -> void:
 	var d := dev.data()
 	var a := 0.45 if ghost else 1.0
@@ -210,18 +210,18 @@ func _draw_long_device(dev: Device, ghost: bool) -> void:
 	var side := ex.orthogonal()
 	var col := d.color
 	col.a = a
-	# Gehäuse auf dem Innenfeld
+	# Housing on the inner tile
 	var r0 := _rect(cells[0], 0.1)
 	draw_rect(r0, col)
 	draw_rect(r0, Color(0, 0, 0, 0.5 * a), false, 1.0)
-	# Halterung durch die Wand (schmaler Steg)
+	# Mount through the wall (narrow bridge)
 	var c1 := (Vector2(cells[1]) + Vector2(0.5, 0.5)) * S
 	draw_line(c1 - ex * S * 0.5, c1 + ex * S * 0.5, Color(0.55, 0.58, 0.62, a), S * 0.32)
-	# Düse draußen: öffnet sich zum All
+	# Nozzle outside: opens towards space
 	var c2 := (Vector2(cells[2]) + Vector2(0.5, 0.5)) * S
 	draw_colored_polygon(PackedVector2Array([c2 - ex * S * 0.5 + side * S * 0.16, c2 - ex * S * 0.5 - side * S * 0.16,
 		c2 + ex * S * 0.35 - side * S * 0.36, c2 + ex * S * 0.35 + side * S * 0.36]), Color(0.45, 0.48, 0.52, a))
-	# Pfeil: Schubrichtung (vom All weg)
+	# Arrow: thrust direction (away from space)
 	var c0 := r0.get_center()
 	draw_colored_polygon(PackedVector2Array([c0 - ex * S * 0.32, c0 + side * S * 0.16, c0 - side * S * 0.16]), Color(0.95, 0.76, 0.31, a))
 	if ghost:
@@ -235,8 +235,8 @@ func _draw_long_device(dev: Device, ghost: bool) -> void:
 	if ((dev.needs_power() and not dev.powered) or dev.broken) and int(Time.get_ticks_msec() / 400) % 2 == 0:
 		draw_circle(Vector2(cells[0]) * S + Vector2(0.82, 0.18) * S, S * 0.09, COL_REMOVE)
 
-## Andockschleuse 5×2: Rahmen über die ganze Fläche, Außentür mit Lampe (grün = gekoppelt),
-## Innentür mit Pfeil nach außen
+## Docking port 5×2: frame over the whole area, outer door with a lamp (green = coupled),
+## inner door with an arrow pointing outwards
 func _draw_dock(dev: Device, ghost: bool) -> void:
 	var a := 0.45 if ghost else 1.0
 	var cells := dev.cells()
@@ -281,7 +281,7 @@ func _draw_air(g: ShipGrid, x0: int, y0: int, x1: int, y1: int) -> void:
 			draw_rect(_rect(Vector2i(x, y)), col)
 	_draw_room_types(g)
 
-## Raumtypen (Ostranauts Rooms) in der Luft-Ansicht: Name und Wertfaktor oben links im Raum
+## Room types (Ostranauts Rooms) in the air view: name and value factor at the top left of the room
 var _room_cache: Array = []
 var _room_cache_at := -100000
 func _draw_room_types(g: ShipGrid) -> void:
@@ -296,8 +296,8 @@ func _draw_room_types(g: ShipGrid) -> void:
 		draw_string(font, Vector2(r.position) * S + Vector2(2, 11), "%s ×%.2f" % [room.name, room.modifier],
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 10, col)
 
-## Schadensansicht (Ostranauts: Lecks finden): beschädigte Felder und Geräte rot, je
-## schlimmer desto kräftiger, mit „~“; Vakuumkanten (Leck ins All) als roter Rand
+## Damage view (Ostranauts: finding leaks): damaged tiles and devices in red, the
+## worse the stronger, with "~"; vacuum edges (leak to space) as a red frame
 func _draw_damage(g: ShipGrid, x0: int, y0: int, x1: int, y1: int) -> void:
 	var font := ThemeDB.fallback_font
 	var m := damage_marks(g, x0, y0, x1, y1)
@@ -308,7 +308,7 @@ func _draw_damage(g: ShipGrid, x0: int, y0: int, x1: int, y1: int) -> void:
 	for i in m.leaks:
 		draw_rect(_rect(g.pos(i)), Color(1, 0.3, 0.25, 0.9), false, 2.0)
 
-## Was die Schadensansicht markiert: {damaged: {Feld: schlechtester Zustand}, leaks: [Felder mit Vakuumkante]}
+## What the damage view marks: {damaged: {tile: worst condition}, leaks: [tiles with a vacuum edge]}
 func damage_marks(g: ShipGrid, x0: int, y0: int, x1: int, y1: int) -> Dictionary:
 	var damaged := {}
 	var leaks: Array[int] = []
@@ -365,7 +365,7 @@ func _draw_jobs() -> void:
 			draw_line(o + Vector2(0.2, 0.2) * S, o + Vector2(0.8, 0.8) * S, col, 2.5)
 			draw_line(o + Vector2(0.8, 0.2) * S, o + Vector2(0.2, 0.8) * S, col, 2.5)
 		elif job.kind == "uninstall" or job.kind == "dismantle":
-			# Abbauen: Pfeil nach oben, Zerlegen: Schraubenschlüssel-Symbol
+			# Uninstall: arrow up, Dismantle: wrench symbol
 			draw_rect(_rect(p, 0.08), Color(0.95, 0.76, 0.31, pulse), false, 1.5)
 			draw_string(ThemeDB.fallback_font, Vector2(p) * S + Vector2(0.3, 0.65) * S, "⇧" if job.kind == "uninstall" else "⚒",
 				HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(0.95, 0.76, 0.31, pulse))
@@ -392,7 +392,7 @@ func _draw_char(c: CrewMember) -> void:
 		return
 	draw_circle(center + Vector2(1, 2), CS * 0.3, Color(0, 0, 0, 0.35))
 	if c.suit != null:
-		# Raumanzug: weiß mit farbigem Ring und Rucksack
+		# Space suit: white with a coloured ring and backpack
 		draw_circle(center - Vector2.from_angle(c.facing) * CS * 0.2, CS * 0.13, Color(0.54, 0.58, 0.65))
 		draw_circle(center, CS * 0.31, Color(0.9, 0.91, 0.93))
 		draw_arc(center, CS * 0.31, 0, TAU, 24, c.color, 2.5)
@@ -405,7 +405,7 @@ func _draw_char(c: CrewMember) -> void:
 		draw_rect(cr, c.carrying.data().color)
 		draw_rect(cr, Color(0, 0, 0, 0.5), false, 1.0)
 	if GameState.selected == c:
-		# Ausgewählt: weiße Eckmarkierungen um die Figur (wie in Ostranauts)
+		# Selected: white corner marks around the character (as in Ostranauts)
 		var h := CS * 0.5
 		var l := CS * 0.18
 		for sx in [-1.0, 1.0]:
@@ -423,8 +423,8 @@ func _draw_char(c: CrewMember) -> void:
 			draw_line(prev, nxt, Color(0.95, 0.64, 0.23, 0.6), 1.0)
 			prev = nxt
 
-## Rechtsklick-Auswahl: genau die markierte Ebene hervorheben (Kabel, Gerät mit allen
-## Feldern, oder Boden/Wand) und benennen
+## Right-click selection: highlight exactly the marked layer (cable, device with all
+## its tiles, or floor/wall) and name it
 func _draw_selection(g: ShipGrid) -> void:
 	if not UIManager.selection_valid():
 		return
@@ -443,7 +443,7 @@ func _draw_selection(g: ShipGrid) -> void:
 		for cell in dev.cells():
 			draw_rect(_rect(cell, 0.04), col, false, 3.0)
 	else:
-		# Boden/Wand: gestrichelter Rahmen am Feldrand
+		# Floor/wall: dashed frame at the tile edge
 		var r := _rect(p)
 		for k in 4:
 			var a := r.position + Vector2(r.size.x * k / 4.0, 0)
@@ -461,7 +461,7 @@ func _draw_preview(g: ShipGrid) -> void:
 		draw_rect(_rect(hover), Color(1, 1, 1, 0.15))
 		return
 	var tiles: Array[Vector2i] = []
-	# Mehrfeld-Gerät (Triebwerk 1×3): alle Felder zeigen, grün nur wenn alles passt
+	# Multi-tile device (thruster 1×3): show all tiles, green only if everything fits
 	var long_type := ""
 	if GameState.tool.begins_with("dev:") and ItemSystem.device(GameState.tool.substr(4)).length > 1:
 		long_type = GameState.tool.substr(4)
@@ -477,7 +477,7 @@ func _draw_preview(g: ShipGrid) -> void:
 		var gh := Device.new(long_type, hover)
 		gh.rot = ShipConstructionSystem.build_rot
 		if long_type == "dockport":
-			# Andockschleuse richtet sich selbst an der Wand aus
+			# The docking port aligns itself with the wall
 			var dd: Vector2i = g.dock_check(hover).dir
 			if dd == Vector2i.ZERO:
 				return
@@ -494,16 +494,16 @@ func _draw_preview(g: ShipGrid) -> void:
 		if ok:
 			col = Color(0.9, 0.33, 0.29, 0.35) if GameState.tool in ["remove", "cancel"] else Color(0.35, 0.78, 0.9, 0.35)
 		draw_rect(_rect(p), col)
-		# Drehbares Gerät: Vorschau mit der gewählten Richtung (Taste G)
+		# Rotatable device: preview with the chosen direction (key G)
 		if GameState.tool.begins_with("dev:") and ItemSystem.device(GameState.tool.substr(4)).rotatable:
 			var ghost := Device.new(GameState.tool.substr(4), p)
 			ghost.rot = ShipConstructionSystem.build_rot
 			_draw_device(ghost, true)
 
-## Einfache Symbole pro Gerät (nur Formen, keine Grafikdateien)
+## Simple symbols per device (shapes only, no image files)
 func _draw_icon(dev: Device, r: Rect2, a: float) -> void:
 	var c := r.get_center()
-	var u := S * 0.8  # Größe des Geräts
+	var u := S * 0.8  # size of the device
 	var t := Time.get_ticks_msec() / 1000.0
 	var on := dev.powered or dev.producing or not dev.needs_power()
 	match dev.type:
@@ -587,7 +587,7 @@ func _draw_icon(dev: Device, r: Rect2, a: float) -> void:
 			draw_arc(c, u * 0.28, PI, TAU, 12, Color(0.95, 0.64, 0.23, a), 3.0)
 			draw_circle(c, u * 0.08, Color(0.35, 0.78, 0.9, a))
 		"thruster":
-			# Düse zeigt zum Abgas (entgegen der Schubrichtung), Pfeil zeigt die Schubrichtung
+			# The nozzle points to the exhaust (against the thrust direction), the arrow shows the thrust direction
 			var push := Vector2(dev.push_dir())
 			var ex := -push
 			var side := ex.orthogonal()
@@ -617,7 +617,7 @@ func _draw_icon(dev: Device, r: Rect2, a: float) -> void:
 		"extinguisher":
 			draw_rect(Rect2(c - Vector2(u * 0.12, u * 0.3), Vector2(u * 0.24, u * 0.6)), Color(0.85, 0.15, 0.15, a))
 		"dockport":
-			# Andockschleuse: Rahmen mit Warnstreifen, Licht grün = angedockt
+			# Docking port: frame with warning stripes, light green = docked
 			var linked := ShipSystem.grid.linked.has(ShipSystem.grid.idx(dev.pos))
 			draw_rect(Rect2(c - Vector2(u * 0.42, u * 0.42), Vector2(u * 0.84, u * 0.84)), Color(0.95, 0.76, 0.31, a), false, 2.0)
 			for k in 3:
@@ -625,14 +625,14 @@ func _draw_icon(dev: Device, r: Rect2, a: float) -> void:
 				draw_line(o, o + Vector2(u * 0.15, -u * 0.15), Color(0.1, 0.1, 0.1, a), 2.0)
 			draw_circle(c - Vector2(0, u * 0.08), u * 0.17, Color(0.44, 0.81, 0.56, a) if linked else Color(0.9, 0.33, 0.29, a))
 		"st_market", "st_bar", "st_board", "st_hiring", "st_claims", "st_bank", "st_shipyard":
-			# Tresen mit Zeichen
+			# Counter with a sign
 			draw_rect(Rect2(c - Vector2(u * 0.42, u * 0.12), Vector2(u * 0.84, u * 0.24)), Color(0.75, 0.62, 0.4, a))
 			var glyph: String = {"st_market": "$", "st_bar": "♪", "st_board": "!", "st_hiring": "+", "st_claims": "§", "st_bank": "¢", "st_shipyard": "⚓"}[dev.type]
 			draw_string(ThemeDB.fallback_font, c + Vector2(-u * 0.18, -u * 0.18), glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(1, 0.9, 0.6, a))
 		_:
 			draw_string(ThemeDB.fallback_font, r.position + Vector2(3, S * 0.5), dev.data().display_name.substr(0, 2), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(1, 1, 1, 0.85 * a))
 
-# ---------------- Station: Raumnamen, Figuren, Sprechblasen ----------------
+# ---------------- Station: room names, characters, speech bubbles ----------------
 
 func _draw_station() -> void:
 	if not StationSystem.active():

@@ -1,6 +1,6 @@
-## Bergung: Zufällige Wracks an der Bergungsleine unterhalb des Schiffs.
-## Jedes Wrack hat Räume, Lecks, beschädigte Geräte, Kisten mit
-## unbekanntem Inhalt, Schrott und alte Kabel.
+## Salvage: random wrecks coupled at the ship's docking port (airlock outer door).
+## Every wreck has rooms, leaks, damaged devices, crates with
+## unknown contents, scrap and old cables.
 extends Node
 
 const NAMES := ["MV Kestrel", "Freighter Nansen-4", "Tanker Halcyon", "Mining Tug Ox-12",
@@ -13,18 +13,18 @@ var wreck_name := ""
 var investigated := false
 var cause := ""
 
-## Mit welcher Andockschleuse das Wrack verbunden ist (Feld-Index) und wo seine Tür liegt
+## Which docking port the wreck is connected to (tile index) and where its door is
 var port := -1
 var entry := Vector2i(-1, -1)
 
-## Freier Andockport (Außentür einer Luftschleuse), in jeder Richtung; der beim Klammern
-## ausgerichtete zuerst
+## Free docking port (outer door of an airlock), in any direction; the one chosen when clamping
+## aligned port first
 func free_port() -> Dictionary:
 	var ports: Array = ShipSystem.free_ports()
 	return ports[0] if not ports.is_empty() else {}
 
-# Port-Rahmen: Wracks werden in Koordinaten relativ zur Wracktür gebaut (x entlang der
-# Schiffswand, y vom Schiff weg) und so in jede Richtung an den Port gesetzt.
+# Port frame: wrecks are built in coordinates relative to the wreck door (x along the
+# ship wall, y away from the ship) and so placed at the port in any direction.
 var _e := Vector2i.ZERO
 var _a := Vector2i(1, 0)
 var _d := Vector2i(0, 1)
@@ -34,12 +34,12 @@ func _frame(pt: Dictionary) -> void:
 	_a = Vector2i(_d.y, -_d.x)
 	_e = pt.pos + _d
 
-## Feld im Port-Rahmen → Feld im Raster
+## tile in the port frame → tile in the grid
 func _w(x: int, y: int) -> Vector2i:
 	return _e + _a * x + _d * y
 
-## Wrack mit seiner Tür direkt unter die Schleuse hängen (Tür an Tür).
-## Gibt false zurück, wenn kein freier Andockport da ist oder kein Platz ist.
+## Hang the wreck with its door right at the airlock (door to door).
+## Returns false if there is no free docking port or no room.
 func generate() -> bool:
 	if not Config.ENABLE_WRECK:
 		return false
@@ -49,13 +49,13 @@ func generate() -> bool:
 		GameState.toast("A wreck needs a free docking port (the outer door of an airlock).", "bad")
 		return false
 	_frame(pt)
-	var e := Vector2i(0, 0)      # Wracktür im Port-Rahmen
+	var e := Vector2i(0, 0)      # wreck door in the port frame
 	var top := 0
 	var w := 0
 	var h := 0
 	var left := 0
 	var found := false
-	var K := Config.GRID_SCALE   # Maße wie früher, im feinen Raster (1 Feld dicke Wände)
+	var K := Config.GRID_SCALE   # Sizes as before, in the fine grid (walls 1 tile thick)
 	for attempt in 40:
 		w = (randi_range(15, 22) - attempt / 5) * K
 		h = (randi_range(7, 10) - attempt / 10) * K
@@ -78,7 +78,7 @@ func generate() -> bool:
 	_put(g, _w(0, 0), ShipGrid.Tile.DOOR)
 	var doors: Array[Vector2i] = [_w(0, 0)]
 	_link(g, pt, _w(0, 0))
-	# Innenwände
+	# inner walls
 	var x := left + randi_range(4, 6) * K
 	var splits := 0
 	while x < left + w - 4 * K and splits < 2:
@@ -90,7 +90,7 @@ func generate() -> bool:
 			doors.append(_w(x, dy))
 			splits += 1
 		x += randi_range(5, 8) * K
-	# Lecks in der Hülle
+	# leaks in the hull
 	var hull: Array[Vector2i] = []
 	for y in range(top, top + h):
 		for xx in range(left, left + w):
@@ -100,12 +100,12 @@ func generate() -> bool:
 				hull.append(_w(xx, y))
 	for k in randi_range(1, 3):
 		_put(g, hull.pick_random(), ShipGrid.Tile.FLOOR)
-	# Abgestandene Luft
+	# stale air
 	for p in inner:
 		var i := g.idx(p)
 		if g.holds_air(i):
 			g.o2[i] = 11.0; g.n2[i] = 55.0; g.co2[i] = 2.5
-	# Plätze an den Wänden, nicht vor Türen
+	# spots along the walls, not in front of doors
 	var spots: Array[Vector2i] = []
 	for p in inner:
 		if g.get_tile(p) != ShipGrid.Tile.FLOOR:
@@ -141,7 +141,7 @@ func generate() -> bool:
 		var crate := g.place_device("crate", spots.pop_back())
 		crate.cond = randf_range(30.0, 90.0)
 		crate.unknown = true
-		# Manche Kisten sind verschlossen: mehr Wertsachen, aber Hacken nötig
+		# Some crates are locked: more valuables, but hacking needed
 		if randf() < 0.35:
 			crate.lock_level = randi_range(1, 3)
 			for n in crate.lock_level:
@@ -151,7 +151,7 @@ func generate() -> bool:
 			if l[0] == "datachip" and randf() < 0.6:
 				continue
 			crate.inv.add(l[0], randi_range(1, l[1]), randf_range(20.0, 95.0))
-	# Schrott und Kabel
+	# scrap and cables
 	var free := inner.filter(func(p): return g.walkable(p))
 	for k in randi_range(2, 5):
 		g.drop_items(free.pick_random(), ["scrap", "scrap", "copper", "pipe", "plate"].pick_random(), randi_range(1, 3), randf_range(15.0, 70.0))
@@ -165,7 +165,7 @@ func generate() -> bool:
 	EventBus.ship_changed.emit()
 	return true
 
-## Ist die Fläche frei (nur Weltraum, im Raster)?
+## Is the area free (only space, inside the grid)?
 func _free_rect(g: ShipGrid, left: int, top: int, w: int, h: int) -> bool:
 	for y in range(top, top + h):
 		for x in range(left, left + w):
@@ -174,7 +174,7 @@ func _free_rect(g: ShipGrid, left: int, top: int, w: int, h: int) -> bool:
 				return false
 	return true
 
-## Schleuse und Wracktür verbinden
+## connect the airlock and the wreck door
 func _link(g: ShipGrid, pt: Dictionary, e: Vector2i) -> void:
 	port = int(pt.i)
 	entry = e
@@ -189,8 +189,8 @@ func _put(g: ShipGrid, p: Vector2i, t: int) -> void:
 func is_wreck(i: int) -> bool:
 	return ShipSystem.grid.zone[i] == 1
 
-## Asteroid: ein Brocken aus Fels (Wände), der beim Abreißen Eis und Erz gibt.
-## Hängt an einem freien Andockport; direkt davor ein Landeplatz.
+## Asteroid: a chunk of rock (walls) that yields ice and ore when demolished.
+## Hangs at a free docking port; a landing spot right in front of it.
 func generate_asteroid() -> bool:
 	if not Config.ENABLE_WRECK:
 		return false
@@ -212,7 +212,7 @@ func generate_asteroid() -> bool:
 			var d := Vector2((x - c.x) / rx, (y - c.y) / ry).length() + randf_range(-0.12, 0.12)
 			if d < 1.0:
 				_put(g, p, ShipGrid.Tile.WALL)
-	# Landeplatz direkt vor dem Port
+	# landing spot right in front of the port
 	_put(g, _w(0, 0), ShipGrid.Tile.FLOOR)
 	_link(g, pt, _w(0, 0))
 	wreck_name = "Asteroid " + ["KX-7a", "KX-7b", "Chunk 12", "Shard 4"].pick_random()
@@ -223,7 +223,7 @@ func generate_asteroid() -> bool:
 func is_asteroid() -> bool:
 	return wreck_name.begins_with("Asteroid")
 
-## Darf das Wrack entfernt werden? (Niemand darf darauf stehen)
+## May the wreck be removed? (nobody may stand on it)
 func clearable() -> bool:
 	var g := ShipSystem.grid
 	for c in CrewSystem.crew:
@@ -268,7 +268,7 @@ func device_value(dev: Device) -> int:
 		base = dev.data().item_value
 	return int(base * (0.3 + 0.7 * dev.cond / 100.0))
 
-## Geschätzter Wert: Je besser die Betriebswirtschaft, desto genauer
+## Estimated value: the better the business skill, the more precise
 func estimate_text(dev: Device) -> String:
 	var v := device_value(dev)
 	var acc := SkillSystem.appraisal()
@@ -277,7 +277,7 @@ func estimate_text(dev: Device) -> String:
 	var spread := int(v * (0.5 - 0.45 * acc))
 	return "Salvage value ~%d–%d Cr" % [maxi(0, v - spread), v + spread]
 
-## Restwert beim Verschrotten
+## Scrap value
 func hull_value() -> int:
 	var g := ShipSystem.grid
 	var v := 0.0
@@ -298,7 +298,7 @@ func hull_value() -> int:
 			v += EconomySystem.inv_value(g.piles[i])
 	return int(v * Config.HULL_FACTOR)
 
-## Forensik: Wrack untersuchen. Findet Ursache und manchmal ein Versteck.
+## Forensics: investigate the wreck. Finds the cause and sometimes a stash.
 func investigate(c: CrewMember) -> String:
 	var g := ShipSystem.grid
 	if wreck_name == "":
@@ -322,7 +322,7 @@ func investigate(c: CrewMember) -> String:
 		text += "No stash found."
 	return text
 
-## Geräte in der Nähe eines Charakters werden erkannt
+## Devices near a character are identified
 func reveal(c: CrewMember) -> void:
 	for dev in ShipSystem.grid.devices.values():
 		if dev.unknown and absf(dev.pos.x + 0.5 - c.pos.x) <= 2.5 and absf(dev.pos.y + 0.5 - c.pos.y) <= 2.5:

@@ -1,57 +1,57 @@
-## Beschreibt eine Geräteart (Bauteil eines Schiffs).
-## Neue Geräte: eine neue .tres-Datei in res://resources/components/ anlegen.
+## Describes a device type (a ship component).
+## New devices: create a new .tres file in res://resources/components/.
 class_name DeviceData
 extends Resource
 
 @export var id: String = ""
 @export var display_name: String = ""
 @export_multiline var description: String = ""
-## kW: positiv erzeugt Strom, negativ verbraucht Strom
+## kW: positive produces power, negative consumes power
 @export var power: float = 0.0
 ## Bauzeit in Spielminuten
 @export var build_time: float = 3.0
-## Baukosten, z. B. {"plate": 2, "circuit": 1}
+## Build cost, e.g. {"plate": 2, "circuit": 1}
 @export var cost: Dictionary = {}
-## Vorrat (z. B. Essensrationen); -1 = kein Vorrat
+## Stock (e.g. food rations); -1 = no stock
 @export var stock: float = -1.0
 @export var stock_unit: String = ""
-## Batteriekapazität in kWh (0 = keine Batterie)
+## Battery capacity in kWh (0 = no battery)
 @export var capacity: float = 0.0
 ## Lade-/Entladegrenze in kW (0 = unbegrenzt), z. B. Ship Battery 81 kW
 @export var max_rate: float = 0.0
-## Lässt sich reparieren (Ostranauts: der Transponder VDX-01 nicht)
+## Can be repaired (Ostranauts: the VDX-01 transponder cannot)
 @export var repairable: bool = true
-## Chance, beim Abbauen kaputtzugehen (Transponder: 0,5)
+## Chance to break when uninstalled (transponder: 0.5)
 @export var uninstall_break: float = 0.0
-## Fester Grundwert in Cr (0 = aus den Baukosten), z. B. Transponder 29 000 laut Wiki
+## Fixed base value in Cr (0 = from the build cost), e.g. transponder 29 000 per the wiki
 @export var item_value: int = 0
-## Lagerplatz in Litern (0 = kein Lager)
+## Storage in liters (0 = no storage)
 @export var storage: float = 0.0
-## Welches Bedürfnis das Gerät erfüllt ("food", "water", "sleep", "hygiene")
+## Which need the device fulfils ("food", "water", "sleep", "hygiene")
 @export var need: String = ""
-## Nutzt sich das Gerät im Betrieb ab?
+## Does the device wear out in operation?
 @export var wears: bool = false
-## Technik-Art für Fähigkeiten: "mechanical", "electrical", "robotic", "computer", "propulsion", "furniture"
+## Technology type for skills: "mechanical", "electrical", "robotic", "computer", "propulsion", "furniture"
 @export var tech: String = "furniture"
-## Gerätekategorie (englische Schlüssel): "appliance" (Haushaltsgeräte), "control" (Steuerungen),
-## "furniture" (Möbel), "hvac" (Klima und Lüftung), "misc" (Miscellaneous), "sensor" (Sensoren), "power", "propulsion",
-## "docking", "water", "farming", "production", "station". Fähigkeiten können darauf wirken.
+## Device category (English keys): "appliance" (appliances), "control" (controls),
+## "furniture" (furniture), "hvac" (climate and ventilation), "misc" (miscellaneous), "sensor" (sensors), "power", "propulsion",
+## "docking", "water", "farming", "production", "station". Skills can act on them.
 @export var category: String = ""
-## Zusätzliche Kategorien (z. B. "suit" für Anzugschrank und Ladestation); Boni aller Kategorien zählen
+## Additional categories (e.g. "suit" for the suit locker and charger); bonuses of all categories count
 @export var extra_categories: PackedStringArray = []
-## Schub in kN (nur Triebwerke)
+## Thrust in kN (thrusters only)
 @export var thrust: float = 0.0
-## Masse in Tonnen (für die Beschleunigung des Schiffs)
+## Mass in tonnes (for the ship's acceleration)
 @export var mass: float = 0.5
-## Lässt sich beim Bauen und danach in 90°-Schritten drehen (z. B. Triebwerke)
+## Can be rotated in 90° steps while building and afterwards (e.g. thrusters)
 @export var rotatable: bool = false
-## Länge in Feldern (1 = ein Feld). Länger (z. B. Triebwerk 1×3) = gerade Linie von innen
-## nach außen durch eine Außenwand: Innenfeld (Schiffsboden), Wandfeld (Befestigung),
-## Außenfeld (Düse im All). Siehe ShipGrid.mount_reason().
+## Length in tiles (1 = one tile). Longer (e.g. thruster 1×3) = a straight line from inside
+## to outside through an outer wall: inner tile (ship floor), wall tile (mount),
+## outer tile (nozzle in space). See ShipGrid.mount_reason().
 @export var length: int = 1
-## Breite in Feldern quer zur Einbaurichtung (Andockschleuse: 5, mittig um pos)
+## Width in tiles across the mounting direction (docking port: 5, centred on pos)
 @export var width: int = 1
-## Im Geräte-Menü baubar (false: nur noch für alte Spielstände vorhanden)
+## Buildable from the device menu (false: only kept for old saves)
 @export var buildable: bool = true
-## Farbe für die einfache Darstellung
+## Colour for the simple drawing
 @export var color: Color = Color(0.35, 0.4, 0.45)

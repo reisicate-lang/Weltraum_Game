@@ -1,22 +1,22 @@
-## Objekte entfernen per Rechtsklick-Menü, auf drei Arten:
-##   Abbauen  (uninstall) – das ganze Objekt als Gegenstand, wieder einbaubar,
-##                          Zustand und eigene Daten bleiben erhalten
-##   Zerlegen (dismantle) – in die festgelegten Materialien zerlegen
-##   Zerstören (destroy)  – draufschlagen, jeder Schlag macht Schaden, am Ende Müll
-## Alle Werte pro Objekttyp stehen in res://data/removal.json (vorläufiges Balancing).
-## Die Arbeit selbst erledigt die Crew über die normalen Aufträge (ShipConstructionSystem).
+## Removing objects through the right-click menu, in three ways:
+##   Uninstall (uninstall) – the whole object as an item, can be installed again,
+##                           condition and its own data are kept
+##   Dismantle (dismantle) – break it down into the defined materials
+##   Destroy (destroy)     – hit it, every hit does damage, scrap at the end
+## All values per object type are in res://data/removal.json (preliminary balancing).
+## The crew does the actual work through the normal jobs (ShipConstructionSystem).
 ##
 ## Regeln:
-## - Abbauen: genau ein vollständiger Gegenstand „… (abgebaut)“ landet auf einem
-##   erreichbaren Bodenfeld (dort, wo das Gerät stand, bzw. innen daneben). Zustand,
-##   Drehung und Inhalt (z. B. Kisteninhalt) bleiben im Gegenstand erhalten.
-##   Sein Einzelgewicht = Masse des eingebauten Geräts (DeviceData.mass) bzw. des Blocks
-##   (Config.TILE_MASS) – Schiffsmasse und Tragen rechnen mit demselben Wert.
-## - Zerlegen und Zerstören: Ergebnisse ins Gepäck der arbeitenden Figur, Rest als
-##   Haufen zu ihren Füßen; Kisteninhalt wird unversehrt neben das Objekt gelegt.
-## - Verschlossene Behälter muss man erst knacken; ein Spind mit Raumanzug kann
-##   nur abgebaut werden (der Anzug bleibt im abgebauten Spind).
-## - Werkzeug muss eine Figur im Gepäck tragen; nur solche Figuren übernehmen den Auftrag.
+## - Uninstall: exactly one complete item "… (uninstalled)" ends up on a
+##   reachable floor tile (where the device stood, or inside next to it). Condition,
+##   rotation and contents (e.g. crate contents) are kept in the item.
+##   Its weight = mass of the installed device (DeviceData.mass) or of the block
+##   (Config.TILE_MASS) – ship mass and carrying use the same value.
+## - Dismantle and Destroy: results go into the working character's pack, the rest as
+##   a pile at their feet; crate contents are put next to the object unharmed.
+## - Locked containers must be cracked first; a locker with a space suit can
+##   only be uninstalled (the suit stays in the uninstalled locker).
+## - A character must carry the tool in their pack; only such characters take the job.
 extends Node
 
 const KINDS := ["uninstall", "dismantle", "destroy"]
@@ -33,14 +33,14 @@ func _ready() -> void:
 
 # ---------------- Konfiguration ----------------
 
-## Werte für einen Objekttyp (Gerät-ID oder "tile:wall" ...), mit Vorgaben aufgefüllt
+## Values for an object type (device ID or "tile:wall" ...), filled with defaults
 func config(key: String) -> Dictionary:
 	var out: Dictionary = data.defaults.duplicate(true)
 	var id := key.trim_prefix("dev:")
 	out.merge(data.get(id, {}), true)
 	return out
 
-## Was steht auf dem Feld? "dev:generator", "tile:wall", "tile:rock" oder ""
+## What is on the tile? "dev:generator", "tile:wall", "tile:rock" or ""
 func key_at(p: Vector2i) -> String:
 	var g := ShipSystem.grid
 	if not g.in_bounds(p):
@@ -53,7 +53,7 @@ func key_at(p: Vector2i) -> String:
 		return "tile:rock"
 	return TILE_KEYS.get(t, "")
 
-## Feld selbst (ohne Gerät): "tile:floor", "tile:wall", "tile:rock" ... oder ""
+## The tile itself (without a device): "tile:floor", "tile:wall", "tile:rock" ... or ""
 func tile_key_at(p: Vector2i) -> String:
 	var g := ShipSystem.grid
 	if not g.in_bounds(p):
@@ -63,9 +63,9 @@ func tile_key_at(p: Vector2i) -> String:
 		return "tile:rock"
 	return TILE_KEYS.get(t, "")
 
-## Ebenen einer Kachel von oben nach unten: Kabel → Gerät → Boden/Wand.
-## Nur vorhandene Ebenen, immer aus dem aktuellen Zustand der Kachel.
-## Ein Mehrfeld-Gerät (Triebwerk 1×3) erscheint auf jedem seiner Felder.
+## Layers of a tile from top to bottom: cable → device → floor/wall.
+## Only existing layers, always from the current state of the tile.
+## A multi-tile device (thruster 1×3) appears on each of its tiles.
 func layers_at(p: Vector2i) -> Array[String]:
 	var out: Array[String] = []
 	var g := ShipSystem.grid
@@ -82,7 +82,7 @@ func layers_at(p: Vector2i) -> Array[String]:
 		out.append(tk)
 	return out
 
-## Rang einer Ebene: 0 Kabel, 1 Gerät, 2 Boden/Wand
+## Rank of a layer: 0 cable, 1 device, 2 floor/wall
 func layer_rank(key: String) -> int:
 	if key == "cable":
 		return 0
@@ -90,9 +90,9 @@ func layer_rank(key: String) -> int:
 		return 1
 	return 2
 
-## Welche Ebene ein Rechtsklick auf p auswählt: Auf einer neuen Kachel die oberste
-## vorhandene; auf derselben Kachel die nächste vorhandene unter der zuletzt gewählten
-## (auch wenn die inzwischen abgebaut ist), nach der letzten wieder die oberste.
+## Which layer a right-click on p selects: on a new tile the topmost
+## existing one; on the same tile the next existing one below the last chosen one
+## (even if that has been removed meanwhile), after the last one the topmost again.
 func next_layer(p: Vector2i, prev_tile: Vector2i, prev_key: String) -> String:
 	var layers := layers_at(p)
 	if layers.is_empty():
@@ -117,11 +117,11 @@ func name_of(key: String) -> String:
 			return Config.TILE_NAMES[t]
 	return "?"
 
-## Gegenstand für ein abgebautes Objekt
+## Item for an uninstalled object
 func packed_id(key: String) -> String:
 	return "pk_" + key.trim_prefix("dev:").replace(":", "_")
 
-## Aus dem Gegenstand wieder den Objekttyp
+## The object type back from the item
 func key_of_packed(pk: String) -> String:
 	var id := pk.trim_prefix("pk_")
 	if id.begins_with("tile_"):
@@ -131,7 +131,7 @@ func key_of_packed(pk: String) -> String:
 func is_packed(type: String) -> bool:
 	return type.begins_with("pk_")
 
-## Für jedes Gerät und jeden Block einen Gegenstand "(abgebaut)" anlegen
+## Create an "(uninstalled)" item for every device and every block
 func _register_packed() -> void:
 	var d: Dictionary = data.defaults
 	var keys: Array = []
@@ -163,7 +163,7 @@ func _register_packed() -> void:
 		item.description = "Uninstalled, can be installed again (right-click a free tile or “Install”). Condition and contents are kept."
 		ItemSystem.items[item.id] = item
 
-## Einzelgewicht in kg: genau die Masse, mit der das eingebaute Objekt zur Schiffsmasse zählt
+## Weight in kg: exactly the mass with which the installed object counts towards the ship mass
 func mass_kg(key: String) -> float:
 	if key.begins_with("dev:"):
 		return ItemSystem.device(key.substr(4)).mass * 1000.0
@@ -186,7 +186,7 @@ func _cable_text() -> String:
 		parts.append("%d× %s" % [int(Config.CABLE_COST[type]), ItemSystem.item(type).display_name])
 	return ", ".join(parts)
 
-## Was beim Abbauen herauskommt (für das Menü)
+## What comes out of uninstalling (for the menu)
 func uninstall_result(key: String) -> String:
 	if key == "cable":
 		return _cable_text()
@@ -198,7 +198,7 @@ func tool_for(kind: String, key: String) -> String:
 func time_for(kind: String, key: String) -> float:
 	return float(config(key).get(kind + "_time", 3.0))
 
-## Materialien beim Zerlegen (genau diese Mengen)
+## Materials from dismantling (exactly these amounts)
 func dismantle_yield(key: String) -> Dictionary:
 	var c := config(key)
 	if c.has("dismantle"):
@@ -208,7 +208,7 @@ func dismantle_yield(key: String) -> Dictionary:
 		out[type] = maxi(1, int(_build_cost(key)[type] * float(c.dismantle_factor)))
 	return out
 
-## Müll beim Zerstören
+## Scrap from destroying
 func debris(key: String) -> Dictionary:
 	var c := config(key)
 	if c.has("debris"):
@@ -218,19 +218,19 @@ func debris(key: String) -> Dictionary:
 		total += int(_build_cost(key)[type])
 	return {"scrap": maxi(1, int(round(total * float(c.debris_factor))))}
 
-# ---------------- Wer kann es? ----------------
+# ---------------- Who can do it? ----------------
 
 func has_tool(c: CrewMember, tool: String) -> bool:
 	return tool == "" or c.inv.count(tool) > 0
 
-## Darf diese Figur den Auftrag übernehmen? (Werkzeug im Gepäck)
+## May this character take the job? (tool in the pack)
 func worker_ok(c: CrewMember, job: Dictionary) -> bool:
 	if not job.kind in KINDS:
 		return true
 	return has_tool(c, String(job.get("tool", "")))
 
-## Grund, warum die Aktion hier nicht geht ("" = es geht)
-## key: die ausgewählte Ebene ("cable", "dev:…", "tile:…"); leer = Gerät, sonst Feld.
+## Reason why the action is not possible here ("" = possible)
+## key: the selected layer ("cable", "dev:…", "tile:…"); empty = device, otherwise tile.
 func reason(kind: String, p: Vector2i, key: String = "") -> String:
 	var g := ShipSystem.grid
 	if not g.in_bounds(p):
@@ -265,7 +265,7 @@ func reason(kind: String, p: Vector2i, key: String = "") -> String:
 	elif key == "tile:floor":
 		if g.cables[i] == 1:
 			return "There is a cable on the floor. Uninstall the cable first (right-click selects it)."
-	# Werkzeug und Erreichbarkeit
+	# Tool and reachability
 	var tool := tool_for(kind, key)
 	var with_tool: Array = CrewSystem.crew.filter(func(c): return not c.unconscious and has_tool(c, tool))
 	if with_tool.is_empty():
@@ -275,14 +275,14 @@ func reason(kind: String, p: Vector2i, key: String = "") -> String:
 			return ""
 	return "Nobody can reach %s." % nm
 
-## Auftrag anlegen. Gibt "" bei Erfolg zurück, sonst den Grund.
-## Mehrfeld-Gerät (Triebwerk 1×3): jedes seiner Felder steht für das ganze Gerät,
-## der Auftrag sitzt am Innenfeld
+## Create a job. Returns "" on success, otherwise the reason.
+## Multi-tile device (thruster 1×3): each of its tiles stands for the whole device,
+## the job sits at the inner tile
 func anchor(p: Vector2i) -> Vector2i:
 	var dev := ShipSystem.grid.device_at(p)
 	return dev.pos if dev != null else p
 
-## key: die ausgewählte Ebene (leer = Gerät, sonst Feld – wie bisher)
+## key: the selected layer (empty = device, otherwise tile – as before)
 func order(kind: String, p: Vector2i, key: String = "") -> String:
 	if key == "":
 		key = key_at(p)
@@ -295,17 +295,17 @@ func order(kind: String, p: Vector2i, key: String = "") -> String:
 	var job := {"kind": kind, "x": p.x, "y": p.y, "target": key, "tool": tool_for(kind, key), "progress": 0.0,
 		"claimed_by": -1, "retry_at": 0.0, "paid": true, "need": time_for(kind, key)}
 	if kind == "destroy":
-		job.need = 1.0          # Fortschritt = angerichteter Schaden (0..1)
+		job.need = 1.0          # progress = damage done (0..1)
 		job.hit_acc = 0.0
 		job.progress = 1.0 - _cond(p) / 100.0
 	ShipConstructionSystem.jobs[g.idx(p)] = job
 	return ""
 
-## Steht noch dasselbe Objekt da?
+## Is the same object still there?
 func target_ok(job: Dictionary) -> bool:
 	return layers_at(ShipConstructionSystem.pos_of(job)).has(String(job.target))
 
-## Auftrag ohne Ziel (Objekt anderweitig entfernt) auflösen, ohne Ergebnis
+## Remove a job without a target (object removed otherwise), without a result
 func drop_stale(job: Dictionary) -> void:
 	var g := ShipSystem.grid
 	var i := g.idx(ShipConstructionSystem.pos_of(job))
@@ -328,7 +328,7 @@ func _set_cond(p: Vector2i, v: float) -> void:
 	else:
 		g.cond[g.idx(p)] = v
 
-# ---------------- Zerstören: Schläge ----------------
+# ---------------- Destroy: hits ----------------
 
 ## Schaden eines Schlags in Trefferpunkten
 func hit_damage(c: CrewMember, key: String) -> float:
@@ -340,7 +340,7 @@ func hit_damage(c: CrewMember, key: String) -> float:
 	var skill := SkillSystem.effect(c, "combat_armed") if best > 0.0 else SkillSystem.effect(c, "combat_unarmed")
 	return (float(cfg.hit_damage) + best) * (1.0 + skill + SkillSystem.effect(c, "work_demolish")) * maxf(0.3, c.health / 100.0)
 
-## Arbeit am Zerstören für dt Spielminuten. true = Objekt ist kaputt (fertig).
+## Work on destroying for dt game minutes. true = object is broken (done).
 func work_destroy(job: Dictionary, c: CrewMember, dt: float) -> bool:
 	var p := ShipConstructionSystem.pos_of(job)
 	var cfg := config(String(job.target))
@@ -364,9 +364,9 @@ func work_destroy(job: Dictionary, c: CrewMember, dt: float) -> bool:
 			return true
 	return false
 
-# ---------------- Abschluss: genau einmal ----------------
+# ---------------- Completion: exactly once ----------------
 
-## Ergebnis eines fertigen Auftrags. Der Auftrag ist schon aus der Liste entfernt.
+## Result of a finished job. The job has already been removed from the list.
 func finish(job: Dictionary, worker: CrewMember, worker_pos: Vector2i) -> void:
 	var g := ShipSystem.grid
 	var p := ShipConstructionSystem.pos_of(job)
@@ -377,7 +377,7 @@ func finish(job: Dictionary, worker: CrewMember, worker_pos: Vector2i) -> void:
 	var key := String(job.target)
 	var kind := String(job.kind)
 	if key == "cable":
-		# Kabel abbauen: nur das Kabel, Gerät und Boden bleiben; das Material liegt daneben
+		# Uninstall a cable: only the cable, device and floor stay; the material is put next to it
 		g.cables[i] = 0
 		var cspot := p if g.walkable(p) else ShipConstructionSystem.drop_spot(worker_pos)
 		for type in Config.CABLE_COST:
@@ -387,15 +387,15 @@ func finish(job: Dictionary, worker: CrewMember, worker_pos: Vector2i) -> void:
 	var dev := g.device_at(p) if key.begins_with("dev:") else null
 	var cond := dev.cond if dev != null else g.cond[i]
 	var results: Array = []   # [type, qty, cond, data]
-	var packed: Array = []    # Abbauen: genau ein Gegenstand mit Inhalt, auf den Boden
+	var packed: Array = []    # Uninstall: exactly one item with its contents, onto the floor
 	match kind:
 		"uninstall":
 			var d = null
 			if dev != null:
-				d = dev.to_data()     # mit Inhalt (Kiste) – bleibt im Gegenstand erhalten
+				d = dev.to_data()     # with contents (crate) – kept in the item
 				d.unknown = false
 				d.lock = 0
-				# Manche Teile gehen beim Abbauen oft kaputt (Ostranauts: Transponder VDX-01)
+				# Some parts often break when uninstalled (Ostranauts: VDX-01 transponder)
 				if dev.data().uninstall_break > 0.0 and randf() < dev.data().uninstall_break:
 					d.broken = true
 					d.cond = 0.0
@@ -410,19 +410,19 @@ func finish(job: Dictionary, worker: CrewMember, worker_pos: Vector2i) -> void:
 			var y := debris(key)
 			for type in y:
 				results.append([type, int(y[type]), 30.0, null])
-	# Zerlegen/Zerstören: Kisteninhalt unversehrt neben das Objekt legen
+	# Dismantle/Destroy: put crate contents next to the object unharmed
 	var spill: Array = []
 	if dev != null and dev.inv != null and kind != "uninstall":
 		for it in dev.inv.items:
 			spill.append([it.type, it.qty, it.cond, it.get("data")])
-	# Wer das Gerät gerade benutzt, hört damit auf
+	# Whoever is using the device stops
 	if dev != null:
 		for c in CrewSystem.crew:
 			if c.activity != null and c.activity.get("dev") == dev:
 				c.stop_activity()
 		if g.zone[i] == 1:
 			GoalSystem.stripped += 1
-		# Andockschleuse: Außentür wird wieder Wand, die Innenreihe wieder Boden
+		# Docking port: the outer door becomes wall again, the inner row floor again
 		if dev.type == "dockport":
 			g.remove_dock(dev)
 		else:
@@ -438,7 +438,7 @@ func finish(job: Dictionary, worker: CrewMember, worker_pos: Vector2i) -> void:
 	for s in spill:
 		g.drop_items(spot, s[0], s[1], s[2], s[3])
 	if not packed.is_empty():
-		# Ein vollständiger Gegenstand auf einem erreichbaren Bodenfeld (innen)
+		# One complete item on a reachable floor tile (inside)
 		var at := p if g.walkable(p) else ShipConstructionSystem.drop_spot(worker_pos)
 		g.drop_items(at, packed[0], 1, packed[2], packed[3])
 		GameState.toast("%s: uninstall done – %s is on the floor (%.0f kg)." % [worker.display_name if worker != null else "Crew",
@@ -450,7 +450,7 @@ func finish(job: Dictionary, worker: CrewMember, worker_pos: Vector2i) -> void:
 		parts.append("%d× %s" % [r[1], ItemSystem.item(r[0]).display_name])
 	GameState.toast("%s: %s done – %s." % [worker.display_name if worker != null else "Crew", NAMES[kind], ", ".join(parts)])
 
-## Ergebnisse ins Gepäck, Rest als Haufen daneben (volles Inventar)
+## Results into the pack, the rest as a pile next to it (full inventory)
 func _give(worker: CrewMember, worker_pos: Vector2i, results: Array) -> void:
 	var g := ShipSystem.grid
 	var spot := worker_pos if g.walkable(worker_pos) else ShipConstructionSystem.drop_spot(worker_pos)
@@ -470,7 +470,7 @@ func _give(worker: CrewMember, worker_pos: Vector2i, results: Array) -> void:
 
 # ---------------- Wiedereinbau ----------------
 
-## Kann der abgebaute Gegenstand pk hier eingebaut werden?
+## Can the uninstalled item pk be installed here?
 func can_install(pk: String, p: Vector2i) -> bool:
 	return install_reason(pk, p) == ""
 
@@ -505,7 +505,7 @@ func install_reason(pk: String, p: Vector2i) -> String:
 		return "No “%s” available." % ItemSystem.item(pk).display_name
 	return ""
 
-## Felder eines Geräts dieser Art an p mit Drehung rot (Innenfeld zuerst)
+## Tiles of a device of this type at p with rotation rot (inner tile first)
 func _cells(type: String, p: Vector2i, rot: int) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
 	for k in maxi(1, ItemSystem.device(type).length):
@@ -530,7 +530,7 @@ func install_time(pk: String) -> float:
 			return Config.TILE_BUILD_TIME[t]
 	return 3.0
 
-## Einbauen fertig: das abgebaute Stück (job.packed) mit Zustand und Daten einsetzen
+## Installing done: put in the uninstalled part (job.packed) with its condition and data
 func finish_install(job: Dictionary, worker_pos: Vector2i) -> void:
 	var g := ShipSystem.grid
 	var p := ShipConstructionSystem.pos_of(job)
@@ -555,7 +555,7 @@ func finish_install(job: Dictionary, worker_pos: Vector2i) -> void:
 			why = g.dock_check(p).reason
 		elif dev.data().length > 1:
 			why = g.mount_reason(dev.type, p, dev.rot)
-		# Mehrfeld-Gerät: Platz inzwischen ungültig? Dann bleibt das Stück erhalten
+		# Multi-tile device: is the place invalid by now? Then the part is kept
 		if why != "":
 			GameState.toast("%s: cannot install – %s The part is lying next to it." % [name_of(key), why], "bad")
 			g.drop_items(ShipConstructionSystem.drop_spot(worker_pos), String(job.item), 1, float(st.cond), st.get("data"))

@@ -1,10 +1,10 @@
-## Navigationskarte: Erde, Mond, Stationen, dein Schiff und die
-## vorausberechnete Flugbahn. Mausrad zoomt, Ziehen verschiebt.
+## Navigation map: Earth, Moon, stations, your ship and the
+## predicted trajectory. The mouse wheel zooms, dragging pans.
 extends Control
 
-var zoom := 0.005         ## Pixel pro km
+var zoom := 0.005         ## pixels per km
 var follow := true
-## Im Cockpit: automatisch so zoomen, dass Schiff und Ziel zu sehen sind (Mausrad schaltet ab)
+## In the cockpit: zoom automatically so ship and target are visible (the mouse wheel turns it off)
 var auto_zoom := false
 var center := Vector2(30000, 0)
 var _drag := false
@@ -46,7 +46,7 @@ func _draw() -> void:
 		var r := maxf(4.0, float(b.r) * zoom)
 		draw_circle(c, r, Color(0.25, 0.44, 0.69) if n == "earth" else Color(0.54, 0.56, 0.6))
 		draw_string(font, c + Vector2(-30, -r - 6), b.name, HORIZONTAL_ALIGNMENT_CENTER, 60, 13, Color(0.78, 0.82, 0.88))
-	# Gefahrenzone der Erde
+	# Earth's danger zone
 	var e: Dictionary = P.space.earth
 	draw_arc(to_screen(Vector2(e.x, e.y)), (float(e.r) + float(P.space.warn_alt)) * zoom, 0, TAU, 96, Color(0.9, 0.33, 0.29, 0.7), 1.0)
 	for l in P.locations:
@@ -58,7 +58,7 @@ func _draw() -> void:
 		var sz := maxf(6.0, 0.08 * zoom)
 		draw_rect(Rect2(sp - Vector2(sz, sz) * 0.5, Vector2(sz, sz)), col)
 		draw_string(font, sp + Vector2(sz * 0.5 + 6, 4), l.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.87, 0.9, 0.94))
-	# Vorausberechnete Flugbahn (nur Schwerkraft)
+	# Predicted trajectory (gravity only)
 	if P.docked == "" and P.travel.is_empty():
 		var p := P.pos
 		var v := P.vel
@@ -73,7 +73,7 @@ func _draw() -> void:
 		draw_polyline(pts, Color(0.95, 0.64, 0.23, 0.6), 1.2)
 	if not P.travel.is_empty():
 		draw_line(to_screen(P.pos), to_screen(P.loc_state(P.loc(P.travel.to), P.secs()).pos), Color(0.44, 0.81, 0.56, 0.7), 1.0)
-	# Ausgewähltes Ziel: Ring und Linie
+	# Selected target: ring and line
 	if P.target != "" and not P.loc(P.target).is_empty():
 		var tp := to_screen(P.loc_state(P.loc(P.target), P.secs()).pos)
 		draw_arc(tp, 12.0, 0, TAU, 32, Color(0.35, 0.78, 0.9), 2.0)
@@ -81,7 +81,7 @@ func _draw() -> void:
 		if zoom > 50.0:
 			# Andockbereich (250 m)
 			draw_arc(tp, float(P.space.dock_dist) * zoom, 0, TAU, 48, Color(0.44, 0.81, 0.56, 0.5), 1.0)
-	# Schiff
+	# Ship
 	var s := to_screen(P.pos)
 	var dir := Vector2.from_angle(P.angle)
 	var side := dir.orthogonal()

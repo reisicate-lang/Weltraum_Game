@@ -1,12 +1,12 @@
-## Wasser und Anbau.
-## - Trinken und Waschen erzeugen Abwasser. Wasserfilter bereiten es wieder
-##   zu Trinkwasser auf (verbrauchen dabei Filterleistung).
-## - Hydrokultur: von Hand pflegen, nach 3 Tagen Ernte.
-## - Auto-Farm: teuer, erntet selbst; mit Gen-Mod jeden Tag.
-## - Fleischtank: frisst Rationen, liefert jeden Tag Fleisch.
+## Water and growing.
+## - Drinking and washing produce waste water. Water filters turn it back
+##   into drinking water (using up filter capacity).
+## - Hydroponics: tend by hand, harvest after 3 days.
+## - Auto farm: expensive, harvests on its own; every day with a gene mod.
+## - Meat vat: eats rations, yields meat every day.
 extends Node
 
-var wastewater := 0.0   ## Liter Abwasser im Schiff
+var wastewater := 0.0   ## liters of waste water on the ship
 
 func reset() -> void:
 	wastewater = 0.0
@@ -31,7 +31,7 @@ func step(dt: float) -> void:
 						target.stock = minf(target.data().stock, target.stock + liters * 0.9)
 						dev.stock = maxf(0.0, dev.stock - liters / 10.0)
 			"hydro":
-				# Wachstum nur mit Licht (Strom), Wasser und Pflege (letzte 24 h)
+				# Growth only with light (power), water and care (last 24 h)
 				if dev.powered and dev.stock > 0.0 and GameState.time - dev.tended_at < 1440.0 and dev.growth < 1.0:
 					dev.growth = minf(1.0, dev.growth + h / 72.0)
 					dev.stock = maxf(0.0, dev.stock - 4.0 * h / 24.0)
@@ -78,7 +78,7 @@ func _ensure_job(dev: Device, kind: String) -> void:
 		ShipConstructionSystem.jobs[i] = {"kind": kind, "x": dev.pos.x, "y": dev.pos.y, "need": 5.0 if kind == "tend" else 3.0,
 			"progress": 0.0, "claimed_by": -1, "retry_at": 0.0, "paid": true}
 
-## Pflegen oder Ernten ist fertig
+## Tending or harvesting is done
 func finish_farm_job(job: Dictionary) -> void:
 	var g := ShipSystem.grid
 	var dev := g.device_at(Vector2i(int(job.x), int(job.y)))

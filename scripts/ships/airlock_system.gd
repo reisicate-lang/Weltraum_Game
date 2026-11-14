@@ -1,10 +1,10 @@
-## Luftschleusen: Ein kleiner geschlossener Raum mit Schleusenpumpe.
-## Eine Schleusentür geht erst auf, wenn der Druck in der Schleuse zum
-## Druck hinter der Tür passt. Die Pumpe speichert abgepumpte Luft.
+## Airlocks: a small closed room with an airlock pump.
+## An airlock door only opens once the pressure in the airlock matches
+## the pressure behind the door. The pump stores the pumped-out air.
 extends Node
 
 var locks: Array[Dictionary] = []
-var door_lock: Dictionary = {}  ## Tür-Index -> {"lock": Dictionary, "outside": int}
+var door_lock: Dictionary = {}  ## door index -> {"lock": Dictionary, "outside": int}
 var _dirty := true
 
 func _ready() -> void:
@@ -56,7 +56,7 @@ func _rebuild() -> void:
 var _grid_id := 0
 
 func ensure() -> void:
-	# Auch neu aufbauen, wenn das Raster ausgetauscht wurde (Laden, Schiffswechsel)
+	# Also rebuild when the grid was replaced (loading, switching ships)
 	if _dirty or ShipSystem.grid == null or ShipSystem.grid.get_instance_id() != _grid_id:
 		if ShipSystem.grid == null:
 			return
@@ -84,7 +84,7 @@ func pressure(lock: Dictionary) -> float:
 func _pump_works(lock: Dictionary) -> bool:
 	return lock.pump.powered and not lock.pump.broken
 
-## Darf jemand jetzt durch diese Tür? Wenn nicht, wird gepumpt.
+## May someone pass through this door now? If not, it pumps.
 func can_pass(i: int) -> bool:
 	ensure()
 	if not door_lock.has(i):
@@ -98,7 +98,7 @@ func can_pass(i: int) -> bool:
 		if d != i and g.door_open(d):
 			return false
 	if not _pump_works(lock):
-		return true  # Notöffnung ohne Pumpe
+		return true  # Emergency opening without a pump
 	var outside: int = e.outside
 	var target := g.pressure(outside) if outside >= 0 and g.holds_air(outside) else 0.0
 	lock.target = target

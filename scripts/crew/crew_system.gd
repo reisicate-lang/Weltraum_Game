@@ -1,4 +1,4 @@
-## Verwaltet alle Charaktere an Bord und lässt sie jeden Schritt handeln.
+## Manages all characters aboard and lets them act every step.
 extends Node
 
 var crew: Array[CrewMember] = []
@@ -30,7 +30,7 @@ func step(dt: float) -> void:
 
 func at(world_pos: Vector2) -> CrewMember:
 	for c in crew:
-		if c.pos.distance_to(world_pos) < 0.5 * Config.GRID_SCALE:   # Figur ist 2 Felder groß
+		if c.pos.distance_to(world_pos) < 0.5 * Config.GRID_SCALE:   # the character is 2 tiles large
 			return c
 	return null
 

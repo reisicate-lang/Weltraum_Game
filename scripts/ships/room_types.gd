@@ -1,7 +1,7 @@
-## Raumtypen nach Ostranauts „Rooms“ (docs/ostranauts/ostranauts-rooms.md, Daten in data/rooms.json).
-## Raum = eigene Bodenfelder, rundum von Wänden, Fenstern oder Türen umschlossen. Der Typ ergibt
-## sich aus den eingebauten Geräten, der Größe und dem Druck; die erste passende Zeile gewinnt.
-## Der Typ multipliziert den Wert der darin eingebauten Geräte (Schiffswert beim Verkauf).
+## Room types after Ostranauts "Rooms" (docs/ostranauts/ostranauts-rooms.md, data in data/rooms.json).
+## Room = own floor tiles enclosed on all sides by walls, windows or doors. The type follows
+## from the installed devices, the size and the pressure; the first matching row wins.
+## The type multiplies the value of the devices installed in it (ship value when selling).
 class_name RoomTypes
 extends RefCounted
 
@@ -13,11 +13,11 @@ static func data() -> Dictionary:
 		_data = JSON.parse_string(f.get_as_text())
 	return _data
 
-## Schlagwörter eines Geräts, z. B. battery → ["battery", "engineering"]
+## Tags of a device, e.g. battery → ["battery", "engineering"]
 static func tags_of(type: String) -> Array:
 	return data().tags.get(type, [])
 
-## Alle umschlossenen Räume des eigenen Schiffs:
+## All enclosed rooms of your own ship:
 ## [{cells, size, devices, pressure, pressurized, id, name, modifier, rect}]
 static func classify(g: ShipGrid) -> Array:
 	var room_of := PackedInt32Array()
@@ -56,7 +56,7 @@ static func classify(g: ShipGrid) -> Array:
 		rooms.append({"cells": cells, "size": cells.size(), "devices": [], "rect": Rect2i(lo, hi - lo + Vector2i.ONE)})
 		if not enclosed:
 			open_rooms[r] = true
-	# Geräte dem Raum ihres Feldes zuordnen (sonst einem angrenzenden, z. B. Andockschleuse an der Tür)
+	# Assign devices to the room of their tile (otherwise to an adjacent one, e.g. a docking port at the door)
 	for i in g.devices:
 		var dev: Device = g.devices[i]
 		if g.foreign(i) or dev.type == "thruster":
@@ -85,7 +85,7 @@ static func classify(g: ShipGrid) -> Array:
 		out.append(room)
 	return out
 
-## Typ nach Wiki-Reihenfolge: Anforderungen erfüllt, nichts Verbotenes, Druck, Mindestgröße
+## Type in wiki order: requirements met, nothing forbidden, pressure, minimum size
 static func _assign(room: Dictionary) -> void:
 	var count := {}
 	for dev in room.devices:
@@ -115,7 +115,7 @@ static func _assign(room: Dictionary) -> void:
 	room.name = "Blank" if room.pressurized else "Unpressurized"
 	room.modifier = 1.0
 
-## Gerätefeld → Wertfaktor seines Raums (nur Geräte in umschlossenen Räumen)
+## Device tile → value factor of its room (only devices in enclosed rooms)
 static func modifiers(g: ShipGrid) -> Dictionary:
 	var out := {}
 	for room in classify(g):
@@ -123,7 +123,7 @@ static func modifiers(g: ShipGrid) -> Dictionary:
 			out[g.idx(dev.pos)] = room.modifier
 	return out
 
-## Anzahl verschiedener spezialisierter Raumtypen (X der Schiffsbewertung)
+## Number of different specialized room types (X of the ship rating)
 static func unique_count(g: ShipGrid) -> int:
 	var ids := {}
 	for room in classify(g):

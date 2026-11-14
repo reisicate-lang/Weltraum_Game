@@ -1,9 +1,9 @@
-## Ein Charakter (Spielerfigur oder Crew). Reihenfolge, was er tut:
-##   1. Laufbefehl vom Spieler
-##   2. Schlechte Luft: Luft anhalten, dann fliehen
-##   3. Laufende Tätigkeit (essen, schlafen, waschen ...)
-##   4. Bedürfnisse erfüllen, wenn sie zu niedrig sind
-##   5. Baupläne abarbeiten (Material holen, bauen)
+## A character (player character or crew). Order of what it does:
+##   1. walk order from the player
+##   2. bad air: hold breath, then flee
+##   3. ongoing activity (eating, sleeping, washing ...)
+##   4. fulfil needs when they are too low
+##   5. work through build plans (fetch material, build)
 class_name CrewMember
 extends RefCounted
 
@@ -13,40 +13,40 @@ var color: Color
 var pos := Vector2(0.5, 0.5)        ## Position in Feldern (Mitte = +0.5)
 var facing := 0.0
 var path: Array[Vector2i] = []
-var order = null                    ## Vector2i oder null
-var job = null                      ## Dictionary oder null
-var fetch = null                    ## {"pos": Vector2i, "inv": Inventory} oder null
-var activity = null                 ## {"need": String, "dev": Device, "timer": float} oder {"flee": true}
+var order = null                    ## Vector2i or null
+var job = null                      ## Dictionary or null
+var fetch = null                    ## {"pos": Vector2i, "inv": Inventory} or null
+var activity = null                 ## {"need": String, "dev": Device, "timer": float} or {"flee": true}
 var needs := {"food": 95.0, "water": 100.0, "sleep": 75.0, "hygiene": 80.0, "air": 100.0}
 var health := 100.0
 var unconscious := false
 var is_player := false
-var manual_until := 0.0             ## echte Zeit (ms), bis wann von Hand gesteuert
-var manual_last := -100000.0        ## echte Zeit (ms) des letzten WASD-Schritts
-var resume_job = null               ## von WASD unterbrochener Auftrag (bleibt für diese Figur reserviert)
-var _job_cmd := false               ## Auftrag per „Resume Task“ befohlen (läuft auch ohne Auto-Modus)
+var manual_until := 0.0             ## real time (ms) until which it is steered by hand
+var manual_last := -100000.0        ## real time (ms) of the last WASD step
+var resume_job = null               ## job interrupted by WASD (stays reserved for this character)
+var _job_cmd := false               ## job ordered via "Resume Task" (runs even without auto mode)
 var task := "Waiting"
 var inv := Inventory.new(Config.CARRY_WEIGHT, Config.CARRY_VOLUME)
-var suit = null                     ## getragener Raumanzug {"o2", "battery"} oder null
-var carrying: Device = null         ## getragenes Gerät
+var suit = null                     ## worn space suit {"o2", "battery"} or null
+var carrying: Device = null         ## carried device
 var waiting := false                ## wartet an einer Schleuse
 ## --- Charakterentwicklung ---
-var skills: Dictionary = {}         ## skill_id -> {"p": Prozent, "xp": Erfahrung, "hist": [...]}
+var skills: Dictionary = {}         ## skill_id -> {"p": percent, "xp": experience, "hist": [...]}
 var traits: Array[String] = []
 var hobbies: Array[String] = []
-var recent_actions: Dictionary = {} ## Aktion -> kürzlich geübte Minuten (Wiederholung bringt weniger)
+var recent_actions: Dictionary = {} ## action -> recently practised minutes (repetition gives less)
 var last_trained := ""
-var stress := 10.0                  ## 0 = entspannt, 100 = Zusammenbruch
-var body_temp := 37.0               ## Körpertemperatur in °C
-var relations: Dictionary = {}      ## andere Crew-ID (Text) -> Beziehung -100..100
+var stress := 10.0                  ## 0 = relaxed, 100 = breakdown
+var body_temp := 37.0               ## body temperature in °C
+var relations: Dictionary = {}      ## other crew ID (text) -> relationship -100..100
 var age := 18
 var history: Array[String] = []     ## Lebenslauf
 var contacts: Array[String] = []
 var enemies: Array[String] = []
-var salary := 0                     ## Credits pro Tag (Crew)
-var away_until := 0.0               ## auf der Station unterwegs bis (Spielzeit)
-## Aufgabenverteilung: welche Arbeiten dieser Charakter übernimmt
-## Auto-Modus: wählt die Figur selbst Aufträge, Bedürfnisse und Freizeit? (Standard: an)
+var salary := 0                     ## credits per day (crew)
+var away_until := 0.0               ## out on the station until (game time)
+## work assignment: which kinds of work this character takes on
+## Auto mode: does the character choose jobs, needs and free time on its own? (default: on)
 var auto_mode := true
 var work_prefs := {"build": true, "repair": true, "remove": true, "haul": true, "refill": true, "craft": true, "hack": true, "eva": true}
 var _search_cooldown := 0.0
@@ -54,7 +54,7 @@ var _flee_cooldown := 0.0
 var _warned := {}
 
 func _init(i: int, n: String, c: Color, tile: Vector2i) -> void:
-	inv.hands = true   # zusätzlich genau ein abgebautes Gerät in den Händen
+	inv.hands = true   # plus exactly one uninstalled device in the hands
 	id = i
 	display_name = n
 	color = c
@@ -70,7 +70,7 @@ func is_next_to(p: Vector2i, reach: int = 1) -> bool:
 	var t := tile()
 	return absi(t.x - p.x) <= reach and absi(t.y - p.y) <= reach and t != p
 
-## Reparaturen gehen mit langem Werkzeug auch aus 2 Feldern Entfernung
+## With a long tool, repairs also work from 2 tiles away
 func _reach(j: Dictionary) -> int:
 	return 2 if j.kind == "repair" else 1
 
@@ -87,8 +87,8 @@ func suit_ok() -> bool:
 func is_manual() -> bool:
 	return is_player and Time.get_ticks_msec() < manual_until
 
-## Darf ein Laufbefehl (Klick) schon starten? Erst MANUAL_WALK_DELAY echte Sekunden
-## nach dem letzten WASD-Schritt; ein früherer Klick wird bis dahin vorgemerkt.
+## May a walk order (click) start yet? Only MANUAL_WALK_DELAY real seconds
+## after the last WASD step; an earlier click is queued until then.
 func walk_ready() -> bool:
 	return Time.get_ticks_msec() >= manual_last + Config.MANUAL_WALK_DELAY * 1000.0
 
@@ -106,13 +106,13 @@ func order_move(target: Vector2i) -> bool:
 	path = p
 	return true
 
-## Unterbrochenen Auftrag nicht mehr vormerken (Reservierung freigeben)
+## Stop remembering the interrupted job (release the reservation)
 func _drop_resume() -> void:
 	if resume_job != null and not is_same(job, resume_job) and int(resume_job.claimed_by) == id:
 		resume_job.claimed_by = -1
 	resume_job = null
 
-## Kann der unterbrochene Auftrag fortgesetzt werden? {"why": "" oder kurze englische Meldung, "path": Weg}
+## Can the interrupted job be continued? {"why": "" or a short English message, "path": path}
 func resume_route() -> Dictionary:
 	var CS := ShipConstructionSystem
 	if resume_job == null:
@@ -131,7 +131,7 @@ func resume_route() -> Dictionary:
 	var res := ShipSystem.nearest_adjacent(tile(), [CS.pos_of(j)], _reach(j))
 	if not res.ok:
 		return {"why": "Target is unreachable."}
-	# Weg oder Arbeitsort im Vakuum: nur mit Raumanzug (wie bei der normalen Auftragswahl)
+	# Path or work site in vacuum: only with a space suit (as with the normal job choice)
 	if not suit_ok():
 		var hostile := not safe_air(grid().idx(tile())) or grid().get_tile(CS.target_of(j)) == ShipGrid.Tile.SPACE
 		for q in res.path:
@@ -141,8 +141,8 @@ func resume_route() -> Dictionary:
 			return {"why": "A space suit is needed for this task."}
 	return {"why": "", "path": res.path}
 
-## „Resume Task“: denselben Auftrag sofort wieder übernehmen (ohne Laufsperre nach WASD).
-## Leer = übernommen, sonst kurze englische Meldung. Legt nie einen neuen Auftrag an.
+## "Resume Task": take over the same job again right away (without the walk delay after WASD).
+## Empty = taken over, otherwise a short English message. Never creates a new job.
 func resume_task() -> String:
 	var r := resume_route()
 	if r.why != "":
@@ -175,7 +175,7 @@ func release_job() -> void:
 	fetch = null
 	if job != null:
 		job.claimed_by = -1
-		# Unterbrochenes Einsammeln: die Sachen bleiben im Gepäck
+		# Interrupted hauling: the things stay in the pack
 		if job.kind == "haul" and job.phase == "deliver":
 			ShipConstructionSystem.jobs.erase(grid().idx(ShipConstructionSystem.pos_of(job)))
 	job = null
@@ -188,7 +188,7 @@ func stop_activity() -> void:
 	activity = null
 	path.clear()
 
-## Getragenes Gerät in der Nähe abstellen
+## Set a carried device down nearby
 func drop_carried() -> void:
 	var g := grid()
 	var dev := carrying
@@ -202,11 +202,11 @@ func drop_carried() -> void:
 	EventBus.ship_changed.emit()
 	push_out_if_stuck()
 
-## Auto-Modus ein- oder ausschalten.
-## Aus: sofort anhalten. Laufender Auftrag wird über die vorhandene Abbruchlogik
-## freigegeben (bleibt offen, Fortschritt und bezahltes Material bleiben beim Auftrag,
-## getragene Geräte werden abgestellt), Freizeit/Bedürfnis-Gang und Laufweg verworfen.
-## Ein: sofort alle verfügbaren Aufträge neu bewerten.
+## Switch auto mode on or off.
+## Off: stop at once. The current job is released through the existing cancel logic
+## (it stays open, progress and paid material stay with the job,
+## carried devices are set down); free time/need walks and the path are dropped.
+## On: re-evaluate all available jobs at once.
 func set_auto(on: bool) -> void:
 	if auto_mode == on:
 		return
@@ -239,7 +239,7 @@ func cancel_all() -> void:
 func _turn_to(angle: float, amount: float) -> void:
 	facing = rotate_toward(facing, angle, amount)
 
-## Läuft den Weg ab. false = Weg blockiert.
+## Walks the path. false = path blocked.
 func follow_path(dt: float) -> bool:
 	var g := grid()
 	var move := Config.WALK_SPEED * dt * move_factor()
@@ -271,14 +271,14 @@ func follow_path(dt: float) -> bool:
 			move = 0.0
 	return true
 
-## Tempo-Faktor: im Vakuum (Schwerelosigkeit draußen) langsamer, außer man kann es
+## Speed factor: slower in vacuum (weightlessness outside), unless you know how
 func move_factor() -> float:
 	var g := grid()
 	if g.pressure(g.idx(tile())) < 5.0:
 		return clampf(0.6 + SkillSystem.effect(self, "eva_speed") * 0.8, 0.6, 1.1)
 	return 1.0
 
-## Direkte Steuerung mit WASD (dist in Feldern)
+## Direct control with WASD (dist in tiles)
 func manual_move(dir: Vector2, dist: float) -> void:
 	if unconscious or dir == Vector2.ZERO:
 		return
@@ -286,7 +286,7 @@ func manual_move(dir: Vector2, dist: float) -> void:
 	if move_factor() < 1.0 or grid().pressure(grid().idx(tile())) < 5.0:
 		SkillSystem.train(self, "eva_move", dist / Config.WALK_SPEED * 2.0)
 	if order != null or job != null or activity != null:
-		# Laufenden Auftrag merken (Fortschritt bleibt im Auftrag); nicht beim Tragen oder Abliefern
+		# Remember the current job (progress stays in the job); not while carrying or delivering
 		var keep = null
 		if job != null and carrying == null and not (job.kind in ["haul", "move"] and job.get("phase", "") == "deliver"):
 			keep = job
@@ -316,7 +316,7 @@ func manual_move(dir: Vector2, dist: float) -> void:
 					return false
 				g.door_open_until[ti] = GameState.time + 0.05
 		return true
-	# Achsen getrennt: so gleitet man an Wänden entlang
+	# Axes separately: this way you slide along walls
 	var moved_x := false
 	var moved_y := false
 	if fits.call(pos + Vector2(dir.x * dist, 0)):
@@ -325,8 +325,8 @@ func manual_move(dir: Vector2, dist: float) -> void:
 	if fits.call(pos + Vector2(0, dir.y * dist)):
 		pos.y += dir.y * dist
 		moved_y = dir.y != 0.0
-	# Einlaufhilfe für Türen (1 Feld breit): an einer Kante hängengeblieben, aber das Feld
-	# davor ist begehbar → seitlich zu dessen Mitte rutschen
+	# Entry help for doors (1 tile wide): stuck on an edge, but the tile
+	# in front is walkable → slide sideways to its centre
 	if absf(dir.x) > 0.5 and not moved_x:
 		var ahead := Vector2i(floori(pos.x + signf(dir.x) * (r + 0.5)), floori(pos.y))
 		if g.walkable(ahead):
@@ -358,7 +358,7 @@ func push_out_if_stuck() -> void:
 					path.clear()
 					return
 
-# ---------------- Körper ----------------
+# ---------------- Body ----------------
 
 func _update_body(dt: float) -> void:
 	var g := grid()
@@ -396,7 +396,7 @@ func _update_body(dt: float) -> void:
 	if needs.water <= 0.0: damage += 4.0
 	if needs.air < 25.0: damage += 600.0
 	if not in_suit and g.holds_air(i) and g.co2[i] > Config.CO2_BAD: damage += 3.0
-	# Körpertemperatur: Kälte (ohne Anzug), Hitze durch Feuer
+	# Body temperature: cold (without a suit), heat from fire
 	var tt: float = g.temp[i] if g.holds_air(i) else Config.SPACE_TEMP
 	if in_suit or suit != null:
 		tt = Config.ROOM_TEMP
@@ -434,7 +434,7 @@ func _update_body(dt: float) -> void:
 		var low := minf(suit.o2, suit.battery)
 		_warn("suit", low < Config.SUIT_RETURN_AT, "The space suit of " + display_name + " is running low.", low > 60.0)
 
-## Stress steigt bei schlechten Bedürfnissen, Gefahr und Schulden; sinkt im Schlaf und in der Freizeit
+## Stress rises with poor needs, danger and debt; it drops while sleeping and in free time
 func _update_stress(dt: float, sleeping: bool) -> void:
 	var h := dt / 60.0
 	var rise := 0.0
@@ -449,7 +449,7 @@ func _update_stress(dt: float, sleeping: bool) -> void:
 		rise += 0.5
 	rise /= TraitSystem.factor(self, "stress_resist")
 	var fall := 4.0 if sleeping else 1.0
-	# Blick aus dem Fenster beruhigt
+	# A look out of the window calms
 	for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1), Vector2i(2, 0), Vector2i(-2, 0), Vector2i(0, 2), Vector2i(0, -2)]:
 		if grid().get_tile(tile() + d) == ShipGrid.Tile.WINDOW:
 			fall += 1.5
@@ -481,8 +481,8 @@ func update(dt: float) -> void:
 	if away_until > GameState.time:
 		task = "Out on the station"
 		return
-	# Nach WASD: Selbststeuerung bleibt kurz aus, ein Laufbefehl startet aber schon
-	# nach MANUAL_WALK_DELAY echten Sekunden (vorgemerkter Klick läuft dann von selbst los)
+	# After WASD: self-control stays off briefly, but a walk order already starts
+	# after MANUAL_WALK_DELAY real seconds (a queued click then starts on its own)
 	if is_manual() and order != null and UIManager.pilot != self and walk_ready():
 		manual_until = 0.0
 	if is_manual():
@@ -499,7 +499,7 @@ func update(dt: float) -> void:
 				if path.is_empty():
 					order = null
 			return
-	# 2) Schlechte Luft
+	# 2) bad air
 	var g := grid()
 	var i := g.idx(tile())
 	_flee_cooldown -= dt
@@ -509,7 +509,7 @@ func update(dt: float) -> void:
 		stop_activity()
 		if _start_flee():
 			return
-	# Auto-Modus aus: nur noch Notfall-Flucht, sonst stehen bleiben und bei Bedarf warnen
+	# Auto mode off: only emergency escape, otherwise stand still and warn if needed
 	if not auto_mode:
 		if activity != null and activity.has("flee"):
 			_do_activity(dt)
@@ -522,7 +522,7 @@ func update(dt: float) -> void:
 			for k in ["food", "water", "sleep", "hygiene"]:
 				_warn("auto-" + k, needs[k] < Config.NEEDS[k].at, "%s: %s – auto mode is off." % [display_name, Config.NEEDS[k].name], needs[k] >= Config.NEEDS[k].at)
 			return
-	# 3) Tätigkeit (Freizeit wird für Arbeit unterbrochen)
+	# 3) activity (free time is interrupted for work)
 	if activity != null and activity.get("kind", "") in ["study", "hobby", "trainer"] and _has_open_job():
 		stop_activity()
 	if activity != null:
@@ -532,7 +532,7 @@ func update(dt: float) -> void:
 	var check := _search_cooldown <= 0.0
 	if check:
 		_search_cooldown = 0.05
-		# Anzug fast leer: aufladen oder ablegen
+		# Suit almost empty: recharge or take it off
 		if suit != null and minf(suit.o2, suit.battery) < Config.SUIT_RETURN_AT and carrying == null:
 			release_job()
 			if suit.o2 >= Config.SUIT_RETURN_AT and _start_device("recharge", func(d): return d.type == "charger" and d.charge > 0.05):
@@ -557,7 +557,7 @@ func update(dt: float) -> void:
 			return
 		elif is_next_to(jp, _reach(job)):
 			if not job.paid:
-				# Mitgebrachtes Material am Bauplatz ablegen (schwere Teile in mehreren Gängen)
+				# Drop the material brought along at the build site (heavy parts in several trips)
 				var CSy := ShipConstructionSystem
 				var rem := CSy.remaining_cost(job)
 				var keys := rem.keys()
@@ -566,7 +566,7 @@ func update(dt: float) -> void:
 					if n <= 0:
 						continue
 					var got := inv.take(type, n)
-					# Einbau: genau dieses abgebaute Stück merken (Zustand, Daten)
+					# Installing: remember exactly this uninstalled part (condition, data)
 					if job.kind == "install" and not got.is_empty():
 						job.packed = got[0]
 					if not job.has("delivered"):
@@ -577,19 +577,19 @@ func update(dt: float) -> void:
 						job.retry_at = GameState.time + 0.5
 						release_job()
 					return
-				# Meister der Montage sparen manchmal ein Teil (kommt ins Gepäck zurück)
+				# Masters of assembly sometimes save a part (it goes back into the pack)
 				var all_keys := CSy.cost(job).keys()
 				if not all_keys.is_empty() and int(CSy.cost(job)[all_keys[0]]) > 1 and SkillSystem.mastered(self, "construction") and randf() < 0.25:
 					inv.add(all_keys[0], 1, 80.0)
 				job.paid = true
 			_turn_to((Vector2(jp) + Vector2(0.5, 0.5) - pos).angle(), 0.3)
 			task = ShipConstructionSystem.label(job)
-			# Objekt inzwischen weg? Dann Auftrag auflösen, ohne Ergebnis
+			# Object gone meanwhile? Then remove the job, without a result
 			if job.kind in RemovalSystem.KINDS and not RemovalSystem.target_ok(job):
 				RemovalSystem.drop_stale(job)
 				job = null
 				return
-			# Zerstören: einzelne Schläge statt gleichmäßigem Fortschritt
+			# Destroying: single hits instead of steady progress
 			if job.kind == "destroy":
 				if RemovalSystem.work_destroy(job, self, dt):
 					_finish_job()
@@ -609,11 +609,11 @@ func update(dt: float) -> void:
 		_assign_job()
 		if job == null and activity == null and suit == null:
 			_start_free_time()
-		# Nichts zu tun: Raumanzug wieder ablegen
+		# Nothing to do: take off the space suit again
 		if job == null and activity == null and suit != null:
 			_start_device("suit_off", func(d): return d.type == "locker" and d.suit == null and not d.broken)
 
-## Gibt es einen offenen Auftrag, den dieser Charakter übernehmen würde?
+## Is there an open job this character would take?
 func _has_open_job() -> bool:
 	for j in ShipConstructionSystem.jobs.values():
 		if j.claimed_by == -1 and j.retry_at <= GameState.time and not j.get("missing", false) and work_prefs.get(_pref_of(j), true) and RemovalSystem.worker_ok(self, j):
@@ -634,7 +634,7 @@ func _pref_of(j: Dictionary) -> String:
 		"hack": return "hack"
 	return "build"
 
-## Freizeit: Lesen, Hobby, Trainingsgerät
+## Free time: reading, hobby, training rig
 func _start_free_time() -> void:
 	if needs.sleep < 40.0 or needs.food < 50.0:
 		return
@@ -698,7 +698,7 @@ func _finish_job() -> void:
 	job = null
 	CS.complete(finished, tile(), self)
 
-## Einsammeln: Haufen aufheben, in die nächste Frachtkiste im Schiff bringen
+## Hauling: pick up piles, bring them to the nearest cargo crate on the ship
 func _finish_haul() -> void:
 	var CS := ShipConstructionSystem
 	var g := grid()
@@ -751,7 +751,7 @@ func _finish_haul() -> void:
 	if g.piles.has(g.idx(src)):
 		CS.place("haul", src)
 
-## Hacken eines verschlossenen Behälters
+## Hacking a locked container
 func _finish_hack() -> void:
 	var CS := ShipConstructionSystem
 	var p := CS.pos_of(job)
@@ -766,7 +766,7 @@ func _finish_hack() -> void:
 	else:
 		GameState.toast("%s fails at the lock (level %d). Needs more practice in Hacking and Software." % [display_name, dev.lock_level], "bad")
 
-## Zu einem passenden Gerät gehen (Anzugschrank, Ladestation)
+## Go to a suitable device (suit locker, charger)
 func _start_device(kind: String, filter: Callable) -> bool:
 	var targets: Array = []
 	var by_pos := {}
@@ -797,10 +797,10 @@ func _assign_job() -> void:
 			continue
 		if not work_prefs.get(_pref_of(j), true):
 			continue
-		# Werkzeug nötig? Nur wer es im Gepäck hat
+		# Tool needed? Only those who have it in their pack
 		if not RemovalSystem.worker_ok(self, j):
 			continue
-		# Ziel schon verschwunden? Auftrag auflösen
+		# Target already gone? Remove the job
 		if j.kind in RemovalSystem.KINDS and not RemovalSystem.target_ok(j):
 			RemovalSystem.drop_stale(j)
 			continue
@@ -818,7 +818,7 @@ func _assign_job() -> void:
 	if targets.is_empty():
 		return
 	var res := ShipSystem.nearest_adjacent(tile(), targets)
-	# Reparaturen: auch mit größerer Reichweite versuchen
+	# Repairs: also try with a larger reach
 	if not res.ok:
 		var rep_targets: Array = targets.filter(func(p): return by_pos[p].kind == "repair")
 		if not rep_targets.is_empty():
@@ -828,7 +828,7 @@ func _assign_job() -> void:
 			j.retry_at = GameState.time + 0.5
 		return
 	var chosen: Dictionary = by_pos[res.target]
-	# Führt der Weg durchs Vakuum? Dann erst einen Raumanzug holen.
+	# Does the path lead through vacuum? Then fetch a space suit first.
 	if not suit_ok():
 		var hostile := not safe_air(grid().idx(tile()))
 		for q in res.path:
@@ -838,7 +838,7 @@ func _assign_job() -> void:
 			var tq := Vector2i(int(chosen.tx), int(chosen.ty))
 			if not safe_air(grid().idx(tq)):
 				hostile = true
-		# Arbeit draußen im All (z. B. Boden vor der Luftschleuse bauen): Anzug nötig
+		# Work outside in space (e.g. building a floor in front of the airlock): suit needed
 		if grid().get_tile(ShipConstructionSystem.target_of(chosen)) == ShipGrid.Tile.SPACE:
 			hostile = true
 		if hostile and not work_prefs.get("eva", true):
@@ -897,7 +897,7 @@ func _do_fetch(dt: float) -> void:
 	grid().clean_piles()
 	fetch = null
 	var still := CS.missing(CS.remaining_cost(job), inv)
-	# Gepäck voll, aber etwas dabei: erst zum Bauplatz und dort ablegen, dann weiterholen
+	# Pack full but carrying something: first go to the build site and drop it, then fetch more
 	var full := moved > 0 and still.keys().all(func(t): return inv.room(t) <= 0)
 	if not still.is_empty() and not full:
 		if not _start_fetch():
@@ -914,7 +914,7 @@ func _do_fetch(dt: float) -> void:
 func _start_need() -> bool:
 	var g := grid()
 	var order_needs: Array = []
-	# Im Anzug (Außeneinsatz) unterbrechen Essen und Trinken erst, wenn es dringend wird
+	# In a suit (EVA), eating and drinking only interrupt when it becomes urgent
 	var margin := 30.0 if suit != null else 0.0
 	for k in Config.NEEDS:
 		if needs[k] < Config.NEEDS[k].at - (margin if k in ["food", "water"] else 0.0):
@@ -962,7 +962,7 @@ func _do_activity(dt: float) -> void:
 	if activity.has("flee"):
 		task = "Looking for air to breathe"
 		activity.timer = float(activity.get("timer", 0.0)) + dt
-		# Schon in atembarer Luft, oder zu lange (z. B. wartet an einer Schleuse, die nicht öffnet): Flucht beenden
+		# Already in breathable air, or too long (e.g. waiting at an airlock that does not open): end the escape
 		if safe_air(grid().idx(tile())) and needs.air >= 50.0 or activity.timer > 3.0:
 			stop_activity()
 			return
@@ -1042,7 +1042,7 @@ func _do_activity(dt: float) -> void:
 	if activity.timer >= def.use_time:
 		var gain: float = def.gain
 		if need == "food":
-			# Kochen: Mahlzeit sättigt mehr und senkt Stress
+			# Cooking: a meal satisfies more and lowers stress
 			gain *= 1.0 + SkillSystem.effect(self, "meal_bonus")
 			stress = maxf(0.0, stress - 3.0 - SkillSystem.effect(self, "meal_mood") * 15.0)
 			SkillSystem.train(self, "cook", def.use_time)
@@ -1076,7 +1076,7 @@ func _start_flee() -> bool:
 	task = "No breathable air within reach!"
 	return false
 
-# ---------------- Speichern ----------------
+# ---------------- Saving ----------------
 
 func to_data() -> Dictionary:
 	return {"id": id, "name": display_name, "color": color.to_html(), "x": pos.x, "y": pos.y,

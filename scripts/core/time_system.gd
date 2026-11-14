@@ -1,9 +1,9 @@
-## Spielzeit: Pause, ×1 (Echtzeit), ×2, ×4, ×8, ×16.
-## Jedes Bild wird die vergangene Spielzeit in Schritte von höchstens
-## einer Spielsekunde aufgeteilt, damit die Simulation stabil bleibt.
+## Game time: pause, ×1 (real time), ×2, ×4, ×8, ×16.
+## Every frame the elapsed game time is split into steps of at most
+## one game second so the simulation stays stable.
 extends Node
 
-const MAX_STEP := 1.0 / 60.0  ## eine Spielsekunde in Minuten
+const MAX_STEP := 1.0 / 60.0  ## one game second in minutes
 
 var speed_index: int = 1
 var _last_speed: int = 1

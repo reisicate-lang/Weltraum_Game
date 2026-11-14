@@ -1,5 +1,5 @@
-## Lebendige Welt: Fraktionen mit Ansehen, Aufträge (Liefern, Bergen,
-## Transport), Versicherung und tägliche Weltereignisse.
+## Living world: factions with reputation, jobs (delivery, salvage,
+## transport), insurance and daily world events.
 extends Node
 
 const FACTIONS := {
@@ -9,8 +9,8 @@ const FACTIONS := {
 	"patrol": {"name": "Space Patrol", "station": ""},
 }
 const DELIVERABLE := ["plate", "copper", "circuit", "motor", "cell", "pipe", "glass", "filter", "ration", "fuelcan", "datachip"]
-const INSURANCE_PREMIUM := 120   ## Cr pro Woche
-const INSURANCE_PAYOUT := 400    ## Cr pro Schaden (Hüllenbruch, Feuer)
+const INSURANCE_PREMIUM := 120   ## Cr per week
+const INSURANCE_PAYOUT := 400    ## Cr per damage (hull breach, fire)
 
 var reputation := {}             ## Fraktion -> -100..100
 var offers := {}                 ## Station -> Array[Dictionary]
@@ -39,7 +39,7 @@ func change_rep(f: String, amount: float) -> void:
 		return
 	reputation[f] = clampf(float(reputation.get(f, 0.0)) + amount, -100.0, 100.0)
 
-## Preisfaktor aus Ansehen (gutes Ansehen = bessere Preise) und Weltereignissen
+## Price factor from reputation (good reputation = better prices) and world events
 func price_factor(type: String) -> float:
 	var st := PhysicsSystem.station()
 	var f := 1.0
@@ -50,7 +50,7 @@ func price_factor(type: String) -> float:
 			f *= float(e.factor)
 	return f
 
-# ---------------- Aufträge ----------------
+# ---------------- Jobs ----------------
 
 func offers_here() -> Array:
 	var st := PhysicsSystem.station()
@@ -93,7 +93,7 @@ func accept(o: Dictionary) -> void:
 			t.inv.add("cargo", int(o.qty), 100.0)
 	GameState.toast("Job accepted: " + describe(o))
 
-## Abliefern: Ware muss im Handelsterminal liegen, am Zielort
+## Delivery: the goods must be in the trade terminal, at the destination
 func deliver(o: Dictionary) -> bool:
 	var st := PhysicsSystem.station()
 	var t := EconomySystem.terminal()
@@ -120,34 +120,34 @@ func set_insured(on: bool) -> void:
 	next_premium = GameState.time
 	GameState.toast("Insurance " + ("abgeschlossen" if on else "cancelled") + ".")
 
-## Schaden melden (Hüllenbruch, Feuer)
+## Report damage (hull breach, fire)
 func claim_damage(what: String) -> void:
 	if not insured:
 		return
 	EconomySystem.credits += INSURANCE_PAYOUT
 	EconomySystem.book("Insurance pays: " + what, INSURANCE_PAYOUT)
 
-# ---------------- Täglich ----------------
+# ---------------- Daily ----------------
 
 func step(_dt: float) -> void:
 	var day := int(GameState.time / 1440.0)
 	if day == _day:
 		return
 	_day = day
-	# Abgelaufene Aufträge kosten Ansehen
+	# Expired jobs cost reputation
 	for o in accepted.duplicate():
 		if GameState.time > float(o.deadline):
 			accepted.erase(o)
 			change_rep(o.faction, -10.0)
 			GameState.toast("Job missed. Your reputation suffers.", "bad")
-	# Neue Angebote an allen Stationen
+	# New offers at all stations
 	offers.clear()
-	# Versicherungsprämie
+	# insurance premium
 	if insured and GameState.time >= next_premium:
 		next_premium += 7.0 * 1440.0
 		EconomySystem.credits -= INSURANCE_PREMIUM
 		EconomySystem.book("Insurance premium", -INSURANCE_PREMIUM)
-	# Weltereignisse
+	# World events
 	events = events.filter(func(e): return float(e.until) > GameState.time)
 	if randf() < 0.35:
 		_new_event()

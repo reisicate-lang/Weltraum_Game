@@ -1,21 +1,21 @@
-## Begehbare Stationen. Beim Andocken entsteht rechts neben dem Schiff ein
-## Druckschlauch mit Luft und dahinter die Station: ein langer Gang mit
-## Räumen (Markt, Bar, Auftragsbrett, Heuerbüro, Bergungsamt, Kreditbüro,
-## Werft). In jedem Raum steht jemand hinter dem Tresen. Klick auf die Figur
-## oder den Tresen: Die ausgewählte Figur läuft hin, dann beginnt das Gespräch.
-## Beim Abdocken verschwindet alles wieder, die Schiffswand wird geschlossen.
+## Walkable stations. When docking, the station is built right at a free airlock
+## (door to door, no corridor in between): a long hall with
+## rooms (market, bar, job board, hiring office, salvage office, credit office,
+## shipyard). In every room someone stands behind the counter. Click the character
+## or the counter: the selected character walks there, then the conversation starts.
+## When undocking everything disappears again and the airlock is released.
 extends Node
 
 const ZONE := 3
-## Maße im feinen Raster (wie früher 5 bzw. 9 der doppelt so großen Felder)
-const PITCH := 5 * Config.GRID_SCALE    ## Höhe eines Raums samt Wand
-const ROOM_W := 9 * Config.GRID_SCALE   ## Innenbreite eines Raums
-const CORR := 2 * Config.GRID_SCALE     ## Breite des Gangs
-const WALL_V := 1 + CORR                ## Raumwand mit den Türen
-const RS := 2 + CORR                    ## erste Reihe in den Räumen
+## Sizes in the fine grid (as before 5 and 9 of the twice as large tiles)
+const PITCH := 5 * Config.GRID_SCALE    ## Height of a room including the wall
+const ROOM_W := 9 * Config.GRID_SCALE   ## inner width of a room
+const CORR := 2 * Config.GRID_SCALE     ## Width of the hall
+const WALL_V := 1 + CORR                ## Room wall with the doors
+const RS := 2 + CORR                    ## first row inside the rooms
 const DEFAULT_ROOMS := ["market", "bar", "board", "hiring", "claims", "bank"]
 
-## Raumarten: Tresen-Gerät, Reiter im Handelsfenster, wer dort arbeitet, was sie sagen
+## Room kinds: counter device, tab in the trade window, who works there, what they say
 const ROOMS := {
 	"market": {"name": "Market", "desk": "st_market", "tab": "sell", "role": "Trader",
 		"lines": ["Fresh goods, barely used!", "Plates, copper, rations – all here.", "Show me what's in your pack."]},
@@ -42,16 +42,16 @@ const COLORS := [Color(0.55, 0.7, 0.85), Color(0.85, 0.6, 0.45), Color(0.6, 0.8,
 var station_id := ""
 var rooms: Array[Dictionary] = []   ## {kind, inner: Rect2i, desk: Vector2i, door: Vector2i}
 var npcs: Array[Dictionary] = []    ## {name, kind, room, pos, home, path, wait, line, line_until, color, ref}
-var tiles: Array[int] = []          ## alle Felder der Station
-var _own: Dictionary = {}           ## dieselben Felder zum schnellen Nachschlagen
-var area := Rect2i()                ## Umriss der Station
-var hatch := -1                     ## verbundene Andockschleuse des Schiffs (Feld-Index)
+var tiles: Array[int] = []          ## all tiles of the station
+var _own: Dictionary = {}           ## the same tiles for fast lookup
+var area := Rect2i()                ## outline of the station
+var hatch := -1                     ## connected docking port of the ship (tile index)
 var corridor := Rect2i()
-var pending: Dictionary = {}        ## {crew, npc} – Figur läuft gerade zu einem Gespräch
+var pending: Dictionary = {}        ## {crew, npc} – a character is walking to a conversation
 var _sync := 0.0
 var _rng := RandomNumberGenerator.new()
 
-## Zustand vergessen, ohne das Gitter anzufassen (neues Spiel, neues Gitter)
+## Forget the state without touching the grid (new game, new grid)
 func reset() -> void:
 	tiles.clear()
 	_own.clear()
@@ -68,19 +68,19 @@ func active() -> bool:
 func is_hatch(i: int) -> bool:
 	return i == hatch and hatch >= 0
 
-## Gehört das Feld zur Station (dort darf man nichts bauen)?
+## Does the tile belong to the station (nothing may be built there)?
 func reserved(p: Vector2i) -> bool:
 	return active() and _own.has(ShipSystem.grid.idx(p))
 
-# ---------------- Aufbauen und Abbauen ----------------
+# ---------------- Building and removing ----------------
 
-## Andockpunkte der Station: in welche Richtung ihre Andocktür zeigt.
-## "west" heißt: die Station liegt östlich, das Schiff dockt mit einer Schleuse nach Osten an.
+## Docking points of the station: which way its docking door faces.
+## "west" means: the station lies to the east, the ship docks with an airlock facing east.
 const DOCK_DIRS := {"west": Vector2i(1, 0), "east": Vector2i(-1, 0), "north": Vector2i(0, 1), "south": Vector2i(0, -1)}
 
-## Baut die Station zum Ort id an eine freie Andockschleuse des Schiffs:
-## Andocktür der Station direkt vor der Schleuse (Tür an Tür), keine Gänge dazwischen.
-## Gibt false zurück (mit Meldung), wenn keine Schleuse passt.
+## Builds the station for place id at a free docking port of the ship:
+## the station's docking door right in front of the airlock (door to door), no corridors in between.
+## Returns false (with a message) if no airlock fits.
 func build(id: String) -> bool:
 	clear()
 	if not Config.ENABLE_STATION:
@@ -89,8 +89,8 @@ func build(id: String) -> bool:
 	if l.is_empty() or String(l.get("kind", "")) != "station":
 		return false
 	var g := ShipSystem.grid
-	# Jeder freie Port (Außentür einer Luftschleuse) passt, in jeder Richtung; der beim
-	# Klammern ausgerichtete zuerst (ShipSystem.dock_pref)
+	# Every free port (outer door of an airlock) fits, in any direction; the one
+	# aligned when clamping comes first (ShipSystem.dock_pref)
 	var ports: Array = ShipSystem.free_ports()
 	if ShipSystem.ports().is_empty():
 		GameState.toast("No docking port: ships dock at the outer door of an airlock.", "bad")
@@ -107,17 +107,17 @@ func build(id: String) -> bool:
 	GameState.toast("No free docking port fits %s (space or direction). Trade only through the terminal." % l.name, "bad")
 	return false
 
-## Station im eigenen Raster: u entlang des Gangs, v weg vom Schiff.
-## v=0 Außenwand mit Andocktür, v=1..CORR Gang, v=WALL_V Raumwand mit Türen, dann die Räume, dann die Rückwand.
+## Station in its own grid: u along the hall, v away from the ship.
+## v=0 outer wall with the docking door, v=1..CORR hall, v=WALL_V room wall with doors, then the rooms, then the back wall.
 const DEPTH := RS + ROOM_W + 1
 
-## Lage im Schiffsraster: Andocktür D liegt direkt vor der Schleuse
+## Position in the ship grid: docking door D lies right in front of the airlock
 func _map(port: Dictionary, ud: int, u: int, v: int) -> Vector2i:
 	var d: Vector2i = port.dir
 	var along := Vector2i(-d.y, d.x)
 	return port.pos + d + along * (u - ud) + d * v
 
-## Passende Stelle für die Andocktür entlang des Gangs (möglichst mittig), -1 = passt nicht
+## Suitable spot for the docking door along the hall (as central as possible), -1 = does not fit
 func _fit(g: ShipGrid, port: Dictionary, length: int) -> int:
 	var order: Array = range(1, length - 1)
 	order.sort_custom(func(a, b): return absi(a - length / 2) < absi(b - length / 2))
@@ -161,7 +161,7 @@ func _build_at(g: ShipGrid, id: String, port: Dictionary, ud: int, kinds: Array)
 		rooms.append({"kind": kinds[k], "inner": _rect(port, ud, r + 1, RS, r + PITCH - 1, RS + ROOM_W - 1), "desk": desk, "door": door,
 			"behind": _rect(port, ud, r + 1, RS + ROOM_W - 2 * K, r + PITCH - 1, RS + ROOM_W - 1),
 			"front": _rect(port, ud, r + 1, RS, r + PITCH - 1, RS + ROOM_W - 4 * K)})
-	# Andocktür der Station direkt vor der Schleuse
+	# the station's docking door right in front of the airlock
 	_put(g, _map(port, ud, ud, 0), ShipGrid.Tile.DOOR)
 	corridor = _rect(port, ud, 1, 1, length - 2, CORR)
 	area = _rect(port, ud, 0, 0, length - 1, DEPTH - 1)
@@ -182,7 +182,7 @@ func _put(g: ShipGrid, p: Vector2i, t: int) -> void:
 		tiles.append(i)
 		_own[i] = true
 
-## Station entfernen und die Schleuse lösen
+## Remove the station and release the airlock
 func clear() -> void:
 	var g := ShipSystem.grid
 	if g != null:
@@ -197,7 +197,7 @@ func clear() -> void:
 			g.temp[i] = Config.SPACE_TEMP
 			g.fire[i] = 0
 			g.zone[i] = 0
-		# Reste aus einem Spielstand (Liste nicht gespeichert)
+		# Leftovers from a save (list not saved)
 		for i in g.tiles.size():
 			if g.zone[i] == ZONE:
 				g.devices.erase(i)
@@ -205,10 +205,10 @@ func clear() -> void:
 				g.tiles[i] = ShipGrid.Tile.SPACE
 				g.o2[i] = 0.0; g.n2[i] = 0.0; g.co2[i] = 0.0
 				g.zone[i] = 0
-		# Nur die Verbindung lösen: die Schleuse bleibt, es bleiben keine Felder zurück
+		# Only release the connection: the airlock stays, no tiles remain
 		g.linked.erase(hatch)
-		# Alter Spielstand: frühere Luke (Tür ohne Schleuse) wieder zur Wand machen –
-		# aber nie die Außentür einer Luftschleuse (das ist der Andockport)
+		# Old save: turn the former hatch (door without an airlock) back into a wall –
+		# but never the outer door of an airlock (that is the docking port)
 		if hatch >= 0 and hatch < g.tiles.size() and g.tiles[hatch] == ShipGrid.Tile.DOOR and not g.devices.has(hatch) and not AirlockSystem.is_lock_door(hatch):
 			g.tiles[hatch] = ShipGrid.Tile.WALL
 		EventBus.ship_changed.emit()
@@ -221,7 +221,7 @@ func clear() -> void:
 	station_id = ""
 	area = Rect2i()
 
-## Ist niemand von der Crew mehr auf der Station?
+## Is nobody from the crew left on the station?
 func clearable() -> bool:
 	if not active():
 		return true
@@ -278,7 +278,7 @@ func _random_spot(home: Rect2i) -> Vector2i:
 			return p
 	return home.position
 
-## Bewerber stehen leibhaftig im Heuerbüro
+## Applicants stand in person in the hiring office
 func _sync_candidates() -> void:
 	var hiring := {}
 	for r in rooms:
@@ -296,7 +296,7 @@ func step(dt: float) -> void:
 	if not Config.ENABLE_STATION or not active():
 		return
 	var g := ShipSystem.grid
-	# Die Station hält ihre Luft selbst
+	# The station keeps its own air
 	for i in tiles:
 		if g.holds_air(i):
 			g.fill_air(i)
@@ -307,7 +307,7 @@ func step(dt: float) -> void:
 	var secs := dt * 60.0
 	for n in npcs:
 		_move_npc(n, secs)
-	# Wartet jemand auf ein Gespräch?
+	# Is anyone waiting for a conversation?
 	if not pending.is_empty():
 		var c: CrewMember = pending.crew
 		var npc: Dictionary = pending.npc
@@ -354,7 +354,7 @@ func npc_at(world: Vector2) -> Dictionary:
 			return n
 	return {}
 
-## Wer steht hinter diesem Tresen?
+## Who stands behind this counter?
 func npc_for_desk(p: Vector2i) -> Dictionary:
 	for r in rooms:
 		if r.desk == p:
@@ -363,9 +363,9 @@ func npc_for_desk(p: Vector2i) -> Dictionary:
 					return n
 	return {}
 
-# ---------------- Gespräche ----------------
+# ---------------- Conversations ----------------
 
-## Klick auf eine Figur oder einen Tresen der Station. true = erledigt.
+## Click on a character or a counter of the station. true = handled.
 func click(t: Vector2i, world: Vector2) -> bool:
 	if not Config.ENABLE_STATION or not active():
 		return false
@@ -380,7 +380,7 @@ func click(t: Vector2i, world: Vector2) -> bool:
 	approach(c, npc)
 	return true
 
-## Figur zum Gesprächspartner schicken (oder gleich reden, wenn sie nah genug ist)
+## Send the character to the conversation partner (or talk right away if close enough)
 func approach(c: CrewMember, npc: Dictionary) -> void:
 	if c.pos.distance_to(npc.pos) <= 2.3 * Config.GRID_SCALE:
 		talk(npc, c)
@@ -397,7 +397,7 @@ func approach(c: CrewMember, npc: Dictionary) -> void:
 	pending = {"crew": c, "npc": npc, "target": target}
 	GameState.toast(c.display_name + " walks to " + String(npc.name) + ".")
 
-## Gespräch beginnen: passendes Fenster öffnen, Figur grüßt
+## Start a conversation: open the matching window, the character greets
 func talk(npc: Dictionary, c: CrewMember) -> void:
 	GameState.selected = c
 	var tab := "station"
@@ -436,13 +436,13 @@ func _greeting(kind: String, c: CrewMember) -> String:
 	var lines: Array = ROOMS[kind].lines
 	return String(lines[_rng.randi() % lines.size()])
 
-# ---------------- Speichern ----------------
+# ---------------- Saving ----------------
 
 func to_data() -> Dictionary:
 	var g := ShipSystem.grid
 	return {"id": station_id, "hatch": hatch, "hatch_pos": [g.pos(hatch).x, g.pos(hatch).y] if hatch >= 0 else []}
 
-## Nach dem Laden: alte Stationsfelder weg, Station frisch aufbauen
+## After loading: remove old station tiles, build the station afresh
 func from_data(d: Dictionary) -> void:
 	tiles.clear()
 	hatch = int(d.get("hatch", -1))
@@ -450,7 +450,7 @@ func from_data(d: Dictionary) -> void:
 	station_id = "x"
 	clear()
 	if PhysicsSystem.docked != "":
-		# Wieder an derselben Tür aufbauen (auch an einer früheren Andockschleuse; die wird
-		# erst nach dem regulären Abdocken entfernt)
+		# Rebuild at the same door (also at a former docking port; that one is
+		# only removed after a regular undock)
 		ShipSystem.dock_pref = old_hatch
 		build(PhysicsSystem.docked)

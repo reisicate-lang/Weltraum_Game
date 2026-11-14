@@ -1,14 +1,14 @@
-## Ein Inventar: Liste von Stapeln {type, qty, cond} – abgebaute Objekte
-## haben zusätzlich "data" (ihr gespeicherter Zustand) und werden nie zusammengelegt.
-## Wird für Gepäck, Kisten und Haufen auf dem Boden benutzt.
+## An inventory: a list of stacks {type, qty, cond} – uninstalled objects
+## also have "data" (their stored state) and are never merged.
+## Used for packs, crates and piles on the floor.
 ##
-## Gewicht: Jede Gegenstandssorte hat ein festes Einzelgewicht (ItemData.weight, kg).
-## Ein Stapel wiegt Stückzahl × Einzelgewicht; ein abgebautes Gerät mit erhaltenem
-## Inhalt ("data.items") wiegt zusätzlich genau einmal seinen Inhalt.
+## Weight: every kind of item has a fixed unit weight (ItemData.weight, kg).
+## A stack weighs quantity × unit weight; an uninstalled device with kept
+## contents ("data.items") additionally weighs its contents exactly once.
 ##
-## Hände: Das Gepäck einer Figur (hands = true) nimmt außerdem genau EIN abgebautes
-## Gerät oder Bauteil (Sorte "pk_…") in die Hände – unabhängig vom Gewichtslimit.
-## Der Gegenstand liegt mit in items; Limit und freier Platz rechnen ihn nicht mit.
+## Hands: a character's pack (hands = true) also takes exactly ONE uninstalled
+## device or part (kind "pk_…") into the hands – independent of the weight limit.
+## The item is kept in items; the limit and free space do not count it.
 class_name Inventory
 extends RefCounted
 
@@ -16,18 +16,18 @@ var items: Array[Dictionary] = []
 var max_weight: float = INF
 var max_volume: float = INF
 var hands := false
-## Modulfach eines Steuerpults: nimmt nur Steuerpultmodule (ItemData.helm_module)
+## Module bay of a navigation console: only takes console modules (ItemData.helm_module)
 var only_modules := false
 
 func _init(w: float = INF, v: float = INF) -> void:
 	max_weight = w
 	max_volume = v
 
-## Abgebautes Gerät oder Bauteil: schwer, wird in den Händen getragen
+## Uninstalled device or part: heavy, carried in the hands
 static func is_heavy(type: String) -> bool:
 	return type.begins_with("pk_")
 
-## Gewicht eines Stapels in kg (mit erhaltenem Inhalt, genau einmal)
+## Weight of a stack in kg (with kept contents, exactly once)
 static func stack_weight(it: Dictionary) -> float:
 	var w: float = ItemSystem.item(it.type).weight * int(it.qty)
 	var d = it.get("data")
@@ -47,7 +47,7 @@ static func stack_volume(it: Dictionary) -> float:
 func _in_hand(it: Dictionary) -> bool:
 	return hands and is_heavy(String(it.type))
 
-## Gesamtgewicht in kg (alles, auch was in den Händen liegt) – Grundlage der Schiffsmasse
+## Total weight in kg (everything, also what is in the hands) – basis of the ship mass
 func weight() -> float:
 	var s := 0.0
 	for it in items:
@@ -60,7 +60,7 @@ func volume() -> float:
 		s += stack_volume(it)
 	return s
 
-## Gewicht, das gegen das Tragelimit zählt (ohne das Stück in den Händen)
+## Weight that counts against the carry limit (without the piece in the hands)
 func load_weight() -> float:
 	var s := 0.0
 	for it in items:
@@ -75,7 +75,7 @@ func load_volume() -> float:
 			s += stack_volume(it)
 	return s
 
-## Was die Figur gerade in den Händen trägt ({} = nichts)
+## What the character is carrying in the hands right now ({} = nothing)
 func in_hands() -> Dictionary:
 	for it in items:
 		if _in_hand(it):
@@ -89,7 +89,7 @@ func count(type: String) -> int:
 			s += it.qty
 	return s
 
-## Wie viele Stück passen noch hinein?
+## How many pieces still fit?
 func room(type: String) -> int:
 	if hands and is_heavy(type):
 		return 1 if in_hands().is_empty() else 0
@@ -99,18 +99,18 @@ func room(type: String) -> int:
 	var w := (max_weight - load_weight()) / d.weight
 	var v := (max_volume - load_volume()) / d.volume
 	var r := minf(w, v)
-	# Ohne Grenze (Haufen auf dem Boden): int(INF) wäre in Godot negativ
+	# Without a limit (pile on the floor): int(INF) would be negative in Godot
 	if is_inf(r) or r > 1000000.0:
 		return 1000000
 	return maxi(0, int(floor(r + 0.000001)))
 
-## Legt einen Stapel hinein. Gibt zurück, wie viel hineingepasst hat.
+## Puts a stack in. Returns how much fitted.
 func add(type: String, qty: int, cond: float = 100.0, data = null) -> int:
 	var n := mini(qty, room(type))
 	if n <= 0:
 		return 0
-	# Einzelstücke mit eigenen Daten (abgebaute Geräte): je Stück ein Stapel.
-	# Ihr erhaltener Inhalt muss mit hineinpassen (außer in den Händen).
+	# Single pieces with their own data (uninstalled devices): one stack per piece.
+	# Their kept contents must fit in as well (except in the hands).
 	if data != null:
 		var st := {"type": type, "qty": 1, "cond": cond, "data": data.duplicate(true)}
 		if not _in_hand(st) and (load_weight() + stack_weight(st) > max_weight + 0.000001 or load_volume() + stack_volume(st) > max_volume + 0.000001):
@@ -127,7 +127,7 @@ func add(type: String, qty: int, cond: float = 100.0, data = null) -> int:
 	items.append({"type": type, "qty": n, "cond": cond})
 	return n
 
-## Nimmt bis zu qty Stück heraus (bester Zustand zuerst). Gibt die Stapel zurück.
+## Takes out up to qty pieces (best condition first). Returns the stacks.
 func take(type: String, qty: int) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var stacks := items.filter(func(it): return it.type == type)
@@ -145,7 +145,7 @@ func take(type: String, qty: int) -> Array[Dictionary]:
 	items.assign(items.filter(func(it): return it.qty > 0))
 	return out
 
-## Verschiebt Gegenstände in ein anderes Inventar
+## Moves items into another inventory
 func move_to(other: Inventory, type: String, qty: int) -> int:
 	var n := mini(mini(qty, count(type)), other.room(type))
 	if n <= 0:
@@ -154,7 +154,7 @@ func move_to(other: Inventory, type: String, qty: int) -> int:
 	for st in take(type, n):
 		var got := other.add(st.type, st.qty, st.cond, st.get("data"))
 		moved += got
-		# Passt nicht (z. B. Inhalt zu schwer): zurücklegen, nichts geht verloren
+		# Does not fit (e.g. contents too heavy): put it back, nothing is lost
 		if got < int(st.qty):
 			var back := st.duplicate(true)
 			back.qty = int(st.qty) - got
@@ -170,7 +170,7 @@ func from_data(data: Array) -> void:
 		var st := {"type": String(it.type), "qty": int(it.qty), "cond": float(it.cond)}
 		if it.has("data") and it.data != null:
 			st.data = it.data
-		# Früher: abgebautes eigenständiges Auto-Dock-Gerät → heute das Autodock-Modul
+		# Formerly: uninstalled stand-alone auto-dock device → today the Autodock Module
 		if st.type == "pk_autodock":
 			st = {"type": "mod_autodock", "qty": int(it.qty), "cond": float(it.cond)}
 		items.append(st)

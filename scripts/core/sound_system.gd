@@ -1,5 +1,5 @@
-## Einfache Geräusche, im Code erzeugt (keine Sounddateien nötig):
-## Alarm bei Gefahr, leises Signal bei Meldungen, Klicken beim Bauen.
+## Simple sounds generated in code (no sound files needed):
+## alarm on danger, a soft chime for messages, clicks while building.
 extends Node
 
 var _players: Array[AudioStreamPlayer] = []
@@ -21,7 +21,7 @@ func _ready() -> void:
 			_last_click = Time.get_ticks_msec()
 			play("click"))
 
-## Erzeugt einen kurzen Klang aus mehreren Tönen (16-Bit, Mono)
+## Creates a short sound from several tones (16-bit, mono)
 func _tone(freqs: Array, length: float, volume: float) -> AudioStreamWAV:
 	var rate := 22050
 	var data := PackedByteArray()

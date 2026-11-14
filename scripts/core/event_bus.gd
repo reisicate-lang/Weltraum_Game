@@ -1,16 +1,16 @@
-## Zentrale Signale: Systeme reden über den EventBus miteinander,
-## statt sich direkt gegenseitig aufzurufen.
+## Central signals: systems talk to each other through the EventBus
+## instead of calling each other directly.
 extends Node
 
-## Das Schiffsraster hat sich verändert (gebaut, abgerissen, Gerät gesetzt)
+## The ship grid has changed (built, demolished, device placed)
 signal ship_changed
-## Ein neues Spiel wurde gestartet oder ein Spielstand geladen
+## A new game was started or a save was loaded
 signal game_loaded
-## Meldung für den Spieler (kind: "" oder "bad")
+## Message for the player (kind: "" or "bad")
 signal toast(text: String, kind: String)
-## Werkzeug im Baumenü gewechselt
+## Tool changed in the build menu
 signal tool_changed(tool: String)
-## Geschwindigkeit geändert
+## Speed changed
 signal speed_changed(index: int)
-## Ein Charakter wurde ausgewählt
+## A character was selected
 signal character_selected(character)

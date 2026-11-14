@@ -1,6 +1,6 @@
-## Geld, Markt und Schulden. Handel läuft über das Handelsterminal.
-## Preise schwanken täglich und fallen, wenn du viel einer Sorte verkaufst.
-## Alle 7 Tage ist eine Kreditrate fällig; nach 3 verpassten Raten Pfändung.
+## Money, market and debt. Trading runs through the trade terminal.
+## Prices fluctuate daily and fall when you sell a lot of one kind.
+## A loan instalment is due every 7 days; repossession after 3 missed instalments.
 extends Node
 
 signal game_over(title: String, text: String)
@@ -9,13 +9,13 @@ var credits := 0
 var debt := 0
 var next_payment := 0.0
 var strikes := 0
-var prices := {}   ## Preisfaktor pro Sorte
-var supply := {}   ## zuletzt verkaufte Menge (drückt den Preis)
+var prices := {}   ## price factor per kind
+var supply := {}   ## recently sold amount (pushes the price down)
 var next_day := 1440.0
 var log_entries: Array[Dictionary] = []
 var over := false
 var recipes: Array = []
-## Faktor auf die Kreditrate (Verhandlung mit dem Bankier)
+## factor on the loan instalment (negotiation with the banker)
 var payment_factor := 1.0
 
 func _ready() -> void:
@@ -47,7 +47,7 @@ func terminal() -> Device:
 			return dev
 	return null
 
-## Handel geht nur angedockt an einer Station
+## Trading only while docked at a station
 func terminal_online() -> bool:
 	var t := terminal()
 	return t != null and t.powered and not t.broken and not PhysicsSystem.station().is_empty()
@@ -58,7 +58,7 @@ func market_price(type: String) -> float:
 	var glut: float = 1.0 / (1.0 + float(supply.get(type, 0.0)) / 20.0)
 	var st := PhysicsSystem.station()
 	var local: float = st.get("market", 1.0)
-	# Schwarzmarkt: Datenchips bringen dort das Doppelte
+	# Black market: data chips are worth double there
 	if st.get("black", false) and type == "datachip":
 		local *= 2.0
 	local *= float(st.get("buys", {}).get(type, 1.0))
@@ -66,7 +66,7 @@ func market_price(type: String) -> float:
 		local *= 2.5
 	return ItemSystem.item(type).value * prices.get(type, 1.0) * glut * local * QuestSystem.price_factor(type)
 
-## Wer handelt? Die ausgewählte Figur (sonst die Spielerfigur)
+## Who is trading? The selected character (otherwise the player character)
 func trader() -> CrewMember:
 	return GameState.selected if GameState.selected != null else CrewSystem.player()
 
@@ -80,7 +80,7 @@ func sell_price(it: Dictionary) -> int:
 		bonus += SkillSystem.effect(trader(), "black_bonus")
 	return int(market_price(it.type) * Config.SELL_FACTOR * (0.2 + 0.8 * it.cond / 100.0) * it.qty * (1.0 + bonus) * negotiated_factor(true))
 
-## Ausgehandelte bessere Preise (Überzeugen) gelten bis zum Ende des Tages
+## Negotiated better prices (Persuasion) last until the end of the day
 var deal_until := 0.0
 var deal_bonus := 0.0
 func negotiated_factor(selling: bool) -> float:
@@ -94,12 +94,12 @@ func inv_value(inv: Inventory) -> int:
 		s += item_value(it)
 	return s
 
-## Gegenstandswert eines Stapels aus den Spieldaten (Grundwert × Menge, nach Zustand).
-## Unabhängig von Markt und Fähigkeiten; das Handelsangebot kann davon abweichen.
+## Item value of a stack from the game data (base value × quantity, by condition).
+## Independent of market and skills; the trade offer can differ from it.
 func item_value(it: Dictionary) -> int:
 	return int(ItemSystem.item(it.type).value * int(it.get("qty", 1)) * (0.25 + 0.75 * float(it.get("cond", 100.0)) / 100.0))
 
-## „Item Value: …“ für Figuren mit Business Admin, sonst leer (bisherige Anzeige bleibt)
+## "Item Value: …" for characters with Business Admin, otherwise empty (the old display stays)
 func value_text(viewer: CrewMember, it: Dictionary) -> String:
 	if not SkillSystem.acquired(viewer, SkillSystem.BUSINESS):
 		return ""
@@ -111,7 +111,7 @@ func value_text(viewer: CrewMember, it: Dictionary) -> String:
 
 # ---------------- Handel ----------------
 
-## Verkaufen aus dem Terminal oder (am Markttresen der Station) aus einem Gepäck
+## Sell from the terminal or (at the station's market counter) from a pack
 func sell(type: String, qty: int, from: Inventory = null) -> void:
 	var t := terminal()
 	if from == null and (t == null or not terminal_online()):
@@ -123,7 +123,7 @@ func sell(type: String, qty: int, from: Inventory = null) -> void:
 	var src: Inventory = t.inv if from == null else from
 	var total := 0
 	var sold := 0
-	# Schmuggelware: Kontrolle möglich
+	# Contraband: inspection possible
 	if ItemSystem.item(type).contraband and not DialogueSystem.smuggle_check(trader()):
 		var n := src.count(type)
 		src.take(type, n)
@@ -156,7 +156,7 @@ func sell_all() -> void:
 	for type in types:
 		sell(type, 9999)
 
-## Fertige Geräte, die jeder Stationsmarkt verkauft (Ostranauts: Ersatz-Transponder beim Ship Broker)
+## Finished devices every station market sells (Ostranauts: replacement transponder at the Ship Broker)
 const SHOP_PACKED := ["pk_transponder"]
 
 func buy(type: String, qty: int) -> void:
@@ -199,7 +199,7 @@ func buy_claim() -> void:
 	credits -= fee
 	DialogueSystem.claim_discount = false
 	book("Salvage claim for a new wreck", -fee)
-	# Das Wrack ist ein eigenes Ziel neben der Station: anfliegen und ankoppeln
+	# The wreck is its own target next to the station: fly there and couple
 	var site := FleetSystem.add_site(PhysicsSystem.docked if PhysicsSystem.docked != "" else "tycho")
 	GameState.toast("Salvage claim bought: %s is now drifting next to the station (navigation → targets)." % String(site.name))
 
@@ -214,7 +214,7 @@ func scrap_hull() -> void:
 	book("Wreck scrapped", v)
 	SalvageSystem.clear()
 
-## Werkbank-Auftrag anlegen
+## Create a workbench job
 func craft(recipe_id: String) -> void:
 	var g := ShipSystem.grid
 	var bench: Device = null
@@ -243,7 +243,7 @@ func recipe(id: String) -> Dictionary:
 func step(_dt: float) -> void:
 	if over:
 		return
-	# Schulden pausiert: die Frist bis zur nächsten Rate bleibt stehen
+	# Debt paused: the time until the next instalment stands still
 	if Settings.debt_paused and debt > 0:
 		next_payment += _dt
 	while GameState.time >= next_day:

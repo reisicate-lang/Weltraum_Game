@@ -1,25 +1,25 @@
-## Beschreibt eine Gegenstandssorte (Daten, keine Logik).
-## Neue Gegenstände: einfach eine neue .tres-Datei in res://resources/items/ anlegen.
+## Describes a kind of item (data, no logic).
+## New items: just create a new .tres file in res://resources/items/.
 class_name ItemData
 extends Resource
 
 @export var id: String = ""
 @export var display_name: String = ""
-## Gewicht pro Stück in kg
+## Weight per piece in kg
 @export var weight: float = 1.0
-## Volumen pro Stück in Litern
+## Volume per piece in liters
 @export var volume: float = 1.0
 ## Neupreis in Credits
 @export var value: int = 1
 @export_multiline var description: String = ""
-## Lehrbuch: welche Fähigkeit und bis zu welchem Fortschritt (Stufe 1: 40 %, 2: 75 %, 3: 100 %)
+## Textbook: which skill and up to which progress (level 1: 40 %, 2: 75 %, 3: 100 %)
 @export var teaches: String = ""
 @export var book_level: int = 0
-## Waffe: "armed" (Nahkampf) oder "ranged" (Fernkampf)
+## Weapon: "armed" (melee) or "ranged" (ranged)
 @export var weapon: String = ""
-## Schmuggelware (am Schwarzmarkt viel wert, kann bei Kontrollen beschlagnahmt werden)
+## Contraband (worth a lot on the black market, can be seized during inspections)
 @export var contraband: bool = false
-## Steuerpultmodul: welche Funktion es im Modulfach eines Steuerpults freischaltet (z. B. "autodock")
+## Console module: which function it unlocks in the module bay of a navigation console (e.g. "autodock")
 @export var helm_module: String = ""
-## Welches Gerät damit aufgefüllt wird und um wie viel, z. B. {"generator": 40}
+## Which device it refills and by how much, e.g. {"generator": 40}
 @export var refill: Dictionary = {}

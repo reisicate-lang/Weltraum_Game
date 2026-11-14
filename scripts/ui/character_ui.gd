@@ -1,5 +1,5 @@
-## Charaktermenü, Lebenslauf-Bildschirm und Begegnungs-Fenster.
-## Nutzt die Bausteine des UIManager (_panel, _label, _button, _row).
+## Character menu, life story screen and encounter window.
+## Uses the UIManager building blocks (_panel, _label, _button, _row).
 extends Node
 
 var ui  ## UIManager
@@ -27,7 +27,7 @@ func setup(manager) -> void:
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(box)
 	creation = _big_panel()
-	# Liste scrollt, die Knöpfe darunter bleiben immer sichtbar
+	# The list scrolls, the buttons below always stay visible
 	var outer := VBoxContainer.new()
 	creation.add_child(outer)
 	creation_scroll = ScrollContainer.new()
@@ -56,7 +56,7 @@ func _big_panel() -> PanelContainer:
 	ui.layer.add_child(p)
 	return p
 
-## Fensterhöhen an den Bildschirm anpassen (kleine Bildschirme, Laptops)
+## Fit the window heights to the screen (small screens, laptops)
 func _fit() -> void:
 	var h: float = ui.get_viewport().get_visible_rect().size.y
 	if creation_scroll != null:
@@ -75,7 +75,7 @@ func _clear(b: Container) -> void:
 func _sel() -> CrewMember:
 	return GameState.selected if GameState.selected != null else CrewSystem.player()
 
-# ---------------- Charaktermenü ----------------
+# ---------------- Character menu ----------------
 
 func toggle() -> void:
 	panel.visible = not panel.visible
@@ -127,7 +127,7 @@ func refresh() -> void:
 		"work": _work(c)
 
 func _stress_text(c: CrewMember) -> String:
-	# Genaue Werte nur, wenn jemand an Bord sich mit Psychologie auskennt
+	# Exact values only if someone aboard knows Psychology
 	if SkillSystem.best_effect("stress_insight") > 0.2 or c.is_player:
 		return "%d %%" % int(c.stress)
 	return "looks relaxed" if c.stress < 40.0 else ("looks tense" if c.stress < 75.0 else "looks worn out")
@@ -266,11 +266,11 @@ func _work(c: CrewMember) -> void:
 			_last = ""
 			refresh()))
 
-# ---------------- Lebenslauf zu Spielbeginn ----------------
+# ---------------- Life story at the start of the game ----------------
 
 func open_creation() -> void:
 	creation.visible = true
-	# Die Steuerungshilfe kommt erst nach dem Lebenslauf (sonst liegt sie verdeckt darunter)
+	# The controls help only comes after the life story (otherwise it lies hidden underneath)
 	ui.close_help()
 	TimeSystem.set_speed(0)
 	refresh_creation()
@@ -302,7 +302,7 @@ func refresh_creation() -> void:
 	creation_box.add_child(_wrap("Best skills: " + ", ".join(sk)))
 	for line in c.history:
 		creation_box.add_child(ui._label(line, ui.COL_MUTED, 11))
-	# Lebensereignis (Seek Adventure, 1 Jahr): offenes Ereignis mit Antworten, sonst Knopf
+	# Life encounter (Seek Adventure, 1 year): open encounter with answers, otherwise a button
 	var pend := CharacterSystem.pending_encounter(c)
 	if pend != "":
 		var ev: Dictionary = CharacterSystem.encounter(pend)
@@ -338,7 +338,7 @@ func refresh_creation() -> void:
 		sav.disabled = why_adv != ""
 		sav.tooltip_text = why_adv if why_adv != "" else "Work and save for a year: about %d–%d Cr start money. Reliable, but little." % [CharacterSystem.SAVE_MONEY_MIN, CharacterSystem.SAVE_MONEY_MAX]
 		creation_box.add_child(sav)
-	# Seek Ship (Ostranauts 2.4): Angebot kaufen oder ablehnen, Kauf beendet die Erstellung
+	# Seek Ship (Ostranauts 2.4): buy or decline the offer, buying ends creation
 	var bought := CharacterSystem.ship_bought(c)
 	var offer := CharacterSystem.ship_offer(c)
 	if bought != "":
@@ -380,7 +380,7 @@ func refresh_creation() -> void:
 			refresh_creation())
 		kb.disabled = pend != ""
 		creation_box.add_child(ui._row("%s (%d years): %s" % [k.name, int(k.years), ", ".join(gains)], [kb]))
-	# Kurse: zählen erst beim Bestätigen (Los geht's), bis dahin nur im Vorschaualter
+	# Courses: only count when confirming ("Let's go"), until then only in the preview age
 	const COURSE_TEXT := {"business": "exact Item Value when trading", "civil": "+4 work value on appliances, controls, furniture, climate & ventilation, miscellaneous",
 		"combat_eng": "+4 work value on appliances, controls, furniture, climate & ventilation, sensors, weapons",
 		"construction": "faster building, sometimes saves material",
@@ -395,7 +395,7 @@ func refresh_creation() -> void:
 		"zerog": "skill check flag, no numeric modifier"}
 	for id in CharacterSystem.course_ids():
 		if SkillSystem.skill(id).is_hobby:
-			continue   # Hobbies: eigene Leiste unten
+			continue   # Hobbies: their own row below
 		var course := CharacterSystem.course_drafted(c, id)
 		var years := CharacterSystem.course_years(id)
 		if not course and (CharacterSystem.preview_age(c) + years > CharacterSystem.max_age or SkillSystem.acquired(c, id)):
@@ -407,7 +407,7 @@ func refresh_creation() -> void:
 		crow.set_meta("course", id)
 		crow.tooltip_text = SkillSystem.skill_tooltip(c, id)
 		creation_box.add_child(crow)
-	# Hobbies (Ostranauts 2.2.2): kompakte Leiste, gleiche Kurs-Logik (Jahre im Vorschaualter)
+	# Hobbies (Ostranauts 2.2.2): compact row, same course logic (years in the preview age)
 	creation_box.add_child(ui._label("HOBBIES (skills, cost years)", ui.COL_MUTED, 11))
 	var hflow := HFlowContainer.new()
 	for hv in CharacterSystem.course_ids():
@@ -426,7 +426,7 @@ func refresh_creation() -> void:
 		hb.tooltip_text = SkillSystem.skill_tooltip(c, hid)
 		hflow.add_child(hb)
 	creation_box.add_child(hflow)
-	# Traits anpassen (Ostranauts „Tweak Skills & Traits“): positive kosten Jahre, negative geben Jahre zurück
+	# Tweaking traits (Ostranauts "Tweak Skills & Traits"): positive ones cost years, negative ones give years back
 	var bal := CharacterSystem.draft_balance(c)
 	creation_box.add_child(ui._label("TRAITS · draft balance %+d %s%s" % [bal, "year" if absi(bal) == 1 else "years", " – must not be negative" if bal < 0 else ""],
 		Color(0.9, 0.33, 0.29) if bal < 0 else ui.COL_MUTED, 11))
@@ -484,7 +484,7 @@ func refresh_creation() -> void:
 	go.disabled = CharacterSystem.preview_age(c) < 18 or CharacterSystem.draft_balance(c) < 0 or CharacterSystem.pending_encounter(c) != "" or CharacterSystem.ship_offer(c) != ""
 	bottom.add_child(go)
 
-# ---------------- Begegnung mit Plünderern ----------------
+# ---------------- Encounter with plunderers ----------------
 
 func show_encounter(result: String = "") -> void:
 	encounter_panel.visible = true

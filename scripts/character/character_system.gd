@@ -1,6 +1,6 @@
-## Charaktererstellung mit Lebenslauf. Man beginnt mit 18 Jahren (Ostranauts-Startprofil) und
-## wählt Lebensstationen (Lehre, Militär, Straße ...), Kurse, Traits und Lebensereignisse
-## („Seek Adventure“, Ostranauts 2.1). Daten: res://data/careers.json, res://data/encounters.json
+## Character creation with a life story. You start at 18 (Ostranauts starting profile) and
+## choose life steps (apprenticeship, military, street ...), courses, traits and life encounters
+## ("Seek Adventure", Ostranauts 2.1). Data: res://data/careers.json, res://data/encounters.json
 extends Node
 
 var careers: Array = []
@@ -23,14 +23,14 @@ func _ready() -> void:
 	enc_cfg = JSON.parse_string(ef.get_as_text())
 	encounters = enc_cfg.encounters
 
-# ---------------- Kurse (Entwurf bis zur Bestätigung) ----------------
-# Jede Fähigkeit mit course_years > 0 (z. B. Business Admin 2, Civil Engineering 3) ist im
-# Lebenslauf als Kurs wählbar. Auswahl und Entfernen ändern nur das Vorschaualter;
-# erst confirm() übernimmt Alter und Fähigkeit, genau einmal.
+# ---------------- Courses (draft until confirmed) ----------------
+# Every skill with course_years > 0 (e.g. Business Admin 2, Civil Engineering 3) can be chosen
+# as a course in the life story. Adding and removing only changes the preview age;
+# only confirm() applies age and skill, exactly once.
 
-const COURSE_YEARS := 2   ## Business Admin (ältere Aufrufer)
+const COURSE_YEARS := 2   ## Business Admin (older callers)
 
-## Fähigkeiten, die als Kurs wählbar sind (sortiert nach ID)
+## Skills that can be chosen as a course (sorted by ID)
 func course_ids() -> Array:
 	var out: Array = []
 	for id in SkillSystem.skills:
@@ -49,7 +49,7 @@ func _drafts(c: CrewMember) -> Array:
 func course_drafted(c: CrewMember, id: String = SkillSystem.BUSINESS) -> bool:
 	return id in _drafts(c)
 
-## Kurs in den Entwurf aufnehmen oder entfernen. Ändert nur das Vorschaualter.
+## Add a course to the draft or remove it. Only changes the preview age.
 func set_course(c: CrewMember, on: bool, id: String = SkillSystem.BUSINESS) -> bool:
 	if creation_ended(c):
 		return false
@@ -65,17 +65,17 @@ func set_course(c: CrewMember, on: bool, id: String = SkillSystem.BUSINESS) -> b
 	c.set_meta("draft_courses", drafts)
 	return true
 
-## Alter mit allem, was im Entwurf gewählt ist (Kurse und Traits)
+## Age with everything chosen in the draft (courses and traits)
 func preview_age(c: CrewMember) -> int:
 	var age := c.age
 	for id in _drafts(c):
 		age += course_years(id)
 	return age + trait_delta(c)
 
-# ---------------- Traits anpassen (Entwurf, Ostranauts „Tweak Skills & Traits“) ----------------
-# Positiver Trait: kostet Jahre; negativer: gibt Jahre zurück. Entfernen kehrt die Buchung um
-# (einen negativen Trait loswerden kostet seine Jahre). Das Gegenstück muss erst weg.
-# Die Bilanz des Entwurfs darf beim Bestätigen nicht negativ sein.
+# ---------------- Tweaking traits (draft, Ostranauts "Tweak Skills & Traits") ----------------
+# Positive trait: costs years; negative: gives years back. Removing reverses the booking
+# (getting rid of a negative trait costs its years). The counterpart must go first.
+# The balance of the draft must not be negative when confirming.
 
 func trait_adds(c: CrewMember) -> Array:
 	return c.get_meta("draft_trait_add", [])
@@ -83,7 +83,7 @@ func trait_adds(c: CrewMember) -> Array:
 func trait_removes(c: CrewMember) -> Array:
 	return c.get_meta("draft_trait_remove", [])
 
-## Jahre, die die Trait-Auswahl im Entwurf bucht
+## Years booked by the trait choices in the draft
 func trait_delta(c: CrewMember) -> int:
 	var d := 0
 	for id in trait_adds(c):
@@ -92,15 +92,15 @@ func trait_delta(c: CrewMember) -> int:
 		d -= TraitSystem.get_trait(id).cost
 	return d
 
-## Bilanz des ganzen Entwurfs (Kurse + Traits) in Jahren; darf beim Bestätigen nicht negativ sein
+## Balance of the whole draft (courses + traits) in years; must not be negative when confirming
 func draft_balance(c: CrewMember) -> int:
 	return preview_age(c) - c.age
 
-## Hat die Figur den Trait nach dem Entwurf?
+## Does the character have the trait after the draft?
 func trait_preview(c: CrewMember, id: String) -> bool:
 	return (id in c.traits and not id in trait_removes(c)) or id in trait_adds(c)
 
-## Warum sich der Trait gerade nicht umschalten lässt ("" = geht)
+## Why the trait cannot be toggled right now ("" = possible)
 func trait_block_reason(c: CrewMember, id: String) -> String:
 	var t: TraitData = TraitSystem.get_trait(id)
 	if t == null:
@@ -108,7 +108,7 @@ func trait_block_reason(c: CrewMember, id: String) -> String:
 	if creation_ended(c):
 		return ended_text(c)
 	if id in trait_adds(c) or id in trait_removes(c) or id in c.traits:
-		return ""   # Rückgängig machen bzw. entfernen geht immer
+		return ""   # Undoing or removing always works
 	var opp := t.opposite
 	if opp != "" and trait_preview(c, opp):
 		return "Remove %s first." % TraitSystem.get_trait(opp).trait_name
@@ -116,7 +116,7 @@ func trait_block_reason(c: CrewMember, id: String) -> String:
 		return "Too old for that."
 	return ""
 
-## Trait im Entwurf umschalten (hinzufügen, entfernen, rückgängig). Gibt den Grund zurück, falls nicht.
+## Toggle a trait in the draft (add, remove, undo). Returns the reason if not possible.
 func toggle_trait(c: CrewMember, id: String) -> String:
 	var why := trait_block_reason(c, id)
 	if why != "":
@@ -135,17 +135,17 @@ func toggle_trait(c: CrewMember, id: String) -> String:
 	c.set_meta("draft_trait_remove", rems)
 	return ""
 
-## Lebenslauf bestätigen: gewählte Kurse und Traits (Alter und Wirkung) genau einmal übernehmen.
-## Eine negative Bilanz wird nicht übernommen (false).
+## Confirm the life story: apply the chosen courses and traits (age and effect) exactly once.
+## A negative balance is not applied (false).
 func confirm(c: CrewMember) -> bool:
 	if draft_balance(c) < 0 or pending_encounter(c) != "":
 		return false
 	var age_before := c.age
 	var drafts: Array = _drafts(c)
 	c.set_meta("draft_courses", [])
-	for id in course_ids():   # feste Reihenfolge
+	for id in course_ids():   # fixed order
 		if not id in drafts or SkillSystem.acquired(c, id):
-			continue   # schon erworben (z. B. durch eine Lebensstation): keine zweite Buchung
+			continue   # already acquired (e.g. through a life step): no second booking
 		var years := course_years(id)
 		c.age += years
 		SkillSystem.set_progress(c, id, SkillSystem.ACQUIRED)
@@ -177,15 +177,15 @@ func career(id: String) -> Dictionary:
 			return c
 	return {}
 
-## Startprofil der Spielerfigur nach Ostranauts (Wiki 1.1): auf einem Asteroiden aufgewachsen,
-## mit 18 schon in schlechter Verfassung. Die negativen Traits lassen sich im Lebenslauf gegen Jahre
-## entfernen. „Youthful“ (ohne Wirkung) gibt es hier nicht.
+## Starting profile of the player character after Ostranauts (wiki 1.1): grew up on an asteroid,
+## already in poor shape at 18. The negative traits can be removed in the life story for years.
+## "Youthful" (no effect) does not exist here.
 const START_TRAITS := ["feeble", "fragile", "micro_g_hypovolemic", "immunosuppressed", "insomniac",
 	"slow_metabolism", "sharp_hearing", "unfit", "visually_impaired"]
 const START_SKILLS := ["spaceship", "zerog"]
 
-## Charakter auf den Anfang des Lebenslaufs setzen. asteroid_start: Startprofil der Spielerfigur
-## (Start-Traits und Start-Skills); false für zufällige Figuren (ein zufälliger Geburts-Trait).
+## Reset a character to the start of the life story. asteroid_start: starting profile of the player character
+## (starting traits and skills); false for random characters (one random birth trait).
 func begin(c: CrewMember, asteroid_start: bool = true) -> void:
 	c.age = start_age
 	c.skills.clear()
@@ -207,7 +207,7 @@ func begin(c: CrewMember, asteroid_start: bool = true) -> void:
 	c.set_meta("ship_offer", "")
 	c.remove_meta("ship_bought")
 	if asteroid_start:
-		c.set_meta("ship_bought", "")   # Spielerfigur: Seek Ship möglich, mit 47 erzwungen
+		c.set_meta("ship_bought", "")   # Player character: Seek Ship possible, forced at 47
 		for t in START_TRAITS:
 			if TraitSystem.get_trait(t) != null and not t in c.traits:
 				c.traits.append(t)
@@ -217,7 +217,7 @@ func begin(c: CrewMember, asteroid_start: bool = true) -> void:
 				SkillSystem._entry(c, s).unlocked = true
 		c.history.append("Grew up on an asteroid: starts at %d in poor shape, with Spaceship Engineering and Zero-g Ops." % start_age)
 	else:
-		# Zufällige Figur: eine angeborene Eigenschaft
+		# Random character: one innate trait
 		var ids := TraitSystem.traits.keys()
 		TraitSystem.add(c, ids.pick_random())
 		c.history.append("Born in a lunar settlement.")
@@ -225,7 +225,7 @@ func begin(c: CrewMember, asteroid_start: bool = true) -> void:
 func done_careers(c: CrewMember) -> Array:
 	return c.get_meta("careers", [])
 
-## Welche Lebensstationen stehen gerade offen?
+## Which life steps are open right now?
 func available(c: CrewMember) -> Array:
 	var out: Array = []
 	var done := done_careers(c)
@@ -246,7 +246,7 @@ func available(c: CrewMember) -> Array:
 			out.append(k)
 	return out
 
-## Eine Lebensstation durchlaufen. Gibt den Text fürs Protokoll zurück.
+## Go through a life step. Returns the text for the log.
 func apply_career(c: CrewMember, id: String) -> String:
 	var k := career(id)
 	if k.is_empty() or not k in available(c) or pending_encounter(c) != "":
@@ -261,9 +261,9 @@ func apply_career(c: CrewMember, id: String) -> String:
 		var cur := SkillSystem.progress(c, s)
 		var gain := float(k.skills[s]) * factor * (0.7 if done.count(id) > 1 else 1.0)
 		SkillSystem.set_progress(c, s, minf(SkillSystem.cap(c, s) if cur < 40.0 else 100.0, cur + gain))
-	# Direkt vergebene Fähigkeiten ("grants"): erworben, ohne eigene Altersbuchung (die Station
-	# hat ihre Jahre schon gebucht). Schon erworben: nichts doppelt. Ein gewählter Kurs
-	# desselben Skills fällt aus dem Entwurf (sonst kämen seine Jahre dazu).
+	# Directly granted skills ("grants"): acquired without their own age booking (the step
+	# has already booked its years). Already acquired: nothing twice. A chosen course
+	# of the same skill drops out of the draft (otherwise its years would be added).
 	var granted: PackedStringArray = []
 	for gid in k.get("grants", []):
 		if SkillSystem.skill(gid) == null:
@@ -294,13 +294,13 @@ func apply_career(c: CrewMember, id: String) -> String:
 	_sanitize_drafts(c)
 	return line
 
-# ---------------- Altern (Ostranauts 1.2) ----------------
-# Beim Erreichen von 29 (Middle Age) und 42 (Old Age) kommt je ein zufälliger negativer Trait dazu
-# (aus allen negativen; schon vorhandene und solche mit vorhandenem Gegenstück werden übersprungen).
-# Mit 47 (max_age) endet die Erstellung: Entwürfe verfallen, nur noch „Los geht's“.
+# ---------------- Aging (Ostranauts 1.2) ----------------
+# On reaching 29 (Middle Age) and 42 (Old Age) one random negative trait is added each
+# (from all negative ones; ones you already have and ones whose counterpart you have are skipped).
+# At 47 (max_age) creation ends: drafts expire, only "Let's go" remains.
 const AGING := [[29, "Middle age"], [42, "Old age"]]
 
-## Nach jeder Alterung aufrufen: Schwellen zwischen altem und neuem Alter prüfen (je einmal)
+## Call after every aging: check the thresholds between the old and new age (once each)
 func _age_check(c: CrewMember, old_age: int) -> void:
 	if c.age > max_age:
 		c.age = max_age
@@ -314,7 +314,7 @@ func _age_check(c: CrewMember, old_age: int) -> void:
 				var t: String = pool.pick_random()
 				c.traits.append(t)
 				c.history.append("%d: %s – gained %s." % [at, a[1], TraitSystem.get_trait(t).trait_name])
-	# Mit 47 ohne Schiff: Seek Ship erzwungen, das erste Angebot wird angenommen (Wiki 1.2)
+	# At 47 without a ship: Seek Ship is forced, the first offer is accepted (wiki 1.2)
 	if c.age >= max_age and String(c.get_meta("ship_bought", "")) == "" and c.has_meta("ship_bought"):
 		var offer := String(c.get_meta("ship_offer", ""))
 		if offer == "":
@@ -331,16 +331,16 @@ func ended_text(c: CrewMember) -> String:
 		return "Character creation has ended: you bought a ship."
 	return "Character creation has ended (age %d)." % max_age
 
-## Mit max_age (47) oder einem gekauften Schiff (Seek Ship) endet die Erstellung
+## Creation ends at max_age (47) or with a bought ship (Seek Ship)
 func creation_ended(c: CrewMember) -> bool:
 	return c.age >= max_age or String(c.get_meta("ship_bought", "")) != ""
 
 # ---------------- Seek Ship (Ostranauts 2.4) ----------------
-# 1 Jahr: ein zufälliges Startschiff wird angeboten. Ablehnen (dann erneut suchen, wieder 1 Jahr)
-# oder kaufen: Man übernimmt den Kredit des Schiffs, die Erstellung endet. Wer nie ein Schiff
-# kauft, startet wie bisher mit der Rostlaube.
+# 1 year: a random starter ship is offered. Decline (then search again, another year)
+# or buy: you take on the ship's loan and creation ends. Whoever never buys a ship
+# starts with the Rustbucket as before.
 
-## Startschiffe: die Rostlaube und die Werftschiffe, Kredit = Preis (Cr)
+## Starter ships: the Rustbucket and the shipyard ships, loan = price (Cr)
 func starter_ships() -> Array:
 	var out: Array = [{"id": "rostlaube", "name": "Rustbucket", "price": Config.START_DEBT,
 		"desc": "Your old salvage tug: life support, generator, two thrusters, an airlock."}]
@@ -360,7 +360,7 @@ func ship_offer(c: CrewMember) -> String:
 func ship_bought(c: CrewMember) -> String:
 	return String(c.get_meta("ship_bought", ""))
 
-## 1 Jahr nach einem Schiff suchen. id leer: zufällig. Gibt die Schiffs-ID zurück ("" = nicht möglich).
+## Search for a ship for 1 year. Empty id: random. Returns the ship ID ("" = not possible).
 func seek_ship(c: CrewMember, id: String = "") -> String:
 	if adventure_block_reason(c) != "":
 		return ""
@@ -377,14 +377,14 @@ func seek_ship(c: CrewMember, id: String = "") -> String:
 func decline_ship(c: CrewMember) -> void:
 	c.set_meta("ship_offer", "")
 
-## Angebot annehmen: Lebenslauf wird bestätigt, die Erstellung endet. false = geht nicht (Bilanz negativ).
+## Accept the offer: the life story is confirmed and creation ends. false = not possible (negative balance).
 func buy_ship(c: CrewMember) -> bool:
 	var id := ship_offer(c)
 	if id == "" or draft_balance(c) < 0:
 		return false
 	confirm(c)
 	if ship_bought(c) != "":
-		return true   # beim Bestätigen 47 geworden: Angebot schon erzwungen angenommen
+		return true   # turned 47 while confirming: the offer was already accepted by force
 	c.set_meta("ship_offer", "")
 	_buy_ship(c, id, false)
 	return true
@@ -397,12 +397,12 @@ func _buy_ship(c: CrewMember, id: String, forced: bool) -> void:
 	c.set_meta("draft_trait_add", [])
 	c.set_meta("draft_trait_remove", [])
 
-# ---------------- Lebensereignisse („Seek Adventure“, Ostranauts 2.1) ----------------
-# Ein Ereignis kostet 1 Jahr. Man wählt eine von mehreren Antworten; manche brauchen einen Skill
-# oder Trait. RISK-Antworten: Beim Beginn eines Ereignisses kommt mit 50 % ein verdeckter
-# Fehlschlag-Token dazu. Die RISK-Antwort scheitert, solange ein Token da ist, und entfernt dabei
-# genau einen. Andere Antworten entfernen keinen, Tokens sammeln sich an (wie im Spiel v1.0.0.17).
-# Belohnungen ohne Entsprechung im Spiel entfallen und stehen als „Not in game“ im Lebenslauf.
+# ---------------- Life encounters ("Seek Adventure", Ostranauts 2.1) ----------------
+# An encounter costs 1 year. You pick one of several answers; some need a skill
+# or trait. RISK answers: when an encounter starts, a hidden failure token is added with 50 %.
+# The RISK answer fails as long as a token is there and removes exactly one
+# in doing so. Other answers remove none, tokens pile up (as in the game v1.0.0.17).
+# Rewards without a counterpart in the game are dropped and listed as "Not in game" in the life story.
 
 func encounter(id: String) -> Dictionary:
 	for e in encounters:
@@ -424,7 +424,7 @@ func risk_tokens(c: CrewMember) -> Dictionary:
 func pending_encounter(c: CrewMember) -> String:
 	return String(c.get_meta("pending_encounter", ""))
 
-## Warum gerade kein Ereignis möglich ist ("" = geht)
+## Why no encounter is possible right now ("" = possible)
 const SAVE_MONEY_MIN := 300
 const SAVE_MONEY_MAX := 600
 
@@ -439,8 +439,8 @@ func adventure_block_reason(c: CrewMember) -> String:
 		return "Too old for that."
 	return ""
 
-## Save Some Money (Ostranauts 2.3): 1 Jahr arbeiten und sparen, etwa 300–600 Cr Startgeld.
-## amount < 0: zufällig; sonst fester Betrag (Tests). Gibt die Lebenslaufzeile zurück ("" = nicht möglich).
+## Save Some Money (Ostranauts 2.3): work and save for 1 year, about 300–600 Cr start money.
+## amount < 0: random; otherwise a fixed amount (tests). Returns the life story line ("" = not possible).
 func save_money(c: CrewMember, amount: int = -1) -> String:
 	if adventure_block_reason(c) != "":
 		return ""
@@ -454,7 +454,7 @@ func save_money(c: CrewMember, amount: int = -1) -> String:
 	_sanitize_drafts(c)
 	return line
 
-## Ereignis beginnen (zufällig oder mit id). token_roll < 0: zufällig; sonst fester Wurf (Tests).
+## Start an encounter (random or with an id). token_roll < 0: random; otherwise a fixed roll (tests).
 func start_encounter(c: CrewMember, id: String = "", token_roll: float = -1.0) -> String:
 	if pending_encounter(c) != "":
 		return pending_encounter(c)
@@ -472,7 +472,7 @@ func start_encounter(c: CrewMember, id: String = "", token_roll: float = -1.0) -
 			tokens[tok] = int(tokens.get(tok, 0)) + 1
 	return e.id
 
-## Warum eine Antwort nicht wählbar ist ("" = geht)
+## Why an answer cannot be chosen ("" = possible)
 func choice_block_reason(c: CrewMember, ch: Dictionary) -> String:
 	var req: Dictionary = ch.get("req", {})
 	if req.has("skill") and not SkillSystem.acquired(c, String(req.skill)):
@@ -481,7 +481,7 @@ func choice_block_reason(c: CrewMember, ch: Dictionary) -> String:
 		return "Needs %s." % TraitSystem.get_trait(String(req.trait)).trait_name
 	return ""
 
-## Antwort wählen: 1 Jahr, Belohnungen, ggf. RISK und Brig. Gibt den Lebenslauf-Eintrag zurück.
+## Choose an answer: 1 year, rewards, RISK and Brig if needed. Returns the life story entry.
 func resolve_encounter(c: CrewMember, choice_id: String) -> String:
 	var e := encounter(pending_encounter(c))
 	var ch := encounter_choice(e, choice_id)
@@ -503,7 +503,7 @@ func resolve_encounter(c: CrewMember, choice_id: String) -> String:
 		_apply_reward(c, ch.get("failure" if failed else "success", {}), parts, missing)
 	c.set_meta("pending_encounter", "")
 	if c.age > max_age:
-		c.age = max_age   # die Brig kann nicht über das Ende der Erstellung hinaus führen
+		c.age = max_age   # the Brig cannot lead past the end of character creation
 	var line := "%d–%d: %s – %s." % [age0, c.age, e.name, label]
 	if not parts.is_empty():
 		line += " " + ", ".join(parts) + "."
@@ -548,7 +548,7 @@ func _apply_reward(c: CrewMember, d: Dictionary, parts: PackedStringArray, missi
 		parts.append("Time in the Brig (+%d %s)" % [years, "year" if years == 1 else "years"])
 		_apply_reward(c, {"skills": b.skills, "contacts": b.contacts, "enemies": b.enemies, "omitted": b.omitted}, parts, missing)
 
-## Skill durch ein Ereignis: erworben (100 %); schon erworben = nichts doppelt
+## Skill from an encounter: acquired (100 %); already acquired = nothing twice
 func _grant_skill(c: CrewMember, id: String, parts: PackedStringArray) -> void:
 	if SkillSystem.skill(id) == null or SkillSystem.acquired(c, id):
 		return
@@ -556,7 +556,7 @@ func _grant_skill(c: CrewMember, id: String, parts: PackedStringArray) -> void:
 	SkillSystem._entry(c, id).unlocked = true
 	parts.append(SkillSystem.skill(id).skill_name)
 
-## Trait durch ein Ereignis (Regel: positiver Trait löst negatives Gegenstück ab)
+## Trait from an encounter (rule: a positive trait replaces its negative counterpart)
 func _gain_trait(c: CrewMember, id: String, parts: PackedStringArray) -> void:
 	var t: TraitData = TraitSystem.get_trait(id)
 	if t == null:
@@ -568,7 +568,7 @@ func _gain_trait(c: CrewMember, id: String, parts: PackedStringArray) -> void:
 		else:
 			parts.append(t.trait_name)
 
-## Entwurf nach einer Station oder einem Ereignis bereinigen (schon erworbene Kurse, Traits)
+## Clean up the draft after a life step or an encounter (courses, traits already acquired)
 func _sanitize_drafts(c: CrewMember) -> void:
 	for id in _drafts(c).duplicate():
 		if SkillSystem.acquired(c, id):
@@ -585,7 +585,7 @@ func choose_hobby(c: CrewMember, id: String) -> bool:
 	c.history.append("Hobby: " + HobbySystem.get_hobby(id).hobby_name)
 	return true
 
-## Zufälliger Lebenslauf bis zu einem Zielalter (für NPCs und "Zufall")
+## Random life story up to a target age (for NPCs and "random")
 func randomize_life(c: CrewMember, target_age: int, asteroid_start: bool = true) -> void:
 	begin(c, asteroid_start)
 	var guard := 0
@@ -598,11 +598,11 @@ func randomize_life(c: CrewMember, target_age: int, asteroid_start: bool = true)
 	if randf() < 0.8:
 		choose_hobby(c, HobbySystem.hobbies.keys().pick_random())
 
-## Startkredite aus dem Lebenslauf (kann negativ sein: Schulden)
+## Start credits from the life story (can be negative: debt)
 func start_credits(c: CrewMember) -> int:
 	return int(c.get_meta("credits", 0))
 
-## Neuer NPC mit zufälliger Vorgeschichte
+## New NPC with a random background
 func generate_npc() -> CrewMember:
 	var name := "%s %s" % [FIRST_NAMES.pick_random(), LAST_NAMES.pick_random()]
 	var c := CrewMember.new(CrewSystem.next_id, name, Color(COLORS.pick_random()), Vector2i.ZERO)
