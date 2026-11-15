@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "co2_alarm"
+display_name = "CO₂ Pressure Alarm"
+description = "Measures the CO₂ in its room. Linked CO₂ scrubbers there only run on demand: on above the set point (default 0.5 kPa), off at half of it. Right-click: set point."
+power = -0.01
+build_time = 2.0
+cost = {"circuit": 1, "copper": 1}
+item_value = 634
+stock = -1.0
+stock_unit = ""
+capacity = 0.0
+storage = 0.0
+need = ""
+wears = false
+color = Color(0.85, 0.75, 0.3, 1)
+tech = "electrical"
+category = "sensor"

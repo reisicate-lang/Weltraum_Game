@@ -87,10 +87,12 @@ func _simulate(dt: float) -> void:
 			continue
 		# A heater warms all air tiles within 5 tiles, the generator a little within 2
 		var K := Config.GRID_SCALE   # the same visible area as before (5 and 2 of the large tiles)
-		var radius := 5 * K if dev.type == "heater" and dev.powered else (2 * K if dev.type == "generator" and dev.producing else 0)
+		var radius := 5 * K if dev.type == "heater" and dev.powered and Hvac.runs(dev) else (2 * K if dev.type == "generator" and dev.producing else 0)
 		if radius == 0:
 			continue
 		var rate := Config.HEATER_RATE if dev.type == "heater" else 0.3
+		# A heater linked to a thermostat heats up to its set point (+0.5 °C), otherwise to room temperature
+		var top := Hvac.cap(dev) if dev.type == "heater" and Hvac.controlled(dev) else Config.ROOM_TEMP
 		var p := g.pos(i)
 		for dy in range(-radius, radius + 1):
 			for dx in range(-radius, radius + 1):
@@ -98,8 +100,8 @@ func _simulate(dt: float) -> void:
 				if not g.in_bounds(q):
 					continue
 				var j := g.idx(q)
-				if g.holds_air(j) and g.pressure(j) > 20.0 and g.temp[j] < Config.ROOM_TEMP:
-					g.temp[j] = minf(Config.ROOM_TEMP, g.temp[j] + rate * dt)
+				if g.holds_air(j) and g.pressure(j) > 20.0 and g.temp[j] < top:
+					g.temp[j] = minf(top, g.temp[j] + rate * dt)
 	_fire(g, dt)
 
 # ---------------- Feuer ----------------

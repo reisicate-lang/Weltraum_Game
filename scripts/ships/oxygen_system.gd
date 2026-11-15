@@ -1,20 +1,23 @@
-## Life support: oxygen generator, CO2 scrubber and air tank
+## Life support: oxygen generator, CO2 scrubber and air tank (switched by pressure alarms, see Hvac)
 ## change the air on their tile. The distribution is handled by the
 ## AtmosphereSystem.
 extends Node
 
 func step(dt: float) -> void:
 	var g := ShipSystem.grid
+	# Pressure alarms switch the machines in their room (Ostranauts Ideal Atmosphere 3)
+	Hvac.update(g)
 	for i in g.devices:
 		var dev: Device = g.devices[i]
 		if dev.broken:
 			continue
 		match dev.type:
 			"o2gen":
-				if dev.powered and g.o2[i] < Config.AIR_O2:
-					g.o2[i] = minf(Config.AIR_O2, g.o2[i] + Config.O2GEN_RATE * dt)
+				var top := Hvac.cap(dev) if Hvac.controlled(dev) else Config.AIR_O2
+				if dev.powered and Hvac.runs(dev) and g.o2[i] < top:
+					g.o2[i] = minf(top, g.o2[i] + Config.O2GEN_RATE * dt)
 			"scrubber":
-				if dev.powered and g.co2[i] > Config.AIR_CO2:
+				if dev.powered and Hvac.runs(dev) and g.co2[i] > Config.AIR_CO2:
 					g.co2[i] = maxf(Config.AIR_CO2, g.co2[i] - Config.SCRUB_RATE * dt)
 			"locker":
 				if dev.powered and dev.suit != null:

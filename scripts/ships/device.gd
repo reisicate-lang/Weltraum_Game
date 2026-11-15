@@ -30,6 +30,8 @@ var genemod := false
 var rot := 0
 ## Power switch: on = conducts like a cable, off = splits the networks
 var switch_on := true
+## Set point of a pressure alarm or thermostat (-1 = default, see Hvac)
+var setpoint := -1.0
 
 const PUSH_DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1)]
 
@@ -109,7 +111,7 @@ func status_text() -> String:
 	if lock_level > 0:
 		parts.append("locked (level %d)" % lock_level)
 	if broken:
-		parts.append("KAPUTT")
+		parts.append("BROKEN")
 	elif cond < 100.0:
 		parts.append("condition %d %%" % int(cond))
 	if needs_power():
@@ -120,10 +122,14 @@ func status_text() -> String:
 		parts.append("Suit: O₂ %d %%, battery %d %%" % [int(suit.o2), int(suit.battery)] if suit != null else "empty (suit is in use)")
 	if type == "pump":
 		parts.append("storage %d kPa" % int(store))
+	if Hvac.is_alarm(type):
+		parts.append(Hvac.status(self))
+	elif Hvac.controlled(self):
+		parts.append("Auto: " + ("on (alarm)" if Hvac.runs(self) else "standby"))
 	if type in ["hydro", "autofarm", "meatvat"]:
 		parts.append("growth %d %%" % int(growth * 100.0) + (" · gene mod" if genemod else ""))
 	if type == "hydro":
-		parts.append("gepflegt" if GameState.time - tended_at < 1440.0 else "needs care")
+		parts.append("tended" if GameState.time - tended_at < 1440.0 else "needs care")
 	if d.capacity > 0.0:
 		var cap := ShipPowerSystem.capacity_of(self)
 		parts.append("%.1f / %.0f kWh" % [charge, cap] + ("" if cap >= d.capacity else " (rated %.0f)" % d.capacity))
@@ -138,7 +144,7 @@ func status_text() -> String:
 func to_data() -> Dictionary:
 	return {"type": type, "x": pos.x, "y": pos.y, "cond": cond, "broken": broken, "stock": stock,
 		"charge": charge, "items": inv.to_data() if inv != null else [], "suit": suit, "store": store, "unknown": unknown, "lock": lock_level,
-		"growth": growth, "tended_at": tended_at, "genemod": genemod, "rot": rot, "shape": data().length, "switch": switch_on}
+		"growth": growth, "tended_at": tended_at, "genemod": genemod, "rot": rot, "shape": data().length, "switch": switch_on, "setpoint": setpoint}
 
 static func from_data(d: Dictionary) -> Device:
 	var dev := Device.new(String(d.type), Vector2i(int(d.x), int(d.y)))
@@ -156,5 +162,6 @@ static func from_data(d: Dictionary) -> Device:
 	dev.tended_at = float(d.get("tended_at", 0.0))
 	dev.genemod = bool(d.get("genemod", false))
 	dev.switch_on = bool(d.get("switch", true))
+	dev.setpoint = float(d.get("setpoint", -1.0))
 	dev.rot = int(d.get("rot", 0))
 	return dev

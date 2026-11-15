@@ -1200,6 +1200,12 @@ func open_object_menu(p: Vector2i) -> bool:
 	if ndev != null and ndev.type == "power_switch" and not g.foreign(g.idx(ndev.pos)):
 		object_menu.add_item("Turn power switch off" if ndev.switch_on else "Turn power switch on", menu_actions.size())
 		menu_actions.append({"kind": "switch", "dev": ndev})
+	# Pressure alarm / thermostat: set point (Ostranauts Ideal Atmosphere 3)
+	if ndev != null and Hvac.is_alarm(ndev.type) and not g.foreign(g.idx(ndev.pos)):
+		var unit: String = Hvac.UNITS[ndev.type]
+		for sgn in [1, -1]:
+			object_menu.add_item("%s set point (%+.1f %s, now %.1f)" % ["Raise" if sgn > 0 else "Lower", float(Hvac.STEPS[ndev.type]) * sgn, unit, Hvac.setpoint(ndev)], menu_actions.size())
+			menu_actions.append({"kind": "setpoint", "dev": ndev, "steps": sgn})
 	# Navigation console: rename the ship (Ostranauts Ship Building 1.4)
 	if ndev != null and ndev.type == "helm" and not ndev.unknown and not g.foreign(g.idx(ndev.pos)):
 		object_menu.add_item("Rename vessel…", menu_actions.size())
@@ -1302,6 +1308,9 @@ func _on_object_menu(id: int) -> void:
 			GameState.toast("Door vent closed: the door is now airtight." if a.closed else "Door vent open: some air flows through the closed door.")
 		"rename":
 			open_rename_dialog()
+		"setpoint":
+			Hvac.adjust(a.dev, int(a.steps))
+			GameState.toast("%s: set point %.1f %s." % [a.dev.data().display_name, Hvac.setpoint(a.dev), Hvac.UNITS[a.dev.type]])
 		"switch":
 			ShipPowerSystem.toggle_switch(a.dev)
 			GameState.toast("Power switch on: the networks are connected." if a.dev.switch_on else "Power switch off: the network is split here.")

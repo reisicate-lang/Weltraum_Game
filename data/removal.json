@@ -581,5 +581,38 @@
   "debris": {
    "scrap": 1
   }
+ },
+ "o2_alarm": {
+  "uninstall_time": 1.5,
+  "dismantle_time": 2.0,
+  "dismantle": {
+   "circuit": 1
+  },
+  "hp": 60,
+  "debris": {
+   "scrap": 1
+  }
+ },
+ "co2_alarm": {
+  "uninstall_time": 1.5,
+  "dismantle_time": 2.0,
+  "dismantle": {
+   "circuit": 1
+  },
+  "hp": 60,
+  "debris": {
+   "scrap": 1
+  }
+ },
+ "thermostat": {
+  "uninstall_time": 1.5,
+  "dismantle_time": 2.0,
+  "dismantle": {
+   "circuit": 1
+  },
+  "hp": 60,
+  "debris": {
+   "scrap": 1
+  }
  }
 }

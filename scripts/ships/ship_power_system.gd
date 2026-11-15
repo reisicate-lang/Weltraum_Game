@@ -80,8 +80,10 @@ func step(dt: float) -> void:
 			if dev.broken:
 				dev.powered = false
 			else:
-				# The heater and the airlock pump only need power while they work
-				var idle: bool = (dev.type == "heater" and g.temp[i] >= Config.ROOM_TEMP - 0.5) or (dev.type == "pump" and not AirlockSystem.is_pumping(dev))
+				# The heater and the airlock pump only need power while they work.
+				# Machines linked to a pressure alarm or thermostat only need power while it calls for them
+				var idle: bool = (dev.type == "heater" and not Hvac.controlled(dev) and g.temp[i] >= Config.ROOM_TEMP - 0.5) or (dev.type == "pump" and not AirlockSystem.is_pumping(dev)) \
+					or (Hvac.controlled(dev) and not Hvac.runs(dev))
 				if not idle:
 					net.demand += -d.power
 				consumers.get_or_add(dev.net, []).append(dev)

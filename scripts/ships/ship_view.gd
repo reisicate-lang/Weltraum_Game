@@ -523,6 +523,12 @@ func _draw_icon(dev: Device, r: Rect2, a: float) -> void:
 			draw_rect(Rect2(c - Vector2(u * 0.22, u * 0.36), Vector2(u * 0.44, u * 0.16)), Color(0.75, 0.77, 0.8, a))
 		"light":
 			draw_circle(c, u * 0.18, Color(1, 0.93, 0.6, a) if dev.powered else Color(0.4, 0.38, 0.3, a))
+		"o2_alarm", "co2_alarm", "thermostat":
+			# Small wall unit: lamp red while the alarm calls for its machines
+			draw_rect(Rect2(c - Vector2(u * 0.22, u * 0.22), Vector2(u * 0.44, u * 0.44)), Color(0.1, 0.13, 0.12, a))
+			var lamp := Color(0.4, 0.4, 0.4, a) if not dev.powered else (Color(0.9, 0.33, 0.29, a) if Hvac.active(dev) else Color(0.44, 0.81, 0.56, a))
+			draw_circle(c, u * 0.1, lamp)
+			draw_rect(Rect2(c - Vector2(u * 0.22, u * 0.22), Vector2(u * 0.44, u * 0.08)), dev.data().color * Color(1, 1, 1, a))
 		"power_switch":
 			var col := Color(0.44, 0.81, 0.56, a) if dev.switch_on else Color(0.9, 0.33, 0.29, a)
 			draw_rect(Rect2(c - Vector2(u * 0.25, u * 0.25), Vector2(u * 0.5, u * 0.5)), Color(0.1, 0.13, 0.12, a))

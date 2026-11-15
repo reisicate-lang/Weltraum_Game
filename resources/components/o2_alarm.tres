@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "o2_alarm"
+display_name = "O₂ Pressure Alarm"
+description = "Measures the O₂ in its room. Linked O₂ generators there only run on demand: on below the set point (default 20 kPa), off 1 kPa above it. Right-click: set point."
+power = -0.01
+build_time = 2.0
+cost = {"circuit": 1, "copper": 1}
+item_value = 659
+stock = -1.0
+stock_unit = ""
+capacity = 0.0
+storage = 0.0
+need = ""
+wears = false
+color = Color(0.35, 0.7, 0.95, 1)
+tech = "electrical"
+category = "sensor"
