@@ -49,6 +49,9 @@ var away_until := 0.0               ## out on the station until (game time)
 ## work assignment: which kinds of work this character takes on
 ## Auto mode: does the character choose jobs, needs and free time on its own? (default: on)
 var auto_mode := true
+## Roster (Ostranauts Crew 3): one shift per hour of the day, "W" work, "F" free, "S" sleep.
+## Only in Work shifts does a character take on jobs from the orders (fire fighting always).
+var roster: Array = default_roster()
 var work_prefs := {"build": true, "repair": true, "remove": true, "haul": true, "refill": true, "craft": true, "hack": true, "eva": true}
 var _search_cooldown := 0.0
 var _flee_cooldown := 0.0
@@ -607,6 +610,8 @@ func update(dt: float) -> void:
 		task = "Breakdown: needs rest"
 		return
 	if check and auto_mode:
+		if not on_work_shift():
+			task = SHIFT_NAMES[shift()] + " shift"
 		_assign_job()
 		if job == null and activity == null and suit == null:
 			_start_free_time()
@@ -614,10 +619,36 @@ func update(dt: float) -> void:
 		if job == null and activity == null and suit != null:
 			_start_device("suit_off", func(d): return d.type == "locker" and d.suit == null and not d.broken)
 
+const SHIFTS := ["W", "F", "S"]
+const SLEEP_SHIFT_AT := 80.0
+const SHIFT_NAMES := {"W": "Work", "F": "Free", "S": "Sleep"}
+
+static func default_roster() -> Array:
+	var r: Array = []
+	r.resize(24)
+	r.fill("W")
+	return r
+
+## Hour of the day (0–23) at game time t
+static func hour_of(t: float) -> int:
+	return int(fposmod(Config.START_MINUTES + t, 1440.0) / 60.0)
+
+func shift(t: float = GameState.time) -> String:
+	if roster.size() != 24:
+		roster = default_roster()
+	return String(roster[hour_of(t)])
+
+func on_work_shift() -> bool:
+	return shift() == "W"
+
+## Free and Sleep shifts: no "work" jobs such as repairing; fires are always fought
+func _shift_allows(j: Dictionary) -> bool:
+	return on_work_shift() or j.kind == "extinguish"
+
 ## Is there an open job this character would take?
 func _has_open_job() -> bool:
 	for j in ShipConstructionSystem.jobs.values():
-		if j.claimed_by == -1 and j.retry_at <= GameState.time and not j.get("missing", false) and work_prefs.get(_pref_of(j), true) and RemovalSystem.worker_ok(self, j):
+		if j.claimed_by == -1 and j.retry_at <= GameState.time and not j.get("missing", false) and work_prefs.get(_pref_of(j), true) and _shift_allows(j) and RemovalSystem.worker_ok(self, j):
 			return true
 	return false
 
@@ -796,7 +827,7 @@ func _assign_job() -> void:
 			continue
 		if (j.kind == "move" or j.kind == "haul") and j.phase == "deliver":
 			continue
-		if not work_prefs.get(_pref_of(j), true):
+		if not work_prefs.get(_pref_of(j), true) or not _shift_allows(j):
 			continue
 		# Tool needed? Only those who have it in their pack
 		if not RemovalSystem.worker_ok(self, j):
@@ -918,7 +949,11 @@ func _start_need() -> bool:
 	# In a suit (EVA), eating and drinking only interrupt when it becomes urgent
 	var margin := 30.0 if suit != null else 0.0
 	for k in Config.NEEDS:
-		if needs[k] < Config.NEEDS[k].at - (margin if k in ["food", "water"] else 0.0):
+		var at: float = Config.NEEDS[k].at
+		# Sleep shift: go to bed as soon as the energy is no longer full
+		if k == "sleep" and shift() == "S":
+			at = maxf(at, SLEEP_SHIFT_AT)
+		if needs[k] < at - (margin if k in ["food", "water"] else 0.0):
 			order_needs.append(k)
 	order_needs.sort_custom(func(a, b): return needs[a] < needs[b])
 	for need in order_needs:
@@ -1084,7 +1119,7 @@ func to_data() -> Dictionary:
 		"needs": needs.duplicate(), "health": health, "unconscious": unconscious,
 		"is_player": is_player, "items": inv.to_data(), "suit": suit,
 		"skills": skills, "traits": traits, "hobbies": hobbies, "stress": stress, "age": age, "history": history,
-		"contacts": contacts, "enemies": enemies, "salary": salary, "death_pay": death_pay, "work_prefs": work_prefs, "last_trained": last_trained,
+		"contacts": contacts, "enemies": enemies, "salary": salary, "death_pay": death_pay, "work_prefs": work_prefs, "roster": roster, "last_trained": last_trained,
 		"careers": get_meta("careers", []), "risk_tokens": get_meta("risk_tokens", {}), "body_temp": body_temp, "relations": relations, "auto": auto_mode}
 
 static func from_data(d: Dictionary) -> CrewMember:
@@ -1111,6 +1146,8 @@ static func from_data(d: Dictionary) -> CrewMember:
 	c.last_trained = String(d.get("last_trained", ""))
 	if d.has("work_prefs"):
 		c.work_prefs = d.work_prefs
+	var ro: Array = d.get("roster", [])
+	c.roster = ro.duplicate() if ro.size() == 24 else default_roster()
 	c.set_meta("careers", d.get("careers", []))
 	c.body_temp = float(d.get("body_temp", 37.0))
 	c.relations = d.get("relations", {})

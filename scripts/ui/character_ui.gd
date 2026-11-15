@@ -89,7 +89,7 @@ func refresh() -> void:
 	var c := _sel()
 	if c == null:
 		return
-	var key := JSON.stringify([tab, detail, c.id, c.skills, c.traits, c.hobbies, int(c.stress), c.work_prefs, CrewSystem.crew.size()])
+	var key := JSON.stringify([tab, detail, c.id, c.skills, c.traits, c.hobbies, int(c.stress), c.work_prefs, c.roster, CrewMember.hour_of(GameState.time), CrewSystem.crew.size()])
 	if key == _last:
 		return
 	_last = key
@@ -254,6 +254,34 @@ func _life(c: CrewMember) -> void:
 		box.add_child(ui._label("Enemies: " + ", ".join(c.enemies), Color(0.9, 0.33, 0.29), 12))
 
 func _work(c: CrewMember) -> void:
+	# Roster (Ostranauts Crew 3): jobs from the orders only in Work shifts
+	box.add_child(_wrap("Roster: %s takes on jobs only in Work shifts (W). Free (F) and Sleep (S) shifts: no work such as repairing, fires are always fought; in a Sleep shift they go to bed early. Now: %s shift. Click an hour to change it." % [c.display_name, CrewMember.SHIFT_NAMES[c.shift()]]))
+	if c.roster.size() != 24:
+		c.roster = CrewMember.default_roster()
+	var now := CrewMember.hour_of(GameState.time)
+	for half in 2:
+		var row := HBoxContainer.new()
+		for h in range(half * 12, half * 12 + 12):
+			var b: Button = ui._button("%02d %s" % [h, c.roster[h]], func():
+				c.roster[h] = CrewMember.SHIFTS[(CrewMember.SHIFTS.find(c.roster[h]) + 1) % 3]
+				_last = ""
+				refresh())
+			b.modulate = {"W": Color(1, 1, 1), "F": Color(0.7, 0.85, 1.0), "S": Color(0.65, 0.65, 0.8)}[c.roster[h]]
+			if h == now:
+				b.text = "▸" + b.text
+			row.add_child(b)
+		box.add_child(row)
+	var presets := HBoxContainer.new()
+	presets.add_child(ui._button("All work", func():
+		c.roster = CrewMember.default_roster()
+		_last = ""
+		refresh()))
+	presets.add_child(ui._button("8 h each: sleep 0–8, work 8–16, free 16–24", func():
+		for h in 24:
+			c.roster[h] = "S" if h < 8 else ("W" if h < 16 else "F")
+		_last = ""
+		refresh()))
+	box.add_child(presets)
 	box.add_child(_wrap("Which work does %s take on? This is how you steer what the crew learns." % c.display_name))
 	var names := {"build": "Building", "repair": "Repairing", "remove": "Demolishing", "haul": "Hauling", "refill": "Refilling",
 		"craft": "Workbench", "hack": "Hacking", "eva": "EVA work (space suit)"}
