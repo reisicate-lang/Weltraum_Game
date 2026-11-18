@@ -126,6 +126,7 @@ und werden Schritt für Schritt übertragen.
 - [x] Balancing: Wochen-Simulation (Hilfsskript inzwischen entfernt) – Bergung allein reicht knapp für die erste Rate (Bergungsrecht 200 Cr, Verkauf 85 %)
 - [ ] Sprites aus Grafikdateien
 - [x] Gerätewerte nach dem Wiki-Spickzettel „Value/Space“ (Base Value 1:1, z. B. Nav Station 16.880, Halvorson-Thruster 5.520, CO2 AtmoScrubber 14.326, Ship Battery 2.623); Geräte ohne Wiki-Gegenstück behalten den Wert aus den Baukosten; Startkredit 211.000 Cr (≈ Schiffswert), Rate 13.200 Cr/Woche, Werftpreise Lumen 208.000 / Bairn 240.000 (≈ Schiffswert, kein Kauf-Verkauf-Gewinn)
+- [x] Halvorson Fire Extinguisher nach Wiki: tragbar, Löschen ×3, Nahkampfwaffe
 - [x] Rack 1x1 und Bulkhead Bin nach Wiki (Werte, Raumtypen, Schleppziel)
 - [x] Hygiene nach Wiki: Anzug verschmutzt schneller, Dirty heilt langsamer, Hygiene Pack
 - [x] Fehler behoben: Ersticken erst unter 16 kPa (Hypoxie unter 20 nur Warnung); Anzug nur in Atemluft des eigenen Schiffs ablegen; Schleuse gleicht bei leerem Pumpenspeicher mit dem Raum aus (vorher Endlos-Warten)

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "fire_extinguisher"
+display_name = "Halvorson Fire Extinguisher"
+weight = 2.5
+volume = 1.5
+value = 240
+description = "An Halvorson Class C portable fire extinguisher, rated for most shipboard emergencies. Suitable as a bludgeoning tool in some scenarios (Ostranauts). Whoever carries one puts out fires three times as fast."
+refill = {}
+weapon = "armed"

@@ -41,6 +41,20 @@ Tool to **temporarily seal wall tiles** damaged by micrometeorites or similar im
 | Scrap | Trash 1 |
 Conditions: Halvorson Wall SealTemp Installed CheckRoom Solid Sheet.
 
+## 3a Halvorson Fire Extinguisher
+"An Halvorson Class C portable fire extinguisher, rated for most shipboard emergencies. Suitable as a bludgeoning tool in some scenarios."
+| Stat | Value |
+|---|---|
+| Category | Tools |
+| Base Price | 240.0 (damaged 67.0) |
+| Max. Damage | 10 (damaged 15) |
+| Molar Volume / Ref | 25.47 (CO2 vessel) |
+| Max. Gas Pressure | 20684.0 |
+| Mass | 2.5 |
+| Volume | 0.003 |
+| Repair | Screwdriver/Drill + Welder, no materials |
+Conditions: Edged Handheld Clippable Halvorson Rigid Solid Tough VesselCO2.
+
 ## 4 Hygiene
 - Character condition with a HUD bar (since 0.14). Without cleaning it drops; too low → **Dirty** (later **Filthy**): higher wound infection risk, slower healing, much lower infection recovery.
 - **Wearing sealed suits (EVA or pressure) for long periods accelerates hygiene loss** and reduces sleep comfort.

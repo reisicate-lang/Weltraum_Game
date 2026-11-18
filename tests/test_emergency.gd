@@ -89,6 +89,23 @@ func _initialize() -> void:
 	g.o2[mt] = 21.0
 	mira.needs.air = 100.0
 
+	# Halvorson Fire Extinguisher (wiki: 240 Cr, 2.5 kg, bludgeoning tool): fires out 3× faster
+	var SKS = root.get_node("SkillSystem")
+	var removed: Array = []
+	for d in root.get_node("PhysicsSystem").ship_devices("extinguisher"):
+		removed.append(d)
+		g.remove_device(d)
+	var fjob := {"kind": "extinguish", "x": mira.tile().x, "y": mira.tile().y}
+	mira.inv.take("fire_extinguisher", 99)
+	var bare: float = SKS.work_speed(mira, fjob)
+	mira.inv.add("fire_extinguisher", 1, 100.0)
+	var with_ext: float = SKS.work_speed(mira, fjob)
+	_check("Fire Extinguisher: 240 Cr, 2.5 kg, a melee weapon; extinguishing ×3 (%.2f → %.2f)" % [bare, with_ext], IS.item("fire_extinguisher").value == 240
+		and is_equal_approx(IS.item("fire_extinguisher").weight, 2.5) and IS.item("fire_extinguisher").weapon == "armed" and is_equal_approx(with_ext, bare * 3.0))
+	mira.inv.take("fire_extinguisher", 99)
+	for d in removed:
+		g.put_device(d)
+
 	# 4) Saving/loading keeps candles and seals
 	mira.inv.add("oxygen_candle", 1, 100.0)
 	Emergency.activate_candle(mira)
