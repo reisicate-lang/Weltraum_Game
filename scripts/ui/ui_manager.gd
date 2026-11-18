@@ -1019,6 +1019,7 @@ func _refresh_window() -> void:
 						_refresh_window())
 					b.disabled = not o.ok
 					window_box.add_child(_row(o.text + ("" if o.ok else "  (" + o.why + ")"), [b], Color(0.87, 0.9, 0.94) if o.ok else COL_MUTED))
+				_residency_section(String(st.id))
 		"crew":
 			if st.is_empty():
 				window_box.add_child(_label("Applicants are only found at stations.", COL_MUTED, 12))
@@ -1695,6 +1696,29 @@ func _install_btn(row: HBoxContainer, type: String) -> HBoxContainer:
 			set_tool("install:" + type)
 			close_container()))
 	return row
+
+## Embassy Services and Real Estate Kiosk (Ostranauts Residential Status)
+func _residency_section(here: String) -> void:
+	window_box.add_child(_label("EMBASSY SERVICES · " + Residency.status_text(), COL_AMBER, 13))
+	var who := EconomySystem.trader()
+	for juris in Residency.JURISDICTIONS:
+		var j: Dictionary = Residency.JURISDICTIONS[juris]
+		for visa in j.visas:
+			var why := Residency.visa_reason(who, here, juris, visa)
+			var vb := _button("%d Cr" % int(j.visas[visa]), func():
+				Residency.buy_visa(who, juris, visa)
+				_last_window = ""
+				_refresh_window())
+			vb.disabled = why != ""
+			window_box.add_child(_row("%s (%s): %s visa%s" % [j.name, j.faction, Residency.VISA_NAMES[visa], "" if why == "" else "  (" + why + ")"], [vb], Color(0.87, 0.9, 0.94) if why == "" else COL_MUTED))
+	if Residency.JURISDICTIONS.has(here):
+		var hwhy := Residency.home_reason(here)
+		var hb := _button("%d Cr" % Residency.HOME_PRICE, func():
+			Residency.buy_home()
+			_last_window = ""
+			_refresh_window())
+		hb.disabled = hwhy != ""
+		window_box.add_child(_row("REAL ESTATE: home at %s (unlimited power, own docking port)%s" % [Residency.JURISDICTIONS[here].name, "" if hwhy == "" else "  (" + hwhy + ")"], [hb], COL_AMBER if hwhy == "" else COL_MUTED))
 
 ## Trade row: item value (only with Business Admin) and offer separately
 func _trade_row(text: String, it: Dictionary, controls: Array) -> HBoxContainer:

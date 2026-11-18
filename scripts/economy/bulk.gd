@@ -95,10 +95,10 @@ static func price(id: String, station: String) -> float:
 	return float(gd.base) * f * (1.0 + drift)
 
 static func buy_price(id: String, station: String) -> int:
-	return int(ceil(price(id, station) * (1.0 + float(data().get("spread", 0.12)) * 0.5)))
+	return int(ceil(price(id, station) * (1.0 + float(data().get("spread", 0.12)) * 0.5) * Residency.bulk_factor(station, false)))
 
 static func sell_price(id: String, station: String) -> int:
-	return int(price(id, station) * (1.0 - float(data().get("spread", 0.12)) * 0.5))
+	return int(price(id, station) * (1.0 - float(data().get("spread", 0.12)) * 0.5) * Residency.bulk_factor(station, true))
 
 static func _station() -> String:
 	return String(PhysicsSystem.station().get("id", ""))

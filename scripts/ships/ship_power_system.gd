@@ -53,6 +53,11 @@ func step(dt: float) -> void:
 	if _dirty:
 		_rebuild()
 	var g := ShipSystem.grid
+	# Docked at your own home: unlimited power (Ostranauts Residential Status 3)
+	if Residency.at_home():
+		for i in g.devices:
+			if not g.foreign(i) and g.devices[i].data().capacity > 0.0 and not g.devices[i].broken:
+				g.devices[i].charge = capacity_of(g.devices[i])
 	var consumers := {}
 	var batteries := {}
 	for net in nets:

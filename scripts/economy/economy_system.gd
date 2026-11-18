@@ -43,6 +43,7 @@ func reset() -> void:
 	permit_until = 0.0
 	permit_reg = ""
 	permit_tier = ""
+	Residency.reset()
 	for id in ItemSystem.items:
 		prices[id] = randf_range(0.85, 1.15)
 		supply[id] = 0.0
@@ -395,7 +396,8 @@ func step(_dt: float) -> void:
 	# Docking fee every hour at a station (drifting nearby is free)
 	while GameState.time >= next_hour:
 		next_hour += 60.0
-		if PhysicsSystem.station().is_empty():
+		# Own home: a dedicated docking port, no fee (Ostranauts Residential Status 3)
+		if PhysicsSystem.station().is_empty() or Residency.at_home():
 			continue
 		if credits >= Config.DOCK_FEE:
 			credits -= Config.DOCK_FEE
@@ -424,7 +426,7 @@ func step(_dt: float) -> void:
 				GameState.toast("Instalment missed! %d Cr penalty interest. %d more until repossession." % [fee, Config.MAX_STRIKES - strikes], "bad")
 
 func to_data() -> Dictionary:
-	return {"payment_factor": payment_factor, "claim_discount": DialogueSystem.claim_discount, "permit_until": permit_until, "permit_reg": permit_reg, "permit_tier": permit_tier, "rate_lowered": DialogueSystem.rate_lowered,
+	return {"payment_factor": payment_factor, "claim_discount": DialogueSystem.claim_discount, "permit_until": permit_until, "permit_reg": permit_reg, "permit_tier": permit_tier, "residency": Residency.to_data(), "rate_lowered": DialogueSystem.rate_lowered,
 		"credits": credits, "debt": debt, "next_payment": next_payment, "strikes": strikes, "prices": prices,
 		"supply": supply, "next_day": next_day, "next_hour": next_hour, "log": log_entries, "wreck": SalvageSystem.wreck_name}
 
@@ -439,4 +441,5 @@ func from_data(d: Dictionary) -> void:
 	permit_until = float(d.get("permit_until", 0.0))
 	permit_reg = String(d.get("permit_reg", ""))
 	permit_tier = String(d.get("permit_tier", ""))
+	Residency.from_data(d.get("residency", {}))
 	DialogueSystem.rate_lowered = bool(d.get("rate_lowered", false))
