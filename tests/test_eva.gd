@@ -221,5 +221,35 @@ func _initialize() -> void:
 			and is_equal_approx(SK.work_value_bonus(mira, ljob2), 4.0 if variant[1] else 0.0))
 		_check("4 old (%d %%): old effect gone (oxygen)" % int(variant[0]), SK.effect(mira, "suit_o2_saving") == 0.0 and SK.effect(mira, "eva_work") == 0.0)
 
+	# 5) Pressure suit (Ostranauts Ideal Atmosphere 4): trapped air, no battery, refreshed in breathable air
+	gs.new_game()
+	var IS = root.get_node("ItemSystem")
+	_check("5: Pressure Suit Locker 865 Cr (suit 630 + helmet 235), EVA Suit Locker 9 800 Cr (7 000 + 2 500 + 300)",
+		IS.device("pressure_locker").item_value == 865 and IS.device("locker").item_value == 9800 and IS.device("pressure_locker").power == 0.0)
+	var pl := Device.new("pressure_locker", Vector2i.ZERO)
+	_check("5: A new pressure locker holds a pressure suit", pl.suit != null and pl.suit.get("kind", "") == "pressure" and pl.status_text().contains("trapped air 100 %"))
+	var m5: CrewMember = root.get_node("CrewSystem").player()
+	var g5 = ship.grid
+	var ti: int = g5.idx(m5.tile())
+	var keep := [g5.o2[ti], g5.n2[ti], g5.co2[ti]]
+	g5.o2[ti] = 0.0
+	g5.n2[ti] = 0.0
+	g5.co2[ti] = 0.0
+	m5.suit = {"o2": 100.0, "battery": 100.0, "kind": "pressure"}
+	for k in 4:
+		m5._update_body(1.0)
+	_check("5: Sealed in vacuum: 4 min use 20 %% of the trapped air, no battery (%.0f %%, %.0f %%)" % [m5.suit.o2, m5.suit.battery], is_equal_approx(m5.suit.o2, 80.0) and is_equal_approx(m5.suit.battery, 100.0))
+	m5.suit = {"o2": 100.0, "battery": 100.0}
+	for k in 4:
+		m5._update_body(1.0)
+	_check("5: The EVA suit lasts longer but drains its battery (%.1f %%, %.1f %%)" % [m5.suit.o2, m5.suit.battery], m5.suit.o2 > 95.0 and m5.suit.battery < 100.0)
+	m5.suit = {"o2": 30.0, "battery": 100.0, "kind": "pressure"}
+	g5.o2[ti] = keep[0]
+	g5.n2[ti] = keep[1]
+	g5.co2[ti] = keep[2]
+	m5._update_body(0.1)
+	_check("5: Back in breathable air: helmet off and on, air refreshed", is_equal_approx(m5.suit.o2, 100.0))
+	m5.suit = null
+
 	print("%d OK, %d Fehler" % [ok_count, fail_count])
 	quit()

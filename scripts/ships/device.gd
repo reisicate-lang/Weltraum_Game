@@ -68,6 +68,8 @@ func _init(t: String, p: Vector2i) -> void:
 		inv.only_modules = t == "helm"
 	if t == "locker":
 		suit = {"o2": 100.0, "battery": 100.0}
+	if t == "pressure_locker":
+		suit = {"o2": 100.0, "battery": 100.0, "kind": "pressure"}
 	if t == "pump":
 		store = 1000.0
 
@@ -122,6 +124,8 @@ func status_text() -> String:
 		parts.append("producing %.1f kW" % d.power if producing else ("must stand outside in vacuum" if type == "solar" else "producing nothing"))
 	if type == "locker":
 		parts.append("Suit: O₂ %d %%, battery %d %%" % [int(suit.o2), int(suit.battery)] if suit != null else "empty (suit is in use)")
+	if type == "pressure_locker":
+		parts.append("Pressure suit: trapped air %d %%" % int(suit.o2) if suit != null else "empty (suit is in use)")
 	if type == "pump":
 		parts.append("storage %d kPa" % int(store))
 	if Hvac.is_alarm(type):

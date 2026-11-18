@@ -194,7 +194,7 @@ func _draw_device(dev: Device, ghost: bool = false) -> void:
 	if f >= 0.0:
 		draw_rect(Rect2(r.position + Vector2(0, r.size.y - 3), Vector2(r.size.x * clampf(f, 0.0, 1.0), 3)), Color(0.44, 0.81, 0.56))
 	_draw_cracks(dev.pos, dev.cond)
-	if dev.type == "locker" and dev.suit != null:
+	if dev.type in Config.SUIT_LOCKERS and dev.suit != null:
 		draw_circle(r.get_center() - Vector2(0, S * 0.1), S * 0.13, Color(0.9, 0.91, 0.93))
 	if dev.type == "pump" and AirlockSystem.is_pumping(dev):
 		draw_arc(r.get_center(), S * 0.25, Time.get_ticks_msec() / 100.0, Time.get_ticks_msec() / 100.0 + 4.0, 12, COL_PLAN, 2.0)
@@ -567,7 +567,7 @@ func _draw_icon(dev: Device, r: Rect2, a: float) -> void:
 		"bed":
 			draw_rect(Rect2(r.position + Vector2(2, 2), Vector2(r.size.x - 4, r.size.y * 0.3)), Color(0.85, 0.87, 0.92, a))
 			draw_rect(Rect2(r.position + Vector2(1, r.size.y * 0.38), Vector2(r.size.x - 2, r.size.y * 0.58)), Color(0.35, 0.45, 0.66, a))
-		"food", "crate", "terminal", "workbench", "chemstation", "locker":
+		"food", "crate", "terminal", "workbench", "chemstation", "locker", "pressure_locker":
 			draw_rect(r.grow(-u * 0.12), Color(0, 0, 0, 0.25 * a), false, 1.5)
 			match dev.type:
 				"food":
@@ -581,7 +581,7 @@ func _draw_icon(dev: Device, r: Rect2, a: float) -> void:
 				"workbench", "chemstation":
 					draw_line(c - Vector2(u * 0.25, u * 0.15), c + Vector2(u * 0.25, u * 0.15), Color(0.75, 0.75, 0.78, a), 3.0)
 					draw_circle(c + Vector2(u * 0.15, -u * 0.15), u * 0.08, Color(0.6, 0.85, 0.5, a) if dev.type == "chemstation" else Color(0.8, 0.8, 0.8, a))
-				"locker":
+				"locker", "pressure_locker":
 					if dev.suit != null:
 						draw_circle(c - Vector2(0, u * 0.12), u * 0.13, Color(0.9, 0.91, 0.93, a))
 						draw_rect(Rect2(c + Vector2(-u * 0.16, 0), Vector2(u * 0.32, u * 0.3)), Color(0.9, 0.91, 0.93, a))

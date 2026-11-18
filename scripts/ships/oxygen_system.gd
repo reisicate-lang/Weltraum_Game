@@ -19,6 +19,10 @@ func step(dt: float) -> void:
 			"scrubber":
 				if dev.powered and Hvac.runs(dev) and g.co2[i] > Config.AIR_CO2:
 					g.co2[i] = maxf(Config.AIR_CO2, g.co2[i] - Config.SCRUB_RATE * dt)
+			"pressure_locker":
+				# A pressure suit takes in fresh room air: only where the air is breathable
+				if dev.suit != null and g.holds_air(i) and g.o2[i] >= Config.O2_LOW:
+					dev.suit.o2 = 100.0
 			"locker":
 				if dev.powered and dev.suit != null:
 					dev.suit.o2 = minf(100.0, dev.suit.o2 + Config.SUIT_REFILL * dt)

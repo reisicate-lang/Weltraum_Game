@@ -85,6 +85,9 @@ func can_reach(p: Vector2i) -> bool:
 func safe_air(i: int) -> bool:
 	return grid().holds_air(i) and grid().o2[i] >= Config.O2_LOW and grid().fire[i] == 0 and grid().temp[i] < 50.0
 
+func is_pressure_suit() -> bool:
+	return suit != null and String(suit.get("kind", "eva")) == "pressure"
+
 func suit_ok() -> bool:
 	return suit != null and suit.o2 > 0.0 and suit.battery > 0.0
 
@@ -369,7 +372,14 @@ func _update_body(dt: float) -> void:
 	var i := g.idx(tile())
 	var sleeping: bool = activity != null and activity.get("need", "") == "sleep" and path.is_empty()
 	var in_suit := suit_ok()
-	if suit != null:
+	if suit != null and is_pressure_suit():
+		# Pressure suit: no battery; sealed it holds only the trapped air (O₂ down, CO₂ up).
+		# In breathable air the helmet comes off and on again: the air is refreshed.
+		if safe_air(i):
+			suit.o2 = 100.0
+		elif in_suit:
+			suit.o2 = maxf(0.0, suit.o2 - Config.PRESSURE_O2_USE * dt * (1.0 - minf(0.5, SkillSystem.effect(self, "suit_o2_saving"))))
+	elif suit != null:
 		suit.battery = maxf(0.0, suit.battery - Config.SUIT_BATTERY_USE * dt)
 		if in_suit:
 			suit.o2 = maxf(0.0, suit.o2 - Config.SUIT_O2_USE * dt * (1.0 - minf(0.5, SkillSystem.effect(self, "suit_o2_saving"))))
@@ -541,7 +551,7 @@ func update(dt: float) -> void:
 			release_job()
 			if suit.o2 >= Config.SUIT_RETURN_AT and _start_device("recharge", func(d): return d.type == "charger" and d.charge > 0.05):
 				return
-			if _start_device("suit_off", func(d): return d.type == "locker" and d.suit == null and not d.broken):
+			if _start_device("suit_off", func(d): return d.type in Config.SUIT_LOCKERS and d.suit == null and not d.broken):
 				return
 		SalvageSystem.reveal(self)
 		if carrying == null and auto_mode and _start_need():
@@ -617,7 +627,7 @@ func update(dt: float) -> void:
 			_start_free_time()
 		# Nothing to do: take off the space suit again
 		if job == null and activity == null and suit != null:
-			_start_device("suit_off", func(d): return d.type == "locker" and d.suit == null and not d.broken)
+			_start_device("suit_off", func(d): return d.type in Config.SUIT_LOCKERS and d.suit == null and not d.broken)
 
 const SHIFTS := ["W", "F", "S"]
 const SLEEP_SHIFT_AT := 80.0
@@ -877,7 +887,7 @@ func _assign_job() -> void:
 			chosen.retry_at = GameState.time + 0.5
 			return
 		if hostile:
-			if _start_device("suit_up", func(d): return d.type == "locker" and d.suit != null and not d.broken):
+			if _start_device("suit_up", func(d): return d.type in Config.SUIT_LOCKERS and d.suit != null and not d.broken):
 				return
 			chosen.retry_at = GameState.time + 1.0
 			_warn("need-suit", true, display_name + " needs a space suit for this work.", false)

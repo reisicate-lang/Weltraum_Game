@@ -5,11 +5,12 @@
 [resource]
 script = ExtResource("1")
 id = "locker"
-display_name = "Suit Locker"
-description = "Stores one space suit and refills its oxygen and battery. Needs 0.5 kW."
+display_name = "EVA Suit Locker"
+description = "Stores one EVA suit (Bingham-12: O₂ bottle, battery, CO₂ filter) and refills its oxygen and battery. Needs 0.5 kW."
 power = -0.5
 build_time = 4.0
 cost = {"plate": 3, "pipe": 1, "circuit": 1}
+item_value = 9800
 stock = -1.0
 stock_unit = ""
 capacity = 0.0

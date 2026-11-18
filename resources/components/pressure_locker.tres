@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "pressure_locker"
+display_name = "Pressure Suit Locker"
+description = "Stores one pressure suit (Ostranauts: cheap, no battery). Sealed, it only holds the air of the room you put the helmet on in: about 20 minutes, then it must be refreshed in breathable air. No power needed."
+power = 0.0
+build_time = 3.0
+cost = {"plate": 2, "fabric": 2, "glass": 1}
+item_value = 865
+stock = -1.0
+stock_unit = ""
+capacity = 0.0
+storage = 0.0
+need = ""
+wears = false
+color = Color(0.45, 0.4, 0.3, 1)
+tech = "furniture"
+category = "furniture"
+extra_categories = PackedStringArray("suit")

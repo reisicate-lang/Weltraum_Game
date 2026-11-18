@@ -5,7 +5,7 @@ extends Node
 
 const NAMES := ["MV Kestrel", "Freighter Nansen-4", "Tanker Halcyon", "Mining Tug Ox-12",
 	"Shuttle Meridian", "Courier Pallas", "Prospector Vesna", "Supply Ship Hollis"]
-const DEVICE_POOL := ["generator", "battery", "o2gen", "scrubber", "bed", "food", "airtank", "locker", "water", "sink", "pump", "solar", "charger"]
+const DEVICE_POOL := ["generator", "battery", "o2gen", "scrubber", "bed", "food", "airtank", "locker", "pressure_locker", "water", "sink", "pump", "solar", "charger"]
 const LOOT := [["scrap", 6], ["plate", 5], ["copper", 5], ["circuit", 3], ["motor", 2], ["cell", 2], ["pipe", 4],
 	["glass", 2], ["filter", 2], ["fabric", 3], ["ration", 4], ["fuelcan", 1], ["aircan", 1], ["watercan", 1], ["datachip", 1]]
 
@@ -135,8 +135,8 @@ func generate() -> bool:
 		if dev.data().stock >= 0.0:
 			dev.stock = floorf(dev.data().stock * randf() * 0.3)
 		dev.charge = 0.0
-		if dev.type == "locker":
-			dev.suit = {"o2": 0.0, "battery": 0.0} if randf() < 0.3 else null
+		if dev.type in Config.SUIT_LOCKERS:
+			dev.suit = ({"o2": 0.0, "battery": 0.0, "kind": "pressure"} if dev.type == "pressure_locker" else {"o2": 0.0, "battery": 0.0}) if randf() < 0.3 else null
 	for k in randi_range(2, 4):
 		if spots.is_empty():
 			break

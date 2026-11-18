@@ -614,5 +614,18 @@
   "debris": {
    "scrap": 1
   }
+ },
+ "pressure_locker": {
+  "uninstall_time": 3.5,
+  "dismantle_time": 5.0,
+  "dismantle": {
+   "plate": 1,
+   "pipe": 1,
+   "circuit": 1
+  },
+  "hp": 160,
+  "debris": {
+   "scrap": 2
+  }
  }
 }

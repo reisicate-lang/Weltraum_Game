@@ -89,6 +89,9 @@ const SUIT_REFILL := 10.0
 const SUIT_CHARGE := 10.0
 const SUIT_KWH_PER_100 := 0.5
 const SUIT_RETURN_AT := 30.0
+## Pressure suit (Ostranauts Ideal Atmosphere 4): trapped room air, about 20 minutes sealed
+const PRESSURE_O2_USE := 100.0 / 20.0
+const SUIT_LOCKERS := ["locker", "pressure_locker"]
 
 ## Airlock
 const AIRLOCK_MAX_SIZE := 12 * GRID_SCALE * GRID_SCALE
