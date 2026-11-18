@@ -14,7 +14,9 @@ var angle := 0.0
 var docked := "tycho"
 var travel: Dictionary = {}     ## {to, t0, t1, from}
 var autodock: Dictionary = {}   ## {to, t0, t1}
-var match_target := ""          ## Geschwindigkeit an dieses Ziel angleichen
+var match_target := ""          ## match the velocity with this target
+## Station keeping (Ostranauts Flying 2.1): point at the selected target and bring VREL to 0
+var station_keep := false
 var thrust := 0.0               ## forward (+1) / back (-1), relative to the heading
 var strafe := 0.0               ## right (+1) / left (-1), relative to the heading
 var rot_input := 0.0            ## Rotation thrust: clockwise (+1) / counter-clockwise (-1)
@@ -70,6 +72,7 @@ func reset() -> void:
 	travel = {}
 	autodock = {}
 	match_target = ""
+	station_keep = false
 	stop_inputs()
 	helm_at = NO_HELM
 	angle = 0.0          # new game: nose forward (do not inherit it from the previous game)
@@ -481,8 +484,11 @@ func step(dt: float) -> void:
 		_helm_fail_warned = helm_at != NO_HELM
 		stop_inputs()
 		match_target = ""
+		station_keep = false
 	elif manual:
 		_helm_fail_warned = false
+	if station_keep and manual:
+		_station_keep()
 	_rotate(s, dt)
 	# Manual thrust takes priority. Without keys an active matching uses
 	# the same thrusters and RCS to reach the target velocity.
@@ -503,6 +509,32 @@ func step(dt: float) -> void:
 	_p32 = pos
 	_v32 = vel
 	_check_hazards()
+
+## Station keeping: matching with the selected target and turning the nose towards it.
+## Q, E or R take over the rotation for as long as they are held.
+func _station_keep() -> void:
+	if target == "" or docked != "":
+		station_keep = false
+		return
+	match_target = target
+	if rot_input == 0.0 and not rot_stop:
+		align_angle = (rel_to(target).pos - pos).angle()
+		aligning = true
+
+func toggle_station_keep() -> bool:
+	if station_keep:
+		station_keep = false
+		match_target = ""
+		aligning = false
+		return true
+	if docked != "" or target == "":
+		GameState.toast("Station keeping needs a selected target and an undocked ship.")
+		return false
+	if not manual_ok():
+		GameState.toast("Cannot keep station: " + helm_block_reason(operated_helm()), "bad")
+		return false
+	station_keep = true
+	return true
 
 ## Thrust relative to the heading: sum of the thrust vectors of all active thrusters
 ## whose direction matches the input (W forward, S back, D right, A left), plus
@@ -722,6 +754,7 @@ func dock(id: String, force: bool = false) -> bool:
 	stop_inputs()
 	ang_vel = 0.0
 	match_target = ""
+	station_keep = false
 	FleetSystem.arrive(loc(id))
 	EconomySystem.check_permit_on_dock(loc(id))
 	NPCSystem.on_docked(id)
@@ -821,6 +854,7 @@ func undock() -> bool:
 	vel = st.vel
 	thrust = 0.0
 	match_target = ""
+	station_keep = false
 	StationSystem.clear()
 	FleetSystem.leave(loc(from))
 	docked = ""
@@ -944,4 +978,5 @@ func from_data(d: Dictionary) -> void:
 	helm_at = NO_HELM
 	crashed = false
 	match_target = ""
+	station_keep = false
 	match_input = Vector2.ZERO

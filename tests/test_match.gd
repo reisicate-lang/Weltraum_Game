@@ -178,5 +178,19 @@ func _initialize() -> void:
 	_frames(60 * 3)
 	_check("Matching only after pressing X again (%.1f → %.1f m/s)" % [l1, _vrel().length()], P.match_target == "l4" and _vrel().length() < l1 - P.rcs_accel() * 1000.0 * 3.0 * 0.8)
 
+	# Station keeping (Ostranauts Flying 2.1): nose towards the target and VREL to 0
+	_fill_fuel(1000.0)
+	_setup(Vector2(12.0, 8.0))
+	P.angle = PI * 0.5
+	_check("Station keeping switches on", P.toggle_station_keep() and P.station_keep)
+	_frames(60 * 60)
+	var brg: float = absf(wrapf((P.rel_to("l4").pos - P.pos).angle() - P.angle, -PI, PI))
+	_check("Station keeping: VREL %.2f m/s, bearing %.1f°" % [_vrel().length(), rad_to_deg(brg)], _vrel().length() < 1.0 and brg < deg_to_rad(3.0))
+	P.toggle_station_keep()
+	_check("Switching it off ends matching and aligning", not P.station_keep and P.match_target == "" and not P.aligning)
+	P.toggle_station_keep()
+	ui.toggle_nav(false)
+	_check("Leaving the console ends station keeping", not P.station_keep)
+
 	print("%d OK, %d Fehler" % [ok_count, fail_count])
 	quit()

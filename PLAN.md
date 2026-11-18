@@ -126,6 +126,7 @@ und werden Schritt für Schritt übertragen.
 - [x] Balancing: Wochen-Simulation (Hilfsskript inzwischen entfernt) – Bergung allein reicht knapp für die erste Rate (Bergungsrecht 200 Cr, Verkauf 85 %)
 - [ ] Sprites aus Grafikdateien
 - [x] Gerätewerte nach dem Wiki-Spickzettel „Value/Space“ (Base Value 1:1, z. B. Nav Station 16.880, Halvorson-Thruster 5.520, CO2 AtmoScrubber 14.326, Ship Battery 2.623); Geräte ohne Wiki-Gegenstück behalten den Wert aus den Baukosten; Startkredit 211.000 Cr (≈ Schiffswert), Rate 13.200 Cr/Woche, Werftpreise Lumen 208.000 / Bairn 240.000 (≈ Schiffswert, kein Kauf-Verkauf-Gewinn)
+- [x] Station Keeping nach Wiki: Nase aufs Ziel, VREL auf 0 (Angleichen + Ausrichten kombiniert)
 - [x] Schichtplan nach Wiki: Work/Free/Sleep je Stunde, Aufträge nur in Work-Schichten (Brände immer), Sleep-Schicht geht früher schlafen; Standard alles Work
 - [x] Druckalarme (O₂, CO₂) und Thermostat nach Wiki: Auto-Betrieb der Maschinen im Raum mit einstellbarem Sollwert und Standby ohne Strom; ohne Alarm eingebaute Regelung wie bisher
 - [x] Atmosphären-Grenzwerte nach Wiki: Hypoxie unter 20 kPa O2, CO2-Zielwert ≤ 0,5 kPa (Warnung), Wohlfühlbereich 17–27 °C in der Wärmeansicht

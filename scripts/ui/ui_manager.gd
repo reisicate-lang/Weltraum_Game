@@ -462,6 +462,7 @@ func leave_flight() -> void:
 		nav_root.visible = false
 	PhysicsSystem.stop_inputs()
 	PhysicsSystem.match_target = ""
+	PhysicsSystem.station_keep = false
 	PhysicsSystem.helm_at = PhysicsSystem.NO_HELM
 	if pilot != null:
 		pilot.manual_until = 0.0
@@ -500,7 +501,7 @@ func _course(v: Vector2) -> String:
 ## Numbers for the flight display (also to detect whether it must be redrawn)
 func _flight_rows() -> Array:
 	var P := PhysicsSystem
-	var out: Array = [_course(Vector2.from_angle(P.angle)), int(rad_to_deg(P.ang_vel)), P.thrust, P.strafe, P.rot_input, P.aligning, P.match_target, P.match_input != Vector2.ZERO,
+	var out: Array = [_course(Vector2.from_angle(P.angle)), int(rad_to_deg(P.ang_vel)), P.thrust, P.strafe, P.rot_input, P.aligning, P.match_target, P.station_keep, P.match_input != Vector2.ZERO,
 		snappedf(P.mass(), 0.1), P.thrust_dir(Vector2i(1, 0)), P.thrust_dir(Vector2i(-1, 0)), P.thrust_dir(Vector2i(0, 1)), P.thrust_dir(Vector2i(0, -1))]
 	if P.target != "" and P.docked == "":
 		var ap: Dictionary = P.approach(P.target)
@@ -522,6 +523,7 @@ func _build_flight_info() -> void:
 	if P.strafe > 0.0: thr.append("right")
 	if P.rot_input != 0.0: thr.append("turning")
 	if P.rot_stop: thr.append("stop rotation")
+	if P.station_keep: thr.append("station keeping")
 	if P.aligning: thr.append("aligning")
 	if P.match_target != "":
 		thr.append("matching" + (" (firing)" if P.match_input != Vector2.ZERO else " (target reached)"))
@@ -577,6 +579,14 @@ func _build_flight_info() -> void:
 		if on:
 			mb.add_theme_color_override("font_color", good)
 		row.add_child(mb)
+		# Station keeping (Ostranauts Flying 2.1): point at the target and bring VREL to 0
+		var skb := _button("Station keeping: ON" if P.station_keep else "Station keeping", func():
+			P.toggle_station_keep()
+			_last_nav = ""
+			_refresh_nav())
+		if P.station_keep:
+			skb.add_theme_color_override("font_color", good)
+		row.add_child(skb)
 		nav_side.add_child(row)
 	nav_side.add_child(_label("COCKPIT KEYS", COL_MUTED, 11))
 	for k in FLIGHT_KEYS:
@@ -603,6 +613,7 @@ func toggle_match() -> void:
 		GameState.toast("Cannot match: " + P.helm_block_reason(P.operated_helm()), "bad")
 		return
 	P.match_target = "" if P.match_target == P.target else P.target
+	P.station_keep = false
 	_last_nav = ""
 
 func _fmt_dist(km: float) -> String:
