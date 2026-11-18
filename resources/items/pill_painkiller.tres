@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "pill_painkiller"
+display_name = "Pill: PharmaCon “Cavilo” Pain Relief"
+weight = 0.0003
+volume = 0.01
+value = 6
+description = "Standard painkiller (Ostranauts): pain threshold +20 % for 6 hours."
+refill = {}

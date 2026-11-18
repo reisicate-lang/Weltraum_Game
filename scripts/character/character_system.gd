@@ -195,6 +195,11 @@ func begin(c: CrewMember, asteroid_start: bool = true) -> void:
 	c.contacts.clear()
 	c.enemies.clear()
 	c.inv.items.clear()
+	c.med = Medical.fresh()
+	if asteroid_start:
+		# Small first aid kit (Ostranauts First Aid: cloths stop bleeding, painkillers)
+		c.inv.add("cloth", 2, 100.0)
+		c.inv.add("pill_painkiller", 2, 100.0)
 	c.set_meta("careers", [])
 	c.set_meta("credits", 0)
 	c.set_meta("draft_courses", [])

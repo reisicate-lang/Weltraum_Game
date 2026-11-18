@@ -720,6 +720,10 @@ func _check_hazards() -> void:
 			var hits := mini(6, int(ceil(vel.distance_to(st.vel) / float(space.collide_speed))))
 			for k in hits:
 				DamageSystem.strike()
+			# The crew is thrown around: bruises, sometimes a fracture (Ostranauts First Aid)
+			for c in CrewSystem.crew:
+				if randf() < 0.3:
+					Medical.hurt(c, 1, 0.25)
 			log_event("Collision with %s at %.0f m/s (%d hull hits)" % [l.name, vel.distance_to(st.vel) * 1000.0, hits])
 			vel = st.vel
 			GameState.toast("Collision with " + l.name + "! The hull is damaged.", "bad")

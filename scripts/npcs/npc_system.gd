@@ -176,12 +176,16 @@ func fight() -> String:
 		c.stress = minf(100.0, c.stress + 15.0)
 	var text := ""
 	if win:
+		for c in team:
+			if randf() < 0.3:
+				Medical.hurt(c, 1)   # Ostranauts First Aid: fights leave cuts and bruises
 		var p: CrewMember = team[0]
 		ShipSystem.grid.drop_items(p.tile(), ["scrap", "circuit", "datachip"].pick_random(), randi_range(1, 2), 60.0)
 		text = "%s and the crew drive off the plunderers. They leave something behind." % p.display_name
 	else:
 		for c in team:
 			c.health = maxf(5.0, c.health - randf_range(20.0, 40.0) / TraitSystem.factor(c, "toughness"))
+			Medical.hurt(c, randi_range(1, 2))
 		var loss := int(EconomySystem.credits * 0.2)
 		EconomySystem.credits -= loss
 		EconomySystem.book("Robbed by plunderers", -loss)

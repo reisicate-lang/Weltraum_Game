@@ -49,5 +49,8 @@ Reference data for bulk trading (cargo kiosk, cargo pods 1000 kg, station market
 Reference data for micrometeorites and emergency items (Oxygen Candle, "Ripley" seal) and hygiene:
 @docs/ostranauts/ostranauts-emergencies.md
 
+Reference data for first aid (injuries, blood loss and infection thresholds, crippled limbs, treatments, medication prices):
+@docs/ostranauts/ostranauts-first-aid.md
+
 Reference data for asteroid mining (tethering, mining tools/explosives, mineral values and weights, kiosk reputation):
 @docs/ostranauts/ostranauts-asteroid-mining.md

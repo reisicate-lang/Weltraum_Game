@@ -89,7 +89,7 @@ func refresh() -> void:
 	var c := _sel()
 	if c == null:
 		return
-	var key := JSON.stringify([tab, detail, c.id, c.skills, c.traits, c.hobbies, int(c.stress), c.work_prefs, c.roster, CrewMember.hour_of(GameState.time), CrewSystem.crew.size()])
+	var key := JSON.stringify([tab, detail, c.id, c.skills, c.traits, c.hobbies, int(c.stress), c.work_prefs, c.roster, Medical.status(c), CrewMember.hour_of(GameState.time), CrewSystem.crew.size()])
 	if key == _last:
 		return
 	_last = key
@@ -109,6 +109,9 @@ func refresh() -> void:
 	box.add_child(ui._label("Stress: " + _stress_text(c) + (" · Dirty (heals slower)" if c.is_dirty() else "") + (" · wages %d Cr/day" % c.salary if c.salary > 0 else "") +
 		(" · death pay in trust %d Cr" % c.death_pay if c.death_pay > 0 else "") +
 		(" · last trained: " + SkillSystem.skill(c.last_trained).skill_name if c.last_trained != "" else ""), ui.COL_MUTED, 12))
+	# Wounds and first aid (Ostranauts First Aid)
+	for line in Medical.status(c):
+		box.add_child(ui._label("✚ " + line, Color(0.9, 0.45, 0.4), 12))
 	if not c.is_player and not PhysicsSystem.station().is_empty():
 		box.add_child(ui._button("Let go (death pay comes back)", func():
 			if NPCSystem.fire(c):

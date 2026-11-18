@@ -45,6 +45,10 @@ func strike() -> void:
 		return
 	var p: Vector2i = hull.pick_random()
 	var i := g.idx(p)
+	# Shrapnel: crew right next to the impact may get cut (Ostranauts First Aid)
+	for c in CrewSystem.crew:
+		if c.grid() == g and (c.tile() - p).length() <= 2.0 * Config.GRID_SCALE and randf() < 0.5:
+			Medical.injure(c, "cut", randf_range(0.25, 0.6))
 	# Ostranauts: a micrometeorite strike sets fast-forward back to ×1 (a pause stays a pause)
 	if TimeSystem.speed_index > 1:
 		TimeSystem.set_speed(1)

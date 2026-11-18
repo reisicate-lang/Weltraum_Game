@@ -38,6 +38,8 @@ var recent_actions: Dictionary = {} ## action -> recently practised minutes (rep
 var last_trained := ""
 var stress := 10.0                  ## 0 = relaxed, 100 = breakdown
 var body_temp := 37.0               ## body temperature in °C
+## Wounds, blood loss, infection, crippled limbs (Ostranauts First Aid, see Medical)
+var med: Dictionary = Medical.fresh()
 var relations: Dictionary = {}      ## other crew ID (text) -> relationship -100..100
 var age := 18
 var history: Array[String] = []     ## Lebenslauf
@@ -298,8 +300,8 @@ func follow_path(dt: float) -> bool:
 func move_factor() -> float:
 	var g := grid()
 	if g.pressure(g.idx(tile())) < 5.0:
-		return clampf(0.6 + SkillSystem.effect(self, "eva_speed") * 0.8, 0.6, 1.1)
-	return 1.0
+		return clampf(0.6 + SkillSystem.effect(self, "eva_speed") * 0.8, 0.6, 1.1) * Medical.move_factor(self)
+	return Medical.move_factor(self)
 
 ## Direct control with WASD (dist in tiles)
 func manual_move(dir: Vector2, dist: float) -> void:
@@ -446,6 +448,10 @@ func _update_body(dt: float) -> void:
 		damage += (body_temp - 39.5) * 15.0
 	if g.fire[i] == 1:
 		damage += 60.0
+		# Fire leaves a burn (Ostranauts First Aid: severe burns)
+		if not med.wounds.any(func(w): return w.kind == "burn" and float(w.sev) > 0.3):
+			Medical.injure(self, "burn", randf_range(0.35, 0.6))
+	damage += Medical.step(self, dt, sleeping)
 	damage /= TraitSystem.factor(self, "toughness")
 	# Dirty (wiki: slower healing)
 	var heal := 1.5 * h * TraitSystem.factor(self, "recovery") * (Config.DIRTY_RECOVERY if is_dirty() else 1.0)
@@ -574,6 +580,11 @@ func update(dt: float) -> void:
 			if _start_device("suit_off", func(d): return d.type in Config.SUIT_LOCKERS and d.suit == null and not d.broken and _safe_locker(d)):
 				return
 		SalvageSystem.reveal(self)
+		# First aid: treat your own wounds with what is aboard
+		if not med.wounds.is_empty() or float(med.infection) >= 35.0:
+			var given := Medical.treat(self)
+			if not given.is_empty():
+				GameState.toast("%s %s." % [display_name, ", ".join(given)])
 		if carrying == null and auto_mode and _start_need():
 			return
 	# 5) Bauplan
@@ -1148,7 +1159,7 @@ func _start_flee() -> bool:
 
 func to_data() -> Dictionary:
 	return {"id": id, "name": display_name, "color": color.to_html(), "x": pos.x, "y": pos.y,
-		"needs": needs.duplicate(), "health": health, "unconscious": unconscious,
+		"needs": needs.duplicate(), "health": health, "unconscious": unconscious, "med": med,
 		"is_player": is_player, "items": inv.to_data(), "suit": suit,
 		"skills": skills, "traits": traits, "hobbies": hobbies, "stress": stress, "age": age, "history": history,
 		"contacts": contacts, "enemies": enemies, "salary": salary, "death_pay": death_pay, "work_prefs": work_prefs, "roster": roster, "last_trained": last_trained,
@@ -1160,6 +1171,10 @@ static func from_data(d: Dictionary) -> CrewMember:
 	for k in d.needs:
 		c.needs[k] = float(d.needs[k])
 	c.health = float(d.health)
+	var md: Dictionary = d.get("med", {})
+	c.med = Medical.fresh()
+	for k in md:
+		c.med[k] = md[k]
 	c.unconscious = bool(d.unconscious)
 	c.is_player = bool(d.is_player)
 	c.inv.from_data(d.items)

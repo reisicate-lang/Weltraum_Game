@@ -437,6 +437,7 @@ func work_speed(c: CrewMember, job: Dictionary) -> float:
 	speed *= eva_factor(c)
 	if c.stress > 70.0:
 		speed *= 0.8
+	speed *= Medical.work_factor(c)   # crippled arms, pain (Ostranauts First Aid)
 	# Extinguisher station aboard or a Halvorson Fire Extinguisher in the pack (Ostranauts wiki)
 	if job.kind == "extinguish" and (not PhysicsSystem.ship_devices("extinguisher").is_empty() or c.inv.count("fire_extinguisher") > 0):
 		speed *= 3.0
