@@ -35,6 +35,8 @@ func can_place(tool: String, p: Vector2i) -> bool:
 		return RemovalSystem.reason(tool, p) == ""
 	if tool == "orders":
 		return Orders.has_target(p)
+	if tool == "barter":
+		return Barter.can_place(p)
 	match tool:
 		"repair": return DamageSystem.needs_repair(p)
 		"haul": return g.piles.has(i) and not jobs.has(i)
@@ -100,6 +102,8 @@ func place(tool: String, p: Vector2i) -> bool:
 	var i := ShipSystem.grid.idx(p)
 	if tool == "orders":
 		return Orders.apply(p)
+	if tool == "barter":
+		return Barter.place(p)
 	if tool == "cancel":
 		cancel(jobs[i])
 		return true

@@ -18,6 +18,8 @@ var over := false
 var recipes: Array = []
 ## factor on the loan instalment (negotiation with the banker)
 var payment_factor := 1.0
+## Buying: send purchases to the Barter Zone instead of the terminal
+var buy_to_barter := false
 ## Salvage permit: valid until this game time (minutes), bound to this hull registry ID
 var permit_until := 0.0
 var permit_reg := ""
@@ -166,6 +168,25 @@ func sell(type: String, qty: int, from: Inventory = null) -> void:
 	SkillSystem.train(trader(), "trade", 2.0)
 	book("Sale: %s ×%d" % [ItemSystem.item(type).display_name, sold], total)
 
+## Sell from the Barter Zone: needs the online terminal, nothing has to be carried
+func sell_barter(type: String, qty: int, inv: Inventory) -> void:
+	if not terminal_online():
+		GameState.toast("The trade terminal is offline.", "bad")
+		return
+	sell(type, qty, inv)
+	ShipSystem.grid.clean_piles()
+
+func sell_barter_all() -> void:
+	if not terminal_online():
+		return
+	for inv in Barter.inventories(ShipSystem.grid):
+		var types := {}
+		for it in inv.items:
+			types[it.type] = true
+		for type in types:
+			sell(type, 9999, inv)
+	ShipSystem.grid.clean_piles()
+
 func sell_all() -> void:
 	var t := terminal()
 	if t == null:
@@ -185,13 +206,20 @@ func buy(type: String, qty: int) -> void:
 		GameState.toast("The trade terminal is offline.", "bad")
 		return
 	var price := buy_price(type)
-	var n := mini(mini(qty, credits / price), t.inv.room(type))
+	var spot := Barter.drop_spot(ShipSystem.grid) if buy_to_barter else Vector2i(-1, -1)
+	if buy_to_barter and spot.x < 0:
+		GameState.toast("No free tile in the Barter Zone: mark floor with the “Barter zone” tool.", "bad")
+		return
+	var n := mini(qty, credits / price) if spot.x >= 0 else mini(mini(qty, credits / price), t.inv.room(type))
 	if n <= 0:
 		GameState.toast("Not enough credits." if credits < price else "There is no room left in the terminal.")
 		return
 	credits -= n * price
 	supply[type] = supply.get(type, 0.0) - n * 0.5
-	t.inv.add(type, n, 100.0)
+	if spot.x >= 0:
+		ShipSystem.grid.drop_items(spot, type, n, 100.0)
+	else:
+		t.inv.add(type, n, 100.0)
 	SkillSystem.train(trader(), "trade", 1.0)
 	book("Purchase: %s ×%d" % [ItemSystem.item(type).display_name, n], -n * price)
 

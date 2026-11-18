@@ -39,6 +39,10 @@ func _draw() -> void:
 			var i := g.idx(Vector2i(x, y))
 			if g.cables[i] == 1:
 				_draw_cable(g, Vector2i(x, y))
+	# Barter Zone: amber frame on the marked tiles
+	for i in g.barter:
+		if Barter.valid(g, int(i)):
+			draw_rect(_rect(g.pos(int(i))).grow(-1.0), Color(0.95, 0.64, 0.23, 0.55), false, 1.5)
 	for i in g.piles:
 		_draw_pile(g.pos(i))
 	for i in g.devices:

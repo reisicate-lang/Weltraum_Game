@@ -15,6 +15,7 @@ const TOOLS := [
 	["remove", "Demolish", "U", "Layer by layer: device, cable, wall/door, floor. Returns parts."],
 	["cancel", "Cancel plan", "C", "Removes build plans. Right-click works too."],
 	["orders", "Orders", "Y", "Pick an action and filters below, then click a tile or drag over an area. Only objects matching an active filter get the order."],
+	["barter", "Barter zone", "–", "Click or drag over floor: marks the Barter Zone (dragging over marked tiles unmarks). While docked, whatever lies there is sold through the terminal, and purchases can be sent there."],
 ]
 const COL_PANEL := Color(0.05, 0.07, 0.106, 0.92)
 const COL_AMBER := Color(0.95, 0.64, 0.23)
@@ -877,7 +878,7 @@ func _refresh_window() -> void:
 	var E := EconomySystem
 	var t := E.terminal()
 	var c: CrewMember = GameState.selected if GameState.selected != null else CrewSystem.player()
-	var key := JSON.stringify([talk_line, station_reply, CrewSystem.crew.size(), window_kind, trade_tab, E.credits, E.debt, t.inv.to_data() if t != null else [], c.inv.to_data() if c != null else [], E.log_entries.size(), SalvageSystem.wreck_name, int(GameState.time / 60.0)])
+	var key := JSON.stringify([talk_line, station_reply, CrewSystem.crew.size(), window_kind, trade_tab, E.credits, E.debt, t.inv.to_data() if t != null else [], c.inv.to_data() if c != null else [], E.log_entries.size(), SalvageSystem.wreck_name, int(GameState.time / 60.0), E.buy_to_barter, Barter.inventories(ShipSystem.grid).map(func(x): return x.to_data())])
 	if key == _last_window:
 		return
 	_last_window = key
@@ -935,6 +936,17 @@ func _refresh_window() -> void:
 				window_box.add_child(_row("Total: %d Cr" % total, [_button("Sell all", E.sell_all)], COL_AMBER))
 			else:
 				window_box.add_child(_label("The terminal is empty.", COL_MUTED, 12))
+			# Barter Zone (Ostranauts Trading 2.1): sell straight from the marked tiles
+			var zone_invs: Array = Barter.inventories(ShipSystem.grid)
+			if not zone_invs.is_empty():
+				window_box.add_child(_label("Barter Zone – no need to carry it here", COL_MUTED, 11))
+				var ztotal := 0
+				for zinv in zone_invs:
+					for it in zinv.items:
+						ztotal += E.sell_price(it)
+						window_box.add_child(_trade_row("%s ×%d · %d %%" % [ItemSystem.item(it.type).display_name, it.qty, int(it.cond)], it,
+							[_offer_button("Offer", E.sell_price(it), E.sell_barter.bind(it.type, it.qty, zinv))]))
+				window_box.add_child(_row("Barter Zone total: %d Cr" % ztotal, [_button("Sell zone", E.sell_barter_all)], COL_AMBER))
 			if c != null and not c.inv.items.is_empty():
 				# Sell straight from the pack at the market counter
 				var at_market := talk_role == "market"
@@ -943,7 +955,10 @@ func _refresh_window() -> void:
 					var btn: Button = _offer_button("Offer", E.sell_price(it), E.sell.bind(it.type, it.qty, c.inv)) if at_market else _button("Put in", _put_terminal.bind(it.type, it.qty))
 					window_box.add_child(_trade_row("%s ×%d" % [ItemSystem.item(it.type).display_name, it.qty], it, [btn]))
 		"buy":
-			window_box.add_child(_label("Purchases go into the terminal. Prices change every day.", COL_MUTED, 12))
+			window_box.add_child(_row("Purchases go into the %s. Prices change every day." % ("Barter Zone" if E.buy_to_barter else "terminal"), [_button("Send to Barter Zone: %s" % ("ON" if E.buy_to_barter else "OFF"), func():
+				E.buy_to_barter = not E.buy_to_barter
+				_last_window = ""
+				_refresh_window())], COL_MUTED))
 			var ids: Array = ItemSystem.items.keys().filter(func(x): return not RemovalSystem.is_packed(x) or x in E.SHOP_PACKED)
 			ids.sort()
 			for id in ids:
