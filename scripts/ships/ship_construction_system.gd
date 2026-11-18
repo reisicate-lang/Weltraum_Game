@@ -129,6 +129,9 @@ func place(tool: String, p: Vector2i) -> bool:
 		job.merge({"kind": "repair", "need": Config.REPAIR_TIME})
 	elif tool == "remove":
 		job.merge({"kind": "remove", "need": Config.REMOVE_TIME})
+		# Asteroid rock: only with the Gott Mining Tool (Ostranauts Asteroid Mining)
+		if ShipSystem.grid.zone[i] == 1 and SalvageSystem.is_asteroid() and ShipSystem.grid.tiles[i] == ShipGrid.Tile.WALL:
+			job.tool = Mining.TOOL
 	elif tool == "cable":
 		job.merge({"kind": "cable", "need": Config.CABLE_TIME})
 	elif tool.begins_with("install:"):
@@ -281,6 +284,7 @@ func salvage(p: Vector2i, worker: CrewMember = null) -> Array:
 	var yield_bonus := SkillSystem.effect(worker, "demolish_yield") if worker != null else 0.0
 	# Asteroid: rock yields ice and ore
 	if t == ShipGrid.Tile.WALL and g.zone[i] == 1 and SalvageSystem.is_asteroid():
+		Mining.tire(worker)
 		var mr := Mining.roll()   # Asteroid Mining (Ostranauts wiki)
 		out.append([mr[0], 1 + (1 if randf() < yield_bonus else 0), mr[2]])
 		return out

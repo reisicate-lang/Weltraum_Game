@@ -155,6 +155,8 @@ func _initialize() -> void:
 	_check("3: Asteroid docked", rock2.x >= 0)
 	var mjob := {"kind": "remove", "x": rock2.x, "y": rock2.y}
 	_check("3: Mining bonus without acquiring it again (+%.0f)" % SK.work_value_bonus(mira, mjob), is_equal_approx(SK.work_value_bonus(mira, mjob), 4.0))
+	_check("3: Demolish job on asteroid rock asks for the Gott Mining Tool", CS.place("remove", rock2) and String(CS.jobs[ship.grid.idx(rock2)].get("tool", "")) == "mining_tool")
+	CS.cancel(CS.jobs[ship.grid.idx(rock2)])
 	Config.ENABLE_WRECK = false
 
 	# Asteroid Mining (Ostranauts wiki): minerals with wiki values, kiosk prices, reputation
@@ -177,6 +179,19 @@ func _initialize() -> void:
 	EE.buy("mineral_gold", 1)
 	_check("Minerals are not sold in the market (only mined)", EE.credits == c_before)
 	_check("Reputation +1 per 12 000 Cr sold at a kiosk, none elsewhere", is_equal_approx(Mining.reputation_for("mineral_gold", "l4", 24000), 2.0) and Mining.reputation_for("mineral_gold", "tycho", 24000) == 0.0)
+
+	# Gott Mining Tool (Ostranauts wiki): needed for mining, every use tires
+	_check("Gott Mining Tool: 2 500 Cr, 8 kg, in the market", IS.item("mining_tool").value == 2500 and is_equal_approx(IS.item("mining_tool").weight, 8.0))
+	_check("Mining rock (MINE/Dismantle) needs the mining tool, not the crowbar", R2.tool_for("dismantle", "tile:rock") == "mining_tool")
+	var miner: CrewMember = root.get_node("CrewSystem").player()
+	miner.inv.take("mining_tool", 99)
+	var rjob := {"kind": "remove", "tool": "mining_tool"}
+	_check("Without the tool: no mining job", not R2.worker_ok(miner, rjob))
+	miner.inv.add("mining_tool", 1, 100.0)
+	_check("With the tool in the pack: mining allowed", R2.worker_ok(miner, rjob))
+	miner.needs.sleep = 50.0
+	Mining.tire(miner)
+	_check("Every use tires: energy 50 → %.1f" % miner.needs.sleep, is_equal_approx(miner.needs.sleep, 49.0))
 
 	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

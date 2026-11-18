@@ -223,10 +223,8 @@ func debris(key: String) -> Dictionary:
 func has_tool(c: CrewMember, tool: String) -> bool:
 	return tool == "" or c.inv.count(tool) > 0
 
-## May this character take the job? (tool in the pack)
+## May this character take the job? (tool in the pack; also Demolish of asteroid rock)
 func worker_ok(c: CrewMember, job: Dictionary) -> bool:
-	if not job.kind in KINDS:
-		return true
 	return has_tool(c, String(job.get("tool", "")))
 
 ## Reason why the action is not possible here ("" = possible)
@@ -409,7 +407,8 @@ func finish(job: Dictionary, worker: CrewMember, worker_pos: Vector2i) -> void:
 			packed = [packed_id(key), 1, cond, d]
 		"dismantle":
 			if key == "tile:rock":
-				# Asteroid Mining (Ostranauts wiki): a random mineral
+				# Asteroid Mining (Ostranauts wiki): a random mineral; the mining tool tires
+				Mining.tire(worker)
 				var mr := Mining.roll()
 				results.append([mr[0], mr[1], mr[2], null])
 			else:

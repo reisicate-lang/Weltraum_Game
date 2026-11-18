@@ -17,6 +17,20 @@ Related: ostranauts-orders.md (MINE action), ostranauts-trading.md (5 Bulk Tradi
 - Explosives must be placed and armed, then move to a safe distance. Damaged explosives have a fail-safe kill-switch; poorly maintained charges are a hazard to the player and nearby vessels.
 - Possible yields: Iron, Olivine (magnesium), Carbon, Silicates, Platinum, Iridium, Palladium, Cobalt, Gold, Wolfram (iron, manganese, tungsten), Hydrates (water source), Void Opal, Gangue Material.
 
+### 1.1 Gott Mining Tool (wiki page "Gott Mining Tool")
+"A Gott handheld power mining pick with inertial compensators. Baseline tool to mine most mineral deposits in micro-gravity."
+| Stat | Value |
+|---|---|
+| Category | Tools |
+| Base Price | 2500.0 |
+| Max. Damage | 6.0 |
+| Max. Dismantle Progress | 130.0 |
+| Mass | 8.0 |
+| Dismantle (50 % each) | Component: Heat Sink 1, Component: Motor 1, Small Electronic Parts 1, Small Mechanical Parts 1 |
+| Repair | Screwdriver/Drill + Soldering Iron, no materials |
+| Inventory | 1×2 slots; needs a charged **Gott brand battery** |
+The "Halvorson Mining Tool" page has no content yet.
+
 ## 2 Storage and Transport
 - Mined minerals are **physical items**, sold through **faction kiosks**, not via Cargo Pods.
 - Store in backpacks, load backpacks onto carts; heavily loaded carts are hard to move and slow you down.

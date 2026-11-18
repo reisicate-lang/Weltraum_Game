@@ -12,6 +12,15 @@ static func data() -> Dictionary:
 		_data = JSON.parse_string(f.get_as_text()) if f != null else {"yield": {}}
 	return _data
 
+## Gott Mining Tool (Ostranauts wiki): needed for mining, every use adds 0.1 fatigue.
+## In this game fatigue is the energy need (0–100): −1 energy per mined tile (our scale).
+const TOOL := "mining_tool"
+const FATIGUE := 1.0
+
+static func tire(worker: CrewMember) -> void:
+	if worker != null:
+		worker.needs.sleep = maxf(0.0, worker.needs.sleep - FATIGUE)
+
 static func is_mineral(type: String) -> bool:
 	return type.begins_with("mineral_")
 

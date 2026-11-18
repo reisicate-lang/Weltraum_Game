@@ -126,6 +126,7 @@ und werden Schritt für Schritt übertragen.
 - [x] Balancing: Wochen-Simulation (Hilfsskript inzwischen entfernt) – Bergung allein reicht knapp für die erste Rate (Bergungsrecht 200 Cr, Verkauf 85 %)
 - [ ] Sprites aus Grafikdateien
 - [x] Gerätewerte nach dem Wiki-Spickzettel „Value/Space“ (Base Value 1:1, z. B. Nav Station 16.880, Halvorson-Thruster 5.520, CO2 AtmoScrubber 14.326, Ship Battery 2.623); Geräte ohne Wiki-Gegenstück behalten den Wert aus den Baukosten; Startkredit 211.000 Cr (≈ Schiffswert), Rate 13.200 Cr/Woche, Werftpreise Lumen 208.000 / Bairn 240.000 (≈ Schiffswert, kein Kauf-Verkauf-Gewinn)
+- [x] Gott Mining Tool nach Wiki: nötig zum Abbau, jeder Einsatz ermüdet
 - [x] Asteroid Mining nach Wiki: 16 Mineralien mit Wiki-Werten, Kiosk-Preise und Ruf; neue Notiz docs/ostranauts/ostranauts-asteroid-mining.md
 - [x] Visa und Hauskauf nach Wiki: Fraktionen auf Stationen abgebildet, Visa-Preise/Bedingungen 1:1, Bürgerrabatt Bulk, Haus mit Strom und Andockplatz
 - [x] Bulk Trading nach Wiki: vier Cargo-Pod-Typen (Wiki-Preise, 1000 kg, eine Ware je Pod), 25 Waren und Marktmatrix aus dem Wiki; Notiz docs/ostranauts/ostranauts-bulk-trading.md

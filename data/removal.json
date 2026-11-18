@@ -77,7 +77,7 @@
    "destroy"
   ],
   "dismantle_time": 3.0,
-  "dismantle_tool": "crowbar",
+  "dismantle_tool": "mining_tool",
   "dismantle": {
    "mineral_regolith": 1
   },
