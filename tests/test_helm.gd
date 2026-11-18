@@ -414,8 +414,31 @@ func _initialize() -> void:
 	_check("3: W gives thrust", (_vrel() - v3 - _grav(60)).length() > 0.5)
 	ui.leave_flight()
 	ui.request_flight(ship.grid.device_at(helm.pos))   # click on the console
-	_check("3: Klick: Einstieg klappt", ui.nav_open and P.helm_at == helm.pos)
+	_check("3: Click: getting in works", ui.nav_open and P.helm_at == helm.pos)
 	ui.leave_flight()
+
+	# Navigation console error (Ostranauts Flying): one timer for all consoles, debugging clears it
+	seat_pilot()
+	_check("Error timer: next error 48–96 h ahead", P.nav_error_at - root.get_node("GameState").time >= 48.0 * 60.0 - 1.0 or P.nav_error)
+	P.clear_nav_error()
+	var due: float = P.nav_error_at
+	_check("After debugging: the next error 48–96 h later", due - root.get_node("GameState").time >= 48.0 * 60.0 - 0.01 and due - root.get_node("GameState").time <= 96.0 * 60.0 + 0.01)
+	P.nav_error_at = root.get_node("GameState").time
+	P._nav_error_tick()
+	_check("Error: every console is blocked (%s)" % P.helm_block_reason(P.operated_helm()), P.nav_error and P.helm_block_reason(P.operated_helm()).begins_with("Navigation console error") and P.pilot_block_reason() != "")
+	_check("Error is in the ship log", String(P.ship_log[P.ship_log.size() - 1].text) == "Navigation console error")
+	var CSY = root.get_node("ShipConstructionSystem")
+	var hp: Vector2i = P.ship_devices("helm")[0].pos
+	CSY.place("debug", hp)
+	var dj: Dictionary = CSY.jobs[ship.grid.idx(hp)]
+	CSY.complete(dj, hp + Vector2i(0, 1))
+	_check("Debugging clears the error", not P.nav_error and P.helm_block_reason(P.operated_helm()) == "")
+	P.nav_error = true
+	root.get_node("SaveSystem").save_game()
+	P.nav_error = false
+	root.get_node("SaveSystem").load_game(true)
+	_check("Saving/loading keeps the error", P.nav_error)
+	P.clear_nav_error()
 
 	print("%d OK, %d Fehler" % [ok_count, fail_count])
 	quit()

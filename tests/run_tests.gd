@@ -199,6 +199,7 @@ func _initialize() -> void:
 	# 10) Space flight: undock, orbit, thrust, dock, travel, fleet, crash
 	var phys = root.get_node("PhysicsSystem")
 	var fleet = root.get_node("FleetSystem")
+	phys.clear_nav_error()   # the time jump to the instalment may have caused a console error: debugged
 	_run(0.1)
 	_check("Docked at Tycho, navigation console has power", phys.docked == "tycho" and phys.helm_ok())
 	_check("Thrust available (%d kN)" % int(phys.max_thrust()), phys.max_thrust() >= 80.0)

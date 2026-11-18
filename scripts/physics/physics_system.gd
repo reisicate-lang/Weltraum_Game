@@ -17,6 +17,13 @@ var autodock: Dictionary = {}   ## {to, t0, t1}
 var match_target := ""          ## match the velocity with this target
 ## Station keeping (Ostranauts Flying 2.1): point at the selected target and bring VREL to 0
 var station_keep := false
+## Navigation console "error" mode (Ostranauts Flying): blocks every console until someone
+## debugs one; it runs on one timer for all consoles, so a second console does not help.
+## The wiki says "occasionally": here every 48–96 game hours (our own choice).
+const NAV_ERROR_MIN_H := 48.0
+const NAV_ERROR_MAX_H := 96.0
+var nav_error := false
+var nav_error_at := -1.0      ## game time (minutes) of the next error; -1 = schedule
 var thrust := 0.0               ## forward (+1) / back (-1), relative to the heading
 var strafe := 0.0               ## right (+1) / left (-1), relative to the heading
 var rot_input := 0.0            ## Rotation thrust: clockwise (+1) / counter-clockwise (-1)
@@ -73,6 +80,8 @@ func reset() -> void:
 	autodock = {}
 	match_target = ""
 	station_keep = false
+	nav_error = false
+	nav_error_at = -1.0
 	stop_inputs()
 	helm_at = NO_HELM
 	angle = 0.0          # new game: nose forward (do not inherit it from the previous game)
@@ -345,7 +354,26 @@ func helm_block_reason(h: Device) -> String:
 		return "This navigation console is broken."
 	if not h.powered:
 		return "This navigation console has no power."
+	if nav_error:
+		return "Navigation console error: debug a console first (right-click it → Debug)."
 	return ""
+
+func _schedule_nav_error() -> void:
+	nav_error_at = GameState.time + randf_range(NAV_ERROR_MIN_H, NAV_ERROR_MAX_H) * 60.0
+
+## Not during a fast travel or an Auto-Dock (they would be cut off midway)
+func _nav_error_tick() -> void:
+	if nav_error_at < 0.0:
+		_schedule_nav_error()
+	elif not nav_error and GameState.time >= nav_error_at and travel.is_empty() and autodock.is_empty() and not ship_devices("helm").is_empty():
+		nav_error = true
+		log_event("Navigation console error")
+		GameState.toast("The navigation console shows an error. Debug it before flying (right-click → Debug).", "bad")
+
+## A finished debug job clears the error on all consoles and starts the timer again
+func clear_nav_error() -> void:
+	nav_error = false
+	_schedule_nav_error()
 
 ## Reason why the pilot cannot give flight commands right now (undocking, fast travel,
 ## Auto-Dock): it needs the operated console, intact and powered. "" = possible.
@@ -422,6 +450,7 @@ func fuel_factor() -> float:
 func step(dt: float) -> void:
 	if crashed:
 		return
+	_nav_error_tick()
 	var s := dt * 60.0
 	var t := secs()
 	if docked != "":
@@ -948,7 +977,7 @@ func to_data() -> Dictionary:
 	return {"x": pos.x, "y": pos.y, "vx": vel.x, "vy": vel.y, "angle": angle, "docked": docked,
 		"travel": _travel_data(),
 		"autodock": autodock, "lock_id": undock_lock_id, "lock_until": undock_lock_until, "ang_vel": ang_vel, "target": target,
-		"ship_log": ship_log, "prox_muted": prox_muted}
+		"ship_log": ship_log, "prox_muted": prox_muted, "nav_error": nav_error, "nav_error_at": nav_error_at}
 
 func _travel_data() -> Dictionary:
 	if travel.is_empty():
@@ -974,6 +1003,8 @@ func from_data(d: Dictionary) -> void:
 	target = String(d.get("target", ""))
 	ship_log.assign(d.get("ship_log", []))
 	prox_muted = bool(d.get("prox_muted", false))
+	nav_error = bool(d.get("nav_error", false))
+	nav_error_at = float(d.get("nav_error_at", -1.0))
 	stop_inputs()
 	helm_at = NO_HELM
 	crashed = false

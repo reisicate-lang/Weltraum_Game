@@ -299,7 +299,9 @@ func complete(job: Dictionary, worker_pos: Vector2i, worker: CrewMember = null) 
 		"repair":
 			DamageSystem.repair(p)
 		"debug":
-			GameState.toast("Navigation console debugged.")
+			var had_error := PhysicsSystem.nav_error
+			PhysicsSystem.clear_nav_error()
+			GameState.toast("Navigation console debugged." + (" The error is cleared." if had_error else ""))
 		"refill":
 			var dev := g.device_at(p)
 			if dev != null:
