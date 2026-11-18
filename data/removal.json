@@ -79,12 +79,11 @@
   "dismantle_time": 3.0,
   "dismantle_tool": "crowbar",
   "dismantle": {
-   "ice": 1,
-   "ore": 1
+   "mineral_regolith": 1
   },
   "hp": 200,
   "debris": {
-   "ore": 1
+   "mineral_gangue": 1
   }
  },
  "airtank": {

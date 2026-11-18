@@ -959,7 +959,7 @@ func _refresh_window() -> void:
 				E.buy_to_barter = not E.buy_to_barter
 				_last_window = ""
 				_refresh_window())], COL_MUTED))
-			var ids: Array = ItemSystem.items.keys().filter(func(x): return (not RemovalSystem.is_packed(x) or x in E.SHOP_PACKED) and E.buy_price(x) > 0 and not String(x).begins_with("permit_"))
+			var ids: Array = ItemSystem.items.keys().filter(func(x): return (not RemovalSystem.is_packed(x) or x in E.SHOP_PACKED) and E.buy_price(x) > 0 and not String(x).begins_with("permit_") and not Mining.is_mineral(String(x)))
 			ids.sort()
 			for id in ids:
 				var f: float = E.prices.get(id, 1.0)

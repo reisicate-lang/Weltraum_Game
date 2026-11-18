@@ -157,5 +157,26 @@ func _initialize() -> void:
 	_check("3: Mining bonus without acquiring it again (+%.0f)" % SK.work_value_bonus(mira, mjob), is_equal_approx(SK.work_value_bonus(mira, mjob), 4.0))
 	Config.ENABLE_WRECK = false
 
+	# Asteroid Mining (Ostranauts wiki): minerals with wiki values, kiosk prices, reputation
+	var IS = root.get_node("ItemSystem")
+	_check("Minerals with wiki values: Regolith 35 (20 kg), Gangue 150 (3 kg), Platinum 15 000, Void Opal 112 000",
+		IS.item("mineral_regolith").value == 35 and is_equal_approx(IS.item("mineral_regolith").weight, 20.0) and IS.item("mineral_gangue").value == 150
+		and is_equal_approx(IS.item("mineral_gangue").weight, 3.0) and IS.item("mineral_platinum").value == 15000 and IS.item("mineral_void_opal").value == 112000)
+	var kinds := {}
+	for k in 400:
+		var mr: Array = Mining.roll()
+		kinds[mr[0]] = true
+	_check("Mining yields mostly common minerals (%d kinds in 400 rolls)" % kinds.size(), kinds.has("mineral_regolith") and kinds.has("mineral_silicates") and kinds.size() >= 8)
+	var R2 = root.get_node("RemovalSystem")
+	_check("Rock: destroying leaves gangue", R2.debris("tile:rock").keys() == ["mineral_gangue"] and int(R2.debris("tile:rock").mineral_gangue) == 1)
+	_check("Full price at the kiosks (L4, Kármán), 60 % elsewhere", Mining.price_factor("mineral_gold", "l4") == 1.0 and Mining.price_factor("mineral_gold", "karman") == 1.0
+		and is_equal_approx(Mining.price_factor("mineral_gold", "tycho"), 0.6) and Mining.price_factor("plate", "tycho") == 1.0)
+	var EE = root.get_node("EconomySystem")
+	EE.credits = 100000
+	var c_before: int = EE.credits
+	EE.buy("mineral_gold", 1)
+	_check("Minerals are not sold in the market (only mined)", EE.credits == c_before)
+	_check("Reputation +1 per 12 000 Cr sold at a kiosk, none elsewhere", is_equal_approx(Mining.reputation_for("mineral_gold", "l4", 24000), 2.0) and Mining.reputation_for("mineral_gold", "tycho", 24000) == 0.0)
+
 	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

@@ -85,6 +85,7 @@ func market_price(type: String) -> float:
 	if st.get("black", false) and type == "datachip":
 		local *= 2.0
 	local *= float(st.get("buys", {}).get(type, 1.0))
+	local *= Mining.price_factor(type, String(st.get("id", "")))
 	if st.get("black", false) and ItemSystem.item(type).contraband:
 		local *= 2.5
 	return ItemSystem.item(type).value * prices.get(type, 1.0) * glut * local * QuestSystem.price_factor(type)
@@ -163,6 +164,10 @@ func sell(type: String, qty: int, from: Inventory = null) -> void:
 	credits += total
 	supply[type] = supply.get(type, 0.0) + sold
 	QuestSystem.change_rep(QuestSystem.faction_of(PhysicsSystem.docked), 0.5)
+	# Minerals at a faction kiosk: +1 reputation per 12 000 Cr (Ostranauts Asteroid Mining)
+	var mrep := Mining.reputation_for(type, PhysicsSystem.docked, total)
+	if mrep > 0.0:
+		QuestSystem.change_rep(QuestSystem.faction_of(PhysicsSystem.docked), mrep)
 	if ItemSystem.item(type).contraband:
 		QuestSystem.change_rep("syndicate", 3.0)
 		QuestSystem.change_rep("patrol", -2.0)
@@ -208,7 +213,7 @@ func buy(type: String, qty: int) -> void:
 		GameState.toast("The trade terminal is offline.", "bad")
 		return
 	var price := buy_price(type)
-	if price <= 0 or type.begins_with("permit_"):
+	if price <= 0 or type.begins_with("permit_") or Mining.is_mineral(type):
 		GameState.toast("The market does not sell that.")
 		return
 	var spot := Barter.drop_spot(ShipSystem.grid) if buy_to_barter else Vector2i(-1, -1)

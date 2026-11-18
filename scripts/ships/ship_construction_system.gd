@@ -281,7 +281,8 @@ func salvage(p: Vector2i, worker: CrewMember = null) -> Array:
 	var yield_bonus := SkillSystem.effect(worker, "demolish_yield") if worker != null else 0.0
 	# Asteroid: rock yields ice and ore
 	if t == ShipGrid.Tile.WALL and g.zone[i] == 1 and SalvageSystem.is_asteroid():
-		out.append(["ice" if randf() < 0.55 else "ore", 1 + (1 if randf() < yield_bonus else 0), randf_range(70.0, 100.0)])
+		var mr := Mining.roll()   # Asteroid Mining (Ostranauts wiki)
+		out.append([mr[0], 1 + (1 if randf() < yield_bonus else 0), mr[2]])
 		return out
 	match t:
 		ShipGrid.Tile.WALL: out.append(["plate", 2, minf(100.0, randf_range(40.0, 90.0) * g.cond[i] / 100.0 * (1.0 + yield_bonus))])

@@ -208,7 +208,7 @@ func _initialize() -> void:
 			rock = g.pos(i)
 			break
 	var loot: Array = root.get_node("ShipConstructionSystem").salvage(rock, crew.player())
-	_check("Rock yields ice or ore", not loot.is_empty() and loot[0][0] in ["ice", "ore"])
+	_check("Rock yields a mineral (%s)" % (loot[0][0] if not loot.is_empty() else "-"), not loot.is_empty() and String(loot[0][0]).begins_with("mineral_"))
 	phys.docked = "hephaistos"
 	var ore_heph: float = econ.market_price("ore")
 	phys.docked = "tycho"

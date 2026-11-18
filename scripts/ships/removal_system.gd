@@ -408,9 +408,14 @@ func finish(job: Dictionary, worker: CrewMember, worker_pos: Vector2i) -> void:
 					GameState.toast("%s broke while being uninstalled." % dev.data().display_name, "bad")
 			packed = [packed_id(key), 1, cond, d]
 		"dismantle":
-			var y := dismantle_yield(key)
-			for type in y:
-				results.append([type, int(y[type]), clampf(cond, 10.0, 100.0), null])
+			if key == "tile:rock":
+				# Asteroid Mining (Ostranauts wiki): a random mineral
+				var mr := Mining.roll()
+				results.append([mr[0], mr[1], mr[2], null])
+			else:
+				var y := dismantle_yield(key)
+				for type in y:
+					results.append([type, int(y[type]), clampf(cond, 10.0, 100.0), null])
 		"destroy":
 			var y := debris(key)
 			for type in y:

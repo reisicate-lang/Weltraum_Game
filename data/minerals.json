@@ -1,0 +1,31 @@
+{
+ "_note": "Asteroid Mining (Ostranauts wiki page 'Asteroid Mining'): names, values (pristine column) and weights from the wiki. The yield weights are our own choice (the wiki names none). kiosks = faction kiosks paying full price (wiki: BCRS/CCRE and BCER/Galilean → L4 and Kármán Ring); elsewhere other_factor. Reputation: +1 per rep_per value sold at a kiosk (wiki: about 1 point per $12,000).",
+ "kiosks": [
+  "l4",
+  "karman"
+ ],
+ "other_factor": 0.6,
+ "rep_per": 12000,
+ "cond": [
+  40.0,
+  95.0
+ ],
+ "yield": {
+  "mineral_regolith": 25,
+  "mineral_carbon": 14,
+  "mineral_hydrates": 10,
+  "mineral_gangue": 15,
+  "mineral_olivine": 8,
+  "mineral_silicates": 12,
+  "mineral_methane_ice": 4,
+  "mineral_meteoric_iron": 4,
+  "mineral_water_ice": 5,
+  "mineral_wolfram": 1.5,
+  "mineral_cobalt": 0.8,
+  "mineral_palladium": 0.4,
+  "mineral_gold": 0.3,
+  "mineral_iridium": 0.2,
+  "mineral_platinum": 0.15,
+  "mineral_void_opal": 0.02
+ }
+}
