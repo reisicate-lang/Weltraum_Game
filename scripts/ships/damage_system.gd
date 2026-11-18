@@ -45,6 +45,9 @@ func strike() -> void:
 		return
 	var p: Vector2i = hull.pick_random()
 	var i := g.idx(p)
+	# Ostranauts: a micrometeorite strike sets fast-forward back to ×1 (a pause stays a pause)
+	if TimeSystem.speed_index > 1:
+		TimeSystem.set_speed(1)
 	var was_door := g.tiles[i] == ShipGrid.Tile.DOOR
 	g.cond[i] -= randf_range(35.0, 80.0)
 	effects.append({"pos": p, "start": Time.get_ticks_msec()})
@@ -112,6 +115,7 @@ func repair(p: Vector2i) -> void:
 		dev.damaged = false
 	else:
 		g.cond[g.idx(p)] = 100.0
+		g.temp_seal.erase(g.idx(p))   # a repaired "Ripley" seal becomes a proper wall
 
 func _auto_repair() -> void:
 	var g := ShipSystem.grid

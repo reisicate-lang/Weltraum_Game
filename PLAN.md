@@ -126,6 +126,7 @@ und werden Schritt für Schritt übertragen.
 - [x] Balancing: Wochen-Simulation (Hilfsskript inzwischen entfernt) – Bergung allein reicht knapp für die erste Rate (Bergungsrecht 200 Cr, Verkauf 85 %)
 - [ ] Sprites aus Grafikdateien
 - [x] Gerätewerte nach dem Wiki-Spickzettel „Value/Space“ (Base Value 1:1, z. B. Nav Station 16.880, Halvorson-Thruster 5.520, CO2 AtmoScrubber 14.326, Ship Battery 2.623); Geräte ohne Wiki-Gegenstück behalten den Wert aus den Baukosten; Startkredit 211.000 Cr (≈ Schiffswert), Rate 13.200 Cr/Woche, Werftpreise Lumen 208.000 / Bairn 240.000 (≈ Schiffswert, kein Kauf-Verkauf-Gewinn)
+- [x] Notfälle nach Wiki: Einschlag setzt ×1, Oxygen Candle, „Ripley“-Hüllensiegel; Notiz docs/ostranauts/ostranauts-emergencies.md
 - [x] Docking and Refuel Services nach Wiki: alles auffüllen und laden gegen Gebühr; Druckanzug: früher umkehren, EVA bevorzugt
 - [x] Gott Mining Tool nach Wiki: nötig zum Abbau, jeder Einsatz ermüdet
 - [x] Asteroid Mining nach Wiki: 16 Mineralien mit Wiki-Werten, Kiosk-Preise und Ruf; neue Notiz docs/ostranauts/ostranauts-asteroid-mining.md
@@ -151,6 +152,7 @@ und werden Schritt für Schritt übertragen.
 - `tests/test_systems.gd` – Temperatur, Feuer, Wasser, Anbau, Chemie (21)
 - `tests/test_world.gd` – Crew-Beziehungen, Aufträge, Fraktionen, Einstellungen, Mods, Speicherplätze, neue Orte, Ziele (32)
 - `tests/test_stations.gd` – begehbare Stationen: Aufbau, Luft, Gespräche, Verkauf, Speichern, Abdocken (36)
+- `tests/test_emergency.gd` – Oxygen Candle, „Ripley“-Siegel, Einschlag und Spieltempo, Speichern (11)
 - `tests/test_residency.gd` – Visa und Haus: Preise, Bedingungen, Kiosk-Regel, Rabatt, Strom, Gebühr, Anzeige, Speichern (18)
 - `tests/test_bulk.gd` – Bulk Trading: Wiki-Pods und -Waren, Pod-Ladungen, Schutzklassen, Masse, Ausbausperre, Marktpreise, Speichern, Cargo-Tab (20)
 - `tests/test_wear.gd` – Worn/Damaged: Kosten der Reparatur, Anzeige, Verschleiß vs. Einschlag, Speichern (9)

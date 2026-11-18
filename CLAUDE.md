@@ -46,5 +46,8 @@ Reference data for residential status (visa types/costs/requirements, embassy ki
 Reference data for bulk trading (cargo kiosk, cargo pods 1000 kg, station market matrix, goods prices/masses/protection):
 @docs/ostranauts/ostranauts-bulk-trading.md
 
+Reference data for micrometeorites and emergency items (Oxygen Candle, "Ripley" seal) and hygiene:
+@docs/ostranauts/ostranauts-emergencies.md
+
 Reference data for asteroid mining (tethering, mining tools/explosives, mineral values and weights, kiosk reputation):
 @docs/ostranauts/ostranauts-asteroid-mining.md

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "ripley_seal"
+display_name = "“Ripley” Temporary Blister Seal Wall"
+weight = 4.0
+volume = 2.0
+value = 79
+description = "Temporarily seals a wall breached by a micrometeorite (Ostranauts). In your inventory: Seal breach – next to a hole in the hull. Holds for 60 minutes; repair the wall before then, or it bursts open again."
+refill = {}

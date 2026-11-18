@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "oxygen_candle"
+display_name = "Oxygen Candle"
+weight = 1.8
+volume = 0.5
+value = 360
+description = "An emergency, single-use device that chemically generates oxygen from lithium perchlorate once its spring hammer is struck (Ostranauts). In your inventory: Activate – it releases oxygen where you stand for 60 minutes. Most effective in small, closed rooms."
+refill = {}

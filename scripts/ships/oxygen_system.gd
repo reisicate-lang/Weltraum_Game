@@ -7,6 +7,7 @@ func step(dt: float) -> void:
 	var g := ShipSystem.grid
 	# Pressure alarms switch the machines in their room (Ostranauts Ideal Atmosphere 3)
 	Hvac.update(g)
+	Emergency.step(g, dt)
 	for i in g.devices:
 		var dev: Device = g.devices[i]
 		if dev.broken:

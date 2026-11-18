@@ -65,13 +65,14 @@ func _initialize() -> void:
 	var st: Dictionary = P.loc_state(P.loc("tycho"), P.secs())
 	P.pos = st.pos
 	P.vel = st.vel + Vector2(0.05, 0.0)
+	seed(4242)   # the collision hits the hull at random spots: fixed, so docking afterwards is reproducible
 	P._check_hazards()
 	var last: Dictionary = P.ship_log[P.ship_log.size() - 1]
 	_check("Log: collision (%s)" % last.text, String(last.text).begins_with("Collision with Tycho") and String(last.text).contains("m/s"))
 
 	# 5) Docking: log
-	P.dock("tycho", true)
-	_check("Log: “Docked: Tycho…”", String(P.ship_log[P.ship_log.size() - 1].text).begins_with("Docked: Tycho"))
+	var dock_ok: bool = P.dock("tycho", true)
+	_check("Log: “Docked: Tycho…” (docking %s)" % str(dock_ok), String(P.ship_log[P.ship_log.size() - 1].text).begins_with("Docked: Tycho"))
 
 	# 6) At most 50 entries, saving/loading
 	for k in 60:
