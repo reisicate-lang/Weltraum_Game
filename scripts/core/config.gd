@@ -52,7 +52,10 @@ const AIR_CO2 := 0.04
 ## Ostranauts "Ideal Atmosphere": O2 ~20 kPa (below 20 → hypoxia), N2 ~80, total ~100 kPa,
 ## CO2 at most 0.5 kPa (more → hypercapnia), 290–300 K
 const O2_OK := 20.5          ## below: warning (yellow in the air view)
-const O2_LOW := 20.0         ## below: hypoxia
+const O2_LOW := 20.0         ## below: hypoxia (wiki) – warning, alarm, red in the air view
+## Below this the air need drops (suffocation) and the crew counts the air as unsafe. Between
+## 16 and 20 kPa the hypoxia only warns: a ship that just lost a bit of air must not kill.
+const O2_DANGER := 16.0
 const CO2_MAX := 0.5         ## target maximum: above it the air view turns yellow
 const CO2_BAD := 3.0         ## above: hypercapnia damage (the wiki names no value)
 const BREATH_O2 := 0.12      ## kPa O2 per minute and person

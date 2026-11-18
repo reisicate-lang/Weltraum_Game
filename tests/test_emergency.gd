@@ -76,6 +76,19 @@ func _initialize() -> void:
 	DS.strike()
 	_check("Strike while paused: stays paused", TS.speed_index == 0)
 
+	# Hypoxia (wiki: below 20 kPa) only warns; suffocation starts below 16 kPa
+	mira.pos = Vector2(root.get_node("ShipSystem").spawn_point()) + Vector2(0.5, 0.5)
+	var mt: int = g.idx(mira.tile())
+	g.o2[mt] = 17.0
+	mira.needs.air = 100.0
+	mira._update_body(5.0)
+	_check("17 kPa O₂: hypoxia warning only, the air need holds (%.0f)" % mira.needs.air, mira.needs.air >= 99.0 and mira.safe_air(mt))
+	g.o2[mt] = 10.0
+	mira._update_body(1.0)
+	_check("10 kPa O₂: suffocating (%.0f)" % mira.needs.air, mira.needs.air < 90.0 and not mira.safe_air(mt))
+	g.o2[mt] = 21.0
+	mira.needs.air = 100.0
+
 	# 4) Saving/loading keeps candles and seals
 	mira.inv.add("oxygen_candle", 1, 100.0)
 	Emergency.activate_candle(mira)

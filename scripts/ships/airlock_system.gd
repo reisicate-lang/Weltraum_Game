@@ -102,6 +102,7 @@ func can_pass(i: int) -> bool:
 	var outside: int = e.outside
 	var target := g.pressure(outside) if outside >= 0 and g.holds_air(outside) else 0.0
 	lock.target = target
+	lock.source = outside if outside >= 0 and g.holds_air(outside) else -1
 	lock.request_until = GameState.time + 0.1
 	return absf(pressure(lock) - target) < Config.AIRLOCK_TOLERANCE
 
@@ -131,6 +132,20 @@ func step(dt: float) -> void:
 			for j in lock.tiles:
 				g.o2[j] += add / n * 0.21
 				g.n2[j] += add / n * 0.79
+			# Empty store (air lost to leaks): equalize with the room behind the door, otherwise
+			# the lock never reaches its pressure and the door stays shut forever
+			var src: int = int(lock.get("source", -1))
+			var rest := amount - add
+			if rest > 0.01 and src >= 0 and g.pressure(src) > avg:
+				var take := minf(rest, (g.pressure(src) - avg) * 0.5)
+				var ps := maxf(0.001, g.pressure(src))
+				var fo := g.o2[src] / ps
+				var fn := g.n2[src] / ps
+				g.o2[src] -= take * fo
+				g.n2[src] -= take * fn
+				for j in lock.tiles:
+					g.o2[j] += take / n * fo
+					g.n2[j] += take / n * fn
 
 func is_pumping(pump: Device) -> bool:
 	ensure()

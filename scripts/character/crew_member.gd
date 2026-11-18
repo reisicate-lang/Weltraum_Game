@@ -83,7 +83,12 @@ func can_reach(p: Vector2i) -> bool:
 	return absi(t.x - p.x) <= 1 and absi(t.y - p.y) <= 1
 
 func safe_air(i: int) -> bool:
-	return grid().holds_air(i) and grid().o2[i] >= Config.O2_LOW and grid().fire[i] == 0 and grid().temp[i] < 50.0
+	return grid().holds_air(i) and grid().o2[i] >= Config.O2_DANGER and grid().fire[i] == 0 and grid().temp[i] < 50.0
+
+## Take the suit off only at a locker of your own ship in breathable air (not in a stale wreck)
+func _safe_locker(d: Device) -> bool:
+	var li := grid().idx(d.pos)
+	return not grid().foreign(li) and safe_air(li)
 
 func is_pressure_suit() -> bool:
 	return suit != null and String(suit.get("kind", "eva")) == "pressure"
@@ -392,8 +397,8 @@ func _update_body(dt: float) -> void:
 			g.o2[i] -= used
 			g.co2[i] += used
 			o2 = g.o2[i]
-		if o2 < Config.O2_LOW:
-			needs.air -= (Config.O2_LOW - o2) / Config.O2_LOW * 40.0 * dt
+		if o2 < Config.O2_DANGER:
+			needs.air -= (Config.O2_DANGER - o2) / Config.O2_DANGER * 40.0 * dt
 		else:
 			needs.air += 30.0 * dt
 	var h := dt / 60.0
@@ -551,7 +556,7 @@ func update(dt: float) -> void:
 			release_job()
 			if suit.o2 >= Config.SUIT_RETURN_AT and _start_device("recharge", func(d): return d.type == "charger" and d.charge > 0.05):
 				return
-			if _start_device("suit_off", func(d): return d.type in Config.SUIT_LOCKERS and d.suit == null and not d.broken):
+			if _start_device("suit_off", func(d): return d.type in Config.SUIT_LOCKERS and d.suit == null and not d.broken and _safe_locker(d)):
 				return
 		SalvageSystem.reveal(self)
 		if carrying == null and auto_mode and _start_need():
@@ -627,7 +632,7 @@ func update(dt: float) -> void:
 			_start_free_time()
 		# Nothing to do: take off the space suit again
 		if job == null and activity == null and suit != null:
-			_start_device("suit_off", func(d): return d.type in Config.SUIT_LOCKERS and d.suit == null and not d.broken)
+			_start_device("suit_off", func(d): return d.type in Config.SUIT_LOCKERS and d.suit == null and not d.broken and _safe_locker(d))
 
 const SHIFTS := ["W", "F", "S"]
 const SLEEP_SHIFT_AT := 80.0
