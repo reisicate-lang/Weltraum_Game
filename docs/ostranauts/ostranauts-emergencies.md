@@ -44,4 +44,5 @@ Conditions: Halvorson Wall SealTemp Installed CheckRoom Solid Sheet.
 ## 4 Hygiene
 - Character condition with a HUD bar (since 0.14). Without cleaning it drops; too low → **Dirty** (later **Filthy**): higher wound infection risk, slower healing, much lower infection recovery.
 - **Wearing sealed suits (EVA or pressure) for long periods accelerates hygiene loss** and reduces sleep comfort.
+- **Hygiene Pack** (wiki page): "A personal hygiene pack, a standard consumable kit with items for cleanliness and grooming on the float" – wet wipes, soap, shaving supplies, deodorant; luxe kits also floss, lip balm, skin cream, nail clippers, sleep mask, ear plugs. Category Medical, **Base Price 80.0**, Max. Damage 1.0, **Mass 0.01**, scraps into Trash 1; interaction SeekHygiene.
 - Cleaning: **Freshen Up** with water (Sink, water containers; uses 1 unit of water); **Hygiene Pack** (consumable kit, turns into trash after one use; sold at station vendors); **Toothbrush** (reusable; freshness buff, must wear off before brushing again).

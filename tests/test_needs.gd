@@ -87,5 +87,23 @@ func _initialize() -> void:
 	_check("Without a suit: thirst 85 leads to the water dispenser", m._start_need() and m.activity.need == "water")
 	m.stop_activity()
 
+	# Hygiene (Ostranauts wiki): suits make you dirty faster, Dirty heals slower, Hygiene Pack
+	var hm: CrewMember = root.get_node("CrewSystem").player()
+	hm.needs.hygiene = 80.0
+	hm.suit = null
+	hm._update_body(60.0)
+	var plain: float = 80.0 - hm.needs.hygiene
+	hm.needs.hygiene = 80.0
+	hm.suit = {"o2": 100.0, "battery": 100.0}
+	hm._update_body(60.0)
+	var suited: float = 80.0 - hm.needs.hygiene
+	hm.suit = null
+	_check("In a sealed suit hygiene drops twice as fast (%.2f vs %.2f per hour)" % [suited, plain], is_equal_approx(suited, plain * Config.SUIT_HYGIENE_FACTOR))
+	hm.needs.hygiene = 10.0
+	_check("Hygiene 10: Dirty", hm.is_dirty())
+	hm.inv.add("hygiene_pack", 1, 100.0)
+	_check("Hygiene Pack (80 Cr): used up, hygiene +70, no longer dirty", root.get_node("ItemSystem").item("hygiene_pack").value == 80 and hm.use_hygiene_pack()
+		and is_equal_approx(hm.needs.hygiene, 80.0) and hm.inv.count("hygiene_pack") == 0 and not hm.is_dirty())
+
 	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

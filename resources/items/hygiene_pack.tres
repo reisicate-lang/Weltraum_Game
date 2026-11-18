@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "hygiene_pack"
+display_name = "Hygiene Pack"
+weight = 0.01
+volume = 0.1
+value = 80
+description = "A personal hygiene pack, a standard consumable kit with items for cleanliness and grooming on the float (Ostranauts): wet wipes, soap, shaving supplies, deodorant. Single use; the crew uses one when no sink is in reach."
+refill = {}

@@ -96,6 +96,12 @@ const SUIT_RETURN_AT := 30.0
 const PRESSURE_O2_USE := 100.0 / 20.0
 ## A pressure suit holds little air: turn back earlier (about 12 minutes left)
 const PRESSURE_RETURN_AT := 60.0
+## Hygiene (Ostranauts wiki): sealed suits make you dirty faster; "Dirty" heals slower.
+## Factors and the threshold are our own choice; the wiki names none.
+const SUIT_HYGIENE_FACTOR := 2.0
+const DIRTY_AT := 20.0
+const DIRTY_RECOVERY := 0.5
+const HYGIENE_PACK_GAIN := 70.0
 const SUIT_LOCKERS := ["locker", "pressure_locker"]
 
 ## Airlock

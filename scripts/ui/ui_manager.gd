@@ -1688,6 +1688,8 @@ func _own_section(c: CrewMember, box_open: bool) -> void:
 	for it in c.inv.items:
 		var row := _item_row(it, "Put in" if box_open else "Drop", _transfer.bind(false, it.type, it.qty) if box_open else _drop_own.bind(it.type, it.qty), c.inv._in_hand(it))
 		# Emergency items (Ostranauts): oxygen candle, "Ripley" hull seal
+		if it.type == "hygiene_pack" and not box_open:
+			row.add_child(_button("Use", func(): c.use_hygiene_pack()))
 		if it.type == "oxygen_candle" and not box_open:
 			row.add_child(_button("Activate", Emergency.activate_candle.bind(c)))
 		if it.type == "ripley_seal" and not box_open:

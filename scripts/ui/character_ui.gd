@@ -106,7 +106,7 @@ func refresh() -> void:
 				refresh()))
 	head.add_child(ui._button("✕", toggle))
 	box.add_child(head)
-	box.add_child(ui._label("Stress: " + _stress_text(c) + (" · wages %d Cr/day" % c.salary if c.salary > 0 else "") +
+	box.add_child(ui._label("Stress: " + _stress_text(c) + (" · Dirty (heals slower)" if c.is_dirty() else "") + (" · wages %d Cr/day" % c.salary if c.salary > 0 else "") +
 		(" · death pay in trust %d Cr" % c.death_pay if c.death_pay > 0 else "") +
 		(" · last trained: " + SkillSystem.skill(c.last_trained).skill_name if c.last_trained != "" else ""), ui.COL_MUTED, 12))
 	if not c.is_player and not PhysicsSystem.station().is_empty():

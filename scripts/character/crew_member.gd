@@ -90,6 +90,17 @@ func _safe_locker(d: Device) -> bool:
 	var li := grid().idx(d.pos)
 	return not grid().foreign(li) and safe_air(li)
 
+func is_dirty() -> bool:
+	return needs.hygiene < Config.DIRTY_AT
+
+## Hygiene Pack (Ostranauts wiki): single use, cleans without a sink
+func use_hygiene_pack() -> bool:
+	if inv.count("hygiene_pack") <= 0:
+		return false
+	inv.take("hygiene_pack", 1)
+	needs.hygiene = minf(100.0, needs.hygiene + Config.HYGIENE_PACK_GAIN)
+	return true
+
 func is_pressure_suit() -> bool:
 	return suit != null and String(suit.get("kind", "eva")) == "pressure"
 
@@ -405,6 +416,8 @@ func _update_body(dt: float) -> void:
 	var slow := 0.5 if sleeping else 1.0
 	for k in ["food", "water", "hygiene"]:
 		var tf := TraitSystem.factor(self, "hunger") if k == "food" else (TraitSystem.factor(self, "thirst") if k == "water" else 1.0)
+		if k == "hygiene" and suit != null:
+			tf = Config.SUIT_HYGIENE_FACTOR   # wiki: sealed suits accelerate hygiene loss
 		needs[k] -= Config.NEEDS[k].decay * h * slow * tf
 	if not sleeping:
 		needs.sleep -= Config.NEEDS.sleep.decay * h
@@ -434,7 +447,9 @@ func _update_body(dt: float) -> void:
 	if g.fire[i] == 1:
 		damage += 60.0
 	damage /= TraitSystem.factor(self, "toughness")
-	health = clampf(health - damage * h if damage > 0.0 else health + 1.5 * h * TraitSystem.factor(self, "recovery"), 0.0, 100.0)
+	# Dirty (wiki: slower healing)
+	var heal := 1.5 * h * TraitSystem.factor(self, "recovery") * (Config.DIRTY_RECOVERY if is_dirty() else 1.0)
+	health = clampf(health - damage * h if damage > 0.0 else health + heal, 0.0, 100.0)
 	_update_stress(dt, sleeping)
 	SkillSystem.decay_recent(self, dt)
 	if not unconscious and (health <= 0.0 or needs.air < 10.0):
@@ -979,6 +994,8 @@ func _start_need() -> bool:
 				targets.append(dev.pos)
 				by_pos[dev.pos] = dev
 		var res := ShipSystem.nearest_adjacent(tile(), targets)
+		if not res.ok and need == "hygiene" and use_hygiene_pack():
+			return true
 		if not res.ok:
 			_warn("no-" + need, needs[need] < Config.NEEDS[need].at - 15.0,
 				display_name + ": " + Config.NEEDS[need].name + ", but nothing suitable is reachable.", needs[need] >= Config.NEEDS[need].at)
