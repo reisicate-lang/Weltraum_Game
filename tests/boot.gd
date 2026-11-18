@@ -17,6 +17,8 @@ func _initialize() -> void:
 		quit(1)
 		return
 	var t: Node = script.new()
+	# Random piloting slips would change exact flight values: off in the tests (test_pilot checks them)
+	root.get_node("PhysicsSystem").pilot_drift = false
 	t.root = root
 	t.process_frame = process_frame
 	root.add_child(t)

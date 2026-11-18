@@ -459,6 +459,26 @@ func piloting(c: CrewMember) -> float:
 			v += skills[id].piloting_bonus
 	return maxf(-0.9, v)
 
+## Piloting right now (Ostranauts Flying: well-rested raises it; sleep deprivation and
+## malnutrition lower it). The amounts are our own choice, the wiki only names the direction.
+const PILOT_RESTED_AT := 90.0
+const PILOT_TIRED_AT := 25.0
+const PILOT_HUNGRY_AT := 20.0
+func piloting_state(c: CrewMember) -> float:
+	if c == null:
+		return 0.0
+	var v := 0.0
+	if c.needs.sleep >= PILOT_RESTED_AT:
+		v += 0.1
+	elif c.needs.sleep < PILOT_TIRED_AT:
+		v -= 0.2
+	if c.needs.food < PILOT_HUNGRY_AT or c.needs.water < PILOT_HUNGRY_AT:
+		v -= 0.1
+	return v
+
+func piloting_now(c: CrewMember) -> float:
+	return maxf(-0.9, piloting(c) + piloting_state(c))
+
 ## Fuel saving (the best aboard counts; currently no skill has this effect)
 func pilot_fuel_factor() -> float:
 	return 1.0 - minf(0.35, best_effect("fuel_saving"))

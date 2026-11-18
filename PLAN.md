@@ -126,6 +126,7 @@ und werden Schritt für Schritt übertragen.
 - [x] Balancing: Wochen-Simulation (Hilfsskript inzwischen entfernt) – Bergung allein reicht knapp für die erste Rate (Bergungsrecht 200 Cr, Verkauf 85 %)
 - [ ] Sprites aus Grafikdateien
 - [x] Gerätewerte nach dem Wiki-Spickzettel „Value/Space“ (Base Value 1:1, z. B. Nav Station 16.880, Halvorson-Thruster 5.520, CO2 AtmoScrubber 14.326, Ship Battery 2.623); Geräte ohne Wiki-Gegenstück behalten den Wert aus den Baukosten; Startkredit 211.000 Cr (≈ Schiffswert), Rate 13.200 Cr/Woche, Werftpreise Lumen 208.000 / Bairn 240.000 (≈ Schiffswert, kein Kauf-Verkauf-Gewinn)
+- [x] Piloting im Flug nach Wiki: Zustand (ausgeruht, übermüdet, hungrig) und seitliche Drift bei negativem Wert
 - [x] Worn und Damaged nach Wiki: Verschleiß nur Zeit, Schaden braucht Bauteile (wertvollstes Bauteil + Schrott)
 - [x] Andockgebühr pro Stunde (2 Cr) nach Wiki
 - [x] Barter Zone nach Wiki: markierte Felder, Verkauf ohne Tragen, Käufe dorthin

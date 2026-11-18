@@ -336,7 +336,27 @@ func pilot_crew() -> CrewMember:
 
 ## Piloting factor (1 + Piloting of the flying character): docking limits, RCS thrust, rotation
 func pilot_factor() -> float:
-	return 1.0 + SkillSystem.piloting(pilot_crew())
+	return 1.0 + SkillSystem.piloting_now(pilot_crew())
+
+## Low Piloting (Ostranauts Flying): now and then the cross velocity (VCRS) drifts away
+## from what was set. Checked once per game minute in free flight at the console:
+## chance −Piloting × 0.5, push 0.3–1 m/s sideways. Off in the automatic tests (exact flight values).
+var pilot_drift := true
+var _drift_t := 0.0
+func _pilot_slip(dt: float) -> void:
+	_drift_t += dt
+	if _drift_t < 1.0:
+		return
+	_drift_t -= 1.0
+	var c := pilot_crew()
+	var p := SkillSystem.piloting_now(c)
+	if not pilot_drift or c == null or p >= 0.0 or randf() >= -p * 0.5:
+		return
+	var side := Vector2.from_angle(angle).orthogonal() * (1.0 if randf() < 0.5 else -1.0)
+	var dv := side * randf_range(0.3, 1.0) / 1000.0
+	_vx += dv.x
+	_vy += dv.y
+	GameState.toast("Unsteady hands: the ship drifts sideways (VCRS %+.1f m/s)." % (dv.length() * 1000.0), "bad")
 
 ## Rotational acceleration while steering (with the Piloting factor); 0 without an operated, intact console
 func rot_accel() -> float:
@@ -518,6 +538,8 @@ func step(dt: float) -> void:
 		_helm_fail_warned = false
 	if station_keep and manual:
 		_station_keep()
+	if manual and travel.is_empty() and autodock.is_empty():
+		_pilot_slip(dt)
 	_rotate(s, dt)
 	# Manual thrust takes priority. Without keys an active matching uses
 	# the same thrusters and RCS to reach the target velocity.

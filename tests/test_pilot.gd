@@ -110,7 +110,8 @@ func _initialize() -> void:
 	gs.new_game()
 	root.get_node("TimeSystem").set_speed(0)
 	mira = root.get_node("CrewSystem").player()
-	mira.needs = {"food": 100.0, "water": 100.0, "sleep": 100.0, "hygiene": 100.0, "air": 100.0}
+	# Energy 80: neither well-rested (+0.1) nor tired, so only the skill counts here
+	mira.needs = {"food": 100.0, "water": 100.0, "sleep": 80.0, "hygiene": 100.0, "air": 100.0}
 	mira.auto_mode = false
 	mira.traits.clear()   # traits like Coordinated change Piloting; here only the skill
 	SK.set_progress(mira, "pilot", 0.0)
@@ -223,6 +224,52 @@ func _initialize() -> void:
 	_sit(mira)
 	var tp: float = root.get_node("TraitSystem").sum(mira, "piloting")
 	_check("4: Piloting +0.5 without training again (traits %+.2f), factor %.2f at the console" % [tp, P.pilot_factor()], SK.acquired(mira, "pilot") and is_equal_approx(SK.piloting(mira), 0.5 + tp) and is_equal_approx(P.pilot_factor(), 1.5 + tp) and SK.effect(mira, "fuel_saving") == 0.0)
+
+	# 5) Piloting right now (Ostranauts Flying): rested +0.1, tired −0.2, hungry −0.1
+	var m5: CrewMember = root.get_node("CrewSystem").player()
+	m5.needs.sleep = 95.0
+	m5.needs.food = 90.0
+	m5.needs.water = 90.0
+	var pbase: float = SK.piloting(m5)
+	_check("5: Well-rested: +0.1 (%.2f → %.2f)" % [pbase, SK.piloting_now(m5)], is_equal_approx(SK.piloting_now(m5), pbase + 0.1))
+	m5.needs.sleep = 10.0
+	m5.needs.food = 10.0
+	_check("5: Sleep-deprived and hungry: −0.3 (%.2f)" % SK.piloting_now(m5), is_equal_approx(SK.piloting_now(m5), pbase - 0.3))
+	_check("5: The character sheet value stays unchanged", is_equal_approx(SK.piloting(m5), pbase))
+	# Low piloting: the cross velocity drifts now and then (on here, off in the other tests)
+	seat_pilot()
+	P.undock()
+	# Without piloting traits and without the skill: only the state counts (−0.2 tired)
+	var TSY = root.get_node("TraitSystem")
+	for t in m5.traits.duplicate():
+		if TSY.get_trait(t) != null and TSY.get_trait(t).modifiers.has("piloting"):
+			m5.traits.erase(t)
+	SK.set_progress(m5, "pilot", 0.0)
+	m5.needs.sleep = 10.0
+	P.pilot_drift = true
+	var slips := 0
+	for k in 200:
+		var v0: Vector2 = P.vel
+		P._vx = P.vel.x
+		P._vy = P.vel.y
+		P._drift_t = 1.0
+		P._pilot_slip(0.0)
+		if P._vx != v0.x or P._vy != v0.y:
+			slips += 1
+		P.vel = v0
+	_check("5: Piloting %.2f: the ship slips now and then (%d of 200 minutes)" % [SK.piloting_now(m5), slips], slips > 5 and slips < 100)
+	m5.needs.sleep = 95.0
+	m5.needs.food = 90.0
+	SK.set_progress(m5, "pilot", 100.0)
+	slips = 0
+	for k in 200:
+		P._vx = P.vel.x
+		P._drift_t = 1.0
+		P._pilot_slip(0.0)
+		if P._vx != P.vel.x:
+			slips += 1
+	_check("5: With good piloting: no slips", slips == 0)
+	P.pilot_drift = false
 
 	print("%d OK, %d Fehler" % [ok_count, fail_count])
 	quit()
