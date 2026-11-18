@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "rack_1x2"
+display_name = "Rack 1x2"
+description = "Rakow storage rack over 2 tiles (Ostranauts): open shelving for bags and boxes. 1200 liters. Rotate with G before building."
+power = 0.0
+build_time = 3.0
+cost = {"plate": 3, "pipe": 3}
+item_value = 882
+mass = 0.014
+stock = -1.0
+stock_unit = ""
+capacity = 0.0
+storage = 1200.0
+need = ""
+wears = false
+color = Color(0.45, 0.42, 0.38, 1)
+tech = "furniture"
+category = "furniture"
+rotatable = true
+length = 2

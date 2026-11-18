@@ -82,6 +82,12 @@
   ],
   "medbed": [
    "bed"
+  ],
+  "rack_1x2": [
+   "cargo_container"
+  ],
+  "rack_1x4": [
+   "cargo_container"
   ]
  },
  "types": [

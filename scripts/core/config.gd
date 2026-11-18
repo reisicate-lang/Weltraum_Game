@@ -104,7 +104,7 @@ const DIRTY_RECOVERY := 0.5
 const HYGIENE_PACK_GAIN := 70.0
 const SUIT_LOCKERS := ["locker", "pressure_locker"]
 ## Storage furniture the crew hauls loose items into (crate; Ostranauts Rack and Bulkhead Bin)
-const STORAGE := ["crate", "rack", "bulkhead_bin"]
+const STORAGE := ["crate", "rack", "rack_1x2", "rack_1x4", "bulkhead_bin"]
 
 ## Airlock
 const AIRLOCK_MAX_SIZE := 12 * GRID_SCALE * GRID_SCALE

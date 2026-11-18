@@ -68,7 +68,7 @@ func set_tile(p: Vector2i, t: int) -> void:
 		cables[i] = 0
 		o2[i] = 0.0; n2[i] = 0.0; co2[i] = 0.0
 
-const MAX_DEVICE_LEN := 3
+const MAX_DEVICE_LEN := 4
 
 ## Device on this tile. Multi-tile devices (thruster 1×3) are listed only once in
 ## devices (at the inner tile); their other tiles map to the same instance here.
@@ -192,10 +192,35 @@ func occupied(p: Vector2i) -> bool:
 
 func put_device(dev: Device) -> void:
 	devices[idx(dev.pos)] = dev
+	_long_dirty = true
 
 func remove_device(dev: Device) -> void:
 	if devices.get(idx(dev.pos)) == dev:
 		devices.erase(idx(dev.pos))
+	_long_dirty = true
+
+## Multi-tile furniture standing on floor (Rack 1x2, 1x4): the other tiles are occupied too.
+## Thrusters and docking ports have their own rules.
+static func floor_long(type: String) -> bool:
+	var d := ItemSystem.device(type)
+	return d != null and d.length > 1 and d.width == 1 and d.category != "propulsion"
+
+var _long_cells := {}
+var _long_n := -1
+var _long_dirty := true
+## Tiles covered by floor multi-tile devices besides their anchor (rebuilt when devices change)
+func long_cells() -> Dictionary:
+	if _long_dirty or _long_n != devices.size():
+		_long_cells.clear()
+		for i in devices:
+			var dev: Device = devices[i]
+			if floor_long(dev.type):
+				for c in dev.cells():
+					if c != dev.pos and in_bounds(c):
+						_long_cells[idx(c)] = true
+		_long_n = devices.size()
+		_long_dirty = false
+	return _long_cells
 
 ## Can a device of this type with this rotation sit at p (inner tile)? "" = yes.
 ## 1×3: inner tile = free ship floor, middle = outer wall (stays wall and airtight),
@@ -213,6 +238,15 @@ func mount_reason(type: String, p: Vector2i, rot: int, ignore: Device = null) ->
 		return "The inner tile must be free floor on your own ship."
 	if busy.call(p):
 		return "The inner tile is occupied."
+	if floor_long(type):
+		# Furniture over several tiles: every tile free floor of your own ship
+		for k in range(1, n):
+			var q := p + out * k
+			if get_tile(q) != Tile.FLOOR or zone[idx(q)] != 0:
+				return "Every tile must be free floor on your own ship."
+			if busy.call(q):
+				return "A tile is occupied."
+		return ""
 	if n < 3:
 		return ""
 	var mid := p + out
@@ -246,6 +280,8 @@ func walkable(p: Vector2i) -> bool:
 		return false
 	var i := idx(p)
 	# A docking port is only walkable while it is docked
+	if long_cells().has(i):
+		return false
 	return not devices.has(i) or (devices[i].type == "dockport" and linked.has(i))
 
 func wall_like(p: Vector2i) -> bool:

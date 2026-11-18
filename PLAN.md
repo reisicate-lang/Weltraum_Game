@@ -130,6 +130,7 @@ und werden Schritt für Schritt übertragen.
 - [x] Medizinbett, Nanorobotic First Aid, Gastroenteritis und Lungenentzündung nach Wiki
 - [x] Wunden und Erste Hilfe nach Wiki (Kern): Wunden je Körperteil, Blut, Infektion, verkrüppelte Gliedmaßen, Selbstbehandlung, Pillen; Notiz docs/ostranauts/ostranauts-first-aid.md
 - [x] Halvorson Fire Extinguisher nach Wiki: tragbar, Löschen ×3, Nahkampfwaffe
+- [x] Mehrfeld-Möbel allgemein (Platzierung, belegte Felder, Zeichnung); Rack 1x2 und 1x4 nach Wiki
 - [x] Rack 1x1 und Bulkhead Bin nach Wiki (Werte, Raumtypen, Schleppziel)
 - [x] Hygiene nach Wiki: Anzug verschmutzt schneller, Dirty heilt langsamer, Hygiene Pack
 - [x] Fehler behoben: Ersticken erst unter 16 kPa (Hypoxie unter 20 nur Warnung); Anzug nur in Atemluft des eigenen Schiffs ablegen; Schleuse gleicht bei leerem Pumpenspeicher mit dem Raum aus (vorher Endlos-Warten)
@@ -159,6 +160,7 @@ und werden Schritt für Schritt übertragen.
 - `tests/test_systems.gd` – Temperatur, Feuer, Wasser, Anbau, Chemie (21)
 - `tests/test_world.gd` – Crew-Beziehungen, Aufträge, Fraktionen, Einstellungen, Mods, Speicherplätze, neue Orte, Ziele (32)
 - `tests/test_stations.gd` – begehbare Stationen: Aufbau, Luft, Gespräche, Verkauf, Speichern, Abdocken (36)
+- `tests/test_racks.gd` – Mehrfeld-Racks: Platzierung, Drehung, belegte Felder, Abbau, Bauauftrag, Raumtyp, Speichern (13)
 - `tests/test_medical.gd` – Wunden, Blutung, Infektion/Dirty, Schiene/Verkrüppeln, Schmerzmittel, Feuer, Medizinbett, Nanorobotik, Krankheiten, Gehirnerschütterung, Speichern, Anzeige (29)
 - `tests/test_emergency.gd` – Oxygen Candle, „Ripley“-Siegel, Einschlag und Spieltempo, Speichern (11)
 - `tests/test_residency.gd` – Visa und Haus: Preise, Bedingungen, Kiosk-Regel, Rabatt, Strom, Gebühr, Anzeige, Speichern (18)

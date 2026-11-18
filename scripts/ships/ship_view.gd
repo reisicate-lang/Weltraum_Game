@@ -209,6 +209,24 @@ func _draw_device(dev: Device, ghost: bool = false) -> void:
 func _draw_long_device(dev: Device, ghost: bool) -> void:
 	var d := dev.data()
 	var a := 0.45 if ghost else 1.0
+	if ShipGrid.floor_long(dev.type):
+		# Furniture over several tiles (Rack 1x2, 1x4): one block with shelf lines
+		var box := _rect(dev.pos, 0.1)
+		for c in dev.cells():
+			box = box.merge(_rect(c, 0.1))
+		var fc := d.color
+		fc.a = a
+		draw_rect(box, fc)
+		draw_rect(box, Color(0, 0, 0, 0.5 * a), false, 1.0)
+		var along := Vector2(dev.outward())
+		for k in range(1, d.length):
+			var mid := (Vector2(dev.pos) + Vector2(0.5, 0.5) + along * (k - 0.5)) * S
+			var ortho := along.orthogonal() * S * 0.35
+			draw_line(mid - ortho, mid + ortho, Color(0.23, 0.18, 0.12, a), 1.5)
+		if dev.inv != null and not ghost:
+			var fill := dev.inv.volume() / maxf(1.0, d.storage)
+			draw_rect(Rect2(box.position + Vector2(2, box.size.y - 3), Vector2((box.size.x - 4) * fill, 2)), Color(0.95, 0.64, 0.23, a))
+		return
 	var cells := dev.cells()
 	var ex := Vector2(dev.outward())
 	var side := ex.orthogonal()

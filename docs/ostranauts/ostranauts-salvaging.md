@@ -37,7 +37,7 @@ Related: ostranauts-orders.md (UNIN/DISM/SCRA/HAUL), ostranauts-ship-building.md
 - **Storage space:**
   - No space? Take floors and containers from derelicts to expand your ship.
   - **Racks** effectively **triple** floor space; exterior **Cargo Webbing** = cheap storage outside the hull for less valuable items.
-  - Racks/bins from the wiki item pages: **Rack 1x1** 774 Cr, 7 kg · **Rack 1x2** 882 Cr, 14 kg · **Rack 1x4** 1300 Cr, 28 kg · **Bulkhead Bin** 774 Cr, 7 kg (Rakow; conditions Container, StorageFurniture; racks are Cumbersome/Oversized). Storage volume not stated on the pages.
+  - Racks/bins from the wiki item pages: **Rack 1x1** 774 Cr, 7 kg · **Rack 1x2** 882 Cr, 14 kg · **Rack 1x4** 1300 Cr, 28 kg · **Bulkhead Bin** 774 Cr, 7 kg (Rakow; conditions Container, StorageFurniture; racks are Cumbersome/Oversized). Storage volume not stated on the pages (in this game: 600 / 1200 / 2400 L, our choice).
   - **Testudo "SuperHandy" Equipment Truck** holds several heavy items → moves salvage faster.
 - **Life support:** keep at least a small space with safe atmosphere to fall back to. Docking at a station costs time and sometimes money; dying costs everything.
   - Food, water, toilet, hygiene supplies → stay out **all day**.

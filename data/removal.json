@@ -708,5 +708,27 @@
   "debris": {
    "scrap": 2
   }
+ },
+ "rack_1x2": {
+  "uninstall_time": 2.7,
+  "dismantle_time": 3.8,
+  "dismantle": {
+   "plate": 1
+  },
+  "hp": 120,
+  "debris": {
+   "scrap": 1
+  }
+ },
+ "rack_1x4": {
+  "uninstall_time": 2.7,
+  "dismantle_time": 3.8,
+  "dismantle": {
+   "plate": 1
+  },
+  "hp": 120,
+  "debris": {
+   "scrap": 1
+  }
  }
 }
