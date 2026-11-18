@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "bulkhead_bin"
+display_name = "Bulkhead Bin"
+description = "Rakow storage bin mounted against the bulkhead (Ostranauts). Counts as a storage bin for quarters and as a cargo container. 200 liters."
+power = 0.0
+build_time = 3.0
+cost = {"plate": 2}
+item_value = 774
+mass = 0.007
+stock = -1.0
+stock_unit = ""
+capacity = 0.0
+storage = 200.0
+need = ""
+wears = false
+color = Color(0.4, 0.38, 0.33, 1)
+tech = "furniture"
+category = "furniture"

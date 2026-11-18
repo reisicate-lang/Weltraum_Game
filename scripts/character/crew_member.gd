@@ -785,7 +785,7 @@ func _finish_haul() -> void:
 			return
 		var targets: Array = []
 		for dev in g.devices.values():
-			if dev.type == "crate" and g.zone[g.idx(dev.pos)] == 0:
+			if dev.type in Config.STORAGE and g.zone[g.idx(dev.pos)] == 0:
 				for t in carry:
 					if dev.inv.room(t) > 0:
 						targets.append(dev.pos)

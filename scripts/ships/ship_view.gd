@@ -567,12 +567,12 @@ func _draw_icon(dev: Device, r: Rect2, a: float) -> void:
 		"bed":
 			draw_rect(Rect2(r.position + Vector2(2, 2), Vector2(r.size.x - 4, r.size.y * 0.3)), Color(0.85, 0.87, 0.92, a))
 			draw_rect(Rect2(r.position + Vector2(1, r.size.y * 0.38), Vector2(r.size.x - 2, r.size.y * 0.58)), Color(0.35, 0.45, 0.66, a))
-		"food", "crate", "terminal", "workbench", "chemstation", "locker", "pressure_locker":
+		"food", "crate", "rack", "bulkhead_bin", "terminal", "workbench", "chemstation", "locker", "pressure_locker":
 			draw_rect(r.grow(-u * 0.12), Color(0, 0, 0, 0.25 * a), false, 1.5)
 			match dev.type:
 				"food":
 					draw_line(Vector2(c.x, r.position.y + 3), Vector2(c.x, r.end.y - 3), Color(0.24, 0.2, 0.15, a), 1.5)
-				"crate":
+				"crate", "rack", "bulkhead_bin":
 					draw_line(r.position + Vector2(4, 4), r.end - Vector2(4, 4), Color(0.23, 0.18, 0.12, a), 1.5)
 					var f3 := dev.inv.volume() / maxf(1.0, dev.data().storage) if dev.inv != null else 0.0
 					draw_rect(Rect2(Vector2(r.position.x + 2, r.end.y - 3), Vector2((r.size.x - 4) * f3, 2)), Color(0.95, 0.64, 0.23, a))

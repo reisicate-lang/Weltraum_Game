@@ -71,6 +71,14 @@
   ],
   "light": [
    "light"
+  ],
+  "rack": [
+   "cargo_container"
+  ],
+  "bulkhead_bin": [
+   "storage_bin",
+   "cargo_container",
+   "exterior_cargo"
   ]
  },
  "types": [

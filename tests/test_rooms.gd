@@ -115,5 +115,13 @@ func _initialize() -> void:
 		all_ok = all_ok and root.get_node("ItemSystem").device(t) != null and root.get_node("ItemSystem").device(t).id == t
 	_check("New furniture Chair, Table, Toilet, Light can be built", all_ok)
 
+	# Storage furniture from the wiki: Rack 1x1 and Bulkhead Bin (774 Cr, 7 kg each)
+	var IS2 = root.get_node("ItemSystem")
+	_check("Rack 1x1 and Bulkhead Bin: 774 Cr, 7 kg (wiki), with storage", IS2.device("rack").item_value == 774 and IS2.device("bulkhead_bin").item_value == 774
+		and is_equal_approx(IS2.device("rack").mass, 0.007) and IS2.device("rack").storage > 0.0 and IS2.device("bulkhead_bin").storage > 0.0)
+	_is("Basic Quarters with a Bulkhead Bin as the storage bin", ["bed", "bulkhead_bin", "light"], "basic_quarters", 1.8, 4, 2)
+	_is("6 racks: Cargo Room", ["rack", "rack", "rack", "rack", "rack", "rack"], "cargo", 1.2, 3, 2)
+	_check("Racks and bins take hauled items", Config.STORAGE.has("rack") and Config.STORAGE.has("bulkhead_bin"))
+
 	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()
