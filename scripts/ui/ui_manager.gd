@@ -1051,33 +1051,37 @@ func _refresh_window() -> void:
 			if not st.is_empty():
 				window_box.add_child(_label("Bonus and death pay are paid on signing. The death pay is held in trust and comes back when someone quits or is let go.", COL_MUTED, 12))
 		"cargo":
-			# Bulk Trading (Ostranauts Trading 5): the terminal is the Cargo Kiosk
+			# Bulk Trading (Ostranauts wiki): the terminal is the Cargo Kiosk; one good per pod, max 1000 kg
 			var bg := ShipSystem.grid
 			var pd: Dictionary = Bulk.pods(bg)
-			window_box.add_child(_label("Cargo pods: %d standard, %d climate, %d radiation, %d specialty · %d / %d units · %.1f t" % [pd.standard, pd.climate, pd.radiation, pd.specialty, Bulk.units(bg.bulk), Bulk.capacity(bg), Bulk.mass(bg)], COL_AMBER, 13))
+			window_box.add_child(_label("Cargo pods: %d standard, %d climate, %d radiation, %d specialty · %d / %d pods used · %.2f t" % [pd.standard, pd.climate, pd.radiation, pd.specialty, Bulk.pods_used(bg.bulk), Bulk.pod_count(bg), Bulk.mass(bg)], COL_AMBER, 13))
 			var bwhy := Bulk.block_reason(bg)
 			if bwhy != "":
 				window_box.add_child(_label(bwhy, COL_MUTED, 12))
 			var sid := String(st.get("id", ""))
 			for gd in Bulk.goods():
 				var have := int(bg.bulk.get(gd.id, 0))
-				var txt := "%s (%s) · buy %d / sell %d Cr · aboard %d" % [gd.name, gd.needs, Bulk.buy_price(gd.id, sid), Bulk.sell_price(gd.id, sid), have]
-				var btns: Array = [_button("Buy 1", func():
-					Bulk.buy(gd.id, 1)
-					_last_window = ""
-					_refresh_window()), _button("Buy 10", func():
-					Bulk.buy(gd.id, 10)
-					_last_window = ""
-					_refresh_window())]
-				if have > 0:
-					btns.append(_button("Sell all", func():
-						Bulk.sell(gd.id, 9999)
+				if not Bulk.traded(gd.id, sid) and have == 0:
+					continue
+				var load := Bulk.per_pod(gd.id)
+				var txt := "%s (%s pod, %d per pod) · " % [gd.name, Bulk.needs_class(gd.id), load]
+				txt += ("buy %.2f / sell %.2f Cr" % [Bulk.buy_price(gd.id, sid), Bulk.sell_price(gd.id, sid)]) if Bulk.traded(gd.id, sid) else "not traded here"
+				txt += " · aboard %d" % have
+				var btns: Array = []
+				if Bulk.traded(gd.id, sid):
+					var bb := _button("Buy a pod load", func():
+						Bulk.buy(gd.id, load)
 						_last_window = ""
-						_refresh_window()))
-				for b in btns:
-					b.disabled = bwhy != "" and not (have > 0 and E.terminal_online() and b.text == "Sell all")
+						_refresh_window())
+					bb.disabled = bwhy != ""
+					btns.append(bb)
+					if have > 0:
+						btns.append(_button("Sell all", func():
+							Bulk.sell(gd.id, 9999999)
+							_last_window = ""
+							_refresh_window()))
 				window_box.add_child(_row(txt, btns))
-			window_box.add_child(_label("Prices differ between stations and drift daily. Goods needing climate control or radiation shielding only fit into matching pods (Specialty takes all). Pods are sold in the Buy tab.", COL_MUTED, 12))
+			window_box.add_child(_label("Goods and prices from the Ostranauts System Market (stations mapped: Tycho = OKLG, Kármán = BCER, L4 = BCRS, Hephaistos = MSUZ). Cheap where produced, dear where consumed; ±19 % per day. Pods are sold in the Buy tab.", COL_MUTED, 12))
 		"ships":
 			var F := FleetSystem
 			window_box.add_child(_row("Current ship", [_label(F.current_name, COL_AMBER, 13)]))

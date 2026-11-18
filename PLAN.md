@@ -128,7 +128,7 @@ und werden Schritt für Schritt übertragen.
 - [x] Gerätewerte nach dem Wiki-Spickzettel „Value/Space“ (Base Value 1:1, z. B. Nav Station 16.880, Halvorson-Thruster 5.520, CO2 AtmoScrubber 14.326, Ship Battery 2.623); Geräte ohne Wiki-Gegenstück behalten den Wert aus den Baukosten; Startkredit 211.000 Cr (≈ Schiffswert), Rate 13.200 Cr/Woche, Werftpreise Lumen 208.000 / Bairn 240.000 (≈ Schiffswert, kein Kauf-Verkauf-Gewinn)
 - [x] Asteroid Mining nach Wiki: 16 Mineralien mit Wiki-Werten, Kiosk-Preise und Ruf; neue Notiz docs/ostranauts/ostranauts-asteroid-mining.md
 - [x] Visa und Hauskauf nach Wiki: Fraktionen auf Stationen abgebildet, Visa-Preise/Bedingungen 1:1, Bürgerrabatt Bulk, Haus mit Strom und Andockplatz
-- [x] Bulk Trading nach Wiki: vier Cargo-Pod-Typen, abstrakte Ware mit Schutzbedarf, Preise je Station (Waren/Preise eigene Wahl)
+- [x] Bulk Trading nach Wiki: vier Cargo-Pod-Typen (Wiki-Preise, 1000 kg, eine Ware je Pod), 25 Waren und Marktmatrix aus dem Wiki; Notiz docs/ostranauts/ostranauts-bulk-trading.md
 - [x] Pressure Suit nach Wiki: eingeschlossene Raumluft (~20 min), keine Batterie, in Atemluft erneuert; Schrankwerte nach Wiki
 - [x] Verlassene Salvage Permits auf Wracks nach Wiki: teils abgelaufen, im Inventar registrierbar
 - [x] Piloting im Flug nach Wiki: Zustand (ausgeruht, übermüdet, hungrig) und seitliche Drift bei negativem Wert
@@ -150,7 +150,7 @@ und werden Schritt für Schritt übertragen.
 - `tests/test_world.gd` – Crew-Beziehungen, Aufträge, Fraktionen, Einstellungen, Mods, Speicherplätze, neue Orte, Ziele (32)
 - `tests/test_stations.gd` – begehbare Stationen: Aufbau, Luft, Gespräche, Verkauf, Speichern, Abdocken (36)
 - `tests/test_residency.gd` – Visa und Haus: Preise, Bedingungen, Kiosk-Regel, Rabatt, Strom, Gebühr, Anzeige, Speichern (18)
-- `tests/test_bulk.gd` – Bulk Trading: Pods, Schutzklassen, Kauf/Verkauf, Masse, Ausbausperre, Speichern, Cargo-Tab (17)
+- `tests/test_bulk.gd` – Bulk Trading: Wiki-Pods und -Waren, Pod-Ladungen, Schutzklassen, Masse, Ausbausperre, Marktpreise, Speichern, Cargo-Tab (20)
 - `tests/test_wear.gd` – Worn/Damaged: Kosten der Reparatur, Anzeige, Verschleiß vs. Einschlag, Speichern (9)
 - `tests/test_barter.gd` – Barter Zone: Markieren, Verkauf aus Haufen und Kisten, Käufe in die Zone, Abgedockt, Speichern (13)
 - `tests/test_roster.gd` – Schichtplan: Standard, Aufträge je Schicht, Brände, Sleep-Schicht, Speichern, Knöpfe (11)

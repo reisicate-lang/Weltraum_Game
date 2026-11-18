@@ -6,12 +6,12 @@
 script = ExtResource("1")
 id = "cargo_pod_specialty"
 display_name = "Cargo Pod (Specialty)"
-description = "Radiation-shielded and climate-controlled: holds 10 units of any bulk trade goods. Bulk Trading (Ostranauts Trading 5): buy and sell goods in the trade terminal under Cargo."
+description = "Radiation-shielded and climate-controlled: one bulk good up to 1000 kg of any kind. Bulk Trading: trade terminal → Cargo."
 power = 0.0
 build_time = 4.0
 cost = {"plate": 4, "pipe": 1}
-item_value = 25000
-mass = 0.4
+item_value = 20000
+mass = 0.05
 stock = -1.0
 stock_unit = ""
 capacity = 0.0

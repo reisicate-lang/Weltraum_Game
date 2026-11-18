@@ -328,7 +328,8 @@ static func from_data(d: Dictionary) -> ShipGrid:
 		g.barter[int(i)] = true
 	var bk: Dictionary = d.get("bulk", {})
 	for k in bk:
-		g.bulk[String(k)] = int(bk[k])
+		if not Bulk.good(String(k)).is_empty():   # goods of an earlier version are dropped
+			g.bulk[String(k)] = int(bk[k])
 	# Earlier save with twice as large tiles: convert to the fine grid
 	if int(d.get("scale", 1)) < Config.GRID_SCALE:
 		return refine(g)

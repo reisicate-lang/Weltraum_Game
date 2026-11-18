@@ -43,5 +43,8 @@ Reference data for flying (nav console, piloting stat, controls, docking, RCS, t
 Reference data for residential status (visa types/costs/requirements, embassy kiosk locations, home ownership):
 @docs/ostranauts/ostranauts-residential-status.md
 
+Reference data for bulk trading (cargo kiosk, cargo pods 1000 kg, station market matrix, goods prices/masses/protection):
+@docs/ostranauts/ostranauts-bulk-trading.md
+
 Reference data for asteroid mining (tethering, mining tools/explosives, mineral values and weights, kiosk reputation):
 @docs/ostranauts/ostranauts-asteroid-mining.md
