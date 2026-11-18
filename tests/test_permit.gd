@@ -103,5 +103,18 @@ func _initialize() -> void:
 	ui.nav_open = false
 	_check("The navigation console shows the permit status", shown)
 
+	# 7) Docking fee per hour at a station (Ostranauts Flying 4.1), one running log entry
+	P.undock()
+	P.dock("tycho", true)
+	E.credits = 1000
+	E.next_hour = gs.time + 60.0
+	gs.time += 3.0 * 60.0 + 1.0
+	E.step(0.0)
+	_check("3 h docked at Tycho: 3 × %d Cr, one log line (%s)" % [Config.DOCK_FEE, E.log_entries[0].text], E.credits == 1000 - 3 * Config.DOCK_FEE and E.log_entries[0].text == "Docking fee (3 h)")
+	P.undock()
+	gs.time += 2.0 * 60.0
+	E.step(0.0)
+	_check("Drifting outside: no docking fee", E.credits == 1000 - 3 * Config.DOCK_FEE)
+
 	print("%d OK, %d Fehler" % [ok_count, fail_count])
 	quit()

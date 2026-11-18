@@ -12,6 +12,7 @@ var strikes := 0
 var prices := {}   ## price factor per kind
 var supply := {}   ## recently sold amount (pushes the price down)
 var next_day := 1440.0
+var next_hour := 60.0
 var log_entries: Array[Dictionary] = []
 var over := false
 var recipes: Array = []
@@ -33,6 +34,7 @@ func reset() -> void:
 	next_payment = Config.PAYMENT_DAYS * 1440.0
 	strikes = 0
 	next_day = 1440.0
+	next_hour = 60.0
 	log_entries.clear()
 	over = false
 	payment_factor = 1.0
@@ -42,6 +44,17 @@ func reset() -> void:
 	for id in ItemSystem.items:
 		prices[id] = randf_range(0.85, 1.15)
 		supply[id] = 0.0
+
+## Book hourly fees as one running entry while nothing else is booked in between
+func _book_merged(text: String, amount: int) -> void:
+	if not log_entries.is_empty() and String(log_entries[0].text).begins_with(text + " (") and int(log_entries[0].get("hours", 0)) < 24:
+		var e: Dictionary = log_entries[0]
+		e.hours = int(e.hours) + 1
+		e.amount = int(e.amount) + amount
+		e.text = "%s (%d h)" % [text, e.hours]
+		return
+	book(text + " (1 h)", amount)
+	log_entries[0].hours = 1
 
 func book(text: String, amount: int) -> void:
 	log_entries.push_front({"text": text, "amount": amount})
@@ -314,14 +327,17 @@ func step(_dt: float) -> void:
 			prices[id] = clampf(prices[id] * (1.0 + randf_range(-1.0, 1.0) * Config.PRICE_DRIFT), 0.5, 1.6)
 			supply[id] = supply[id] * 0.7
 		NPCSystem.pay_wages()
+	# Docking fee every hour at a station (drifting nearby is free)
+	while GameState.time >= next_hour:
+		next_hour += 60.0
 		if PhysicsSystem.station().is_empty():
 			continue
 		if credits >= Config.DOCK_FEE:
 			credits -= Config.DOCK_FEE
-			book("Docking fee", -Config.DOCK_FEE)
+			_book_merged("Docking fee", -Config.DOCK_FEE)
 		elif not Settings.debt_paused:
 			debt += Config.DOCK_FEE
-			book("Docking fee: no money, %d Cr added to the debt" % Config.DOCK_FEE, 0)
+			_book_merged("Docking fee: no money, added to the debt", 0)
 	if debt > 0 and GameState.time >= next_payment:
 		next_payment += Config.PAYMENT_DAYS * 1440.0
 		var rate := mini(int(Config.PAYMENT * payment_factor), debt)
@@ -345,11 +361,11 @@ func step(_dt: float) -> void:
 func to_data() -> Dictionary:
 	return {"payment_factor": payment_factor, "claim_discount": DialogueSystem.claim_discount, "permit_until": permit_until, "permit_reg": permit_reg, "permit_tier": permit_tier, "rate_lowered": DialogueSystem.rate_lowered,
 		"credits": credits, "debt": debt, "next_payment": next_payment, "strikes": strikes, "prices": prices,
-		"supply": supply, "next_day": next_day, "log": log_entries, "wreck": SalvageSystem.wreck_name}
+		"supply": supply, "next_day": next_day, "next_hour": next_hour, "log": log_entries, "wreck": SalvageSystem.wreck_name}
 
 func from_data(d: Dictionary) -> void:
 	credits = int(d.credits); debt = int(d.debt); next_payment = float(d.next_payment); strikes = int(d.strikes)
-	prices = d.prices; supply = d.supply; next_day = float(d.next_day)
+	prices = d.prices; supply = d.supply; next_day = float(d.next_day); next_hour = float(d.get("next_hour", floor(GameState.time / 60.0) * 60.0 + 60.0))
 	log_entries.assign(d.log)
 	SalvageSystem.wreck_name = String(d.wreck)
 	over = false

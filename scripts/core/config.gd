@@ -112,7 +112,9 @@ const PAYMENT := 13200
 const PAYMENT_DAYS := 7
 const LATE_FEE := 0.1
 const MAX_STRIKES := 3
-const DOCK_FEE := 45
+## Docking fee per started hour at a station (Ostranauts Flying 4.1: kLEG charges per hour
+## while docked; the wiki names no amount: 2 Cr, about the former 45 Cr a day)
+const DOCK_FEE := 2
 const BUY_MARKUP := 1.3
 const SELL_FACTOR := 0.85
 ## Ayotimiwa Salvage Permit (Ostranauts Trading 2.3, prices 1:1): id, name, cost, hours

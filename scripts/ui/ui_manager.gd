@@ -955,7 +955,7 @@ func _refresh_window() -> void:
 			var days := maxf(0.0, (E.next_payment - GameState.time) / 1440.0)
 			window_box.add_child(_row("Remaining debt", [_label("%d Cr" % E.debt, COL_AMBER, 13)]))
 			window_box.add_child(_row("Next instalment", [_label("paused (settings ⚙)" if Settings.debt_paused else "%d Cr in %.1f days" % [mini(Config.PAYMENT, E.debt), days], COL_AMBER, 13)]))
-			window_box.add_child(_row("Docking fee", [_label("%d Cr per day" % Config.DOCK_FEE, COL_MUTED, 13)]))
+			window_box.add_child(_row("Docking fee", [_label("%d Cr per hour docked" % Config.DOCK_FEE, COL_MUTED, 13)]))
 			window_box.add_child(_row("Missed instalments", [_label("%d of %d" % [E.strikes, Config.MAX_STRIKES], COL_MUTED, 13)]))
 			window_box.add_child(_row("Repay", [_button("500 Cr", E.pay_debt.bind(500)), _button("All", E.pay_debt.bind(999999))]))
 			window_box.add_child(_label("Account statement", COL_MUTED, 11))
