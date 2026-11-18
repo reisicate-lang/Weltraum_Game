@@ -1027,6 +1027,14 @@ func _refresh_window() -> void:
 					_refresh_window())
 				rb.disabled = rq.parts.is_empty() or E.credits < int(rq.cost)
 				window_box.add_child(_row("DOCKING AND REFUEL SERVICES: " + (", ".join(rq.parts) if not rq.parts.is_empty() else "everything is full"), [rb], COL_AMBER))
+				# Self Care: Nanorobotic First Aid (Ostranauts First Aid 2.2)
+				var nwho := E.trader()
+				var nb := _button("%d Cr" % Medical.NANO_PRICE, func():
+					Medical.nano_first_aid(nwho)
+					_last_window = ""
+					_refresh_window())
+				nb.disabled = E.credits < Medical.NANO_PRICE
+				window_box.add_child(_row("SELF CARE: Nanorobotic First Aid for %s (wounds heal 40 %% faster for %d h, then 15 %%)" % [nwho.display_name, int(Medical.NANO_HOURS)], [nb], COL_AMBER))
 				_residency_section(String(st.id))
 		"crew":
 			if st.is_empty():

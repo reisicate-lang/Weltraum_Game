@@ -79,6 +79,9 @@
    "storage_bin",
    "cargo_container",
    "exterior_cargo"
+  ],
+  "medbed": [
+   "bed"
   ]
  },
  "types": [

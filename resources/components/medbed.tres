@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "medbed"
+display_name = "Van Buren “Infirmaway” Medical Bed"
+description = "Powered medical bed (Ostranauts First Aid): sleeping here heals wounds 20 % faster, blood and infection faster, pain threshold +10 %. Needs 0.5 kW."
+power = -0.5
+build_time = 6.0
+cost = {"plate": 3, "fabric": 3, "circuit": 2, "motor": 1}
+item_value = 18570
+stock = -1.0
+stock_unit = ""
+capacity = 0.0
+storage = 0.0
+need = "sleep"
+wears = true
+color = Color(0.8, 0.85, 0.9, 1)
+tech = "electrical"
+category = "appliance"

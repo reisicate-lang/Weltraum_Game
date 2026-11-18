@@ -109,7 +109,57 @@ func _initialize() -> void:
 	g.fire[ti] = 0
 	_check("Standing in fire: a burn", mira.med.wounds.any(func(x): return x.kind == "burn"))
 
+	# 6b) Medical assistance (wiki 2.2): medical bed and nanorobotic first aid
+	_check("Medical bed: 18 570 Cr (wiki), a bed for the room types", IS.device("medbed").item_value == 18570 and IS.device("medbed").need == "sleep")
+	mira.med = Medical.fresh()
+	var bw: Dictionary = Medical.injure(mira, "bruise", 0.9, "torso")
+	Medical.step(mira, 60.0, true)
+	var plain_heal: float = 0.9 - float(bw.sev)
+	var bed := Device.new("medbed", Vector2i.ZERO)
+	bed.powered = true
+	bw.sev = 0.9
+	mira.activity = {"need": "sleep", "dev": bed, "timer": 0.0}
+	Medical.step(mira, 60.0, true)
+	mira.activity = null
+	_check("Asleep in a powered medical bed: wounds heal 20 %% faster (%.4f vs %.4f)" % [0.9 - float(bw.sev), plain_heal], is_equal_approx(0.9 - float(bw.sev), plain_heal * 1.2))
+	var E = root.get_node("EconomySystem")
+	E.credits = 1000
+	bw.sev = 0.9
+	_check("Nanorobotic First Aid at Tycho: %d Cr" % Medical.NANO_PRICE, Medical.nano_first_aid(mira) and E.credits == 1000 - Medical.NANO_PRICE and Medical.nano(mira) == 2)
+	Medical.step(mira, 60.0, true)
+	_check("Nanorobotics: wounds heal 40 %% faster (%.4f)" % (0.9 - float(bw.sev)), is_equal_approx(0.9 - float(bw.sev), plain_heal * 1.4))
+	gs.time += (Medical.NANO_HOURS + 1.0) * 60.0
+	_check("After 12 h the effect fades to the tail", Medical.nano(mira) == 1)
+
+	# 6c) Diseases: Gastroenteritis from filth (Iron Stomach immune), Pneumonia, antibiotics cure
+	mira.med = Medical.fresh()
+	mira.needs.hygiene = 0.0
+	var caught := false
+	for k in 400:
+		mira.needs.hygiene = 0.0
+		Medical.step(mira, 60.0, false)
+		if mira.med.disease.has("gastro"):
+			caught = true
+			break
+	_check("Filthy: Gastroenteritis is caught sooner or later", caught)
+	var t_iron: Array = mira.traits.duplicate()
+	mira.med = Medical.fresh()
+	mira.traits.append("iron_stomach")
+	for k in 400:
+		mira.needs.hygiene = 0.0
+		Medical.step(mira, 60.0, false)
+	_check("Iron Stomach: no Gastroenteritis", not mira.med.disease.has("gastro"))
+	mira.traits.assign(t_iron)
+	mira.needs.hygiene = 90.0
+	Medical.catch(mira, "pneumonia")
+	mira.inv.add("pill_antibiotic", 1, 100.0)
+	Medical.treat(mira)
+	Medical.step(mira, 1.0, false)
+	_check("Pneumonia: antibiotics cure it", not mira.med.disease.has("pneumonia"))
+
 	# 7) Saving/loading and the character window
+	mira.med = Medical.fresh()
+	Medical.injure(mira, "burn", 0.4, "torso")
 	Medical.cripple(mira, "right leg")
 	SS.save_game()
 	SS.load_game(true)

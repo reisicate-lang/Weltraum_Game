@@ -696,5 +696,17 @@
   "debris": {
    "scrap": 1
   }
+ },
+ "medbed": {
+  "uninstall_time": 3.5,
+  "dismantle_time": 5.0,
+  "dismantle": {
+   "plate": 1,
+   "fabric": 1
+  },
+  "hp": 160,
+  "debris": {
+   "scrap": 2
+  }
  }
 }

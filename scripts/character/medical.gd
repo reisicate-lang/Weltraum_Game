@@ -25,8 +25,56 @@ const ABX_HOURS := 12.0
 const ITEMS := {"cloth": "cloth", "water": "watercan", "splint": "splint", "antibiotic": "pill_antibiotic",
 	"painkiller": "pill_painkiller", "painkiller_rx": "pill_painkiller_rx"}
 
+## Medical assistance (wiki 2.2): powered medical bed while sleeping; Nanorobotic First Aid at
+## a station's Self Care service (price and durations our own choice).
+const MEDBED := {"wound": 1.2, "blood": 0.45, "infection": 1.05, "pain": 0.1}
+const NANO_PRICE := 500
+const NANO_HOURS := 12.0
+const NANO_TAIL_HOURS := 24.0
+## Diseases (wiki 3.4): Gastroenteritis (50 % from "Filthy" hygiene, Iron Stomach immune) and
+## Pneumonia (can follow torso wounds); antibiotics cure both. Chances per hour our own choice.
+const FILTHY_AT := 5.0
+const GASTRO_PER_H := 0.04
+const PNEUMONIA_PER_H := 0.1
+const DISEASE_HOURS := 48.0
+const DISEASE_NAMES := {"gastro": "Gastroenteritis", "pneumonia": "Pneumonia"}
+
 static func fresh() -> Dictionary:
-	return {"wounds": [], "blood": 0.0, "infection": 0.0, "crippled": [], "pain_until": 0.0, "pain_f": 0.0, "abx_until": 0.0}
+	return {"wounds": [], "blood": 0.0, "infection": 0.0, "crippled": [], "pain_until": 0.0, "pain_f": 0.0, "abx_until": 0.0,
+		"nano_until": 0.0, "nano_tail": 0.0, "disease": {}}
+
+## Asleep in a powered medical bed?
+static func on_medbed(c: CrewMember) -> bool:
+	if c.activity == null or c.activity.get("need", "") != "sleep":
+		return false
+	var d = c.activity.get("dev")
+	return d is Device and d.type == "medbed" and d.powered and not d.broken
+
+static func nano(c: CrewMember) -> int:
+	if GameState.time < float(c.med.get("nano_until", 0.0)):
+		return 2
+	return 1 if GameState.time < float(c.med.get("nano_tail", 0.0)) else 0
+
+## Nanorobotic First Aid (Self Care service at a station)
+static func nano_first_aid(c: CrewMember) -> bool:
+	if PhysicsSystem.station().is_empty():
+		GameState.toast("Nanorobotic First Aid only at a station.", "bad")
+		return false
+	if EconomySystem.credits < NANO_PRICE:
+		GameState.toast("Nanorobotic First Aid costs %d Cr." % NANO_PRICE, "bad")
+		return false
+	EconomySystem.credits -= NANO_PRICE
+	EconomySystem.book("Nanorobotic First Aid: " + c.display_name, -NANO_PRICE)
+	c.med.nano_until = GameState.time + NANO_HOURS * 60.0
+	c.med.nano_tail = c.med.nano_until + NANO_TAIL_HOURS * 60.0
+	GameState.toast("%s gets nanorobotic first aid: wounds heal 40 %% faster for %d hours." % [c.display_name, int(NANO_HOURS)])
+	return true
+
+static func catch(c: CrewMember, id: String) -> void:
+	if c.med.disease.has(id):
+		return
+	c.med.disease[id] = {"stage": 2 if id == "pneumonia" else 1, "since": GameState.time}
+	GameState.toast("%s has caught %s." % [c.display_name, DISEASE_NAMES[id]], "bad")
 
 static func open(w: Dictionary) -> bool:
 	return w.kind == "cut" or w.kind == "burn"
@@ -75,9 +123,15 @@ static func pain(c: CrewMember) -> float:
 	var p := 0.0
 	for w in c.med.wounds:
 		p += float(PAIN[w.kind]) * float(w.sev) + (10.0 if w.kind == "fracture" else 0.0)
+	var pn = c.med.disease.get("pneumonia")
+	if pn is Dictionary and int(pn.stage) >= 3:
+		p += 10.0   # wiki: severe pneumonia pain +10
+	var f := 0.0
 	if GameState.time < float(c.med.pain_until):
-		p /= 1.0 + float(c.med.pain_f)
-	return p
+		f += float(c.med.pain_f)
+	if on_medbed(c):
+		f += float(MEDBED.pain)
+	return p / (1.0 + f)
 
 static func antibiotics(c: CrewMember) -> bool:
 	return GameState.time < float(c.med.abx_until)
@@ -87,8 +141,12 @@ static func step(c: CrewMember, dt: float, sleeping: bool) -> float:
 	var m: Dictionary = c.med
 	var h := dt / 60.0
 	var heal: float = TraitSystem.factor(c, "recovery") * (1.5 if sleeping or c.unconscious else 1.0) * (Config.DIRTY_RECOVERY if c.is_dirty() else 1.0)
+	var bed := on_medbed(c)
+	var nn := nano(c)
+	var wound_f: float = (float(MEDBED.wound) if bed else 1.0) * (1.4 if nn == 2 else (1.15 if nn == 1 else 1.0))
+	var regen: float = BLOOD_REGEN * heal * (1.4 if nn == 2 else 1.0) + (float(MEDBED.blood) if bed else 0.0) + (0.45 if nn == 1 else 0.0)
 	var bleed := bleeding(c)
-	m.blood = clampf(float(m.blood) + (bleed - (BLOOD_REGEN * heal if bleed <= 0.0 else 0.0)) * h, 0.0, 100.0)
+	m.blood = clampf(float(m.blood) + (bleed - (regen if bleed <= 0.0 else 0.0)) * h, 0.0, 100.0)
 	var infect_risk: float = (2.0 if c.is_dirty() else 1.0) * (1.2 if c.traits.has("immunosuppressed") else 1.0)
 	var body_gain := 0.0
 	for k in range(m.wounds.size() - 1, -1, -1):
@@ -97,7 +155,7 @@ static func step(c: CrewMember, dt: float, sleeping: bool) -> float:
 			w.infect = clampf(float(w.infect) + INFECT_GAIN * h * (1.0 - float(w.dis)) * infect_risk * (0.5 if w.bandaged else 1.0)
 				- (0.05 if antibiotics(c) else 0.01) * h * heal, 0.0, 1.0)
 			body_gain += float(w.infect)
-		var rate: float = float(HEAL[w.kind]) * heal * (1.0 - 0.8 * float(w.infect))
+		var rate: float = float(HEAL[w.kind]) * heal * wound_f * (1.0 - 0.8 * float(w.infect))
 		if w.kind == "cut" and w.bandaged:
 			rate *= 2.0
 		if w.kind == "fracture" and w.splint:
@@ -108,7 +166,27 @@ static func step(c: CrewMember, dt: float, sleeping: bool) -> float:
 			if w.kind == "fracture" and not w.splint and w.part in LIMBS:
 				GameState.toast("%s: the fracture of the %s healed without a splint." % [c.display_name, w.part], "bad")
 				cripple(c, w.part)
-	var clear: float = BODY_CLEAR * heal * (1.2 if antibiotics(c) else 1.0)
+	var clear: float = BODY_CLEAR * heal * (1.2 if antibiotics(c) else 1.0) * (float(MEDBED.infection) if bed else 1.0)
+	# Diseases: catching, effects, cure by antibiotics or after a while
+	if not m.has("disease"):
+		m.disease = {}
+	if c.needs.hygiene < FILTHY_AT and not c.traits.has("iron_stomach") and randf() < GASTRO_PER_H * 0.5 * (2.0 if c.traits.has("weak_stomach") else 1.0) * h:
+		catch(c, "gastro")
+	for w in m.wounds:
+		if w.part == "torso" and open(w) and float(w.infect) >= 0.25 and randf() < PNEUMONIA_PER_H * h:
+			catch(c, "pneumonia")
+	for id in m.disease.keys():
+		var dz: Dictionary = m.disease[id]
+		if antibiotics(c) or GameState.time - float(dz.since) > DISEASE_HOURS * 60.0:
+			m.disease.erase(id)
+			GameState.toast("%s is over the %s." % [c.display_name, DISEASE_NAMES[id]])
+			continue
+		body_gain += 1.0 / BODY_INFECT   # wiki: infection stat +1 (per hour)
+		if id == "gastro":
+			c.needs.hygiene -= 5.0 * h        # diarrhea
+			c.needs.water -= Config.NEEDS.water.decay * 0.5 * h
+		if id == "pneumonia" and GameState.time - float(dz.since) > 24.0 * 60.0:
+			dz.stage = 3                       # severe: pain +10
 	m.infection = clampf(float(m.infection) + (body_gain * BODY_INFECT - clear) * h, 0.0, 100.0)
 	# Effects after the wiki thresholds
 	var extra := 0.0          # extra food/hydration rate
@@ -204,7 +282,7 @@ static func treat(c: CrewMember) -> PackedStringArray:
 		if w.kind == "fracture" and not w.splint and take(c, ITEMS.splint):
 			w.splint = true
 			done.append("splinted the %s" % w.part)
-	var infected := float(m.infection) >= 35.0
+	var infected: bool = float(m.infection) >= 35.0 or not (m.get("disease", {}) as Dictionary).is_empty()
 	for w in m.wounds:
 		infected = infected or float(w.infect) >= 0.25
 	if infected and not antibiotics(c) and take(c, ITEMS.antibiotic):
@@ -236,6 +314,10 @@ static func status(c: CrewMember) -> PackedStringArray:
 		head.append("pain %d%s" % [int(p), " (dulled)" if GameState.time < float(m.pain_until) else ""])
 	if antibiotics(c):
 		head.append("on antibiotics")
+	if nano(c) > 0:
+		head.append("nanorobotic first aid")
+	for id in m.get("disease", {}):
+		head.append(String(DISEASE_NAMES[id]) + (" (severe)" if int(m.disease[id].stage) >= 3 else ""))
 	if not head.is_empty():
 		out.append(", ".join(head))
 	for w in m.wounds:
