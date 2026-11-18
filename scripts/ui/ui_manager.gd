@@ -959,7 +959,7 @@ func _refresh_window() -> void:
 				E.buy_to_barter = not E.buy_to_barter
 				_last_window = ""
 				_refresh_window())], COL_MUTED))
-			var ids: Array = ItemSystem.items.keys().filter(func(x): return not RemovalSystem.is_packed(x) or x in E.SHOP_PACKED)
+			var ids: Array = ItemSystem.items.keys().filter(func(x): return (not RemovalSystem.is_packed(x) or x in E.SHOP_PACKED) and E.buy_price(x) > 0 and not String(x).begins_with("permit_"))
 			ids.sort()
 			for id in ids:
 				var f: float = E.prices.get(id, 1.0)
@@ -1646,6 +1646,12 @@ func _own_section(c: CrewMember, box_open: bool) -> void:
 		return
 	for it in c.inv.items:
 		var row := _item_row(it, "Put in" if box_open else "Drop", _transfer.bind(false, it.type, it.qty) if box_open else _drop_own.bind(it.type, it.qty), c.inv._in_hand(it))
+		# Found salvage permit: register it to the transponder (Ostranauts Trading 2.3)
+		if String(it.type).begins_with("permit_") and not box_open:
+			var rb := _button("Register", EconomySystem.register_permit_item.bind(c, it))
+			rb.disabled = EconomySystem.permit_item_reason(it) != ""
+			rb.tooltip_text = EconomySystem.permit_item_text(it)
+			row.add_child(rb)
 		container_box.add_child(_install_btn(row, it.type))
 
 func _best_hack() -> float:
@@ -1689,6 +1695,8 @@ func _item_row(it: Dictionary, action: String, cb: Callable, hand: bool = false)
 ## with Business Admin also the exact item value
 func item_tooltip(it: Dictionary) -> String:
 	var text := ItemSystem.item(it.type).description
+	if String(it.type).begins_with("permit_"):
+		text += "\n" + EconomySystem.permit_item_text(it)
 	var v := EconomySystem.value_text(EconomySystem.trader(), it)
 	return text + ("\n" + v if v != "" else "")
 

@@ -75,9 +75,13 @@ func attach_site(l: Dictionary) -> bool:
 		var design := DesignLoader.read_design("ships/wreck")
 		if not design.is_empty():
 			design.name = String(l.get("wreck_name", design.name))
-			return _attach_design(design)
+			if not _attach_design(design):
+				return false
+			SalvageSystem.maybe_drop_permit(ShipSystem.grid)
+			return true
 		if not SalvageSystem.generate():
 			return false
+		SalvageSystem.maybe_drop_permit(ShipSystem.grid)
 		SalvageSystem.wreck_name = String(l.get("wreck_name", SalvageSystem.wreck_name))
 	EventBus.ship_changed.emit()
 	return true

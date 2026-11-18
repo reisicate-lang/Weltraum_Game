@@ -116,5 +116,25 @@ func _initialize() -> void:
 	E.step(0.0)
 	_check("Drifting outside: no docking fee", E.credits == 1000 - 3 * Config.DOCK_FEE)
 
+	# 8) Abandoned permits on derelicts (Ostranauts Trading 2.3)
+	var mira: CrewMember = root.get_node("CrewSystem").player()
+	E.permit_until = 0.0
+	E.permit_reg = ""
+	mira.inv.add("permit_red", 1, 60.0, {"until": gs.time - 60.0})
+	var old_it: Dictionary = mira.inv.items[mira.inv.items.size() - 1]
+	_check("Expired found permit: cannot be registered (%s)" % E.permit_item_text(old_it), E.permit_item_reason(old_it) == "This permit has expired." and not E.register_permit_item(mira, old_it))
+	mira.inv.add("permit_yellow", 1, 60.0, {"until": gs.time + 10.0 * 60.0})
+	var ok_it: Dictionary = mira.inv.items[mira.inv.items.size() - 1]
+	_check("Valid found permit: registered for its 10 h left, item used up", E.register_permit_item(mira, ok_it) and E.permit_valid() and is_equal_approx(E.permit_hours_left(), 10.0) and not mira.inv.items.has(ok_it) and mira.inv.items.has(old_it))
+	var site3: Dictionary = F.add_site("debris")
+	_check("Docked at a fresh derelict", P.dock(site3.id, true))
+	var g = root.get_node("ShipSystem").grid
+	var found := 0
+	for k in 200:
+		var t: String = root.get_node("SalvageSystem").maybe_drop_permit(g)
+		if t != "":
+			found += 1
+	_check("Derelicts: about every 4th has a permit (%d of 200 tries)" % found, found > 25 and found < 80)
+
 	print("%d OK, %d Fehler" % [ok_count, fail_count])
 	quit()

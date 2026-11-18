@@ -206,6 +206,9 @@ func buy(type: String, qty: int) -> void:
 		GameState.toast("The trade terminal is offline.", "bad")
 		return
 	var price := buy_price(type)
+	if price <= 0 or type.begins_with("permit_"):
+		GameState.toast("The market does not sell that.")
+		return
 	var spot := Barter.drop_spot(ShipSystem.grid) if buy_to_barter else Vector2i(-1, -1)
 	if buy_to_barter and spot.x < 0:
 		GameState.toast("No free tile in the Barter Zone: mark floor with the “Barter zone” tool.", "bad")
@@ -269,6 +272,39 @@ func buy_permit(id: String) -> bool:
 	book("%s Ayotimiwa Salvage Permit (%d h)" % [t.name, int(t.hours)], -fee)
 	var site := FleetSystem.add_site(PhysicsSystem.docked if PhysicsSystem.docked != "" else "tycho")
 	GameState.toast("%s salvage permit valid for %s. %s is drifting next to the station (navigation → targets)." % [t.name, _hours_text(permit_hours_left()), String(site.name)])
+	return true
+
+## Abandoned permit found on a derelict (Ostranauts Trading 2.3): item "permit_<tier>" with
+## data {"until": game time}. "" = still valid, otherwise why not
+func permit_item_reason(it: Dictionary) -> String:
+	var d = it.get("data")
+	var until: float = float(d.get("until", 0.0)) if d is Dictionary else 0.0
+	if until <= GameState.time:
+		return "This permit has expired."
+	if not PhysicsSystem.xpdr_faults().is_empty():
+		return "Your transponder cannot be read (%s)." % ", ".join(PhysicsSystem.xpdr_faults())
+	return ""
+
+func permit_item_text(it: Dictionary) -> String:
+	var d = it.get("data")
+	var until: float = float(d.get("until", 0.0)) if d is Dictionary else 0.0
+	return "Expired" if until <= GameState.time else "Valid for another " + _hours_text((until - GameState.time) / 60.0)
+
+## Register a found permit: bound to this ship's transponder for the time it has left
+func register_permit_item(c: CrewMember, it: Dictionary) -> bool:
+	var why := permit_item_reason(it)
+	if why != "":
+		GameState.toast(why, "bad")
+		return false
+	var until: float = float(it.data.until)
+	var tier := String(it.type).trim_prefix("permit_")
+	if not (permit_valid() and permit_until >= until):
+		permit_until = until
+		permit_tier = tier
+	permit_reg = FleetSystem.registry_id
+	c.inv.items.erase(it)   # exactly this permit (each one is its own stack with its date)
+	book("Found %s salvage permit registered" % String(permit_tier_data(tier).get("name", tier)), 0)
+	GameState.toast("Salvage permit registered to your transponder: %s left." % _hours_text(permit_hours_left()))
 	return true
 
 ## Valid = not expired, bought for this ship, and the transponder can be scanned

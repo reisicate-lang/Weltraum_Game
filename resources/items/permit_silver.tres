@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "permit_silver"
+display_name = "Silver Ayotimiwa Salvage Permit"
+weight = 0.01
+volume = 0.05
+value = 0
+description = "An abandoned salvage permit. In your inventory: Register binds it to your ship's transponder for the time it has left – if it has not expired yet."
+refill = {}

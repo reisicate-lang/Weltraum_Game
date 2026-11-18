@@ -188,6 +188,24 @@ func _put(g: ShipGrid, p: Vector2i, t: int) -> void:
 	g.zone[i] = 1
 	g.cond[i] = randf_range(25.0, 95.0)
 
+## Abandoned salvage permit on a new derelict (Ostranauts Trading 2.3: "may or may not be expired"):
+## 25 % chance, tiers weighted Yellow 70 / Red 20 / Blue 8 / Silver 2, ±48 h around now
+const PERMIT_CHANCE := 0.25
+func maybe_drop_permit(g: ShipGrid) -> String:
+	if randf() >= PERMIT_CHANCE:
+		return ""
+	var floor_tiles: Array = []
+	for i in g.tiles.size():
+		if g.zone[i] == 1 and g.walkable(g.pos(i)):
+			floor_tiles.append(i)
+	if floor_tiles.is_empty():
+		return ""
+	var r := randf()
+	var tier := "yellow" if r < 0.7 else ("red" if r < 0.9 else ("blue" if r < 0.98 else "silver"))
+	g.drop_items(g.pos(floor_tiles.pick_random()), "permit_" + tier, 1, randf_range(40.0, 90.0),
+		{"until": GameState.time + randf_range(-48.0, 48.0) * 60.0})
+	return tier
+
 func is_wreck(i: int) -> bool:
 	return ShipSystem.grid.zone[i] == 1
 
