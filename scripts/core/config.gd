@@ -91,6 +91,8 @@ const SUIT_KWH_PER_100 := 0.5
 const SUIT_RETURN_AT := 30.0
 ## Pressure suit (Ostranauts Ideal Atmosphere 4): trapped room air, about 20 minutes sealed
 const PRESSURE_O2_USE := 100.0 / 20.0
+## A pressure suit holds little air: turn back earlier (about 12 minutes left)
+const PRESSURE_RETURN_AT := 60.0
 const SUIT_LOCKERS := ["locker", "pressure_locker"]
 
 ## Airlock

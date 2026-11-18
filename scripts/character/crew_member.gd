@@ -547,7 +547,7 @@ func update(dt: float) -> void:
 	if check:
 		_search_cooldown = 0.05
 		# Suit almost empty: recharge or take it off
-		if suit != null and minf(suit.o2, suit.battery) < Config.SUIT_RETURN_AT and carrying == null:
+		if suit != null and minf(suit.o2, suit.battery) < (Config.PRESSURE_RETURN_AT if is_pressure_suit() else Config.SUIT_RETURN_AT) and carrying == null:
 			release_job()
 			if suit.o2 >= Config.SUIT_RETURN_AT and _start_device("recharge", func(d): return d.type == "charger" and d.charge > 0.05):
 				return
@@ -887,7 +887,7 @@ func _assign_job() -> void:
 			chosen.retry_at = GameState.time + 0.5
 			return
 		if hostile:
-			if _start_device("suit_up", func(d): return d.type in Config.SUIT_LOCKERS and d.suit != null and not d.broken):
+			if (_start_device("suit_up", func(d): return d.type == "locker" and d.suit != null and not d.broken) or _start_device("suit_up", func(d): return d.type == "pressure_locker" and d.suit != null and not d.broken)):
 				return
 			chosen.retry_at = GameState.time + 1.0
 			_warn("need-suit", true, display_name + " needs a space suit for this work.", false)

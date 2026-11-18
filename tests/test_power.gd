@@ -168,5 +168,31 @@ func _initialize() -> void:
 	var plain := Device.from_data(bat.to_data())
 	_check("Old save without the field: the switch counts as on", plain.switch_on)
 
+	# Docking and Refuel Services (Ostranauts wiki): fill tanks and batteries for a fee
+	gs.new_game()
+	g = root.get_node("ShipSystem").grid
+	var E = root.get_node("EconomySystem")
+	var PH = root.get_node("PhysicsSystem")
+	var tanks: Array = PH.ship_devices("fueltank")
+	var air: Array = PH.ship_devices("airtank")
+	var bats: Array = PH.ship_devices("battery")
+	_check("Starter ship has a fuel tank, an air tank and a battery", not tanks.is_empty() and not air.is_empty() and not bats.is_empty())
+	for d in g.devices.values():   # everything full first, then empty exactly these three
+		if d.data().stock > 0.0:
+			d.stock = d.data().stock
+		if d.data().capacity > 0.0:
+			d.charge = P.capacity_of(d)
+	tanks[0].stock = tanks[0].data().stock - 40.0
+	air[0].stock = air[0].data().stock - 800.0
+	bats[0].charge = 0.0
+	var q: Dictionary = E.refuel_quote()
+	var expect: float = E.buy_price("fuelcan") + E.buy_price("aircan") + P.capacity_of(bats[0]) * E.POWER_PRICE
+	_check("Quote: one fuel can + one air can at market price + power 0.5 Cr/kWh (%d, expected ~%.0f)" % [q.cost, expect], absf(q.cost - expect) <= 1.0 and q.parts.size() >= 3)
+	E.credits = 100000
+	var cr: int = E.credits
+	_check("Refuelled at Tycho: tanks and battery full, paid", E.refuel() and tanks[0].stock == tanks[0].data().stock and air[0].stock == air[0].data().stock
+		and is_equal_approx(bats[0].charge, P.capacity_of(bats[0])) and E.credits == cr - int(q.cost))
+	_check("Nothing to fill: refused", not E.refuel())
+
 	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

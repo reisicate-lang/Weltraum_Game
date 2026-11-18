@@ -233,6 +233,61 @@ func buy(type: String, qty: int) -> void:
 	SkillSystem.train(trader(), "trade", 1.0)
 	book("Purchase: %s ×%d" % [ItemSystem.item(type).display_name, n], -n * price)
 
+# ---------------- Docking and Refuel Services (Ostranauts wiki) ----------------
+# The refuel kiosk refills O2, N2, RCS gas, reactor remass and power of a docked ship.
+# The wiki names no prices: tanks cost the market price of the matching canister,
+# power 0.5 Cr per kWh (our choice; the wiki: "electricity is very cheap").
+const REFUEL := {"airtank": "aircan", "fueltank": "fuelcan", "generator": "fuelcan"}
+const POWER_PRICE := 0.5
+
+## {cost, parts: [text]} for filling everything up
+func refuel_quote() -> Dictionary:
+	var g := ShipSystem.grid
+	var cost := 0.0
+	var parts: PackedStringArray = []
+	var kwh := 0.0
+	for i in g.devices:
+		var dev: Device = g.devices[i]
+		if g.foreign(i) or dev.broken:
+			continue
+		var d := dev.data()
+		if REFUEL.has(dev.type) and d.stock > 0.0 and dev.stock < d.stock:
+			var item: String = REFUEL[dev.type]
+			var per: float = float(ItemSystem.item(item).refill.get(dev.type, 1))
+			cost += (d.stock - dev.stock) / per * buy_price(item)
+			parts.append("%s %.0f %s" % [d.display_name, d.stock - dev.stock, d.stock_unit])
+		if d.capacity > 0.0:
+			kwh += maxf(0.0, ShipPowerSystem.capacity_of(dev) - dev.charge)
+	if kwh > 0.05:
+		cost += kwh * POWER_PRICE
+		parts.append("%.1f kWh" % kwh)
+	return {"cost": int(ceil(cost)), "parts": parts}
+
+func refuel() -> bool:
+	if PhysicsSystem.station().is_empty():
+		GameState.toast("Docking and Refuel Services only at a station.", "bad")
+		return false
+	var q := refuel_quote()
+	if q.parts.is_empty():
+		GameState.toast("Everything is full already.")
+		return false
+	if credits < int(q.cost):
+		GameState.toast("Refuelling costs %d Cr." % int(q.cost), "bad")
+		return false
+	var g := ShipSystem.grid
+	for i in g.devices:
+		var dev: Device = g.devices[i]
+		if g.foreign(i) or dev.broken:
+			continue
+		if REFUEL.has(dev.type) and dev.data().stock > 0.0:
+			dev.stock = dev.data().stock
+		if dev.data().capacity > 0.0:
+			dev.charge = ShipPowerSystem.capacity_of(dev)
+	credits -= int(q.cost)
+	book("Docking and Refuel Services", -int(q.cost))
+	GameState.toast("Refuelled: %s (%d Cr)." % [", ".join(q.parts), int(q.cost)])
+	return true
+
 func pay_debt(amount: int) -> void:
 	var n := mini(mini(amount, credits), debt)
 	if n <= 0:

@@ -1019,6 +1019,14 @@ func _refresh_window() -> void:
 						_refresh_window())
 					b.disabled = not o.ok
 					window_box.add_child(_row(o.text + ("" if o.ok else "  (" + o.why + ")"), [b], Color(0.87, 0.9, 0.94) if o.ok else COL_MUTED))
+				# Docking and Refuel Services (Ostranauts wiki)
+				var rq: Dictionary = E.refuel_quote()
+				var rb := _button("%d Cr" % int(rq.cost), func():
+					E.refuel()
+					_last_window = ""
+					_refresh_window())
+				rb.disabled = rq.parts.is_empty() or E.credits < int(rq.cost)
+				window_box.add_child(_row("DOCKING AND REFUEL SERVICES: " + (", ".join(rq.parts) if not rq.parts.is_empty() else "everything is full"), [rb], COL_AMBER))
 				_residency_section(String(st.id))
 		"crew":
 			if st.is_empty():
