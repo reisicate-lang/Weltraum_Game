@@ -198,7 +198,8 @@ func sell_all() -> void:
 		sell(type, 9999)
 
 ## Finished devices every station market sells (Ostranauts: replacement transponder at the Ship Broker)
-const SHOP_PACKED := ["pk_transponder"]
+## Cargo pods (Ostranauts Trading 5: bought at a Cargo Kiosk) – here in every station market
+const SHOP_PACKED := ["pk_transponder", "pk_cargo_pod", "pk_cargo_pod_climate", "pk_cargo_pod_radiation", "pk_cargo_pod_specialty"]
 
 func buy(type: String, qty: int) -> void:
 	var t := terminal()

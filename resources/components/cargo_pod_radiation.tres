@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "cargo_pod_radiation"
+display_name = "Cargo Pod (Radiation-Shielded)"
+description = "Holds 10 units of bulk trade goods, also those that need radiation shielding (isotopes, fuel pellets). Bulk Trading (Ostranauts Trading 5): buy and sell goods in the trade terminal under Cargo."
+power = 0.0
+build_time = 4.0
+cost = {"plate": 4, "pipe": 1}
+item_value = 12000
+mass = 0.4
+stock = -1.0
+stock_unit = ""
+capacity = 0.0
+storage = 0.0
+need = ""
+wears = false
+color = Color(0.55, 0.55, 0.3, 1)
+tech = "mechanical"
+category = "misc"

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "cargo_pod_specialty"
+display_name = "Cargo Pod (Specialty)"
+description = "Radiation-shielded and climate-controlled: holds 10 units of any bulk trade goods. Bulk Trading (Ostranauts Trading 5): buy and sell goods in the trade terminal under Cargo."
+power = 0.0
+build_time = 4.0
+cost = {"plate": 4, "pipe": 1}
+item_value = 25000
+mass = 0.4
+stock = -1.0
+stock_unit = ""
+capacity = 0.0
+storage = 0.0
+need = ""
+wears = false
+color = Color(0.6, 0.4, 0.55, 1)
+tech = "mechanical"
+category = "misc"

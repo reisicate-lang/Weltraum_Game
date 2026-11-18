@@ -27,6 +27,7 @@ var devices: Dictionary = {}  ## tile index -> Device
 var linked: Dictionary = {}
 var piles: Dictionary = {}    ## tile index -> Inventory (pile on the floor)
 var barter: Dictionary = {}   ## tile index -> true: Barter Zone (Ostranauts Trading 2.1)
+var bulk: Dictionary = {}     ## bulk trade goods in the cargo pods: good id -> units (Ostranauts Trading 5)
 
 func _init(w: int = Config.WORLD_W, h: int = Config.WORLD_H) -> void:
 	width = w
@@ -286,7 +287,7 @@ func to_data() -> Dictionary:
 		pl.append([i, piles[i].to_data()])
 	return {"w": width, "h": height, "tiles": Array(tiles), "cables": Array(cables),
 		"o2": Array(o2), "n2": Array(n2), "co2": Array(co2), "cond": Array(cond), "zone": Array(zone), "temp": Array(temp), "devices": devs, "piles": pl,
-		"vents": _closed_vents(), "linked": linked.keys(), "barter": barter.keys(), "scale": Config.GRID_SCALE}
+		"vents": _closed_vents(), "linked": linked.keys(), "barter": barter.keys(), "bulk": bulk, "scale": Config.GRID_SCALE}
 
 func _closed_vents() -> Array:
 	var out: Array = []
@@ -325,6 +326,9 @@ static func from_data(d: Dictionary) -> ShipGrid:
 		g.linked[int(i)] = true
 	for i in d.get("barter", []):
 		g.barter[int(i)] = true
+	var bk: Dictionary = d.get("bulk", {})
+	for k in bk:
+		g.bulk[String(k)] = int(bk[k])
 	# Earlier save with twice as large tiles: convert to the fine grid
 	if int(d.get("scale", 1)) < Config.GRID_SCALE:
 		return refine(g)

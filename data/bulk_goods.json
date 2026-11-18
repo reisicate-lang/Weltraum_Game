@@ -1,0 +1,16 @@
+{
+ "_note": "Bulk Trading (Ostranauts Trading 5). The wiki names no goods or prices: everything here is our own choice. needs: standard / climate / radiation / specialty (pod protection). Station factors < 1 = produced there (cheap), > 1 = in demand (expensive). Missing station = factor 1.",
+ "units_per_pod": 10,
+ "unit_mass_t": 0.1,
+ "spread": 0.12,
+ "drift": 0.08,
+ "goods": [
+  {"id": "ore", "name": "Ore Concentrate", "needs": "standard", "base": 300, "stations": {"tycho": 0.7, "hephaistos": 1.4, "karman": 1.1}},
+  {"id": "parts", "name": "Machine Parts", "needs": "standard", "base": 900, "stations": {"hephaistos": 0.75, "tycho": 1.3, "l4": 1.2}},
+  {"id": "food", "name": "Foodstuffs", "needs": "climate", "base": 700, "stations": {"karman": 0.7, "l4": 1.35, "tycho": 1.25}},
+  {"id": "medicine", "name": "Medical Supplies", "needs": "climate", "base": 2200, "stations": {"karman": 0.8, "l4": 1.4, "hephaistos": 1.2}},
+  {"id": "isotopes", "name": "Isotopes", "needs": "radiation", "base": 2600, "stations": {"hephaistos": 0.7, "karman": 1.35, "l4": 1.2}},
+  {"id": "pellets", "name": "Fusion Fuel Pellets", "needs": "radiation", "base": 1800, "stations": {"hephaistos": 0.8, "tycho": 1.3}},
+  {"id": "samples", "name": "Biological Samples", "needs": "specialty", "base": 5200, "stations": {"l4": 0.75, "karman": 1.4}}
+ ]
+}

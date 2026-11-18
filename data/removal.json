@@ -627,5 +627,53 @@
   "debris": {
    "scrap": 2
   }
+ },
+ "cargo_pod": {
+  "uninstall_time": 3.0,
+  "dismantle_time": 4.0,
+  "dismantle": {
+   "plate": 2,
+   "pipe": 1
+  },
+  "hp": 150,
+  "debris": {
+   "scrap": 2
+  }
+ },
+ "cargo_pod_climate": {
+  "uninstall_time": 3.0,
+  "dismantle_time": 4.0,
+  "dismantle": {
+   "plate": 2,
+   "pipe": 1
+  },
+  "hp": 150,
+  "debris": {
+   "scrap": 2
+  }
+ },
+ "cargo_pod_radiation": {
+  "uninstall_time": 3.0,
+  "dismantle_time": 4.0,
+  "dismantle": {
+   "plate": 2,
+   "pipe": 1
+  },
+  "hp": 150,
+  "debris": {
+   "scrap": 2
+  }
+ },
+ "cargo_pod_specialty": {
+  "uninstall_time": 3.0,
+  "dismantle_time": 4.0,
+  "dismantle": {
+   "plate": 2,
+   "pipe": 1
+  },
+  "hp": 150,
+  "debris": {
+   "scrap": 2
+  }
  }
 }

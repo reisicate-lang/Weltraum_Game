@@ -912,7 +912,7 @@ func _refresh_window() -> void:
 	if st.get("black", false):
 		window_box.add_child(_label("Black market: data chips are worth double here.", COL_MUTED, 12))
 	var tabs := HBoxContainer.new()
-	for tb in [["sell", "Sell"], ["buy", "Buy"], ["bank", "Account"], ["salvage", "Salvage"], ["ships", "Ships"], ["station", "Station"], ["crew", "Crew"], ["jobs", "Jobs"]]:
+	for tb in [["sell", "Sell"], ["buy", "Buy"], ["cargo", "Cargo"], ["bank", "Account"], ["salvage", "Salvage"], ["ships", "Ships"], ["station", "Station"], ["crew", "Crew"], ["jobs", "Jobs"]]:
 		if tb[0] == "salvage" and not Config.ENABLE_WRECK:
 			continue
 		var b := _button(tb[1], func():
@@ -1049,6 +1049,34 @@ func _refresh_window() -> void:
 				window_box.add_child(terms)
 			if not st.is_empty():
 				window_box.add_child(_label("Bonus and death pay are paid on signing. The death pay is held in trust and comes back when someone quits or is let go.", COL_MUTED, 12))
+		"cargo":
+			# Bulk Trading (Ostranauts Trading 5): the terminal is the Cargo Kiosk
+			var bg := ShipSystem.grid
+			var pd: Dictionary = Bulk.pods(bg)
+			window_box.add_child(_label("Cargo pods: %d standard, %d climate, %d radiation, %d specialty · %d / %d units · %.1f t" % [pd.standard, pd.climate, pd.radiation, pd.specialty, Bulk.units(bg.bulk), Bulk.capacity(bg), Bulk.mass(bg)], COL_AMBER, 13))
+			var bwhy := Bulk.block_reason(bg)
+			if bwhy != "":
+				window_box.add_child(_label(bwhy, COL_MUTED, 12))
+			var sid := String(st.get("id", ""))
+			for gd in Bulk.goods():
+				var have := int(bg.bulk.get(gd.id, 0))
+				var txt := "%s (%s) · buy %d / sell %d Cr · aboard %d" % [gd.name, gd.needs, Bulk.buy_price(gd.id, sid), Bulk.sell_price(gd.id, sid), have]
+				var btns: Array = [_button("Buy 1", func():
+					Bulk.buy(gd.id, 1)
+					_last_window = ""
+					_refresh_window()), _button("Buy 10", func():
+					Bulk.buy(gd.id, 10)
+					_last_window = ""
+					_refresh_window())]
+				if have > 0:
+					btns.append(_button("Sell all", func():
+						Bulk.sell(gd.id, 9999)
+						_last_window = ""
+						_refresh_window()))
+				for b in btns:
+					b.disabled = bwhy != "" and not (have > 0 and E.terminal_online() and b.text == "Sell all")
+				window_box.add_child(_row(txt, btns))
+			window_box.add_child(_label("Prices differ between stations and drift daily. Goods needing climate control or radiation shielding only fit into matching pods (Specialty takes all). Pods are sold in the Buy tab.", COL_MUTED, 12))
 		"ships":
 			var F := FleetSystem
 			window_box.add_child(_row("Current ship", [_label(F.current_name, COL_AMBER, 13)]))

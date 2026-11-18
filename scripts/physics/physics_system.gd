@@ -192,6 +192,7 @@ func mass() -> float:
 	for i in g.piles:
 		if _own_floor(g, i):
 			m += g.piles[i].weight() / 1000.0
+	m += Bulk.mass(g)
 	for c in CrewSystem.crew:
 		if c.away_until > GameState.time or not g.in_bounds(c.tile()) or not _own_floor(g, g.idx(c.tile())):
 			continue

@@ -258,6 +258,9 @@ func reason(kind: String, p: Vector2i, key: String = "") -> String:
 	if dev != null:
 		if dev.lock_level > 0:
 			return "Locked – crack it first (hacking)."
+		var bulk_why := Bulk.remove_reason(g, dev)
+		if bulk_why != "":
+			return bulk_why
 		if dev.suit != null and kind != "uninstall":
 			return "A space suit hangs in the locker. Only Uninstall is possible."
 		if g.linked.has(i):
