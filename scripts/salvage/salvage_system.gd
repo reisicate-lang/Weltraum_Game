@@ -129,6 +129,8 @@ func generate() -> bool:
 		var dev := g.place_device(DEVICE_POOL.pick_random(), spots.pop_back())
 		dev.cond = randf_range(8.0, 75.0)
 		dev.broken = randf() < 0.35
+		# Derelicts: some parts only worn, others damaged (repair with components)
+		dev.damaged = dev.broken or randf() < 0.5
 		dev.unknown = true
 		if dev.data().stock >= 0.0:
 			dev.stock = floorf(dev.data().stock * randf() * 0.3)

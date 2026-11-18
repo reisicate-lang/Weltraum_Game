@@ -323,6 +323,7 @@ func _set_cond(p: Vector2i, v: float) -> void:
 	var dev := g.device_at(p)
 	if dev != null:
 		dev.cond = v
+		dev.damaged = true
 		if v <= 0.0:
 			dev.broken = true
 	else:
@@ -398,6 +399,7 @@ func finish(job: Dictionary, worker: CrewMember, worker_pos: Vector2i) -> void:
 				# Some parts often break when uninstalled (Ostranauts: VDX-01 transponder)
 				if dev.data().uninstall_break > 0.0 and randf() < dev.data().uninstall_break:
 					d.broken = true
+					d.damaged = true
 					d.cond = 0.0
 					cond = 0.0
 					GameState.toast("%s broke while being uninstalled." % dev.data().display_name, "bad")

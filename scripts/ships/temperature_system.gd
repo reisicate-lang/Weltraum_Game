@@ -142,6 +142,7 @@ func _fire(g: ShipGrid, dt: float) -> void:
 		if g.devices.has(i):
 			var dev: Device = g.devices[i]
 			dev.cond = maxf(0.0, dev.cond - 5.0 * dt)
+			dev.damaged = true
 			if dev.cond <= 0.0:
 				dev.broken = true
 		for d in [1, -1, g.width, -g.width]:

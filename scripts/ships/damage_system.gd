@@ -51,6 +51,7 @@ func strike() -> void:
 	for dev in g.devices.values():
 		if absi(dev.pos.x - p.x) <= 2 * Config.GRID_SCALE and absi(dev.pos.y - p.y) <= 2 * Config.GRID_SCALE and not dev.broken:
 			dev.cond = maxf(0.0, dev.cond - randf() * 30.0)
+			dev.damaged = true
 			if dev.cond <= 0.0:
 				dev.broken = true
 	# Impacts can start fires (on a neighbouring tile with air)
@@ -80,12 +81,35 @@ func needs_repair(p: Vector2i) -> bool:
 	var t := g.get_tile(p)
 	return (t == ShipGrid.Tile.WALL or t == ShipGrid.Tile.DOOR) and g.cond[g.idx(p)] < 100.0
 
+## Components a repair needs (Ostranauts Salvaging 3.2): worn = only time and work;
+## damaged = its most valuable component other than plates, plus scrap
+## (wiki: "keep motors and scrap stockpiled to repair" RCS thrusters)
+func repair_parts(dev: Device) -> Dictionary:
+	if dev == null or not dev.damaged:
+		return {}
+	var best := ""
+	var c := dev.data().cost
+	for t in c:
+		if t != "plate" and ItemSystem.item(t) != null and (best == "" or ItemSystem.item(t).value > ItemSystem.item(best).value):
+			best = t
+	if best == "":
+		best = "plate"
+	return {best: 1, "scrap": 1}
+
+func parts_text(dev: Device) -> String:
+	var parts: PackedStringArray = []
+	var need := repair_parts(dev)
+	for t in need:
+		parts.append("%d× %s" % [int(need[t]), ItemSystem.item(t).display_name])
+	return ", ".join(parts)
+
 func repair(p: Vector2i) -> void:
 	var g := ShipSystem.grid
 	var dev := g.device_at(p)
 	if dev != null and dev.pos == p:
 		dev.cond = 100.0
 		dev.broken = false
+		dev.damaged = false
 	else:
 		g.cond[g.idx(p)] = 100.0
 

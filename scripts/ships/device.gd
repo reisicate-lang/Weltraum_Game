@@ -32,6 +32,8 @@ var rot := 0
 var switch_on := true
 ## Set point of a pressure alarm or thermostat (-1 = default, see Hvac)
 var setpoint := -1.0
+## Damaged (impact, fire, hits) instead of only worn: repairing needs components (Ostranauts Salvaging 3.2)
+var damaged := false
 
 const PUSH_DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1)]
 
@@ -113,7 +115,7 @@ func status_text() -> String:
 	if broken:
 		parts.append("BROKEN")
 	elif cond < 100.0:
-		parts.append("condition %d %%" % int(cond))
+		parts.append("condition %d %%" % int(cond) + (" (damaged: repair needs %s)" % DamageSystem.parts_text(self) if damaged else " (worn)"))
 	if needs_power():
 		parts.append("running" if powered else "no power")
 	if d.power > 0.0:
@@ -144,7 +146,7 @@ func status_text() -> String:
 func to_data() -> Dictionary:
 	return {"type": type, "x": pos.x, "y": pos.y, "cond": cond, "broken": broken, "stock": stock,
 		"charge": charge, "items": inv.to_data() if inv != null else [], "suit": suit, "store": store, "unknown": unknown, "lock": lock_level,
-		"growth": growth, "tended_at": tended_at, "genemod": genemod, "rot": rot, "shape": data().length, "switch": switch_on, "setpoint": setpoint}
+		"growth": growth, "tended_at": tended_at, "genemod": genemod, "rot": rot, "shape": data().length, "switch": switch_on, "setpoint": setpoint, "damaged": damaged}
 
 static func from_data(d: Dictionary) -> Device:
 	var dev := Device.new(String(d.type), Vector2i(int(d.x), int(d.y)))
@@ -163,5 +165,6 @@ static func from_data(d: Dictionary) -> Device:
 	dev.genemod = bool(d.get("genemod", false))
 	dev.switch_on = bool(d.get("switch", true))
 	dev.setpoint = float(d.get("setpoint", -1.0))
+	dev.damaged = bool(d.get("damaged", false))
 	dev.rot = int(d.get("rot", 0))
 	return dev

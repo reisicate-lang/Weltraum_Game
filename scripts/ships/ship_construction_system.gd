@@ -181,6 +181,10 @@ func cost(job: Dictionary) -> Dictionary:
 		"refill": return {job.item: int(job.qty)}
 		"craft": return EconomySystem.recipe(job.recipe)["in"]
 		"install": return {job.item: 1}
+		"repair":
+			# Damaged devices need components, worn ones only time (Ostranauts Salvaging 3.2)
+			var dv := ShipSystem.grid.device_at(pos_of(job))
+			return DamageSystem.repair_parts(dv) if dv != null and dv.pos == pos_of(job) else {}
 	return {}
 
 ## What the job is still missing (cost minus material already dropped at the build site).
