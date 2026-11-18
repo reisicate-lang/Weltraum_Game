@@ -11,7 +11,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _initialize() -> void:
 	await process_frame
@@ -30,7 +30,7 @@ func _initialize() -> void:
 	_check("Docked: no PROX WARN, log empty", P.prox_warning() == "" and P.proximity().is_empty() and P.ship_log.is_empty())
 
 	# 2) Undocking: log entry, Tycho within 5 km → PROX WARN
-	_check("Abdocken klappt", P.undock())
+	_check("Undocking works", P.undock())
 	_check("Log: “Undocked: Tycho…” (%s)" % str(P.ship_log), P.ship_log.size() == 1 and String(P.ship_log[0].text).begins_with("Undocked: Tycho"))
 	var w: String = P.prox_warning()
 	_check("PROX WARN nahe Tycho: %s" % w, w.begins_with("PROX WARN: Tycho") and w.ends_with("km"))
@@ -51,7 +51,7 @@ func _initialize() -> void:
 	_check("The cockpit shows PROX WARN with “Mute” and SHIP LOGS", texts.any(func(t): return String(t).contains("PROX WARN")) and mute != null and texts.has("SHIP LOGS"))
 	mute.pressed.emit()
 	ui.nav_open = false
-	_check("Mute-Knopf schaltet stumm", P.prox_muted)
+	_check("The Mute button mutes", P.prox_muted)
 	P.prox_muted = true
 	_check("Muted: no warning, the proximity stays known", P.prox_warning() == "" and not P.proximity().is_empty())
 	P.prox_muted = false
@@ -86,5 +86,5 @@ func _initialize() -> void:
 	gs.new_game()
 	_check("New game: log empty, alarm on", P.ship_log.is_empty() and not P.prox_muted)
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

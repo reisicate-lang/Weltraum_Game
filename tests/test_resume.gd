@@ -21,7 +21,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _now() -> float:
 	return Time.get_ticks_msec() / 1000.0
@@ -304,5 +304,5 @@ func _initialize() -> void:
 	ui.object_menu.hide()
 	_check("4: Right-clicks on the same tile: %s" % str(keys), keys == ["cable", "dev:battery", "tile:floor", "cable"])
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

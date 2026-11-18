@@ -23,7 +23,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _texts(n: Node) -> String:
 	var out := ""
@@ -124,7 +124,7 @@ func _initialize() -> void:
 		var dj := {"kind": "device", "dev": cs[1], "x": 0, "y": 0, "paid": false}
 		var wa: float = SK.work_value(a, dj)
 		var wb: float = SK.work_value(b, dj)
-		_check("2: %s (%s bauen): Arbeitswert %.2f → %.2f, erwartet %+.0f, Material gleich" % [cs[0], cs[1], wa, wb, cs[2]],
+		_check("2: %s (building %s): work value %.2f → %.2f, expected %+.0f, same material" % [cs[0], cs[1], wa, wb, cs[2]],
 			is_equal_approx(wb - wa, cs[2]) and ItemSystem.device(cs[1]).category == cs[0] and CS.cost(dj) == ItemSystem.device(cs[1]).cost)
 	var bat := _dev_pos("battery")
 	_check("2: Uninstall job at the battery (tool as before)", R.order("uninstall", bat) == "")
@@ -263,5 +263,5 @@ func _initialize() -> void:
 			is_equal_approx(SK.progress(mira, "electrical"), variant[0]) and is_equal_approx(SK.work_value_bonus(mira, bj), variant[1]) and is_equal_approx(SK.progress(mira, "construction"), 33.0))
 		_check("5 (%d %%): old speed effect gone (electrical, cables)" % int(variant[0]), SK.effect(mira, "work_electrical") == 0.0 and SK.effect(mira, "cable_speed") == 0.0)
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

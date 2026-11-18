@@ -11,7 +11,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 ## Own small grid with one room: inner area w × h, ring of walls, air (or vacuum)
 func _room(w: int, h: int, devs: Array, air: bool = true) -> ShipGrid:
@@ -88,10 +88,10 @@ func _initialize() -> void:
 	eng.tiles[eng.idx(Vector2i(2, 4))] = ShipGrid.Tile.SPACE
 	var v_open: int = F.ship_value(eng)
 	var expect := int(dev_v * 0.4) + 45   # + 45 Cr for the wall piece that the hole replaces
-	_check("Engineering ×1,4: Wert +%d Cr (erwartet %d)" % [v_room - v_open, expect], absi(v_room - v_open - expect) <= 2)
+	_check("Engineering ×1.4: value +%d Cr (expected %d)" % [v_room - v_open, expect], absi(v_room - v_open - expect) <= 2)
 
 	# 3) Ship Rating W-X-Y-ZZZZ
-	_check("Zustand: 100 A, 97 B, 90 C, 60 D, 40 E", ShipRating.condition_rank(100.0) == "A" and ShipRating.condition_rank(97.0) == "B"
+	_check("Condition: 100 A, 97 B, 90 C, 60 D, 40 E", ShipRating.condition_rank(100.0) == "A" and ShipRating.condition_rank(97.0) == "B"
 		and ShipRating.condition_rank(90.0) == "C" and ShipRating.condition_rank(60.0) == "D" and ShipRating.condition_rank(40.0) == "E")
 	_check("Thrust: 250 A, 500 B, 700 C, 1500 D, 1600 E, without a thruster E", ShipRating.thrust_rank(250.0, 1) == "A" and ShipRating.thrust_rank(1000.0, 2) == "B"
 		and ShipRating.thrust_rank(700.0, 1) == "C" and ShipRating.thrust_rank(1500.0, 1) == "D" and ShipRating.thrust_rank(1600.0, 1) == "E" and ShipRating.thrust_rank(10.0, 0) == "E")
@@ -109,11 +109,11 @@ func _initialize() -> void:
 	# 4) Anzeige
 	var rt: String = ui.rooms_text(g)
 	_check("Room list of the starter ship: %s" % rt, rt.contains("Airlock ×1.50") and rt.contains("Reactor Room ×1.60") and rt.contains("Bridge (Open) ×1.30"))
-	_check("Bewertungszeile: %s" % ui.ship_rating_text(g, 1000.0), ui.ship_rating_text(g, 1000.0).begins_with("Ship Rating ") and ui.ship_rating_text(g, 1000.0).contains("Ship value"))
+	_check("Rating line: %s" % ui.ship_rating_text(g, 1000.0), ui.ship_rating_text(g, 1000.0).begins_with("Ship Rating ") and ui.ship_rating_text(g, 1000.0).contains("Ship value"))
 	var all_ok := true
 	for t in ["chair", "table", "toilet", "light"]:
 		all_ok = all_ok and root.get_node("ItemSystem").device(t) != null and root.get_node("ItemSystem").device(t).id == t
 	_check("New furniture Chair, Table, Toilet, Light can be built", all_ok)
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

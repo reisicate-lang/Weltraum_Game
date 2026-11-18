@@ -12,7 +12,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _initialize() -> void:
 	await process_frame
@@ -136,5 +136,5 @@ func _initialize() -> void:
 			found += 1
 	_check("Derelicts: about every 4th has a permit (%d of 200 tries)" % found, found > 25 and found < 80)
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

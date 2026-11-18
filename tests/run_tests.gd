@@ -6,7 +6,7 @@ extends "res://tests/test_base.gd"
 var _failed := 0
 
 func _check(name: String, ok: bool) -> void:
-	print(("OK    " if ok else "FEHLER") + "  " + name)
+	print(("OK    " if ok else "FAIL  ") + "  " + name)
 	if not ok:
 		_failed += 1
 
@@ -74,7 +74,7 @@ func _initialize() -> void:
 	build.place("remove", target)
 	_run(30)
 	_check("Crate demolished", ship.grid.device_at(target) == null)
-	_check("Teile liegen herum", not ship.grid.piles.is_empty())
+	_check("Parts are lying around", not ship.grid.piles.is_empty())
 
 	# 4) Leak: remove the outer wall at the top of the cockpit -> air escapes
 	# (the docked station lies right at the wall on the right)
@@ -113,7 +113,7 @@ func _initialize() -> void:
 	var charger_to := C(x0 + 6, y0 + 7)
 	build.place_move(charger_from, charger_to)
 	_run(5)
-	_check("Ladestation versetzt", ship.grid.device_at(charger_to) != null and ship.grid.device_at(charger_to).type == "charger")
+	_check("Charging station moved", ship.grid.device_at(charger_to) != null and ship.grid.device_at(charger_to).type == "charger")
 
 	# 7) Meteorite impacts and automatic repair
 	var dmg = root.get_node("DamageSystem")
@@ -169,7 +169,7 @@ func _initialize() -> void:
 					moved += dev.inv.move_to(term.inv, it.type, it.qty)
 	var cr0: int = econ.credits
 	econ.sell_all()
-	_check("Verkauf bringt Geld (%d -> %d Cr)" % [cr0, econ.credits], econ.credits > cr0)
+	_check("Selling brings money (%d -> %d Cr)" % [cr0, econ.credits], econ.credits > cr0)
 	econ.buy("fuelcan", 1)
 	_check("Buying puts goods into the terminal", term.inv.count("fuelcan") >= 1)
 	var old_name: String = salv.wreck_name
@@ -205,7 +205,7 @@ func _initialize() -> void:
 	_check("Thrust available (%d kN)" % int(phys.max_thrust()), phys.max_thrust() >= 80.0)
 	var wreck_before: String = salv.wreck_name
 	seat_pilot()   # Pilot at the navigation console (flight commands only there)
-	_check("Abdocken klappt", phys.undock())
+	_check("Undocking works", phys.undock())
 	_check("Wreck stays at Tycho when undocking", salv.wreck_name == "")
 	var moon := Vector2(60000, 0)
 	var d0: float = phys.pos.distance_to(moon)
@@ -228,7 +228,7 @@ func _initialize() -> void:
 	phys.ang_vel = 0.0
 	phys.match_target = "tycho"
 	_run(0.5)
-	_check("Geschwindigkeit angeglichen (%.4f km/s)" % phys.rel_to("tycho").speed, phys.rel_to("tycho").speed < 0.006)
+	_check("Velocity matched (%.4f km/s)" % phys.rel_to("tycho").speed, phys.rel_to("tycho").speed < 0.006)
 	# after matching, drift in slowly (like with a short burst)
 	phys.pos = phys.rel_to("tycho").pos + Vector2(0.1, 0)
 	phys.angle = phys.dock_alignment("tycho").angle   # Turn the airlock towards the target
@@ -281,5 +281,5 @@ func _initialize() -> void:
 	_run(30)
 	_check("Crash on Earth", phys.crashed and over[0])
 
-	print("\n%d Fehler" % _failed)
+	print("\n%d failed" % _failed)
 	quit(1 if _failed > 0 else 0)

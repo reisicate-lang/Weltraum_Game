@@ -10,7 +10,7 @@ func _check(name: String, ok: bool) -> void:
 		_ok += 1
 	else:
 		_failed += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _fresh(n: String = "Test") -> CrewMember:
 	var c := CrewMember.new(900 + randi() % 1000, n, Color.WHITE, Vector2i(30, 22))
@@ -68,7 +68,7 @@ func _initialize() -> void:
 	for k in 10:
 		SK.train(r, "lay_cable", 10.0)
 	var later: float = SK.train(r, "lay_cable", 10.0)
-	_check("Wiederholung bringt weniger (%.3f -> %.3f)" % [first, later], later < first * 0.6)
+	_check("Repetition brings less (%.3f -> %.3f)" % [first, later], later < first * 0.6)
 	var novice := _fresh()
 	var expert := _fresh()
 	SK.set_progress(expert, "electrical", 90.0)
@@ -234,11 +234,11 @@ func _initialize() -> void:
 	for o in opts:
 		if o.id == "tip":
 			tip_ok = o.ok
-	_check("Volksetikette schaltet Gus' Tipp frei", tip_ok)
+	_check("Folk Etiquette unlocks Gus' tip", tip_ok)
 	_check("The answer comes from a person", DLG.choose("tip").begins_with("Gus:"))
 	var cr0: int = econ.credits
 	DLG.choose("song")
-	_check("Auftritt bringt Gage", econ.credits > cr0)
+	_check("A gig brings a fee", econ.credits > cr0)
 	_check("Auftritt trainiert Gesang", SK.progress(mira, "song") > 0.0)
 	var victim := hire
 	victim.stress = 80.0
@@ -262,5 +262,5 @@ func _initialize() -> void:
 	_check("Crew complete after loading", crew.crew.size() == 2)
 	_check("Lernhistorie gespeichert", not m2.skills.get("song", {}).get("hist", []).is_empty())
 
-	print("\n%d OK, %d Fehler" % [_ok, _failed])
+	print("\n%d OK, %d failed" % [_ok, _failed])
 	quit(1 if _failed > 0 else 0)

@@ -11,7 +11,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _initialize() -> void:
 	await process_frame
@@ -76,5 +76,5 @@ func _initialize() -> void:
 	main._key(ev)
 	_check("X again: off", gs.view == "normal")
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

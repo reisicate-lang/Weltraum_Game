@@ -9,5 +9,5 @@ START=$(date +%s)
 SLOW="test_systems run_tests test_resume test_core test_world test_match"
 { printf '%s\n' $SLOW; ls tests/*.gd | xargs -n1 basename | sed 's/\.gd$//' | grep -vE "^(boot|test_base|_)" | grep -vxF -f <(printf '%s\n' $SLOW); } | \
   xargs -P4 -I{} bash -c "s=\$(date +%s); timeout ${TEST_TIMEOUT:-900} \"$GODOT\" --headless --path . --script res://tests/boot.gd -- {} > \"$OUT/{}.log\" 2>&1; \
-    printf '%-16s %4ss  %s\n' {} \$((\$(date +%s)-s)) \"\$(grep -E 'Fehler\$' \"$OUT/{}.log\")\"; grep -h '^FEHLER' \"$OUT/{}.log\" | sed 's/^/    /'"
-echo "Gesamt: $(( $(date +%s) - START ))s  (Protokolle: $OUT)"
+    printf '%-16s %4ss  %s\n' {} \$((\$(date +%s)-s)) \"\$(grep -E 'failed\$' \"$OUT/{}.log\")\"; grep -h '^FAIL' \"$OUT/{}.log\" | sed 's/^/    /'"
+echo "Total: $(( $(date +%s) - START ))s  (logs: $OUT)"

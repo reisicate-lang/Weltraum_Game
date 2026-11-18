@@ -1,4 +1,4 @@
-## Tests: „Save Some Money“ im Lebenslauf (Ostranauts 2.3): 1 Jahr, etwa 300–600 Cr Startgeld
+## Tests: “Save Some Money” in the life story (Ostranauts 2.3): 1 year, about 300–600 Cr start money
 ##   godot --headless --path . --script res://tests/boot.gd -- test_save_money
 extends "res://tests/test_base.gd"
 
@@ -11,7 +11,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _find(where: Node, meta: String) -> Button:
 	for ch in where.get_children():
@@ -48,29 +48,29 @@ func _initialize() -> void:
 			break
 		var got: int = CHS.start_credits(c) - before
 		ok_range = ok_range and got >= 300 and got <= 600
-	_check("Zufällig immer 300–600 Cr", ok_range)
-	_check("Mit 29 greift das Altern (Middle age)", c.get_meta("aged_29", false))
-	# Ende der Erstellung: mit 47 nicht mehr
+	_check("Random, always 300–600 Cr", ok_range)
+	_check("At 29 aging applies (Middle age)", c.get_meta("aged_29", false))
+	# End of the creation: no longer at 47
 	c.age = CHS.max_age
-	_check("Mit 47 gesperrt", CHS.save_money(c) == "" and c.age == CHS.max_age)
+	_check("Locked at 47", CHS.save_money(c) == "" and c.age == CHS.max_age)
 	# Offenes Ereignis sperrt
 	var d := CrewMember.new(991, "Busy", Color.WHITE, Vector2i.ZERO)
 	CHS.begin(d)
 	CHS.start_encounter(d)
 	_check("Offenes Ereignis sperrt Save Some Money", CHS.save_money(d) == "" and d.age == 18)
 
-	# 2) Oberfläche
+	# 2) Interface
 	var mira: CrewMember = root.get_node("CrewSystem").player()
 	CHS.begin(mira)
 	var cui = ui.char_ui
 	cui.open_creation()
 	await process_frame
 	var b := _find(cui.creation_box, "save_money")
-	_check("Knopf „Save Some Money (1 year)“", b != null and b.text == "Save Some Money (1 year)" and not b.disabled and b.tooltip_text.contains("300–600"))
+	_check("Button “Save Some Money (1 year)”", b != null and b.text == "Save Some Money (1 year)" and not b.disabled and b.tooltip_text.contains("300–600"))
 	var age_b: int = mira.age
 	b.pressed.emit()
 	await process_frame
-	_check("Klick: +1 Jahr und Startgeld (%d Cr)" % CHS.start_credits(mira), mira.age == age_b + 1 and CHS.start_credits(mira) >= 300)
+	_check("Click: +1 year and start money (%d Cr)" % CHS.start_credits(mira), mira.age == age_b + 1 and CHS.start_credits(mira) >= 300)
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

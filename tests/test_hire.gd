@@ -12,7 +12,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _initialize() -> void:
 	await process_frame
@@ -91,5 +91,5 @@ func _initialize() -> void:
 				texts.append(x.text)
 	_check("Crew tab: salary, bonus, death pay and “Offer”", texts.any(func(t): return String(t).begins_with("Salary ")) and texts.any(func(t): return String(t).begins_with("Death pay "))
 		and texts.any(func(t): return String(t).begins_with("Offer (")))
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

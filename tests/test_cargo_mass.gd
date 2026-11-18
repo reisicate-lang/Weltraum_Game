@@ -14,7 +14,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _near(a: float, b: float, eps: float = 0.000001) -> bool:
 	return absf(a - b) < eps
@@ -182,5 +182,5 @@ func _initialize() -> void:
 	g = ship.grid
 	_check("Switched back: the old stack is there again and counts once", g.piles.has(g.idx(floor_p)) and _near(P.mass(), m_saved, 0.00001))
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

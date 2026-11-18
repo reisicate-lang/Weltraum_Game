@@ -22,7 +22,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _texts(n: Node) -> String:
 	var out := ""
@@ -251,5 +251,5 @@ func _initialize() -> void:
 	_check("5: Back in breathable air: helmet off and on, air refreshed", is_equal_approx(m5.suit.o2, 100.0))
 	m5.suit = null
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

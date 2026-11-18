@@ -21,7 +21,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _until_done(p: Vector2i, max_s: int = 3600) -> bool:
 	for k in max_s:
@@ -172,5 +172,5 @@ func _initialize() -> void:
 	_check("Thruster: the inner tile starts at the cable, then the same device", m3 == "cable" and (await _rclick(inner)) == "dev:thruster" and g.device_at(ui.sel_tile) == thr)
 	ui.object_menu.hide()
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

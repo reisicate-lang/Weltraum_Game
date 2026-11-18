@@ -21,7 +21,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _texts(n: Node) -> String:
 	var out := ""
@@ -174,7 +174,7 @@ func _initialize() -> void:
 	]
 	for cs in cases:
 		var d: float = SK.work_value(b, cs[1]) - SK.work_value(a, cs[1])
-		_check("2: %s: Arbeitswert %.2f → %.2f (%+.0f, erwartet %+.0f)" % [cs[0], SK.work_value(a, cs[1]), SK.work_value(b, cs[1]), d, cs[2]], is_equal_approx(d, cs[2]))
+		_check("2: %s: work value %.2f → %.2f (%+.0f, expected %+.0f)" % [cs[0], SK.work_value(a, cs[1]), SK.work_value(b, cs[1]), d, cs[2]], is_equal_approx(d, cs[2]))
 	var wj: Dictionary = cases[0][1]
 	_check("2: Same material for both (wall: %s)" % str(CS.cost(wj)), CS.cost(wj) == CS.cost(wj.duplicate()) and not CS.cost(wj).is_empty())
 	_check("2: No bonus yet at 99.9 %", is_equal_approx(SK.work_value(_fresh(99.9), wj), SK.work_value(a, wj)))
@@ -240,5 +240,5 @@ func _initialize() -> void:
 	_check("4: Structure bonus without acquiring it again (+%.0f), other skills kept" % SK.work_value_bonus(mira, wj),
 		SK.acquired(mira, "spaceship") and is_equal_approx(SK.work_value_bonus(mira, wj), 4.0) and is_equal_approx(SK.progress(mira, "construction"), 33.0) and SK.effect(mira, "work_hull") == 0.0)
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

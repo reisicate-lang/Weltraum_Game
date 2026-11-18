@@ -16,7 +16,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _fresh() -> CrewMember:
 	var c := CrewMember.new(800 + randi() % 1000, "Test", Color.WHITE, Vector2i.ZERO)
@@ -67,7 +67,7 @@ func _initialize() -> void:
 	_check("An open encounter locks life steps, confirming and a new encounter", CHS.apply_career(c, "trader") == "" and not CHS.confirm(c) and CHS.adventure_block_reason(c) != "")
 	var line: String = CHS.resolve_encounter(c, "electrician")
 	_check("Electrician Gig: 1 Jahr, +200 Cr, Electrical Engineering, Patient (%s)" % line, c.age == a0 + 1 and int(c.get_meta("credits", 0)) == 200 and SK.acquired(c, "electrical") and "patient" in c.traits and CHS.pending_encounter(c) == "")
-	_check("Lebenslauf-Eintrag", c.history[-1] == line and "Daily Grind – Electrician Gig" in line)
+	_check("Life story entry", c.history[-1] == line and "Daily Grind – Electrician Gig" in line)
 
 	# 3) Voraussetzung: Hack Them braucht Hacking
 	CHS.start_encounter(c, "king", 0.9)
@@ -165,5 +165,5 @@ func _initialize() -> void:
 	save.load_game(true)
 	_check("Tokens kept after loading", int(CHS.risk_tokens(root.get_node("CrewSystem").player()).get("IsEncPokerFailChance", 0)) == 2)
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

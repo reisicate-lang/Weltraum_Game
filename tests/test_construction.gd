@@ -22,7 +22,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _texts(n: Node) -> String:
 	var out := ""
@@ -84,7 +84,7 @@ func _effects_check(label: String) -> void:
 	]
 	for cs in cases:
 		var d: float = SK.work_speed(b, cs[1]) - SK.work_speed(a, cs[1])
-		_check("%s: %s Tempo %+.2f (= %+.1f Arbeitswert), erwartet %+.2f" % [label, cs[0], d, d * 10.0, cs[2]], is_equal_approx(d, cs[2]))
+		_check("%s: %s speed %+.2f (= %+.1f work value), expected %+.2f" % [label, cs[0], d, d * 10.0, cs[2]], is_equal_approx(d, cs[2]))
 
 func _initialize() -> void:
 	await process_frame
@@ -215,5 +215,5 @@ func _initialize() -> void:
 	_check("3: Practice mappings unchanged (%s)" % str(acts), acts == ["build_device", "build_structure", "deconstruct_furniture", "repair_furniture", "study_construction"])
 	_effects_check("3")
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

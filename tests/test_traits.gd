@@ -19,7 +19,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _trait_button(id: String) -> Button:
 	for row in ui.char_ui.creation_box.get_children():
@@ -194,7 +194,7 @@ func _initialize() -> void:
 	save.load_game(true)
 	_check("6: New traits unchanged after loading (%s)" % str(root.get_node("CrewSystem").player().traits), root.get_node("CrewSystem").player().traits == ["genius", "heavy_sleeper", "smoker"])
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()
 
 func _find_go() -> Button:

@@ -10,7 +10,7 @@ func _check(name: String, ok: bool) -> void:
 		_ok += 1
 	else:
 		_failed += 1
-	print(("OK    " if ok else "FEHLER") + "  " + name)
+	print(("OK    " if ok else "FAIL  ") + "  " + name)
 
 func _run(minutes: float) -> void:
 	var gs = root.get_node("GameState")
@@ -107,9 +107,9 @@ func _initialize() -> void:
 	var fire_tile: int = g.idx(C(x0 + 5, y0 + 6))
 	var o2_before: float = g.o2[fire_tile]
 	temp.ignite(fire_tile)
-	_check("Feuer brennt", g.fire[fire_tile] == 1)
+	_check("Fire burns", g.fire[fire_tile] == 1)
 	_run(1)
-	_check("Feuer verbraucht Sauerstoff", g.o2[fire_tile] < o2_before)
+	_check("Fire uses oxygen", g.o2[fire_tile] < o2_before)
 	_run(20)
 	_check("The crew put out the fire (burning: %d, Mira: %s, hp %d, stress %d, manual %s)" % [temp.burning_count(), mira.task, int(mira.health), int(mira.stress), str(mira.is_manual())], temp.burning_count() == 0)
 	# Fire in vacuum goes out
@@ -130,7 +130,7 @@ func _initialize() -> void:
 	water.wastewater = 30.0
 	_run_coarse(240)
 	_check("The water filter turns waste water into drinking water (waste water %.1f L, dispenser %.1f L)" % [water.wastewater, dispenser.stock], water.wastewater < 30.0 and dispenser.stock > 20.0)
-	_check("Filter verbraucht Filterleistung", wf.stock < 20.0)
+	_check("The filter uses up filter capacity", wf.stock < 20.0)
 
 	# 6) Hydrokultur: Pflege, Wachstum, Ernte
 	var hydro = g.place_device("hydro", C(x0 + 2, y0 + 3))
@@ -141,7 +141,7 @@ func _initialize() -> void:
 	_check("Plants are tended", gs.time - hydro.tended_at < 1440.0)
 	hydro.growth = 0.97
 	_run(180)
-	_check("Hydrokultur geerntet (Rationen %d -> %d)" % [rations_before, build.available("ration")], build.available("ration") > rations_before or hydro.growth < 0.5)
+	_check("Hydroponics harvested (rations %d -> %d)" % [rations_before, build.available("ration")], build.available("ration") > rations_before or hydro.growth < 0.5)
 
 	# 7) Auto farm with a gene mod and meat vat
 	var farm = g.place_device("autofarm", C(x0 + 14, y0 + 2))
@@ -173,7 +173,7 @@ func _initialize() -> void:
 	econ.craft("chemfuel")
 	_run(40)
 	var who = root.get_node("CrewSystem").player()
-	_check("Chemiestation stellt Brennstoff her (Mira: %s, Hunger %d, Energie %d)" % [who.task, int(who.needs.food), int(who.needs.sleep)], made[0])
+	_check("The chemistry station makes generator fuel (Mira: %s, hunger %d, energy %d)" % [who.task, int(who.needs.food), int(who.needs.sleep)], made[0])
 
-	print("\n%d OK, %d Fehler" % [_ok, _failed])
+	print("\n%d OK, %d failed" % [_ok, _failed])
 	quit(1 if _failed > 0 else 0)

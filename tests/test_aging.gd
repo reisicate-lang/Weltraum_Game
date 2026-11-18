@@ -11,7 +11,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _initialize() -> void:
 	await process_frame
@@ -70,5 +70,5 @@ func _initialize() -> void:
 	CHS.confirm(k)
 	_check("Course past 29 confirmed: middle age (age %d)" % k.age, k.age == 30 and k.history.any(func(h): return h.begins_with("29: Middle age")) and k.traits.size() == t0 + 1)
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

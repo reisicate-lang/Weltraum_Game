@@ -11,7 +11,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _initialize() -> void:
 	await process_frame
@@ -72,7 +72,7 @@ func _initialize() -> void:
 	g.cables[g.idx(x.pos)] = 1
 	PS._dirty = true
 	PS.step(0.01)
-	_check("Wieder angeschlossen: alles gut", P.xpdr_faults().is_empty())
+	_check("Connected again: all fine", P.xpdr_faults().is_empty())
 
 	# 4) Shipyard ships come with both, on a cable
 	var F = root.get_node("FleetSystem")
@@ -97,7 +97,7 @@ func _initialize() -> void:
 	_check("Automatic repair skips it", not CS.jobs.has(g.idx(x.pos)))
 	x.cond = 100.0
 	_check("Salvage value per the wiki: %d Cr" % root.get_node("SalvageSystem").device_value(x), root.get_node("SalvageSystem").device_value(x) == 29000)
-	_check("Abgebaut-Gegenstand ~29 000 Cr wert (%d)" % IS.item("pk_transponder").value, absi(IS.item("pk_transponder").value - 29000) <= 1)
+	_check("Uninstalled item worth ~29 000 Cr (%d)" % IS.item("pk_transponder").value, absi(IS.item("pk_transponder").value - 29000) <= 1)
 	# Uninstall 40 times: about half broken
 	var broke := 0
 	var tries := 40
@@ -157,5 +157,5 @@ func _initialize() -> void:
 		pk2 += root.get_node("ShipSystem").grid.piles[i].count("pk_transponder")
 	_check("New save: no additional parts", pk2 == 1)
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

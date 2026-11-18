@@ -12,7 +12,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _zone(g, z: int) -> int:
 	var n := 0
@@ -77,10 +77,10 @@ func _initialize() -> void:
 	# 4) Undock and dock again, travel: no tiles are created
 	gs.step(1.0 / 60.0)
 	seat_pilot()   # Pilot at the navigation console (flight commands only there)
-	_check("Abdocken klappt", P.request_undock())
+	_check("Undocking works", P.request_undock())
 	for k in 20 * 60:
 		gs.step(1.0 / 60.0)
-	_check("Wieder andocken an Tycho", P.dock("tycho", true) and P.docked == "tycho")
+	_check("Docking at Tycho again", P.dock("tycho", true) and P.docked == "tycho")
 	_check("… without station and wreck", _zone(g, 3) == 0 and _zone(g, 1) == 0)
 	seat_pilot()   # Pilot at the navigation console (flight commands only there)
 	P.request_undock()
@@ -119,12 +119,12 @@ func _initialize() -> void:
 	g = ship.grid
 	_check("Loaded: no station tiles, station inactive", _zone(g, 3) == 0 and not st.active())
 	_check("Loaded: no wreck tiles", _zone(g, 1) == 0 and salv.wreck_name == "")
-	_check("Geladen: Schleusen frei", g.linked.is_empty())
+	_check("Loaded: airlocks free", g.linked.is_empty())
 	var parked = null
 	for site in fleet.sites:
 		if fleet.places.get(site.id, {}).get("wreck") != null:
 			parked = fleet.places[site.id].wreck
 	_check("Wreck not deleted but stored as its own wreck target (%s)" % (parked.name if parked != null else "-"), parked != null and parked.name == had_wreck)
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

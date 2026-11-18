@@ -20,7 +20,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 ## Button with this text below a node (recursive)
 func _find_button(n: Node, text: String) -> Button:
@@ -180,8 +180,8 @@ func _initialize() -> void:
 		SK.study(mira, "book_business_3", 30.0)
 		SK.decay_recent(mira, 120.0)
 	var unlock_msgs := toasts.filter(func(t): return "acquired Business Admin" in t)
-	_check("3: Abschluss schaltet frei (%d × 30 min gelesen)" % guard, SK.acquired(mira, "business") and unlock_msgs.size() == 1)
-	_check("3: Jetzt exakter Wert sichtbar", ("Item Value: %d Cr" % exact) in ui.item_tooltip(it))
+	_check("3: Finishing unlocks it (%d × 30 min read)" % guard, SK.acquired(mira, "business") and unlock_msgs.size() == 1)
+	_check("3: Now the exact value is visible", ("Item Value: %d Cr" % exact) in ui.item_tooltip(it))
 	SK.study(mira, "book_business_3", 30.0)
 	SK.set_progress(mira, "business", 100.0)
 	_check("3: No second unlock", toasts.filter(func(t): return "acquired Business Admin" in t).size() == 1 and SK.readable_book(mira) == "")
@@ -207,5 +207,5 @@ func _initialize() -> void:
 		_check("5 (%d %%): sale offer as without the skill (%d Cr)" % [int(variant[0]), p_with], p_with == E.sell_price(it))
 		gs.selected = null
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

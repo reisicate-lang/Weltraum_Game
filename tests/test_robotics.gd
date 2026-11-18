@@ -23,7 +23,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _texts(n: Node) -> String:
 	var out := ""
@@ -116,7 +116,7 @@ func _initialize() -> void:
 	for cs in [["control", "helm", 4.0], ["control", "terminal", 4.0], ["sensor", "autodock", 4.0], ["sensor", "autofarm", 4.0],
 			["appliance", "sink", 0.0], ["power", "battery", 0.0], ["furniture", "bed", 0.0], ["hvac", "heater", 0.0]]:
 		var dj := {"kind": "device", "dev": cs[1], "x": 0, "y": 0, "paid": false}
-		_check("2: %s (%s bauen): Arbeitswert %.2f → %.2f, erwartet %+.0f, Material gleich" % [cs[0], cs[1], SK.work_value(a, dj), SK.work_value(b, dj), cs[2]],
+		_check("2: %s (building %s): work value %.2f → %.2f, expected %+.0f, same material" % [cs[0], cs[1], SK.work_value(a, dj), SK.work_value(b, dj), cs[2]],
 			is_equal_approx(SK.work_value(b, dj) - SK.work_value(a, dj), cs[2]) and CS.cost(dj) == ItemSystem.device(cs[1]).cost)
 	var term: Device = _dev("terminal")
 	_check("2: Uninstall job at the trade terminal (control)", R.order("uninstall", term.pos) == "")
@@ -219,5 +219,5 @@ func _initialize() -> void:
 	mira = root.get_node("CrewSystem").player()
 	_check("4: Bonus without acquiring it again (+%.0f), old effect gone" % SK.work_value_bonus(mira, hj), SK.acquired(mira, "robotics") and is_equal_approx(SK.work_value_bonus(mira, hj), 4.0) and SK.effect(mira, "work_robotic") == 0.0 and is_equal_approx(SK.progress(mira, "construction"), 33.0))
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

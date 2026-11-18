@@ -21,7 +21,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _texts(n: Node) -> String:
 	var out := ""
@@ -207,5 +207,5 @@ func _initialize() -> void:
 	_check("4: Bonus without training again (work value %.2f, +%.0f)" % [SK.work_value(mira, job), SK.work_value_bonus(mira, job)],
 		SK.acquired(mira, "software") and is_equal_approx(SK.work_value_bonus(mira, job), 4.0) and SK.effect(mira, "work_computer") == 0.0)
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

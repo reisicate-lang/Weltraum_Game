@@ -11,7 +11,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _pick(action: String, on: Array) -> void:
 	Orders.action = action
@@ -59,7 +59,7 @@ func _initialize() -> void:
 	_pick("CANC", [])
 	CS.place("orders", bat)
 	_pick("DISM", ["EQUIP"])
-	_check("DISM = Zerlegen (meiste Teile)", CS.place("orders", bat) and CS.jobs[bi].kind == "dismantle")
+	_check("DISM = dismantle (most parts)", CS.place("orders", bat) and CS.jobs[bi].kind == "dismantle")
 	_pick("CANC", [])
 	CS.place("orders", bat)
 	_pick("UNIN", [])
@@ -99,7 +99,7 @@ func _initialize() -> void:
 	_pick("REPR", ["FLOOR"])
 	_check("REPR + only FLOOR: the damaged battery stays", not CS.place("orders", bat) and not CS.jobs.has(bi))
 	_pick("REPR", ["EQUIP"])
-	_check("REPR + EQUIP: Reparaturauftrag", CS.place("orders", bat) and CS.jobs.has(bi) and CS.jobs[bi].kind == "repair")
+	_check("REPR + EQUIP: repair job", CS.place("orders", bat) and CS.jobs.has(bi) and CS.jobs[bi].kind == "repair")
 	_pick("CANC", [])
 	CS.place("orders", bat)
 	dev.cond = 100.0
@@ -130,9 +130,9 @@ func _initialize() -> void:
 	ui.order_buttons.DISM.pressed.emit()
 	_check("An action button sets the action", Orders.action == "DISM" and ui.order_buttons.DISM.button_pressed and not ui.order_buttons.HAUL.button_pressed)
 	ui.filter_buttons.WALL.pressed.emit()
-	_check("Filterknopf schaltet um", bool(Orders.filters.WALL) == false and not ui.filter_buttons.WALL.button_pressed)
+	_check("A filter button toggles", bool(Orders.filters.WALL) == false and not ui.filter_buttons.WALL.button_pressed)
 	ui.set_tool("select")
 	_check("Another tool hides the bar", not ui.orders_bar.visible)
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

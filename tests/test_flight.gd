@@ -17,7 +17,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 ## Run game time like TimeSystem: factor game seconds per frame (1/60 s real),
 ## split into steps of at most one game second.
@@ -86,7 +86,7 @@ func _initialize() -> void:
 	_check("The pilot stays at the console", mira.can_reach(helm.pos) and mira.task == "Flying the ship")
 
 	# 2) Undock, fly away, release thrust: the ship keeps drifting
-	_check("Abdocken", P.request_undock())
+	_check("Undocking", P.request_undock())
 	_secs(20)
 	_free_near("tycho", 2.0, PI)          # the nose points west (towards the target)
 	var v0 := _rel("tycho")
@@ -210,7 +210,7 @@ func _initialize() -> void:
 	root.get_node("SaveSystem").load_game(true)
 	_check("After loading: rotation and target kept", absf(P.ang_vel - 0.3) < 0.0001 and P.target == "karman" and P.thrust == 0.0)
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()
 
 ## Test pilot: player inputs only (thrust, sideways, turn, stop, dock)

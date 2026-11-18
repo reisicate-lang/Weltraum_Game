@@ -1,5 +1,5 @@
-## Tests: Übergang von WASD zu einem Laufbefehl per Klick (Frist 0,5 echte Sekunden)
-## Mit echten Tasten- und Mausereignissen über die Hauptszene, bei ×1 und ×16.
+## Tests: switching from WASD to a walk order by click (delay of 0.5 real seconds)
+## With real key and mouse events through the main scene, at ×1 and ×16.
 ##   godot --headless --path . --script res://tests/boot.gd -- test_walk_delay
 extends "res://tests/test_base.gd"
 
@@ -18,7 +18,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _now() -> float:
 	return Time.get_ticks_msec() / 1000.0
@@ -30,7 +30,7 @@ func _key(code: Key, pressed: bool) -> void:
 	ev.pressed = pressed
 	Input.parse_input_event(ev)
 
-## Kachel unter den Mauszeiger bringen (ohne Fenster steht die Maus still: Kamera verschieben)
+## Bring a tile under the mouse pointer (without a window the mouse stands still: move the camera)
 func _aim(t: Vector2i) -> void:
 	for k in 8:
 		var got: Vector2i = main._tile_at_mouse()
@@ -49,7 +49,7 @@ func _click(button: MouseButton) -> void:
 		root.push_input(ev)
 		await process_frame
 
-## Mit WASD (D, sonst A) ein Stück laufen und loslassen; gibt die echte Zeit des Loslassens zurück
+## Walk a bit with WASD (D, otherwise A) and release; returns the real time of the release
 func _wasd() -> float:
 	var start: Vector2 = mira.pos
 	for code in [KEY_D, KEY_A]:
@@ -63,7 +63,7 @@ func _wasd() -> float:
 			break
 	return _now()
 
-## Erreichbares freies Bodenfeld 4–8 Felder entfernt
+## Reachable free floor tile 4–8 tiles away
 func _target() -> Vector2i:
 	var g = ship.grid
 	var from: Vector2i = mira.tile()
@@ -76,7 +76,7 @@ func _target() -> Vector2i:
 			return p
 	return Vector2i(-1, -1)
 
-## Wartet, bis sich die Figur bewegt; gibt die echte Zeit zurück (oder -1)
+## Waits until the character moves; returns the real time (or -1)
 func _wait_move(max_s: float) -> float:
 	var p0: Vector2 = mira.pos
 	var t0 := _now()
@@ -86,7 +86,7 @@ func _wait_move(max_s: float) -> float:
 			return _now()
 	return -1.0
 
-## Wartet, bis die Figur am Ziel steht
+## Waits until the character stands at the target
 func _wait_arrive(t: Vector2i, max_s: float) -> bool:
 	var t0 := _now()
 	while _now() - t0 < max_s:
@@ -97,20 +97,20 @@ func _wait_arrive(t: Vector2i, max_s: float) -> bool:
 
 func _run(speed: int, label: String) -> void:
 	root.get_node("TimeSystem").set_speed(speed)
-	# 1) Loslassen und sofort klicken: vorgemerkt, Start nach etwa 0,5 s
+	# 1) Release and click at once: queued, start after about 0.5 s
 	var released: float = await _wasd()
-	_check("%s: WASD hat die Figur bewegt und die Handsteuerung gesetzt" % label, mira.is_manual() and not mira.walk_ready())
+	_check("%s: WASD moved the character and set manual control" % label, mira.is_manual() and not mira.walk_ready())
 	var t := _target()
 	await _aim(t)
 	await _click(MOUSE_BUTTON_LEFT)
 	var clicked := _now() - released
-	_check("%s 1: Klick %.2f s nach dem Loslassen, Befehl vorgemerkt" % [label, clicked], clicked < 0.35 and mira.order == t)
+	_check("%s 1: click %.2f s after the release, order queued" % [label, clicked], clicked < 0.35 and mira.order == t)
 	var moved: float = await _wait_move(3.0)
 	var delay := moved - released
-	_check("%s 1: Figur läuft %.2f s nach dem Loslassen los (erwartet ≈ 0,5 s)" % [label, delay], moved > 0.0 and delay >= 0.45 and delay <= 0.7)
-	_check("%s 1: ohne zweiten Klick am Ziel" % label, await _wait_arrive(t, 30.0))
+	_check("%s 1: the character starts walking %.2f s after the release (expected ≈ 0.5 s)" % [label, delay], moved > 0.0 and delay >= 0.45 and delay <= 0.7)
+	_check("%s 1: at the target without a second click" % label, await _wait_arrive(t, 30.0))
 
-	# 2) Loslassen, länger warten, dann klicken: sofort los
+	# 2) Release, wait longer, then click: off at once
 	released = await _wasd()
 	var t2 := _target()
 	await _aim(t2)
@@ -119,8 +119,8 @@ func _run(speed: int, label: String) -> void:
 	await _click(MOUSE_BUTTON_LEFT)
 	var at := _now()
 	moved = await _wait_move(3.0)
-	_check("%s 2: Klick nach %.2f s → Figur läuft %.2f s danach los (sofort)" % [label, at - released, moved - at], moved > 0.0 and moved - at <= 0.15)
-	_check("%s 2: am Ziel" % label, await _wait_arrive(t2, 30.0))
+	_check("%s 2: click after %.2f s → the character starts %.2f s later (at once)" % [label, at - released, moved - at], moved > 0.0 and moved - at <= 0.15)
+	_check("%s 2: at the target" % label, await _wait_arrive(t2, 30.0))
 
 func _initialize() -> void:
 	await process_frame
@@ -146,12 +146,12 @@ func _initialize() -> void:
 	var y0: int = (g.height / Config.GRID_SCALE - 10) / 2
 	screen = root.get_viewport().get_canvas_transform() * ((Vector2(C(x0 + 2, y0 + 5)) + Vector2(0.5, 0.5)) * Config.TILE_SIZE)
 	await process_frame
-	_check("Frist ist 0,5 echte Sekunden", is_equal_approx(Config.MANUAL_WALK_DELAY, 0.5))
+	_check("The delay is 0.5 real seconds", is_equal_approx(Config.MANUAL_WALK_DELAY, 0.5))
 
 	await _run(1, "×1")
 	await _run(5, "×16")
 
-	# 3) Rechtsklick-Auswahl nach WASD unverändert: Kabel → Gerät → Boden
+	# 3) Right-click selection after WASD unchanged: cable → device → floor
 	root.get_node("TimeSystem").set_speed(1)
 	await _wasd()
 	var bat := C(x0 + 2, y0 + 5)
@@ -162,8 +162,8 @@ func _initialize() -> void:
 		await process_frame
 		keys.append(ui.sel_key)
 	ui.object_menu.hide()
-	_check("3: Rechtsklicks auf dieselbe Kachel: %s" % str(keys), keys == ["cable", "dev:battery", "tile:floor", "cable"])
-	_check("3: Rechtsklick gibt keinen Laufbefehl", mira.order == null)
+	_check("3: right-clicks on the same tile: %s" % str(keys), keys == ["cable", "dev:battery", "tile:floor", "cable"])
+	_check("3: a right-click gives no walk order", mira.order == null)
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

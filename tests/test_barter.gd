@@ -12,7 +12,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _initialize() -> void:
 	await process_frame
@@ -106,5 +106,5 @@ func _initialize() -> void:
 	var g2: ShipGrid = root.get_node("ShipSystem").grid
 	_check("Saving/loading keeps the Barter Zone", Barter.tiles(g2).size() == marked.size() and g2.barter.has(g2.idx(a)))
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

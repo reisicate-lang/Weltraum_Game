@@ -12,7 +12,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _run(seconds: float) -> void:
 	var gs = root.get_node("GameState")
@@ -64,7 +64,7 @@ func _initialize() -> void:
 	P.request_undock()
 	_run(2)
 	toasts.clear()
-	_check("Frei treibend: Abdocken liefert false", not P.request_undock())
+	_check("Drifting free: undocking returns false", not P.request_undock())
 	_check("… with an understandable message (%s)" % _last(), _last() == "The ship is not docked.")
 
 	# 2) Undocking at a stationary place (Habitat L4 does not move)
@@ -166,7 +166,7 @@ func _initialize() -> void:
 		time.set_speed(si)
 		for f in 3:
 			time._process(1.0 / 60.0)
-		_check("Zeitstufe %d: Abdocken klappt" % si, P.request_undock())
+		_check("Time step %d: undocking works" % si, P.request_undock())
 		var game_s := 0.0
 		var frames := 0
 		while game_s < 60.0 and frames < 4000:
@@ -199,5 +199,5 @@ func _initialize() -> void:
 	_run(12)
 	_check("Still steerable after loading (drift continues)", P.pos.distance_to(p_before) > 0.02)
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

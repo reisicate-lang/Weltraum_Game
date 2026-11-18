@@ -17,7 +17,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 ## One frame at ×1 with held keys, the way scenes/main/main.gd processes them:
 ## Only in the cockpit (and as long as the pilot stays at the console) do W/S/A/D/Q/E set inputs.
@@ -407,7 +407,7 @@ func _initialize() -> void:
 	_check("3: No thrust without entering", not ui.nav_open and not P.manual_ok())
 	mira.pos = _beside(helm)
 	ui.toggle_nav(true)                     # N
-	_check("3: N: Einstieg klappt", ui.nav_open and P.helm_at == helm.pos and ui.pilot == mira)
+	_check("3: N: getting in works", ui.nav_open and P.helm_at == helm.pos and ui.pilot == mira)
 	_park()
 	var v3 := _vrel()
 	_frames(60, 1.0)
@@ -440,5 +440,5 @@ func _initialize() -> void:
 	_check("Saving/loading keeps the error", P.nav_error)
 	P.clear_nav_error()
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

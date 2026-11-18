@@ -14,7 +14,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _initialize() -> void:
 	await process_frame
@@ -66,5 +66,5 @@ func _initialize() -> void:
 	var m2 = root.get_node("CrewSystem").player()
 	_check("Old save: no starting traits added afterwards (%s), age %d" % [str(m2.traits), m2.age], m2.traits == ["coordinated"] and m2.age == 21)
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

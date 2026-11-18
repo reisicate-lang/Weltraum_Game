@@ -23,7 +23,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _secs(s: float) -> void:
 	for k in int(s):
@@ -193,7 +193,7 @@ func _initialize() -> void:
 	g.cables[g.idx(helm_a.pos)] = 1
 	_power()
 	helm_a.inv.items[0].cond = 0.0
-	_check("2: Kaputtes Modul schaltet nichts frei (%s)" % P.autodock_block_reason(), "broken" in P.autodock_block_reason())
+	_check("2: A broken module unlocks nothing (%s)" % P.autodock_block_reason(), "broken" in P.autodock_block_reason())
 	helm_a.inv.items[0].cond = 73.0
 
 	# ---------------- 3) Power failure during the manoeuvre ----------------
@@ -283,5 +283,5 @@ func _initialize() -> void:
 		and int(mira.inv.items.filter(func(it): return it.type == "mod_autodock")[0].cond) == 55)
 	Config.ENABLE_STATION = false
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

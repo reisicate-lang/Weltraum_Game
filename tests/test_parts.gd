@@ -23,7 +23,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _secs(s: float) -> void:
 	for k in int(s):
@@ -238,7 +238,7 @@ func _initialize() -> void:
 	var it: Dictionary = _find("pk_crate")
 	_check("2: Exactly one complete item on the floor", g.device_at(crate_p) == null and _deep("pk_crate") == 1 and pi >= 0 and g.piles[pi].count("pk_crate") == 1)
 	_check("2: … reachable (walkable tile, path exists)", pi >= 0 and g.walkable(g.pos(pi)) and (mira.tile() == g.pos(pi) or not ship.find_path(mira.tile(), g.pos(pi)).is_empty()))
-	_check("2: … Zustand 55 %%, Inhalt erhalten (%d Stapel)" % it.get("data", {}).get("items", []).size(), int(it.get("cond", -1)) == 55 and it.data.items == content_before)
+	_check("2: … condition 55 %%, contents kept (%d stacks)" % it.get("data", {}).get("items", []).size(), int(it.get("cond", -1)) == 55 and it.data.items == content_before)
 	var w_item: float = R.mass_kg("dev:crate") + content_kg
 	_check("2: … weight = device + contents exactly once (%.1f kg)" % Inventory.stack_weight(it), absf(Inventory.stack_weight(it) - w_item) < 0.001)
 	_check("2: … ship mass unchanged", absf(P.mass() - m_before) < 0.000001)
@@ -263,7 +263,7 @@ func _initialize() -> void:
 	_check("2: Wiedereinbau beauftragt (%s)" % R.install_reason("pk_crate", crate_p), CS.place("install:pk_crate", crate_p))
 	_until_done(crate_p)
 	var c2 = g.device_at(crate_p)
-	_check("2: Wieder eingebaut: Zustand 55 %%, Inhalt gleich", c2 != null and c2.type == "crate" and int(c2.cond) == 55 and c2.inv.to_data() == content_before)
+	_check("2: Installed again: condition 55 %%, same contents", c2 != null and c2.type == "crate" and int(c2.cond) == 55 and c2.inv.to_data() == content_before)
 	_check("2: … nothing twice, mass as before", _deep("pk_crate") == 0 and absf(P.mass() - m_before) < 0.001)
 
 	# ---------------- 3) Moving things and weight ----------------
@@ -446,5 +446,5 @@ func _initialize() -> void:
 	_check("5: Saved and loaded again: the conversion does not happen again", g.migrated.converted == 0 and g.migrated.packed == 0
 		and P.ship_devices("thruster").size() == 1 and _deep("pk_thruster") == 1 and _deep("pk_generator") == 1)
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

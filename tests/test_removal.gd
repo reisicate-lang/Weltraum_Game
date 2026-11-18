@@ -18,7 +18,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _run(seconds: float) -> void:
 	for i in int(seconds):
@@ -211,7 +211,7 @@ func _initialize() -> void:
 	for t in yield_bed:
 		before[t] = _count(t)
 	_click(bed_p, "dismantle")
-	_check("Zerlegen fertig", _until_done(bed_p))
+	_check("Dismantling done", _until_done(bed_p))
 	var exact := g.device_at(bed_p) == null
 	for t in yield_bed:
 		if _count(t) - before[t] != int(yield_bed[t]):
@@ -403,7 +403,7 @@ func _initialize() -> void:
 	_check("After loading: damage and job kept (%d %% → %s, job %s)" % [int(c_mid), str(dl.cond if dl != null else -1), str(jl.kind if jl != null else "-")], g.device_at(tp) != null and absf(g.device_at(tp).cond - c_mid) < 0.000001 and CS.jobs.has(g.idx(tp)) and CS.jobs[g.idx(tp)].kind == "destroy")
 	_check("Destroyed completely after loading", _until_done(tp) and g.device_at(tp) == null)
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()
 
 func PhysicsSystem_ok(r) -> bool:

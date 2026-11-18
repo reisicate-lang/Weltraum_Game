@@ -11,7 +11,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _initialize() -> void:
 	await process_frame
@@ -65,11 +65,11 @@ func _initialize() -> void:
 	for d in g.devices.values():
 		if d.data().need == "food": food1 += d.stock
 		if d.data().need == "water": water1 += d.stock
-	_check("12 h: %d Mahlzeiten (erwartet 2)" % meals, meals == 2)
+	_check("12 h: %d meals (expected 2)" % meals, meals == 2)
 	_check("12 h: %d glasses of water (expected 5–7)" % drinks, drinks >= 5 and drinks <= 7)
 	_check("Hunger and thirst stay in the green range (min. %.0f / %.0f)" % [lowest.food, lowest.water], lowest.food > 55.0 and lowest.water > 75.0)
 	_check("Health stays full (%.1f)" % m.health, m.health >= 99.9)
-	_check("Verbrauch Essen %.2f Portionen (erwartet ca. 1)" % (food0 - food1), food0 - food1 > 0.8 and food0 - food1 < 1.6)
+	_check("Food used: %.2f portions (expected about 1)" % (food0 - food1), food0 - food1 > 0.8 and food0 - food1 < 1.6)
 	_check("Water used %.2f l (expected under 1 l)" % (water0 - water1), water0 - water1 > 0.4 and water0 - water1 < 1.0)
 
 	# 4) In a suit mild thirst does not interrupt work, strong thirst does
@@ -87,5 +87,5 @@ func _initialize() -> void:
 	_check("Without a suit: thirst 85 leads to the water dispenser", m._start_need() and m.activity.need == "water")
 	m.stop_activity()
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

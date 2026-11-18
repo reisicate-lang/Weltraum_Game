@@ -16,7 +16,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 ## New empty test grid (all space)
 func _grid() -> void:
@@ -292,5 +292,5 @@ func _initialize() -> void:
 	_sim(1)
 	_check("… and keeps leaking there", atm.last_vented > 0.0)
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

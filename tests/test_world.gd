@@ -10,7 +10,7 @@ func _check(name: String, ok: bool) -> void:
 		_ok += 1
 	else:
 		_failed += 1
-	print(("OK    " if ok else "FEHLER") + "  " + name)
+	print(("OK    " if ok else "FAIL  ") + "  " + name)
 
 func _initialize() -> void:
 	await process_frame
@@ -222,5 +222,5 @@ func _initialize() -> void:
 	_check("Outpost: locked storerooms (%d)" % locked, locked > 0)
 	_check("Sounds generated (alarm, message, click, hit)", root.get_node("SoundSystem")._sounds.size() == 4 and root.get_node("SoundSystem")._sounds.has("hit"))
 
-	print("\n%d OK, %d Fehler" % [_ok, _failed])
+	print("\n%d OK, %d failed" % [_ok, _failed])
 	quit(1 if _failed > 0 else 0)

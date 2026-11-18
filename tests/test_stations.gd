@@ -11,7 +11,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _run(minutes: float) -> void:
 	var gs = root.get_node("GameState")
@@ -130,7 +130,7 @@ func _initialize() -> void:
 		c.pos = Vector2(ship.spawn_point()) + Vector2(0.5, 0.5)
 	_run(0.1)
 	seat_pilot()   # Pilot at the navigation console (flight commands only there)
-	_check("Abdocken klappt", phys.undock())
+	_check("Undocking works", phys.undock())
 	_check("Station weg", not st.active() and st.npcs.is_empty())
 	_check("The airlock stays, only released (the outer door is the port)", g.tiles[h] == ShipGrid.Tile.DOOR and root.get_node("AirlockSystem").is_lock_door(h) and not g.linked.has(h)
 		and g.get_tile(g.pos(h) + Vector2i(-1, 0)) == ShipGrid.Tile.SPACE)
@@ -174,5 +174,5 @@ func _initialize() -> void:
 	phys.dock("debris", true)
 	_check("There is no station at the debris field", not st.active())
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

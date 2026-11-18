@@ -12,7 +12,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 var g: ShipGrid
 var PS: Node
@@ -143,5 +143,5 @@ func _initialize() -> void:
 			found = Hvac.setpoint(g.devices[i])
 	_check("Saving/loading: thermostat set point 23 °C stays (%.1f)" % found, is_equal_approx(found, 23.0))
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

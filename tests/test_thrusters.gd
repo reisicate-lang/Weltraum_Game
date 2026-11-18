@@ -16,7 +16,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _secs(s: float) -> void:
 	for k in int(s):
@@ -126,8 +126,8 @@ func _initialize() -> void:
 	var expect1 := (thr + rcs) / m1 * 10.0
 	var expect2 := (2.0 * thr + rcs) / m2 * 10.0
 	_check("Gleiche Masse (%.2f t = %.2f t)" % [m1, m2], absf(m1 - m2) < 0.001)
-	_check("1 Triebwerk: %.2f m/s in 10 s (erwartet %.2f = %d kN ÷ %.1f t)" % [dv1, expect1, int(thr + rcs), m1], absf(dv1 - expect1) < 0.05)
-	_check("2 Triebwerke: %.2f m/s in 10 s (erwartet %.2f)" % [dv2, expect2], absf(dv2 - expect2) < 0.05)
+	_check("1 thruster: %.2f m/s in 10 s (expected %.2f = %d kN ÷ %.1f t)" % [dv1, expect1, int(thr + rcs), m1], absf(dv1 - expect1) < 0.05)
+	_check("2 thrusters: %.2f m/s in 10 s (expected %.2f)" % [dv2, expect2], absf(dv2 - expect2) < 0.05)
 	_check("Two thrusters facing the same way accelerate more (×%.2f)" % (dv2 / dv1), dv2 > dv1 * 1.5)
 
 	# 2) Light against heavy ship with the same thrust
@@ -229,5 +229,5 @@ func _initialize() -> void:
 		absf(res[0][0] - res[1][0]) < 0.01 and absf(res[0][1] - res[1][1]) < 0.01)
 	_check("Drift without thrust: speed stays apart from gravity (rest %.4f / %.4f m/s in 30 s)" % [res[0][2], res[1][2]], res[0][2] < 0.01 and res[1][2] < 0.01)
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

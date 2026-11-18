@@ -18,7 +18,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _run(seconds: float) -> void:
 	for i in int(seconds):
@@ -197,5 +197,5 @@ func _initialize() -> void:
 	_run(20)
 	_check("Only an unreachable task: stays put (%s)" % mira.task, mira.job == null and mira.pos.distance_to(p1) < 0.01)
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

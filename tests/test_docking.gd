@@ -28,7 +28,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _run(seconds: float) -> void:
 	for i in int(seconds):
@@ -229,5 +229,5 @@ func _initialize() -> void:
 	_check("5: No docking without a port, with a message", ship.ports().is_empty() and not P.dock("tycho", true) and toasts.any(func(t): return "docking port" in t))
 	_check("5: The former docking port cannot be installed", root.get_node("RemovalSystem").install_reason("pk_dockport", old_right) != "")
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

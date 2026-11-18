@@ -23,7 +23,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _hobby_button(id: String) -> Button:
 	for row in ui.char_ui.creation_box.get_children():
@@ -131,5 +131,5 @@ func _initialize() -> void:
 		SK.acquired(mira, "cooking") and is_equal_approx(SK.progress(mira, "persuasion"), 60.0) and SK.effect(mira, "meal_bonus") == 0.0 and SK.effect(mira, "negotiate") == 0.0)
 	_check("Eigene Freizeit-Hobbies weiter vorhanden (%s)" % str(mira.hobbies), mira.hobbies == ["tinkering"] and root.get_node("HobbySystem").get_hobby("tinkering") != null)
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

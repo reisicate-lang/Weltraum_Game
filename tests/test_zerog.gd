@@ -22,7 +22,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _texts(n: Node) -> String:
 	var out := ""
@@ -182,5 +182,5 @@ func _initialize() -> void:
 	_check("4: Schiffswechsel: erworben", fleet.current_id == id2 and SK.acquired(mira, "zerog"))
 	fleet.switch_to(old_id)
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

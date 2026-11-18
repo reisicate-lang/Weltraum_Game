@@ -32,7 +32,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 func _secs(s: float) -> void:
 	for k in int(s):
@@ -309,5 +309,5 @@ func _initialize() -> void:
 	Config.ENABLE_STATION = false
 	Config.ENABLE_WRECK = false
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

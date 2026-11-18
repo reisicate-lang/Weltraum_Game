@@ -13,7 +13,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 ## Empty test area: all devices and cables gone, only what the test builds
 func _clear() -> void:
@@ -91,12 +91,12 @@ func _initialize() -> void:
 	g.cables[g.idx(Vector2i(3, 6))] = 1
 	P.step(0.001)
 	_check("Condition 50 %%: usable %.1f kWh, charge capped to %.2f" % [P.capacity_of(bad), bad.charge], P.capacity_of(bad) == 10.0 and bad.charge <= 10.0)
-	_check("Zustand 90 %: nutzbar 18 kWh", is_equal_approx(P.capacity_of(good), 18.0))
+	_check("Condition 90 %: 18 kWh usable", is_equal_approx(P.capacity_of(good), 18.0))
 	good.charge = 18.0
 	bad.charge = 10.0
 	P.step(60.0)
 	var leak: float = 10.0 - bad.charge
-	_check("Zustand 50 %%: verliert %.3f kWh/h (erwartet 0,667)" % leak, absf(leak - 20.0 * 0.1 * 25.0 / 75.0) < 0.01)
+	_check("Condition 50 %%: loses %.3f kWh/h (expected 0.667)" % leak, absf(leak - 20.0 * 0.1 * 25.0 / 75.0) < 0.01)
 	_check("Condition 90 %%: keeps its charge (%.2f)" % good.charge, is_equal_approx(good.charge, 18.0))
 	bad.broken = true
 	P.step(0.01)
@@ -168,5 +168,5 @@ func _initialize() -> void:
 	var plain := Device.from_data(bat.to_data())
 	_check("Old save without the field: the switch counts as on", plain.switch_on)
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

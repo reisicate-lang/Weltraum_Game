@@ -15,7 +15,7 @@ func _check(name: String, ok: bool) -> void:
 		print("OK      " + name)
 	else:
 		fail_count += 1
-		print("FEHLER  " + name)
+		print("FAIL    " + name)
 
 ## Like TimeSystem at ×factor: factor/60 game seconds per frame, steps ≤ 1 s
 func _frames(n: int, factor: float = 1.0) -> void:
@@ -192,5 +192,5 @@ func _initialize() -> void:
 	ui.toggle_nav(false)
 	_check("Leaving the console ends station keeping", not P.station_keep)
 
-	print("%d OK, %d Fehler" % [ok_count, fail_count])
+	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()
