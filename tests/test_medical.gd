@@ -157,6 +157,22 @@ func _initialize() -> void:
 	Medical.step(mira, 1.0, false)
 	_check("Pneumonia: antibiotics cure it", not mira.med.disease.has("pneumonia"))
 
+	# 6d) Concussion (wiki): a hard blow to the head
+	mira.med = Medical.fresh()
+	var SKC = root.get_node("SkillSystem")
+	var pil0: float = SKC.piloting_now(mira)
+	Medical.injure(mira, "bruise", 0.2, "head")
+	_check("A light bump on the head: no concussion", not Medical.concussed(mira))
+	Medical.injure(mira, "bruise", 0.7, "head")
+	_check("A hard blow: concussion for 24 h, Piloting −0.1 (Oblivious)", Medical.concussed(mira) and is_equal_approx(SKC.piloting_now(mira), pil0 - 0.1))
+	mira.med.concussion.headache = true
+	mira.med.concussion.dizzy = true
+	var pain_c: float = Medical.pain(mira)
+	mira.med.concussion.headache = false
+	_check("Headache +10 pain, dizzy: movement ×0.75", is_equal_approx(pain_c - Medical.pain(mira), 10.0) and is_equal_approx(Medical.move_factor(mira), 0.75))
+	gs.time += 25.0 * 60.0
+	_check("After 24 h the concussion is over", not Medical.concussed(mira))
+
 	# 7) Saving/loading and the character window
 	mira.med = Medical.fresh()
 	Medical.injure(mira, "burn", 0.4, "torso")

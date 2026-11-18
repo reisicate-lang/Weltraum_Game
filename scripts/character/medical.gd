@@ -39,6 +39,16 @@ const PNEUMONIA_PER_H := 0.1
 const DISEASE_HOURS := 48.0
 const DISEASE_NAMES := {"gastro": "Gastroenteritis", "pneumonia": "Pneumonia"}
 
+## Concussion (wiki 3.1): temporary Insomniac, Obtuse, Oblivious; 80 % headache, 60 % dizzy.
+## In this game: sleep recovery ×0.75 (Insomniac), Piloting −0.1 (Oblivious), headache pain +10,
+## dizzy movement −25 % (our choice). Duration and trigger (head blow ≥ 0.5) our choice.
+const CONCUSSION_SEV := 0.5
+const CONCUSSION_HOURS := 24.0
+
+static func concussed(c: CrewMember) -> bool:
+	var cc = c.med.get("concussion")
+	return cc is Dictionary and GameState.time < float(cc.get("until", 0.0))
+
 static func fresh() -> Dictionary:
 	return {"wounds": [], "blood": 0.0, "infection": 0.0, "crippled": [], "pain_until": 0.0, "pain_f": 0.0, "abx_until": 0.0,
 		"nano_until": 0.0, "nano_tail": 0.0, "disease": {}}
@@ -95,6 +105,10 @@ static func injure(c: CrewMember, kind: String, sev: float, part: String = "") -
 				break
 	var w := {"part": part, "kind": kind, "sev": clampf(sev, 0.05, 1.0), "bandaged": false, "dis": 0.0, "infect": 0.0, "splint": false}
 	c.med.wounds.append(w)
+	# A hard blow to the head: concussion (wiki 3.1)
+	if part == "head" and kind != "burn" and w.sev >= CONCUSSION_SEV and not concussed(c):
+		c.med.concussion = {"until": GameState.time + CONCUSSION_HOURS * 60.0, "headache": randf() < 0.8, "dizzy": randf() < 0.6}
+		GameState.toast("%s has a concussion." % c.display_name, "bad")
 	GameState.toast("%s: %s %s on the %s%s." % [c.display_name, severity_name(w.sev), kind, part, ", bleeding" if kind == "cut" else ""], "bad")
 	return w
 
@@ -123,6 +137,8 @@ static func pain(c: CrewMember) -> float:
 	var p := 0.0
 	for w in c.med.wounds:
 		p += float(PAIN[w.kind]) * float(w.sev) + (10.0 if w.kind == "fracture" else 0.0)
+	if concussed(c) and bool(c.med.concussion.get("headache", false)):
+		p += 10.0   # wiki: headache +10
 	var pn = c.med.disease.get("pneumonia")
 	if pn is Dictionary and int(pn.stage) >= 3:
 		p += 10.0   # wiki: severe pneumonia pain +10
@@ -227,7 +243,7 @@ static func work_factor(c: CrewMember) -> float:
 
 ## Movement factor: crippled legs −50 % each (wiki)
 static func move_factor(c: CrewMember) -> float:
-	var f := 1.0
+	var f := 0.75 if concussed(c) and bool(c.med.concussion.get("dizzy", false)) else 1.0
 	for p in c.med.crippled:
 		if "leg" in String(p):
 			f *= 0.5
@@ -316,6 +332,13 @@ static func status(c: CrewMember) -> PackedStringArray:
 		head.append("on antibiotics")
 	if nano(c) > 0:
 		head.append("nanorobotic first aid")
+	if concussed(c):
+		var cs: PackedStringArray = ["concussion"]
+		if bool(m.concussion.get("headache", false)):
+			cs.append("headache")
+		if bool(m.concussion.get("dizzy", false)):
+			cs.append("dizzy")
+		head.append(" + ".join(cs))
 	for id in m.get("disease", {}):
 		head.append(String(DISEASE_NAMES[id]) + (" (severe)" if int(m.disease[id].stage) >= 3 else ""))
 	if not head.is_empty():

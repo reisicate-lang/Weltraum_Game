@@ -476,6 +476,8 @@ func piloting_state(c: CrewMember) -> float:
 		v -= 0.2
 	if c.needs.food < PILOT_HUNGRY_AT or c.needs.water < PILOT_HUNGRY_AT:
 		v -= 0.1
+	if Medical.concussed(c):
+		v -= 0.1   # concussion: temporarily Oblivious (wiki)
 	return v
 
 func piloting_now(c: CrewMember) -> float:

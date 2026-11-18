@@ -1114,7 +1114,7 @@ func _do_activity(dt: float) -> void:
 	task = def.verb
 	activity.timer += dt
 	if need == "sleep":
-		needs.sleep = minf(100.0, needs.sleep + def.gain / 60.0 * dt * TraitSystem.factor(self, "sleep_gain"))
+		needs.sleep = minf(100.0, needs.sleep + def.gain / 60.0 * dt * TraitSystem.factor(self, "sleep_gain") * (0.75 if Medical.concussed(self) else 1.0))
 		if needs.sleep >= 100.0:
 			stop_activity()
 		return
