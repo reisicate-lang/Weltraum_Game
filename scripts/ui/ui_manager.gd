@@ -1560,9 +1560,12 @@ func _on_toast(text: String, kind: String) -> void:
 	toast_box.add_child(p)
 	while toast_box.get_child_count() > 5:
 		toast_box.get_child(0).free()
+	# Only the instance id: an old toast may already be freed (more than 5) when the timer fires
+	var pid := p.get_instance_id()
 	get_tree().create_timer(6.0 if kind == "bad" else 3.0).timeout.connect(func():
-		if is_instance_valid(p):
-			p.queue_free())
+		var o := instance_from_id(pid)
+		if o != null:
+			o.queue_free())
 
 func _refresh() -> void:
 	if ShipSystem.grid == null:

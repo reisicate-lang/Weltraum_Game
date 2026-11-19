@@ -15,6 +15,19 @@ func _check(name: String, ok: bool) -> void:
 		fail_count += 1
 		print("FAIL    " + name)
 
+## Fly out of the wake zone: 600 km away from the nearest station
+func _leave_wake(P) -> void:
+	var st_pos: Vector2 = P.pos
+	for l in P.locations:
+		if l.kind == "station" and P.pos.distance_to(P.loc_state(l, P.secs()).pos) < 500.0:
+			st_pos = P.loc_state(l, P.secs()).pos
+	var dir: Vector2 = (P.pos - st_pos).normalized() if P.pos.distance_to(st_pos) > 1.0 else (st_pos - Vector2(P.main_body().x, P.main_body().y)).normalized()
+	P.pos = st_pos + dir * 600.0
+
+var msgs: Array = []
+func _on_over(_t: String, text: String) -> void:
+	msgs.append(text)
+
 func _ids(P) -> Array:
 	return P.locations.map(func(l): return l.id)
 
@@ -43,6 +56,8 @@ func _initialize() -> void:
 	# 2) Cruise conditions
 	_check("Docked: undock first", P.cruise_info("mars").reason == "Undock first.")
 	P.undock()
+	_check("Right after undocking: inside the wake zone (%s)" % P.cruise_info("mars").reason, P.cruise_info("mars").reason.begins_with("Inside the wake zone of Tycho"))
+	_leave_wake(P)
 	var info: Dictionary = P.cruise_info("mars")
 	_check("Earth → Mars: %.1f days, %d fuel" % [info.days, int(info.fuel)], is_equal_approx(info.days, 3.0 + 2.5 * 0.52) and info.reason == "")
 	_check("Saturn is much further (%.1f days)" % P.cruise_info("saturn").days, P.cruise_info("saturn").days > 20.0)
@@ -101,6 +116,7 @@ func _initialize() -> void:
 	seat_pilot()
 	var ub: String = P.undock_block_reason()
 	_check("Undock from Ares (%s)" % ub, P.undock())
+	_leave_wake(P)
 	for t in P.ship_devices("fueltank"):
 		t.stock = t.data().stock
 	var t0: float = gs.time
@@ -116,9 +132,9 @@ func _initialize() -> void:
 	# 8) Crash into Mars
 	P.pos = Vector2(3390.0 + 50.0, 0.0)
 	P.vel = Vector2.ZERO
-	var msgs: Array = []
-	root.get_node("EconomySystem").game_over.connect(func(_t, text): msgs.append(text))
+	root.get_node("EconomySystem").game_over.connect(_on_over)
 	P._check_hazards()
+	root.get_node("EconomySystem").game_over.disconnect(_on_over)
 	_check("Crash into Mars ends the game (%s)" % (msgs[0] if not msgs.is_empty() else "-"), P.crashed and not msgs.is_empty() and String(msgs[0]).contains("Mars"))
 
 	print("%d OK, %d failed" % [ok_count, fail_count])

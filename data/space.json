@@ -412,5 +412,6 @@
  ],
  "cruise_days_base": 3.0,
  "cruise_days_per_au": 2.5,
- "cruise_fuel_per_day": 20.0
+ "cruise_fuel_per_day": 20.0,
+ "wake_km": 500
 }

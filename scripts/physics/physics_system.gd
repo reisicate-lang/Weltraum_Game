@@ -616,6 +616,19 @@ func step(dt: float) -> void:
 
 # ---------------- Long-range cruise between regions ----------------
 
+## Wake zone (Ostranauts Flying 3.2): around stations the torch drive is locked; a long-range
+## cruise can only be plotted outside. Radius our own choice (the wiki names none).
+## Nearest station closer than wake_km: {name, dist}, otherwise empty
+func wake_zone() -> Dictionary:
+	var best := {}
+	for l in locations:
+		if l.kind != "station":
+			continue
+		var d: float = pos.distance_to(loc_state(l, secs()).pos)
+		if d < float(space.get("wake_km", 500.0)) and (best.is_empty() or d < float(best.dist)):
+			best = {"name": l.name, "dist": d}
+	return best
+
 ## {days, fuel, reason} for a cruise to another region (reason "" = possible)
 func cruise_info(to: String) -> Dictionary:
 	var a := float(region_data().get("au", 1.0))
@@ -633,6 +646,10 @@ func cruise_info(to: String) -> Dictionary:
 		why = "A fast travel or Auto-Dock is running."
 	else:
 		why = pilot_block_reason()
+	if why == "":
+		var wz := wake_zone()
+		if not wz.is_empty():
+			why = "Inside the wake zone of %s (%d km): the torch drive is locked, fly beyond %d km." % [wz.name, int(wz.dist), int(space.get("wake_km", 500.0))]
 	if why == "" and fuel() < fuel_need:
 		why = "Not enough fuel (%d needed)." % int(ceil(fuel_need))
 	return {"days": days, "fuel": fuel_need, "reason": why}

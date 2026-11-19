@@ -56,6 +56,9 @@ func _draw() -> void:
 			var b: Dictionary = P.space[l.body]
 			draw_arc(to_screen(Vector2(b.x, b.y)), float(l.radius) * zoom, 0, TAU, 96, Color(0.35, 0.78, 0.9, 0.15), 1.0)
 		var sp := to_screen(P.loc_state(l, P.secs()).pos)
+		# Wake zone: no torch drive (Ostranauts Flying 3.2)
+		if l.kind == "station":
+			draw_arc(sp, float(P.space.get("wake_km", 500.0)) * zoom, 0, TAU, 64, Color(0.95, 0.64, 0.23, 0.18), 1.0)
 		var col := Color(0.63, 0.53, 0.42) if l.kind in ["debris", "asteroid", "outpost", "wreck"] else (Color(0.69, 0.42, 0.82) if l.get("black", false) else Color(0.35, 0.78, 0.9))
 		var sz := maxf(6.0, 0.08 * zoom)
 		draw_rect(Rect2(sp - Vector2(sz, sz) * 0.5, Vector2(sz, sz)), col)
