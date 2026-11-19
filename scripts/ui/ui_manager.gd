@@ -629,9 +629,9 @@ func _refresh_nav() -> void:
 	if not nav_open:
 		return
 	var P := PhysicsSystem
-	var e: Dictionary = P.space.earth
+	var e: Dictionary = P.main_body()
 	var alt := P.pos.distance_to(Vector2(e.x, e.y)) - float(e.r)
-	var rows: Array = [P.target, _flight_rows(), P.xpdr_faults(), P.prox_warning(), P.prox_muted, P.ship_log.size(), EconomySystem.permit_text(), P.helm_block_reason(P.operated_helm()), P.autodock_block_reason(),
+	var rows: Array = [P.region, snappedf(P.cruise_left_days(), 0.1), P.target, _flight_rows(), P.xpdr_faults(), P.prox_warning(), P.prox_muted, P.ship_log.size(), EconomySystem.permit_text(), P.helm_block_reason(P.operated_helm()), P.autodock_block_reason(),
 		P.operated_helm().inv.to_data() if P.operated_helm() != null and P.operated_helm().inv != null else [], int(ceil(P.redock_wait(P.undock_lock_id))), P.status(), _fmt_speed(P.vel.length()), _fmt_dist(alt), int(P.fuel()), P.max_thrust(), snappedf(P.mass(), 0.1)]
 	for l in P.locations:
 		var r := P.rel_to(l.id)
@@ -649,6 +649,7 @@ func _refresh_nav() -> void:
 	head.add_child(_button("Leave [Esc]", toggle_nav.bind(false)))
 	nav_side.add_child(head)
 	nav_side.add_child(_label(P.status(), COL_AMBER, 14))
+	_cruise_section()
 	var faults: Array = P.xpdr_faults()
 	if not faults.is_empty():
 		nav_side.add_child(_label("⚠ " + " · ".join(faults) + " – some stations refuse docking", Color(0.9, 0.33, 0.29), 13))
@@ -661,7 +662,7 @@ func _refresh_nav() -> void:
 		nav_side.add_child(_row("Proximity alarm muted", [_button("Unmute", func(): P.prox_muted = false)], COL_MUTED))
 	_build_flight_info()
 	nav_side.add_child(_row("Velocity", [_label(_fmt_speed(P.vel.length()), COL_AMBER, 12)]))
-	nav_side.add_child(_row("Altitude above Earth", [_label(_fmt_dist(alt), Color(0.9, 0.33, 0.29) if alt < float(P.space.warn_alt) else COL_AMBER, 12)]))
+	nav_side.add_child(_row("Altitude above " + String(e.name), [_label(_fmt_dist(alt), Color(0.9, 0.33, 0.29) if alt < float(e.get("warn_alt", -1.0)) else COL_AMBER, 12)]))
 	nav_side.add_child(_row("Fuel", [_label("%d" % int(P.fuel()), COL_AMBER, 12)]))
 	nav_side.add_child(_row("Thrust / mass", [_label("%d kN / %.1f t" % [int(P.max_thrust()), P.mass()], COL_AMBER, 12)]))
 	var helm_why := P.helm_block_reason(P.operated_helm())
@@ -1725,6 +1726,30 @@ func _install_btn(row: HBoxContainer, type: String) -> HBoxContainer:
 			set_tool("install:" + type)
 			close_container()))
 	return row
+
+## Long-range cruise to the other worlds (regions of the solar system)
+func _cruise_section() -> void:
+	var P := PhysicsSystem
+	nav_side.add_child(_label("SOLAR SYSTEM · here: " + String(P.region_data().name), COL_MUTED, 11))
+	if not P.cruise.is_empty():
+		var tot: float = (float(P.cruise.t1) - float(P.cruise.t0)) / 1440.0
+		var pb := ProgressBar.new()
+		pb.max_value = 100.0
+		pb.value = 100.0 * (1.0 - P.cruise_left_days() / maxf(0.01, tot))
+		pb.custom_minimum_size = Vector2(0, 10)
+		nav_side.add_child(pb)
+		return
+	for r in P.regions():
+		if r.id == P.region:
+			continue
+		var info: Dictionary = P.cruise_info(r.id)
+		var b := _button("Set course", func():
+			P.start_cruise(r.id)
+			_last_nav = ""
+			_refresh_nav())
+		b.disabled = info.reason != ""
+		b.tooltip_text = String(r.get("desc", "")) + ("\n" + String(info.reason) if info.reason != "" else "")
+		nav_side.add_child(_row("%s · %.1f days · fuel %d%s" % [r.name, float(info.days), int(ceil(float(info.fuel))), "" if info.reason == "" else " (" + String(info.reason) + ")"], [b], Color(0.87, 0.9, 0.94) if info.reason == "" else COL_MUTED))
 
 ## Embassy Services and Real Estate Kiosk (Ostranauts Residential Status)
 func _residency_section(here: String) -> void:

@@ -16,7 +16,10 @@
   "tycho": "OKLG",
   "karman": "BCER",
   "l4": "BCRS",
-  "hephaistos": "MSUZ"
+  "hephaistos": "MSUZ",
+  "ares": "MHNG",
+  "ceres_exchange": "BCER",
+  "europa_station": "JPTN"
  },
  "goods": [
   {

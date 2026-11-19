@@ -40,15 +40,17 @@ func _draw() -> void:
 		zoom = clampf(0.35 * minf(size.x, size.y) / maxf(d, 0.05), 0.002, 4000.0)
 	draw_rect(Rect2(Vector2.ZERO, size), Color(0.016, 0.024, 0.043))
 	var font := ThemeDB.fallback_font
-	for n in ["earth", "moon"]:
+	for n in P.region_bodies():
 		var b: Dictionary = P.space[n]
 		var c := to_screen(Vector2(b.x, b.y))
 		var r := maxf(4.0, float(b.r) * zoom)
-		draw_circle(c, r, Color(0.25, 0.44, 0.69) if n == "earth" else Color(0.54, 0.56, 0.6))
+		var bc: Array = b.get("color", [0.54, 0.56, 0.6])
+		draw_circle(c, r, Color(float(bc[0]), float(bc[1]), float(bc[2])))
 		draw_string(font, c + Vector2(-30, -r - 6), b.name, HORIZONTAL_ALIGNMENT_CENTER, 60, 13, Color(0.78, 0.82, 0.88))
-	# Earth's danger zone
-	var e: Dictionary = P.space.earth
-	draw_arc(to_screen(Vector2(e.x, e.y)), (float(e.r) + float(P.space.warn_alt)) * zoom, 0, TAU, 96, Color(0.9, 0.33, 0.29, 0.7), 1.0)
+		# Danger zone of bodies that pull you in
+		if b.has("warn_alt"):
+			draw_arc(c, (float(b.r) + float(b.warn_alt)) * zoom, 0, TAU, 96, Color(0.9, 0.33, 0.29, 0.7), 1.0)
+	var e: Dictionary = P.main_body()
 	for l in P.locations:
 		if l.has("body"):
 			var b: Dictionary = P.space[l.body]

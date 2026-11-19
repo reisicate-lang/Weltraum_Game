@@ -2,7 +2,8 @@
  "_note": "Asteroid Mining (Ostranauts wiki page 'Asteroid Mining'): names, values (pristine column) and weights from the wiki. The yield weights are our own choice (the wiki names none). kiosks = faction kiosks paying full price (wiki: BCRS/CCRE and BCER/Galilean → L4 and Kármán Ring); elsewhere other_factor. Reputation: +1 per rep_per value sold at a kiosk (wiki: about 1 point per $12,000).",
  "kiosks": [
   "l4",
-  "karman"
+  "karman",
+  "ceres_exchange"
  ],
  "other_factor": 0.6,
  "rep_per": 12000,

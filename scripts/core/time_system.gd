@@ -8,9 +8,19 @@ const MAX_STEP := 1.0 / 60.0  ## one game second in minutes
 var speed_index: int = 1
 var _last_speed: int = 1
 
+## Long-range cruise: time lapse, about 10 game hours per real second, coarse steps of 5 minutes
+const CRUISE_MINUTES_PER_SECOND := 600.0
+const CRUISE_STEP := 5.0
+
 func _process(delta: float) -> void:
 	var total := minf(delta, 0.1) * Config.SPEEDS[speed_index] * Config.MINUTES_PER_SECOND
 	if total <= 0.0:
+		return
+	if not PhysicsSystem.cruise.is_empty():
+		total = minf(delta, 0.1) * CRUISE_MINUTES_PER_SECOND
+		var m := int(ceil(total / CRUISE_STEP))
+		for i in m:
+			GameState.step(total / m)
 		return
 	var n := int(ceil(total / MAX_STEP))
 	for i in n:

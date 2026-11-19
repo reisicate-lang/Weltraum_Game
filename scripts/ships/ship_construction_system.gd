@@ -271,7 +271,7 @@ func salvage(p: Vector2i, worker: CrewMember = null) -> Array:
 				out.append([type, n, randf_range(25.0, 90.0) * maxf(0.3, dev.cond / 100.0)])
 		out.append(["scrap", 1 + randi() % 2, 40.0])
 		# Combat engineering: war wrecks in the debris field yield more
-		if worker != null and g.zone[i] == 1 and PhysicsSystem.docked == "debris" and randf() < SkillSystem.effect(worker, "military_salvage"):
+		if worker != null and g.zone[i] == 1 and String(PhysicsSystem.loc(PhysicsSystem.docked).get("kind", "")) == "debris" and randf() < SkillSystem.effect(worker, "military_salvage"):
 			out.append([["motor", "circuit", "cell", "boltgun"].pick_random(), 1, randf_range(40.0, 85.0)])
 		if dev.inv != null:
 			for it in dev.inv.items:

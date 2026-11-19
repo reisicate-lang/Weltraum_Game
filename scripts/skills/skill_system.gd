@@ -331,7 +331,7 @@ func _base_profile(job: Dictionary) -> Dictionary:
 		"remove":
 			if dev != null:
 				var acts := ["deconstruct_furniture"]
-				if g.zone[g.idx(p)] == 1 and PhysicsSystem.docked == "debris":
+				if g.zone[g.idx(p)] == 1 and String(PhysicsSystem.loc(PhysicsSystem.docked).get("kind", "")) == "debris":
 					acts.append("deconstruct_military")
 				return {"actions": acts, "effects": ["work_furniture", "work_demolish"]}
 			if g.cables[g.idx(p)] == 1:

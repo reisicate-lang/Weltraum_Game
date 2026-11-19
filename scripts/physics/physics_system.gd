@@ -63,18 +63,64 @@ var _no_fuel_warned := false
 func _ready() -> void:
 	var f := FileAccess.open("res://data/space.json", FileAccess.READ)
 	space = JSON.parse_string(f.get_as_text())
-	locations = space.locations.duplicate()
+	_refilter()
+
+# ---------------- Regions of the solar system ----------------
+# Every world is its own region with a local map (Earth–Moon, Mars, Belt, Jupiter, Saturn):
+# precise enough for docking. Between regions the ship flies a long-range cruise that takes
+# days (Ostranauts: interplanetary travel only by torch drive, a first trip takes about a week).
+
+## Current region; `locations` only holds its places, loc() finds every place
+var region := "earth"
+## Long-range cruise in progress: {to, t0, t1} in game minutes, or empty
+var cruise := {}
+var _extra: Array = []
 
 ## Additional places (wrecks as their own targets, see FleetSystem.sites) on top of the fixed places
 func set_extra_locations(extra: Array) -> void:
-	locations = space.locations.duplicate()
-	locations.append_array(extra)
+	_extra = extra
+	_refilter()
+
+func _all_locations() -> Array:
+	var out: Array = space.locations.duplicate()
+	out.append_array(_extra)
+	return out
+
+func region_of(l: Dictionary) -> String:
+	if l.has("near"):
+		var base := loc(String(l.near))
+		return region_of(base) if not base.is_empty() else "earth"
+	return String(l.get("region", "earth"))
+
+func _refilter() -> void:
+	locations = _all_locations().filter(func(l): return region_of(l) == region)
+
+func regions() -> Array:
+	return space.get("regions", [])
+
+func region_data(id: String = "") -> Dictionary:
+	var want := region if id == "" else id
+	for r in regions():
+		if r.id == want:
+			return r
+	return {"id": "earth", "name": "Earth–Moon", "bodies": ["earth", "moon"], "au": 1.0, "arrive": "tycho"}
+
+## Bodies of the current region (gravity, map, crashes)
+func region_bodies() -> Array:
+	return region_data().get("bodies", ["earth", "moon"])
+
+## Main body of the region (altitude display)
+func main_body() -> Dictionary:
+	return _body(String(region_bodies()[0]))
 
 func reset() -> void:
 	ship_log.clear()
 	prox_muted = false
 	undock_lock_id = ""
 	undock_lock_until = 0.0
+	region = "earth"
+	cruise = {}
+	_refilter()
 	docked = "tycho"
 	travel = {}
 	autodock = {}
@@ -94,6 +140,9 @@ func reset() -> void:
 
 func loc(id: String) -> Dictionary:
 	for l in locations:
+		if l.id == id:
+			return l
+	for l in _all_locations():
 		if l.id == id:
 			return l
 	return {}
@@ -152,8 +201,8 @@ func loc_state(l: Dictionary, t: float) -> Dictionary:
 
 func gravity(p: Vector2) -> Vector2:
 	var a := Vector2.ZERO
-	for n in ["earth", "moon"]:
-		var b := _body(n)
+	for n in region_bodies():
+		var b := _body(String(n))
 		var d := Vector2(b.x, b.y) - p
 		var r2 := d.length_squared()
 		a += d.normalized() * float(b.gm) / r2
@@ -471,6 +520,9 @@ func fuel_factor() -> float:
 func step(dt: float) -> void:
 	if crashed:
 		return
+	if not cruise.is_empty():
+		_cruise_step()
+		return
 	_nav_error_tick()
 	var s := dt * 60.0
 	var t := secs()
@@ -561,6 +613,73 @@ func step(dt: float) -> void:
 	_p32 = pos
 	_v32 = vel
 	_check_hazards()
+
+# ---------------- Long-range cruise between regions ----------------
+
+## {days, fuel, reason} for a cruise to another region (reason "" = possible)
+func cruise_info(to: String) -> Dictionary:
+	var a := float(region_data().get("au", 1.0))
+	var b := float(region_data(to).get("au", 1.0))
+	var days := float(space.get("cruise_days_base", 3.0)) + float(space.get("cruise_days_per_au", 2.5)) * absf(b - a)
+	var fuel_need := days * float(space.get("cruise_fuel_per_day", 20.0)) * fuel_factor()
+	var why := ""
+	if to == region:
+		why = "You are already here."
+	elif not cruise.is_empty():
+		why = "Already on a long-range cruise."
+	elif docked != "":
+		why = "Undock first."
+	elif not travel.is_empty() or not autodock.is_empty():
+		why = "A fast travel or Auto-Dock is running."
+	else:
+		why = pilot_block_reason()
+	if why == "" and fuel() < fuel_need:
+		why = "Not enough fuel (%d needed)." % int(ceil(fuel_need))
+	return {"days": days, "fuel": fuel_need, "reason": why}
+
+func start_cruise(to: String) -> bool:
+	var info := cruise_info(to)
+	if info.reason != "":
+		GameState.toast(info.reason, "bad")
+		return false
+	use_fuel(float(info.fuel))
+	stop_inputs()
+	match_target = ""
+	station_keep = false
+	cruise = {"to": to, "t0": GameState.time, "t1": GameState.time + float(info.days) * 1440.0}
+	log_event("Long-range cruise to " + String(region_data(to).name))
+	GameState.toast("Course set for %s: %.1f days. The crew lives aboard meanwhile." % [region_data(to).name, float(info.days)])
+	SkillSystem.train_all_at("helm", "navigate", 20.0)
+	return true
+
+func cruise_left_days() -> float:
+	return maxf(0.0, (float(cruise.get("t1", 0.0)) - GameState.time) / 1440.0) if not cruise.is_empty() else 0.0
+
+## In transit nothing moves on the local map; on arrival the ship drifts near the main port
+func _cruise_step() -> void:
+	if GameState.time < float(cruise.t1):
+		return
+	var to := String(cruise.to)
+	cruise = {}
+	region = to
+	_refilter()
+	var arrive := String(region_data().get("arrive", ""))
+	var l := loc(arrive)
+	if l.is_empty() and not locations.is_empty():
+		l = locations[0]
+	var st := loc_state(l, secs()) if not l.is_empty() else {"pos": Vector2(20000, 0), "vel": Vector2.ZERO}
+	var side: Vector2 = (st.pos - Vector2(main_body().x, main_body().y)).normalized()
+	pos = st.pos + side * 150.0
+	vel = st.vel
+	_px = pos.x
+	_py = pos.y
+	_vx = vel.x
+	_vy = vel.y
+	target = String(l.get("id", ""))
+	log_event("Arrived in " + String(region_data().name))
+	GameState.toast("Arrived in %s. %s is 150 km away." % [region_data().name, l.get("name", "the port")])
+	TimeSystem.set_speed(1)
+	EventBus.ship_changed.emit()
 
 ## Station keeping: matching with the selected target and turning the nose towards it.
 ## Q, E or R take over the rotation for as long as they are held.
@@ -697,21 +816,23 @@ func approach(id: String) -> Dictionary:
 		"eta": dist / closing if closing > 0.000001 else -1.0}
 
 func _check_hazards() -> void:
-	var e := _body("earth")
-	var m := _body("moon")
-	var alt_e := pos.distance_to(Vector2(e.x, e.y)) - float(e.r)
-	var alt_m := pos.distance_to(Vector2(m.x, m.y)) - float(m.r)
-	if alt_e < float(space.warn_alt) and not _warned:
-		_warned = true
-		GameState.toast("Warning: Earth's gravity is pulling the ship in! Burn away from it.", "bad")
-	if alt_e > float(space.warn_alt) * 1.5:
+	var warn_any := false
+	for n in region_bodies():
+		var b := _body(String(n))
+		var alt := pos.distance_to(Vector2(b.x, b.y)) - float(b.r)
+		if b.has("warn_alt") and alt < float(b.warn_alt):
+			warn_any = true
+			if not _warned:
+				_warned = true
+				GameState.toast("Warning: %s's gravity is pulling the ship in! Burn away from it." % b.name, "bad")
+		if alt < float(b.get("crash_alt", 30.0)):
+			crashed = true
+			TimeSystem.set_speed(0)
+			var text := "Earth never let your ship go. It burned up entering the atmosphere." if n == "earth" else ("Your ship crashed into the lunar surface." if n == "moon" else "Your ship crashed into %s." % b.name)
+			EconomySystem.game_over.emit("Crashed", text)
+			return
+	if not warn_any:
 		_warned = false
-	if alt_e < float(space.crash_alt) or alt_m < float(space.moon_crash_alt):
-		crashed = true
-		TimeSystem.set_speed(0)
-		var text := "Earth never let your ship go. It burned up entering the atmosphere." if alt_e < float(space.crash_alt) else "Your ship crashed into the lunar surface."
-		EconomySystem.game_over.emit("Crashed", text)
-		return
 	for l in locations:
 		if l.kind != "station":
 			continue
@@ -985,6 +1106,8 @@ func travel_to(id: String) -> void:
 	GameState.toast("Fast travel to %s: %.1f hours." % [loc(id).name, info.secs / 3600.0])
 
 func status() -> String:
+	if not cruise.is_empty():
+		return "Long-range cruise to %s: %.1f days left" % [region_data(String(cruise.to)).name, cruise_left_days()]
 	if docked != "":
 		return "Docked at: " + loc(docked).name
 	if not travel.is_empty():
@@ -1004,7 +1127,8 @@ func to_data() -> Dictionary:
 	return {"x": pos.x, "y": pos.y, "vx": vel.x, "vy": vel.y, "angle": angle, "docked": docked,
 		"travel": _travel_data(),
 		"autodock": autodock, "lock_id": undock_lock_id, "lock_until": undock_lock_until, "ang_vel": ang_vel, "target": target,
-		"ship_log": ship_log, "prox_muted": prox_muted, "nav_error": nav_error, "nav_error_at": nav_error_at}
+		"ship_log": ship_log, "prox_muted": prox_muted, "nav_error": nav_error, "nav_error_at": nav_error_at,
+		"region": region, "cruise": cruise}
 
 func _travel_data() -> Dictionary:
 	if travel.is_empty():
@@ -1031,6 +1155,9 @@ func from_data(d: Dictionary) -> void:
 	ship_log.assign(d.get("ship_log", []))
 	prox_muted = bool(d.get("prox_muted", false))
 	nav_error = bool(d.get("nav_error", false))
+	region = String(d.get("region", "earth"))
+	cruise = d.get("cruise", {})
+	_refilter()
 	nav_error_at = float(d.get("nav_error_at", -1.0))
 	stop_inputs()
 	helm_at = NO_HELM

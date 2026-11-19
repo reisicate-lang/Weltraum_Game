@@ -145,7 +145,7 @@ func pay_wages() -> void:
 
 ## Plunderers can show up when docking in the debris field or at L4
 func on_docked(loc_id: String) -> void:
-	var chance := {"debris": 0.35, "l4": 0.2}.get(loc_id, 0.0) as float
+	var chance := {"debris": 0.35, "l4": 0.2, "phobos_field": 0.3, "belt_rock": 0.15}.get(loc_id, 0.0) as float
 	chance *= 1.0 - minf(0.6, SkillSystem.best_effect("threat"))
 	if randf() < chance:
 		start_plunderers()

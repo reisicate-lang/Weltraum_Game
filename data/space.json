@@ -1,17 +1,30 @@
 {
  "earth": {
-  "name": "Erde",
+  "name": "Earth",
   "x": 0,
   "y": 0,
   "r": 6371,
-  "gm": 40000
+  "gm": 40000,
+  "crash_alt": 400,
+  "warn_alt": 3000,
+  "color": [
+   0.25,
+   0.44,
+   0.69
+  ]
  },
  "moon": {
-  "name": "Mond",
+  "name": "Moon",
   "x": 60000,
   "y": 0,
   "r": 1737,
-  "gm": 600
+  "gm": 600,
+  "crash_alt": 30,
+  "color": [
+   0.54,
+   0.56,
+   0.6
+  ]
  },
  "crash_alt": 400,
  "warn_alt": 3000,
@@ -145,6 +158,97 @@
     "north"
    ],
    "requires_xpdr": true
+  },
+  {
+   "id": "ares",
+   "name": "Ares Orbital",
+   "kind": "station",
+   "region": "mars",
+   "body": "mars",
+   "radius": 9000,
+   "phase": 1.0,
+   "market": 1.15,
+   "shipyard": true,
+   "requires_xpdr": true,
+   "desc": "Busy orbital port above Mars. Shipyard, market, crew for hire.",
+   "rooms": [
+    "market",
+    "bar",
+    "board",
+    "hiring",
+    "bank",
+    "shipyard"
+   ]
+  },
+  {
+   "id": "phobos_field",
+   "name": "Phobos Wreck Field",
+   "kind": "debris",
+   "region": "mars",
+   "x": 7000,
+   "y": -4000,
+   "desc": "Old hulks drifting between Mars and Phobos. Free salvage, no trade."
+  },
+  {
+   "id": "ceres_exchange",
+   "name": "Ceres Mining Exchange",
+   "kind": "station",
+   "region": "belt",
+   "body": "ceres",
+   "radius": 1500,
+   "phase": 0.3,
+   "market": 1.0,
+   "buys": {
+    "scrap": 1.4
+   },
+   "desc": "Mining hub of the Belt. Pays full price for minerals.",
+   "rooms": [
+    "market",
+    "bar",
+    "board",
+    "hiring"
+   ]
+  },
+  {
+   "id": "belt_rock",
+   "name": "Rock BR-88",
+   "kind": "asteroid",
+   "region": "belt",
+   "x": 2600,
+   "y": 1800,
+   "desc": "A mineral-rich asteroid. Tether to it and mine with a mining tool."
+  },
+  {
+   "id": "europa_station",
+   "name": "Europa Ice Station",
+   "kind": "station",
+   "region": "jupiter",
+   "body": "europa",
+   "radius": 3000,
+   "phase": 2.2,
+   "market": 1.25,
+   "requires_xpdr": true,
+   "buys": {
+    "ice": 2.0,
+    "mineral_water_ice": 1.3
+   },
+   "desc": "Research and ice mining under Jupiter. Pays well for ice.",
+   "rooms": [
+    "market",
+    "bar",
+    "board",
+    "bank"
+   ]
+  },
+  {
+   "id": "titan_outpost",
+   "name": "Titan Outpost",
+   "kind": "outpost",
+   "region": "saturn",
+   "body": "titan",
+   "radius": 4000,
+   "phase": 4.0,
+   "desc": "An abandoned outpost at the edge of the known world. Locked storerooms."
   }
  ],
  "shipyard": [
@@ -169,5 +273,144 @@
  "rcs_burn": 0.6,
  "rot_accel": 0.5,
  "rot_max": 1.0,
- "dock_align_deg": 25
+ "dock_align_deg": 25,
+ "mars": {
+  "name": "Mars",
+  "x": 0,
+  "y": 0,
+  "r": 3390,
+  "gm": 4300,
+  "crash_alt": 100,
+  "warn_alt": 1500,
+  "color": [
+   0.72,
+   0.38,
+   0.25
+  ]
+ },
+ "ceres": {
+  "name": "Ceres",
+  "x": 0,
+  "y": 0,
+  "r": 470,
+  "gm": 6,
+  "crash_alt": 5,
+  "color": [
+   0.5,
+   0.48,
+   0.45
+  ]
+ },
+ "europa": {
+  "name": "Europa",
+  "x": 0,
+  "y": 0,
+  "r": 1561,
+  "gm": 320,
+  "crash_alt": 20,
+  "color": [
+   0.78,
+   0.74,
+   0.66
+  ]
+ },
+ "jupiter": {
+  "name": "Jupiter",
+  "x": -671000,
+  "y": 0,
+  "r": 69911,
+  "gm": 12670000,
+  "crash_alt": 5000,
+  "warn_alt": 60000,
+  "color": [
+   0.78,
+   0.62,
+   0.45
+  ]
+ },
+ "titan": {
+  "name": "Titan",
+  "x": 0,
+  "y": 0,
+  "r": 2575,
+  "gm": 90,
+  "crash_alt": 300,
+  "color": [
+   0.82,
+   0.66,
+   0.35
+  ]
+ },
+ "saturn": {
+  "name": "Saturn",
+  "x": -1221870,
+  "y": 0,
+  "r": 58232,
+  "gm": 3790000,
+  "crash_alt": 5000,
+  "warn_alt": 50000,
+  "color": [
+   0.86,
+   0.78,
+   0.55
+  ]
+ },
+ "regions": [
+  {
+   "id": "earth",
+   "name": "Earth–Moon",
+   "bodies": [
+    "earth",
+    "moon"
+   ],
+   "au": 1.0,
+   "arrive": "tycho",
+   "desc": "Home: Tycho Scrapyard, the Kármán Ring, Habitat L4, the debris field."
+  },
+  {
+   "id": "mars",
+   "name": "Mars",
+   "bodies": [
+    "mars"
+   ],
+   "au": 1.52,
+   "arrive": "ares",
+   "desc": "Ares Orbital with a shipyard, and a field of old wrecks."
+  },
+  {
+   "id": "belt",
+   "name": "Asteroid Belt (Ceres)",
+   "bodies": [
+    "ceres"
+   ],
+   "au": 2.77,
+   "arrive": "ceres_exchange",
+   "desc": "The Ceres Mining Exchange buys minerals; rocks to mine nearby."
+  },
+  {
+   "id": "jupiter",
+   "name": "Jupiter (Europa)",
+   "bodies": [
+    "europa",
+    "jupiter"
+   ],
+   "au": 5.2,
+   "arrive": "europa_station",
+   "desc": "Europa Ice Station under Jupiter's glare."
+  },
+  {
+   "id": "saturn",
+   "name": "Saturn (Titan)",
+   "bodies": [
+    "titan",
+    "saturn"
+   ],
+   "au": 9.54,
+   "arrive": "titan_outpost",
+   "desc": "A remote outpost on Titan: the edge of the known world."
+  }
+ ],
+ "cruise_days_base": 3.0,
+ "cruise_days_per_au": 2.5,
+ "cruise_fuel_per_day": 20.0
 }
