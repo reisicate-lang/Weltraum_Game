@@ -669,6 +669,22 @@ func start_cruise(to: String) -> bool:
 	SkillSystem.train_all_at("helm", "navigate", 20.0)
 	return true
 
+## Position of a region on the solar system map in AU (Sun at 0): circular orbits with the
+## Kepler period au^1.5 years; start angles our own choice (data "phase", degrees)
+func system_pos(id: String, minutes: float = -1.0) -> Vector2:
+	var r := region_data(id)
+	var au := float(r.get("au", 1.0))
+	var days := (GameState.time if minutes < 0.0 else minutes) / 1440.0
+	return Vector2.from_angle(deg_to_rad(float(r.get("phase", 0.0))) + TAU * days / (365.25 * pow(au, 1.5))) * au
+
+## The ship on the solar system map: at its region, or on the line of the running cruise
+func system_ship_pos() -> Vector2:
+	if cruise.is_empty():
+		return system_pos(region)
+	var a := system_pos(region, float(cruise.t0))
+	var b := system_pos(String(cruise.to), float(cruise.t1))
+	return a.lerp(b, clampf((GameState.time - float(cruise.t0)) / maxf(1.0, float(cruise.t1) - float(cruise.t0)), 0.0, 1.0))
+
 func cruise_left_days() -> float:
 	return maxf(0.0, (float(cruise.get("t1", 0.0)) - GameState.time) / 1440.0) if not cruise.is_empty() else 0.0
 

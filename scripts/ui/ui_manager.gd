@@ -362,6 +362,9 @@ func _build_nav() -> void:
 	nav_map.set_script(load("res://scripts/ui/nav_map.gd"))
 	nav_map.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	nav_map.clip_contents = true
+	nav_map.picked.connect(func(_id):
+		_last_nav = ""
+		_refresh_nav())
 	nav_root.add_child(nav_map)
 	var side := _panel()
 	(side.get_theme_stylebox("panel") as StyleBoxFlat).bg_color = Color(0.05, 0.07, 0.106, 1.0)
@@ -631,7 +634,7 @@ func _refresh_nav() -> void:
 	var P := PhysicsSystem
 	var e: Dictionary = P.main_body()
 	var alt := P.pos.distance_to(Vector2(e.x, e.y)) - float(e.r)
-	var rows: Array = [P.region, snappedf(P.cruise_left_days(), 0.1), P.target, _flight_rows(), P.xpdr_faults(), P.prox_warning(), P.prox_muted, P.ship_log.size(), EconomySystem.permit_text(), P.helm_block_reason(P.operated_helm()), P.autodock_block_reason(),
+	var rows: Array = [nav_map.system_view, nav_map.sys_pick, P.region, snappedf(P.cruise_left_days(), 0.1), P.target, _flight_rows(), P.xpdr_faults(), P.prox_warning(), P.prox_muted, P.ship_log.size(), EconomySystem.permit_text(), P.helm_block_reason(P.operated_helm()), P.autodock_block_reason(),
 		P.operated_helm().inv.to_data() if P.operated_helm() != null and P.operated_helm().inv != null else [], int(ceil(P.redock_wait(P.undock_lock_id))), P.status(), _fmt_speed(P.vel.length()), _fmt_dist(alt), int(P.fuel()), P.max_thrust(), snappedf(P.mass(), 0.1)]
 	for l in P.locations:
 		var r := P.rel_to(l.id)
@@ -1733,7 +1736,11 @@ func _install_btn(row: HBoxContainer, type: String) -> HBoxContainer:
 ## Long-range cruise to the other worlds (regions of the solar system)
 func _cruise_section() -> void:
 	var P := PhysicsSystem
-	nav_side.add_child(_label("SOLAR SYSTEM · here: " + String(P.region_data().name), COL_MUTED, 11))
+	var srow := _row("SOLAR SYSTEM · here: " + String(P.region_data().name), [_button("Local map" if nav_map.system_view else "System map", func():
+		nav_map.system_view = not nav_map.system_view
+		_last_nav = ""
+		_refresh_nav())], COL_MUTED)
+	nav_side.add_child(srow)
 	if not P.cruise.is_empty():
 		var tot: float = (float(P.cruise.t1) - float(P.cruise.t0)) / 1440.0
 		var pb := ProgressBar.new()
@@ -1752,7 +1759,7 @@ func _cruise_section() -> void:
 			_refresh_nav())
 		b.disabled = info.reason != ""
 		b.tooltip_text = String(r.get("desc", "")) + ("\n" + String(info.reason) if info.reason != "" else "")
-		nav_side.add_child(_row("%s · %.1f days · fuel %d%s" % [r.name, float(info.days), int(ceil(float(info.fuel))), "" if info.reason == "" else " (" + String(info.reason) + ")"], [b], Color(0.87, 0.9, 0.94) if info.reason == "" else COL_MUTED))
+		nav_side.add_child(_row("%s%s · %.1f days · fuel %d%s" % ["▶ " if r.id == nav_map.sys_pick else "", r.name, float(info.days), int(ceil(float(info.fuel))), "" if info.reason == "" else " (" + String(info.reason) + ")"], [b], Color(0.87, 0.9, 0.94) if info.reason == "" else COL_MUTED))
 
 ## Embassy Services and Real Estate Kiosk (Ostranauts Residential Status)
 func _residency_section(here: String) -> void:

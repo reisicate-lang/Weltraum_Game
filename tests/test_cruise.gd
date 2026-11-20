@@ -127,6 +127,19 @@ func _initialize() -> void:
 		await process_frame
 	root.get_node("TimeSystem").set_speed(0)
 	_check("Cruising: time lapse (%.0f game minutes in 30 frames)" % (gs.time - t0), gs.time - t0 > 60.0)
+	# 7c) Solar system overview map
+	var sp: Vector2 = P.system_ship_pos()
+	var a0: Vector2 = P.system_pos("mars", float(P.cruise.t0))
+	var b1: Vector2 = P.system_pos("belt", float(P.cruise.t1))
+	_check("Overview: the ship is on the course line Mars → Belt", sp.distance_to(a0) + sp.distance_to(b1) < a0.distance_to(b1) + 0.001 and sp.distance_to(a0) > 0.0)
+	_check("Overview: Mars orbits in 1.88 years (Kepler)", P.system_pos("mars", 0.0).distance_to(P.system_pos("mars", 365.25 * pow(1.52, 1.5) * 1440.0)) < 0.001
+		and absf(P.system_pos("saturn").length() - 9.54) < 0.001)
+	ui.nav_open = true
+	ui._last_nav = ""
+	ui._refresh_nav()
+	await process_frame
+	ui.nav_open = false
+	_check("Course set: the cockpit map shows the solar system", ui.nav_map.system_view)
 	P.cruise = {}
 
 	# 8) Crash into Mars
