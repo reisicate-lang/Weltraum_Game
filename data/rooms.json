@@ -18,6 +18,10 @@
    "canister",
    "engineering"
   ],
+  "gas_canister": [
+   "canister",
+   "engineering"
+  ],
   "fueltank": [
    "canister",
    "engineering"

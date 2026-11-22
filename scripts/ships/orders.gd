@@ -22,7 +22,7 @@ const FILTER_HINTS := {"WALL": "All walls (also doors and windows)", "FLOOR": "A
 	"CAN": "All canisters (air tank, fuel tank)", "EQUIP": "All equipment, incl. furniture and lights", "LOOSE": "Anything uninstalled (loose piles)"}
 ## action → removal kind in RemovalSystem
 const REMOVAL := {"UNIN": "uninstall", "SCRA": "destroy", "DISM": "dismantle"}
-const CANISTERS := ["airtank", "fueltank"]
+const CANISTERS := ["airtank", "fueltank", "gas_canister"]
 
 static var action := "UNIN"
 static var filters := {"WALL": true, "FLOOR": true, "CONDUIT": true, "CAN": true, "EQUIP": true, "LOOSE": true}

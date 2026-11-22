@@ -4,7 +4,7 @@ extends "res://tests/test_base.gd"
 
 const OLD_SAVE := "res://tests/fixtures/old_save_blueports.json"
 const BONUS_DEVICES := ["food", "medbed", "water", "sink", "meatvat", "toilet", "chair", "table", "helm", "terminal", "pump", "bed", "crate", "rack", "rack_1x2", "rack_1x4", "bulkhead_bin", "cargo_web", "locker", "pressure_locker", "cargo_pod", "cargo_pod_climate", "cargo_pod_radiation", "cargo_pod_specialty", "workbench", "trainer",
-	"heater", "scrubber", "tox_scrubber", "o2gen", "airtank", "extinguisher", "charger"]
+	"heater", "scrubber", "tox_scrubber", "gas_canister", "o2gen", "airtank", "extinguisher", "charger"]
 
 var ok_count := 0
 var fail_count := 0

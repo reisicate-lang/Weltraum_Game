@@ -1285,6 +1285,11 @@ func open_object_menu(p: Vector2i) -> bool:
 		for sgn in [1, -1]:
 			object_menu.add_item("%s set point (%+.1f %s, now %.1f)" % ["Raise" if sgn > 0 else "Lower", float(Hvac.STEPS[ndev.type]) * sgn, unit, Hvac.setpoint(ndev)], menu_actions.size())
 			menu_actions.append({"kind": "setpoint", "dev": ndev, "steps": sgn})
+	# Gas Canister: vent the waste gas into space (only where it touches vacuum)
+	if ndev != null and ndev.type == "gas_canister" and not g.foreign(g.idx(ndev.pos)) and ndev.store > 0.5:
+		object_menu.add_item("Vent waste gas into space (%d kPa)" % int(ndev.store), menu_actions.size())
+		object_menu.set_item_disabled(object_menu.item_count - 1, not DamageSystem.exposed(g, ndev.pos))
+		menu_actions.append({"kind": "vent_canister", "dev": ndev})
 	# Navigation console: rename the ship (Ostranauts Ship Building 1.4)
 	if ndev != null and ndev.type == "helm" and not ndev.unknown and not g.foreign(g.idx(ndev.pos)):
 		object_menu.add_item("Rename vessel…", menu_actions.size())
@@ -1387,6 +1392,8 @@ func _on_object_menu(id: int) -> void:
 			GameState.toast("Door vent closed: the door is now airtight." if a.closed else "Door vent open: some air flows through the closed door.")
 		"rename":
 			open_rename_dialog()
+		"vent_canister":
+			OxygenSystem.vent_canister(a.dev)
 		"setpoint":
 			Hvac.adjust(a.dev, int(a.steps))
 			GameState.toast("%s: set point %.1f %s." % [a.dev.data().display_name, Hvac.setpoint(a.dev), Hvac.UNITS[a.dev.type]])

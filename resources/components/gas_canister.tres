@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "gas_canister"
+display_name = "Gas Canister"
+description = "A generic compressed gas canister for mixed gasses at high pressure (Ostranauts), for temporary and waste gas storage. Place it right next to a CO₂ or Contaminant AtmoScrubber: the scrubber pumps what it removes into it. Without a canister, or with a full one, scrubbers vent overboard and wear twice as fast. Empty it at a station's Docking and Refuel Services, or vent it where it touches open space (right-click). Holds 300 kPa."
+power = 0.0
+build_time = 4.0
+cost = {"plate": 4, "pipe": 2}
+item_value = 410
+mass = 0.07
+stock = -1.0
+stock_unit = ""
+capacity = 0.0
+storage = 0.0
+need = ""
+wears = false
+color = Color(0.42, 0.44, 0.4, 1)
+tech = "mechanical"
+category = "hvac"

@@ -128,6 +128,10 @@ func status_text() -> String:
 		parts.append("Pressure suit: trapped air %d %%" % int(suit.o2) if suit != null else "empty (suit is in use)")
 	if type == "pump":
 		parts.append("storage %d kPa" % int(store))
+	if type == "gas_canister":
+		parts.append("waste gas %d / %d kPa%s" % [int(store), int(Config.GAS_CANISTER_MAX), " – FULL" if store >= Config.GAS_CANISTER_MAX - 0.001 else ""])
+	if type in ["scrubber", "tox_scrubber"] and ShipSystem.grid != null and ShipSystem.grid.devices.has(ShipSystem.grid.idx(pos)) and OxygenSystem.canister_for(ShipSystem.grid, self) == null:
+		parts.append("no free Gas Canister next to it: vents overboard, wears ×2")
 	if Hvac.is_alarm(type):
 		parts.append(Hvac.status(self))
 	elif Hvac.controlled(self):

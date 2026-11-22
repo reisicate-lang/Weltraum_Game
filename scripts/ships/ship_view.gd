@@ -584,6 +584,11 @@ func _draw_icon(dev: Device, r: Rect2, a: float) -> void:
 			draw_circle(c, u * 0.38, Color(0.53, 0.59, 0.67, a))
 			var f2 := dev.stock / maxf(1.0, dev.data().stock)
 			draw_rect(Rect2(c + Vector2(-u * 0.3, -u * 0.05), Vector2(u * 0.6 * f2, u * 0.1)), Color(0.35, 0.78, 0.9, a))
+		"gas_canister":
+			# Grey canister, fill bar of waste gas (red when full)
+			draw_circle(c, u * 0.38, Color(0.42, 0.44, 0.4, a))
+			var fg := dev.store / Config.GAS_CANISTER_MAX
+			draw_rect(Rect2(c + Vector2(-u * 0.3, -u * 0.05), Vector2(u * 0.6 * fg, u * 0.1)), Color(0.9, 0.33, 0.29, a) if fg >= 0.999 else Color(0.85, 0.75, 0.35, a))
 		"bed":
 			draw_rect(Rect2(r.position + Vector2(2, 2), Vector2(r.size.x - 4, r.size.y * 0.3)), Color(0.85, 0.87, 0.92, a))
 			draw_rect(Rect2(r.position + Vector2(1, r.size.y * 0.38), Vector2(r.size.x - 2, r.size.y * 0.58)), Color(0.35, 0.45, 0.66, a))

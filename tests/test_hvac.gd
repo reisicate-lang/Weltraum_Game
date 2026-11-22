@@ -171,7 +171,38 @@ func _initialize() -> void:
 	_fill(sc.room, "tox", 0.3)
 	_tick()
 	_check("0.3 kPa: alarm on, scrubber runs", Hvac.active(tal) and Hvac.runs(tsc))
+	# 5c) Gas Canister next to the scrubber (wiki: waste gas storage, 410 Cr, 70 kg)
 	_fill(sc.room, "tox", 0.0)
+	var cscr: Device = sc.dev
+	var c_si: int = g.idx(cscr.pos)
+	_check("Gas Canister: 410 Cr, 70 kg (wiki)", IS2.device("gas_canister").item_value == 410 and is_equal_approx(IS2.device("gas_canister").mass, 0.07))
+	var c_spot := Vector2i(-1, -1)
+	for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+		var q: Vector2i = cscr.pos + d
+		if c_spot.x < 0 and g.get_tile(q) == ShipGrid.Tile.FLOOR and g.device_at(q) == null:
+			c_spot = q
+	for a in g.devices.values():
+		if a.type == "co2_alarm":
+			a.broken = true
+	_tick()
+	g.co2[c_si] = 3.0
+	cscr.cond = 80.0
+	OX.step(1.0)
+	_check("No canister: emergency mode, CO₂ removed but extra wear (%.4f)" % (80.0 - cscr.cond), g.co2[c_si] < 3.0 and cscr.cond < 80.0 and String(cscr.status_text()).contains("vents overboard"))
+	var c_can: Device = g.place_device("gas_canister", c_spot)
+	cscr.cond = 80.0
+	g.co2[c_si] = 3.0
+	OX.step(1.0)
+	_check("With a canister next to it: waste gas collected (%.2f kPa), no extra wear" % c_can.store, c_can.store > 0.0 and is_equal_approx(cscr.cond, 80.0))
+	c_can.store = Config.GAS_CANISTER_MAX
+	g.co2[c_si] = 3.0
+	OX.step(1.0)
+	_check("Full canister: emergency mode again", cscr.cond < 80.0 and is_equal_approx(c_can.store, Config.GAS_CANISTER_MAX))
+	_check("Inside the hull it cannot be vented", not OX.vent_canister(c_can) and c_can.store > 0.0)
+	_check("Docking and Refuel Services take the waste gas", Array(root.get_node("EconomySystem").refuel_quote().parts).any(func(t): return String(t).contains("waste gas")))
+	for a in g.devices.values():
+		if a.type == "co2_alarm":
+			a.broken = false
 	g.tox[ti] = 0.7
 
 	# 6) Saving/loading keeps the set points

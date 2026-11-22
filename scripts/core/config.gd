@@ -61,6 +61,10 @@ const CO2_BAD := 3.0         ## above: hypercapnia damage (the wiki names no val
 ## Contaminants (Ostranauts Contaminants Pressure Alarm, NH3 row): warning from 0.1 kPa, unsafe above 1 kPa
 const TOX_WARN := 0.1
 const TOX_UNSAFE := 1.0
+## Gas Canister next to a scrubber: waste gas capacity in kPa (our choice; the wiki gives none)
+const GAS_CANISTER_MAX := 300.0
+## Scrubbers without a free gas canister vent overboard and wear this much faster (our choice)
+const SCRUB_NO_CANISTER_WEAR := 2.0
 ## Contaminant AtmoScrubber: kPa removed per game minute on its tile (our choice)
 const TOX_SCRUB_RATE := 0.5
 ## Smoke: contaminants per kPa of O₂ burned by a fire (our choice)

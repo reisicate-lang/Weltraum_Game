@@ -258,6 +258,8 @@ func refuel_quote() -> Dictionary:
 			parts.append("%s %.0f %s" % [d.display_name, d.stock - dev.stock, d.stock_unit])
 		if d.capacity > 0.0:
 			kwh += maxf(0.0, ShipPowerSystem.capacity_of(dev) - dev.charge)
+		if dev.type == "gas_canister" and dev.store > 0.5:
+			parts.append("waste gas %d kPa taken (free)" % int(dev.store))
 	if kwh > 0.05:
 		cost += kwh * POWER_PRICE
 		parts.append("%.1f kWh" % kwh)
@@ -283,6 +285,9 @@ func refuel() -> bool:
 			dev.stock = dev.data().stock
 		if dev.data().capacity > 0.0:
 			dev.charge = ShipPowerSystem.capacity_of(dev)
+		if dev.type == "gas_canister":
+			dev.store = 0.0
+			OxygenSystem.clear_warning(dev)
 	credits -= int(q.cost)
 	book("Docking and Refuel Services", -int(q.cost))
 	GameState.toast("Refuelled: %s (%d Cr)." % [", ".join(q.parts), int(q.cost)])

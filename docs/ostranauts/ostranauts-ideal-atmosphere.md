@@ -69,7 +69,7 @@ Parts used to manage atmosphere once compartments are airtight (wiki: System_Com
 |---|---|---|---|---|
 | Contaminant AtmoScrubber (Kang LCR Series) | 4226 | 845 | 10.5 | HVAC; removes contaminants such as sulfuric acid by condensation with sorbents (sodium carbonate, water); common on Venusian aerostats; repair Screwdriver/Drill + Soldering Iron; Powered, Signalable |
 | Contaminants Pressure Alarm (Kang Industrial) | 634 | – | 0.5 | Sensors; wall-mounted, needs a conduit; detects H2SO4 or particulates |
-| Gas Canister | 410 | 53 | 70.0 | LifeSupport; generic mixed-gas canister for temporary and waste gas storage |
+| Gas Canister | 410 | 53 | 70.0 | LifeSupport; generic mixed-gas canister for temporary and waste gas storage; this game: holds 300 kPa of waste gas next to a scrubber (our choice) |
 
 Contaminants Pressure Alarm thresholds:
 | Contaminant | Safe | Alert (Warning) | Alert (Unsafe) |
