@@ -426,6 +426,8 @@ func _update_body(dt: float) -> void:
 	for k in needs:
 		needs[k] = clampf(needs[k], 0.0, 100.0)
 	var damage := 0.0
+	# G-force of the ship's acceleration (wiki Health and Safety 4.7); only aboard your own ship
+	damage += Medical.g_effects(self, PhysicsSystem.g_load if not g.foreign(i) else 0.0, dt, sleeping)
 	# Hunger: no direct damage (wiki), malnutrition instead
 	Medical.nutrition_step(self, h)
 	if Medical.nutrition_stage(self) == "Starved":
@@ -457,13 +459,13 @@ func _update_body(dt: float) -> void:
 	health = clampf(health - damage * h if damage > 0.0 else health + heal, 0.0, 100.0)
 	_update_stress(dt, sleeping)
 	SkillSystem.decay_recent(self, dt)
-	if not unconscious and (health <= 0.0 or needs.air < 10.0):
+	if not unconscious and (health <= 0.0 or needs.air < 10.0 or Medical.g_out(self)):
 		unconscious = true
 		release_job()
 		stop_activity()
 		order = null
 		GameState.toast(display_name + " is unconscious!", "bad")
-	elif unconscious and health >= 10.0 and needs.air >= 40.0:
+	elif unconscious and health >= 10.0 and needs.air >= 40.0 and not Medical.g_out(self):
 		unconscious = false
 		GameState.toast(display_name + " is conscious again.")
 	_warn("air", needs.air < 40.0, display_name + " can barely breathe!", needs.air > 95.0)

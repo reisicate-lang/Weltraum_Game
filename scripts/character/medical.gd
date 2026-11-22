@@ -150,6 +150,74 @@ static func eat(c: CrewMember, points: float) -> void:
 	var per_h: float = Config.NEEDS.food.decay
 	c.med.nutrition = maxf(0.0, float(c.med.get("nutrition", 0.0)) - points / per_h * MEAL_NUTRITION / 6.0)
 
+## G-force (Ostranauts Health and Safety 4.7). Stages from the wiki: Normal Gravity < 4 G, G-LOC
+## 4–9 (fatigue +50 %, start losing consciousness), Supergravic 9–35 (fatigue +100 %, rapidly losing
+## consciousness, minor damage), Hypergravic > 35 (significant damage). Tolerance from the wiki:
+## Fit/Strong/Tough +12.5 % each (Unfit/Feeble/Fragile −12.5 %), any chair incl. the nav station
+## +12.5 %, Passenger Seat +25 %, lying prone +75 %. The G-LOC speed, how long one stays out,
+## the damage and the impact duration of collisions are our choice.
+const G_STAGES := [[0.00005, "Microgravity"], [4.0, "Normal Gravity"], [9.0, "G-LOC"], [35.0, "Supergravic"], [1.0e9, "Hypergravic"]]
+const G_TOL_TRAITS := {"fit": 0.125, "strong": 0.125, "tough": 0.125, "unfit": -0.125, "feeble": -0.125, "fragile": -0.125}
+const G_FX := {"G-LOC": {"loc": 0.5, "fatigue": 0.5, "dmg": 0.0}, "Supergravic": {"loc": 4.0, "fatigue": 1.0, "dmg": 20.0},
+	"Hypergravic": {"loc": 20.0, "fatigue": 1.0, "dmg": 200.0}}
+const GLOC_OUT_MIN := 5.0       ## unconscious this long after the G-LOC meter fills (game minutes)
+const IMPACT_SECONDS := 0.2     ## a collision stops the relative velocity within this time
+
+static func g_stage(g: float) -> String:
+	for st in G_STAGES:
+		if g < float(st[0]):
+			return st[1]
+	return "Hypergravic"
+
+## G tolerance factor of a character right now
+static func g_tolerance(c: CrewMember) -> float:
+	var f := 1.0
+	for t in G_TOL_TRAITS:
+		if c.traits.has(t):
+			f += float(G_TOL_TRAITS[t])
+	if c.activity != null and c.activity.get("need", "") == "sleep" and c.path.is_empty():
+		f += 0.75                  # lying prone
+	elif UIManager.pilot == c or (c.grid().device_at(c.tile()) != null and c.grid().device_at(c.tile()).type == "chair"):
+		f += 0.125                 # seated (chair or nav station)
+	return maxf(0.25, f)
+
+## Felt G of a character at a ship acceleration of g
+static func felt_g(c: CrewMember, g: float) -> float:
+	return g / g_tolerance(c)
+
+static func g_out(c: CrewMember) -> bool:
+	return GameState.time < float(c.med.get("gloc_until", -1.0))
+
+## Sustained acceleration for dt minutes: returns damage per hour
+static func g_effects(c: CrewMember, g: float, dt: float, sleeping: bool) -> float:
+	var st := g_stage(felt_g(c, g))
+	c.med.g_stage = st if G_FX.has(st) else ""
+	var meter := float(c.med.get("gloc", 0.0))
+	if not G_FX.has(st):
+		c.med.gloc = maxf(0.0, meter - dt)
+		return 0.0
+	var fx: Dictionary = G_FX[st]
+	meter += float(fx.loc) * dt
+	if meter >= 1.0:
+		c.med.gloc_until = GameState.time + GLOC_OUT_MIN
+		meter = 1.0
+	c.med.gloc = meter
+	if not sleeping:
+		c.needs.sleep -= Config.NEEDS.sleep.decay * float(fx.fatigue) * dt / 60.0
+	return float(fx.dmg)
+
+## A collision: a short G spike from the velocity change dv (m/s). Injuries by felt G; the more one
+## carries, the worse (wiki: G-force × mass)
+static func g_impact(c: CrewMember, dv: float) -> void:
+	var g := felt_g(c, dv / IMPACT_SECONDS / 9.81) * (1.0 + c.inv.weight() / 40.0 * 0.5)
+	if g >= 35.0:
+		hurt(c, 3, 0.4)
+	elif g >= 9.0:
+		hurt(c, 2, 0.25)
+		c.med.gloc_until = GameState.time + GLOC_OUT_MIN * 0.5
+	elif g >= 4.0 and randf() < 0.5:
+		injure(c, "bruise", randf_range(0.2, 0.5))
+
 ## Gas hazards (Ostranauts Health and Safety 2.1 and 4.9). Thresholds and names from the wiki;
 ## the wiki gives effects only for the deadly stages, the damage per hour below is our choice.
 ## CO₂ poisoning: Malaise 0.5, Mild Hypercapnia 1, Moderate 2, Advanced 3.066, Severe 5.066 (dizzy),
@@ -559,6 +627,10 @@ static func status(c: CrewMember) -> PackedStringArray:
 	var ns := nutrition_stage(c)
 	if ns in ["Malnourished", "Starving", "Starved"]:
 		head.append(ns)
+	if String(m.get("g_stage", "")) != "":
+		head.append(String(m.g_stage))
+	if g_out(c):
+		head.append("unconscious (G-LOC)")
 	var bs := body_stage(c.body_temp)
 	if bs != "Comfortable":
 		head.append("%s (%.1f °C)" % [bs, c.body_temp])

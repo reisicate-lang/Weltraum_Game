@@ -535,7 +535,9 @@ func _build_flight_info() -> void:
 	var fl: Vector2 = P.thrust_vector_local()
 	var mass_t: float = P.mass()
 	nav_side.add_child(_row("Total mass", [_label("%.1f t" % mass_t, COL_AMBER, 12)]))
-	nav_side.add_child(_row("Effective thrust now", [_label("%d kN → %.2f m/s²" % [int(fl.length()), fl.length() / maxf(1.0, mass_t)], COL_AMBER if fl.length() > 0.0 else COL_MUTED, 12)]))
+	var gl: float = fl.length() / maxf(1.0, mass_t) / 9.81
+	nav_side.add_child(_row("Effective thrust now", [_label("%d kN → %.2f m/s² (%.2f G%s)" % [int(fl.length()), fl.length() / maxf(1.0, mass_t), gl, " – " + Medical.g_stage(gl) if gl >= 4.0 else ""],
+		Color(0.9, 0.33, 0.29) if gl >= 4.0 else (COL_AMBER if fl.length() > 0.0 else COL_MUTED), 12)]))
 	nav_side.add_child(_row("Thrusters (kN)", [_label("forward %d · back %d · left %d · right %d · RCS each %d" % [
 		int(P.thrust_dir(Vector2i(1, 0))), int(P.thrust_dir(Vector2i(-1, 0))), int(P.thrust_dir(Vector2i(0, -1))), int(P.thrust_dir(Vector2i(0, 1))), int(P.rcs_thrust())], COL_MUTED, 12)]))
 	var tl := P.loc(P.target)

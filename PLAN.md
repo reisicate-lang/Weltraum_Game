@@ -130,6 +130,7 @@ und werden Schritt für Schritt übertragen.
 - [x] Medizinbett, Nanorobotic First Aid, Gastroenteritis und Lungenentzündung nach Wiki
 - [x] Wunden und Erste Hilfe nach Wiki (Kern): Wunden je Körperteil, Blut, Infektion, verkrüppelte Gliedmaßen, Selbstbehandlung, Pillen; Notiz docs/ostranauts/ostranauts-first-aid.md
 - [x] Halvorson Fire Extinguisher nach Wiki: tragbar, Löschen ×3, Nahkampfwaffe
+- [x] G-Kraft nach Wiki (G-LOC, Toleranz, Kollisionen)
 - [x] Unterernährung in Wiki-Stufen (Health and Safety 4.8)
 - [x] Körpertemperatur in neun Wiki-Stufen (Health and Safety 2.3)
 - [x] Gasgefahren nach Wiki Health and Safety (CO₂-Stufen, Schadstoff-Stufen, Ebullismus)

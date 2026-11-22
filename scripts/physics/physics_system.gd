@@ -25,6 +25,8 @@ const NAV_ERROR_MAX_H := 96.0
 var nav_error := false
 var nav_error_at := -1.0      ## game time (minutes) of the next error; -1 = schedule
 var thrust := 0.0               ## forward (+1) / back (-1), relative to the heading
+## G load the crew feels from the drive right now (free fall in gravity feels like 0 G)
+var g_load := 0.0
 var strafe := 0.0               ## right (+1) / left (-1), relative to the heading
 var rot_input := 0.0            ## Rotation thrust: clockwise (+1) / counter-clockwise (-1)
 var rot_stop := false           ## Brake the rotation (counter-thrust of the RCS)
@@ -518,6 +520,7 @@ func fuel_factor() -> float:
 # ---------------- Simulation ----------------
 
 func step(dt: float) -> void:
+	g_load = 0.0
 	if crashed:
 		return
 	if not cruise.is_empty():
@@ -574,6 +577,7 @@ func step(dt: float) -> void:
 		_vx = vel.x
 		_vy = vel.y
 	var acc := gravity(pos)
+	var grav := acc
 	# If the operated console fails, thrust, rotation thrust and matching stop at once.
 	# The existing motion (velocity, rotation) continues physically.
 	var manual := manual_ok()
@@ -603,6 +607,7 @@ func step(dt: float) -> void:
 		match_input = _match_input(s)
 		if match_input != Vector2.ZERO:
 			acc += _thrust_accel(dt, match_input)
+	g_load = (acc - grav).length() * 1000.0 / 9.81
 	# Semi-implicit Euler method: stable for orbits
 	_vx += acc.x * s
 	_vy += acc.y * s
@@ -874,10 +879,11 @@ func _check_hazards() -> void:
 			var hits := mini(6, int(ceil(vel.distance_to(st.vel) / float(space.collide_speed))))
 			for k in hits:
 				DamageSystem.strike()
-			# The crew is thrown around: bruises, sometimes a fracture (Ostranauts First Aid)
+			# The crew is thrown around: a short G spike (Ostranauts Health and Safety 4.7)
+			var dv: float = vel.distance_to(st.vel) * 1000.0
 			for c in CrewSystem.crew:
-				if randf() < 0.3:
-					Medical.hurt(c, 1, 0.25)
+				if not c.grid().foreign(c.grid().idx(c.tile())):
+					Medical.g_impact(c, dv)
 			log_event("Collision with %s at %.0f m/s (%d hull hits)" % [l.name, vel.distance_to(st.vel) * 1000.0, hits])
 			vel = st.vel
 			GameState.toast("Collision with " + l.name + "! The hull is damaged.", "bad")

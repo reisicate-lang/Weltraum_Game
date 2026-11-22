@@ -305,6 +305,37 @@ func _initialize() -> void:
 	_check("An empty hunger bar alone does no damage (wiki) (%.1f → %.1f, %s)" % [h0, mira.health, str(mira.med.gas)], mira.health >= h0)
 	mira.needs.food = 90.0
 
+	# 6i) G-force (wiki Health and Safety 4.7)
+	mira.med = Medical.fresh()
+	var tr0: Array = mira.traits.duplicate()
+	mira.traits.assign([])
+	_check("Stages: 2 G normal, 5 G G-LOC, 20 G Supergravic, 40 G Hypergravic", Medical.g_stage(2.0) == "Normal Gravity" and Medical.g_stage(5.0) == "G-LOC"
+		and Medical.g_stage(20.0) == "Supergravic" and Medical.g_stage(40.0) == "Hypergravic")
+	_check("Tolerance: no traits 1.0; Fit + Tough 1.25", is_equal_approx(Medical.g_tolerance(mira), 1.0) and (func():
+		mira.traits.assign(["fit", "tough"])
+		var t: float = Medical.g_tolerance(mira)
+		mira.traits.assign([])
+		return is_equal_approx(t, 1.25)).call())
+	_check("4.4 G with Fit (×1.125): still Normal Gravity", (func():
+		mira.traits.assign(["fit"])
+		var st: String = Medical.g_stage(Medical.felt_g(mira, 4.4))
+		mira.traits.assign([])
+		return st == "Normal Gravity").call())
+	Medical.g_effects(mira, 5.0, 1.0, false)
+	_check("5 G for a minute: G-LOC, not yet out", mira.med.g_stage == "G-LOC" and not Medical.g_out(mira))
+	Medical.g_effects(mira, 5.0, 1.5, false)
+	_check("After two minutes at 5 G: unconscious (G-LOC)", Medical.g_out(mira))
+	_check("Supergravic: damage", Medical.g_effects(mira, 20.0, 0.1, false) > 0.0)
+	gs.time += 10.0
+	Medical.g_effects(mira, 0.0, 5.0, false)
+	_check("Back under 4 G: wakes after the time out", not Medical.g_out(mira) and mira.med.g_stage == "")
+	var w0: int = mira.med.wounds.size()
+	for k in 5:
+		Medical.g_impact(mira, 50.0)
+	_check("Collision at 50 m/s (≈25 G): injuries (%d)" % (mira.med.wounds.size() - w0), mira.med.wounds.size() - w0 >= 5)
+	mira.med = Medical.fresh()
+	mira.traits.assign(tr0)
+
 	# 7) Saving/loading and the character window
 	mira.med = Medical.fresh()
 	Medical.injure(mira, "burn", 0.4, "torso")
