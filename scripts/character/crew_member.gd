@@ -434,22 +434,14 @@ func _update_body(dt: float) -> void:
 	damage += Medical.gas_hazards(self, g.co2[i] if air_in else 0.0, g.tox[i] if air_in else 0.0, g.o2[i] if air_in else 0.0, in_suit)
 	if not in_suit and air_in and g.tox[i] > Config.TOX_WARN:
 		Medical.expose(self, g.tox[i], dt)   # breathing contaminants brings Pneumonitis
-	# Body temperature: cold (without a suit), heat from fire
+	# Body temperature (Ostranauts Health and Safety 2.2/2.3): air below 22.85 °C cools, above
+	# 25.85 °C heats; suits insulate. Stages and their effects: Medical.body_effects
 	var tt: float = g.temp[i] if g.holds_air(i) else Config.SPACE_TEMP
 	if in_suit or suit != null:
-		tt = Config.ROOM_TEMP
+		tt = Medical.AIR_MILD.x + 1.0
 	var insulation := 0.5 if inv.count("thermojacket") > 0 else 1.0
-	if tt < 12.0:
-		body_temp -= (12.0 - tt) / 30.0 * h * insulation
-	elif tt > 45.0:
-		body_temp += (tt - 45.0) / 20.0 * h
-	else:
-		body_temp += (37.0 - body_temp) * minf(1.0, h * 2.0)
-	body_temp = clampf(body_temp, 25.0, 43.0)
-	if body_temp < 35.0:
-		damage += (35.0 - body_temp) * 8.0
-	if body_temp > 39.5:
-		damage += (body_temp - 39.5) * 15.0
+	body_temp = Medical.body_step(body_temp, tt, insulation, h)
+	damage += Medical.body_effects(self, h, sleeping)
 	if g.fire[i] == 1:
 		damage += 60.0
 		# Fire leaves a burn (Ostranauts First Aid: severe burns)
@@ -475,7 +467,8 @@ func _update_body(dt: float) -> void:
 	var gs: Array = med.get("gas", [])
 	_warn("gas", not gs.is_empty() and String(gs[0]) in Medical.GAS_ALERT, display_name + ": " + (String(gs[0]) if not gs.is_empty() else "") + "! Get to clean air or into a suit.", gs.is_empty())
 	_warn("health", health < 30.0, display_name + " is in very bad shape.", health > 50.0)
-	_warn("cold", body_temp < 35.5, display_name + " is freezing. A heater or a thermal jacket helps.", body_temp > 36.5)
+	_warn("cold", body_temp < Medical.BODY_COLD, display_name + " is cold (%s). A heater or a thermal jacket helps." % Medical.body_stage(body_temp), body_temp > Medical.BODY_COLD + 0.8)
+	_warn("heat", body_temp > Medical.BODY_HOT, display_name + " is overheating (%s)! Cool the room or get out." % Medical.body_stage(body_temp), body_temp < Medical.BODY_HOT - 0.5)
 	if suit != null:
 		var low := minf(suit.o2, suit.battery)
 		_warn("suit", low < Config.SUIT_RETURN_AT, "The space suit of " + display_name + " is running low.", low > 60.0)

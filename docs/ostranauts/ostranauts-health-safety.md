@@ -71,4 +71,5 @@ Pressure: safe < 0.1 · warning 0.1–1 · unsafe > 1. Poisoning: Stinging Throa
 ## 7 In this game
 - CO2 stages and contaminant stages (NH3 rows; one combined contaminant gas) as above; damage per hour our choice: Advanced 3, Severe 10 (+ dizzy, movement ×0.75), Critical 60, Lethal 600; Burning 2, Lethal Inhalation 300. Working suits protect.
 - Void Atmo (O2 < 3 kPa) without a suit: Ebullism, pain +10 (First Aid 3.6), lasts 30 minutes after (our choice).
-- Body temperature, G-force and malnutrition stages are recorded only, not yet used.
+- Body temperature: the nine stages above. Air below 22.85 °C pulls the body temperature down, above 25.85 °C up; equilibrium 37 °C − 0.1 per °C of air below 22.85 (×0.5 with a thermal jacket) + 0.05 per °C above 25.85, approached at 1/h; suits keep the air mild (all rates our choice). Effects: Froze to Death and Organ Failure deadly; Hypothermia healing ×0.5, Freezing ×0.75 (our mapping of the wiki's heal-rate penalties); Heat Exhaustion hydration +0.5, Heat Stroke hydration +1 and dizzy (movement ×0.75). The old flat damage below 35 / above 39.5 °C is gone.
+- G-force and malnutrition stages are recorded only, not yet used.

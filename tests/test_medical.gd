@@ -255,6 +255,32 @@ func _initialize() -> void:
 	_check("After 30 minutes it has passed", not Medical.ebullism(mira) and mira.med.gas.is_empty())
 	mira.med = Medical.fresh()
 
+	# 6g) Body temperature stages (wiki Health and Safety 2.3)
+	_check("Stages: 37 Comfortable, 33 Cold, 30 Freezing, 39 Heat Exhaustion, 20 Froze to Death, 43 Organ Failure",
+		Medical.body_stage(37.0) == "Comfortable" and Medical.body_stage(33.0) == "Cold" and Medical.body_stage(30.0) == "Freezing"
+		and Medical.body_stage(39.0) == "Heat Exhaustion" and Medical.body_stage(20.0) == "Froze to Death" and Medical.body_stage(43.0) == "Organ Failure")
+	var bt := 37.0
+	for k in 10:
+		bt = Medical.body_step(bt, 21.0, 1.0, 1.0)
+	_check("10 h at 21 °C room air: still Comfortable (%.2f °C)" % bt, Medical.body_stage(bt) == "Comfortable")
+	bt = 37.0
+	for k in 10:
+		bt = Medical.body_step(bt, 60.0, 1.0, 1.0)
+	_check("10 h at 60 °C: overheating (%.2f °C, %s)" % [bt, Medical.body_stage(bt)], bt > 37.75)
+	mira.med = Medical.fresh()
+	mira.body_temp = 39.5
+	mira.needs.water = 100.0
+	Medical.body_effects(mira, 1.0, false)
+	_check("Heat Exhaustion: hydration rate +0.5 (%.1f)" % (100.0 - mira.needs.water), mira.needs.water < 100.0)
+	mira.body_temp = 41.5
+	_check("Heat Stroke: dizzy, movement ×0.75", is_equal_approx(Medical.move_factor(mira), 0.75))
+	mira.body_temp = 30.0
+	_check("Freezing: wounds heal slower (×%.2f)" % Medical.body_heal(mira), is_equal_approx(Medical.body_heal(mira), 0.75))
+	mira.body_temp = 43.0
+	_check("Organ Failure: deadly", Medical.body_effects(mira, 1.0, false) >= Medical.SHOCK_DAMAGE)
+	mira.body_temp = 37.0
+	mira.needs.water = 90.0
+
 	# 7) Saving/loading and the character window
 	mira.med = Medical.fresh()
 	Medical.injure(mira, "burn", 0.4, "torso")

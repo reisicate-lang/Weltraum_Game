@@ -76,6 +76,46 @@ const PNEUMONITIS_DOSE := 10.0       ## kPa × minutes of breathing contaminants
 const PNEUMONITIS_HOURS := 72.0
 const PNEUMONITIS_BLOOD := 0.5       ## blood lost per hour (coughing blood)
 
+## Body temperature (Ostranauts Health and Safety 2.2/2.3). Stage upper bounds and effects from the
+## wiki: Froze to Death < 20.05 (dead), Hypothermia (slower healing), Freezing (slower healing),
+## Cold, Comfortable, Overheating, Heat Exhaustion > 38.85 (hydration +0.5), Heat Stroke > 41.15
+## (dizzy, hydration +1), Organ Failure > 42.55 (dead). Air below 22.85 °C cools the body, above
+## 25.85 °C heats it. Rates, the healing factors and the dying speed are our choice.
+const BODY_STAGES := [[20.05, "Froze to Death"], [27.85, "Hypothermia"], [32.25, "Freezing"], [35.65, "Cold"],
+	[37.75, "Comfortable"], [38.85, "Overheating"], [41.15, "Heat Exhaustion"], [42.55, "Heat Stroke"], [1000.0, "Organ Failure"]]
+const AIR_MILD := Vector2(22.85, 25.85)
+const BODY_COLD := 35.65
+const BODY_HOT := 38.85
+const BODY_COLD_K := 0.1      ## °C of body temperature lost per °C of air below 22.85 (equilibrium)
+const BODY_HEAT_K := 0.05     ## °C gained per °C of air above 25.85
+const BODY_RATE := 1.0        ## approach to the equilibrium per hour
+const BODY_HEAL := {"Hypothermia": 0.5, "Freezing": 0.75}
+
+static func body_stage(t: float) -> String:
+	for st in BODY_STAGES:
+		if t < float(st[0]):
+			return st[1]
+	return "Organ Failure"
+
+## New body temperature after h hours in air of temperature air_t
+static func body_step(t: float, air_t: float, insulation: float, h: float) -> float:
+	var target := 37.0 - maxf(0.0, AIR_MILD.x - air_t) * BODY_COLD_K * insulation + maxf(0.0, air_t - AIR_MILD.y) * BODY_HEAT_K
+	return clampf(t + (target - t) * minf(1.0, BODY_RATE * h), 15.0, 46.0)
+
+## Effects of the body temperature stage; returns damage per hour
+static func body_effects(c: CrewMember, h: float, sleeping: bool) -> float:
+	match body_stage(c.body_temp):
+		"Froze to Death", "Organ Failure":
+			return SHOCK_DAMAGE
+		"Heat Exhaustion":
+			c.needs.water -= Config.NEEDS.water.decay * 0.5 * h
+		"Heat Stroke":
+			c.needs.water -= Config.NEEDS.water.decay * 1.0 * h
+	return 0.0
+
+static func body_heal(c: CrewMember) -> float:
+	return float(BODY_HEAL.get(body_stage(c.body_temp), 1.0))
+
 ## Gas hazards (Ostranauts Health and Safety 2.1 and 4.9). Thresholds and names from the wiki;
 ## the wiki gives effects only for the deadly stages, the damage per hour below is our choice.
 ## CO₂ poisoning: Malaise 0.5, Mild Hypercapnia 1, Moderate 2, Advanced 3.066, Severe 5.066 (dizzy),
@@ -262,7 +302,7 @@ static func antibiotics(c: CrewMember) -> bool:
 static func step(c: CrewMember, dt: float, sleeping: bool) -> float:
 	var m: Dictionary = c.med
 	var h := dt / 60.0
-	var heal: float = TraitSystem.factor(c, "recovery") * (1.5 if sleeping or c.unconscious else 1.0) * (Config.DIRTY_RECOVERY if c.is_dirty() else 1.0)
+	var heal: float = TraitSystem.factor(c, "recovery") * (1.5 if sleeping or c.unconscious else 1.0) * (Config.DIRTY_RECOVERY if c.is_dirty() else 1.0) * body_heal(c)
 	var bed := on_medbed(c)
 	var nn := nano(c)
 	var wound_f: float = (float(MEDBED.wound) if bed else 1.0) * (1.4 if nn == 2 else (1.15 if nn == 1 else 1.0))
@@ -386,7 +426,7 @@ static func work_factor(c: CrewMember) -> float:
 
 ## Movement factor: crippled legs −50 % each (wiki)
 static func move_factor(c: CrewMember) -> float:
-	var f := 0.75 if (concussed(c) and bool(c.med.concussion.get("dizzy", false))) or gas_dizzy(c) else 1.0
+	var f := 0.75 if (concussed(c) and bool(c.med.concussion.get("dizzy", false))) or gas_dizzy(c) or body_stage(c.body_temp) == "Heat Stroke" else 1.0
 	for p in c.med.crippled:
 		if "leg" in String(p):
 			f *= 0.5
@@ -482,6 +522,9 @@ static func status(c: CrewMember) -> PackedStringArray:
 		if bool(m.concussion.get("dizzy", false)):
 			cs.append("dizzy")
 		head.append(" + ".join(cs))
+	var bs := body_stage(c.body_temp)
+	if bs != "Comfortable":
+		head.append("%s (%.1f °C)" % [bs, c.body_temp])
 	for n in m.get("gas", []):
 		head.append(String(n))
 	for id in m.get("disease", {}):
