@@ -116,6 +116,40 @@ static func body_effects(c: CrewMember, h: float, sleeping: bool) -> float:
 static func body_heal(c: CrewMember) -> float:
 	return float(BODY_HEAL.get(body_stage(c.body_temp), 1.0))
 
+## Malnutrition (Ostranauts Health and Safety 4.8): "StatFood" rises by 1 per hour, faster when cold,
+## bleeding or infected, slower when unconscious; meals lower it. Stages from the wiki: Well-Fed < 7,
+## Stomach Growling < 72, Malnourished < 650 (slower healing), Starving < 1350 (much slower healing),
+## Starved (death). The hunger bar itself does no damage (wiki: none of the bars kill).
+## Modifier sizes, meal effect and healing factors are our choice.
+const NUTRITION_STAGES := [[7.0, "Well-Fed"], [72.0, "Stomach Growling"], [650.0, "Malnourished"], [1350.0, "Starving"], [1.0e9, "Starved"]]
+const NUTRITION_HEAL := {"Malnourished": 0.75, "Starving": 0.5}
+## A full meal lowers StatFood by this many hours (twice what it covers, so a backlog recovers slowly)
+const MEAL_NUTRITION := 12.0
+
+static func nutrition_stage(c: CrewMember) -> String:
+	var v := float(c.med.get("nutrition", 0.0))
+	for st in NUTRITION_STAGES:
+		if v < float(st[0]):
+			return st[1]
+	return "Starved"
+
+static func nutrition_step(c: CrewMember, h: float) -> void:
+	var f := 1.0
+	if c.body_temp < BODY_COLD:
+		f += 0.25          # cold
+	if float(c.med.blood) >= 15.0:
+		f += 0.15          # blood loss (wiki: food rate +0.15 / +0.25)
+	if float(c.med.infection) >= 35.0:
+		f += 0.25          # infection (wiki: food rate +0.25)
+	if c.unconscious:
+		f *= 0.5           # wiki: unconscious food rate −0.5
+	c.med.nutrition = float(c.med.get("nutrition", 0.0)) + f * h
+
+## A meal of this many hunger points
+static func eat(c: CrewMember, points: float) -> void:
+	var per_h: float = Config.NEEDS.food.decay
+	c.med.nutrition = maxf(0.0, float(c.med.get("nutrition", 0.0)) - points / per_h * MEAL_NUTRITION / 6.0)
+
 ## Gas hazards (Ostranauts Health and Safety 2.1 and 4.9). Thresholds and names from the wiki;
 ## the wiki gives effects only for the deadly stages, the damage per hour below is our choice.
 ## CO₂ poisoning: Malaise 0.5, Mild Hypercapnia 1, Moderate 2, Advanced 3.066, Severe 5.066 (dizzy),
@@ -302,7 +336,7 @@ static func antibiotics(c: CrewMember) -> bool:
 static func step(c: CrewMember, dt: float, sleeping: bool) -> float:
 	var m: Dictionary = c.med
 	var h := dt / 60.0
-	var heal: float = TraitSystem.factor(c, "recovery") * (1.5 if sleeping or c.unconscious else 1.0) * (Config.DIRTY_RECOVERY if c.is_dirty() else 1.0) * body_heal(c)
+	var heal: float = TraitSystem.factor(c, "recovery") * (1.5 if sleeping or c.unconscious else 1.0) * (Config.DIRTY_RECOVERY if c.is_dirty() else 1.0) * body_heal(c) * float(NUTRITION_HEAL.get(nutrition_stage(c), 1.0))
 	var bed := on_medbed(c)
 	var nn := nano(c)
 	var wound_f: float = (float(MEDBED.wound) if bed else 1.0) * (1.4 if nn == 2 else (1.15 if nn == 1 else 1.0))
@@ -522,6 +556,9 @@ static func status(c: CrewMember) -> PackedStringArray:
 		if bool(m.concussion.get("dizzy", false)):
 			cs.append("dizzy")
 		head.append(" + ".join(cs))
+	var ns := nutrition_stage(c)
+	if ns in ["Malnourished", "Starving", "Starved"]:
+		head.append(ns)
 	var bs := body_stage(c.body_temp)
 	if bs != "Comfortable":
 		head.append("%s (%.1f °C)" % [bs, c.body_temp])

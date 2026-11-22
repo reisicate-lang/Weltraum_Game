@@ -426,7 +426,10 @@ func _update_body(dt: float) -> void:
 	for k in needs:
 		needs[k] = clampf(needs[k], 0.0, 100.0)
 	var damage := 0.0
-	if needs.food <= 0.0: damage += 2.0
+	# Hunger: no direct damage (wiki), malnutrition instead
+	Medical.nutrition_step(self, h)
+	if Medical.nutrition_stage(self) == "Starved":
+		damage += Medical.SHOCK_DAMAGE
 	if needs.water <= 0.0: damage += 4.0
 	if needs.air < 25.0: damage += 600.0
 	# Gas hazards (Ostranauts Health and Safety 2.1, 4.9): hypercapnia, contaminants, ebullism
@@ -464,6 +467,7 @@ func _update_body(dt: float) -> void:
 		unconscious = false
 		GameState.toast(display_name + " is conscious again.")
 	_warn("air", needs.air < 40.0, display_name + " can barely breathe!", needs.air > 95.0)
+	_warn("malnourished", float(med.get("nutrition", 0.0)) >= 72.0, display_name + " is malnourished: wounds heal slower. Regular meals help.", float(med.get("nutrition", 0.0)) < 60.0)
 	var gs: Array = med.get("gas", [])
 	_warn("gas", not gs.is_empty() and String(gs[0]) in Medical.GAS_ALERT, display_name + ": " + (String(gs[0]) if not gs.is_empty() else "") + "! Get to clean air or into a suit.", gs.is_empty())
 	_warn("health", health < 30.0, display_name + " is in very bad shape.", health > 50.0)
@@ -1127,6 +1131,7 @@ func _do_activity(dt: float) -> void:
 			gain *= 1.0 + SkillSystem.effect(self, "meal_bonus")
 			stress = maxf(0.0, stress - 3.0 - SkillSystem.effect(self, "meal_mood") * 15.0)
 			SkillSystem.train(self, "cook", def.use_time)
+			Medical.eat(self, gain)
 		needs[need] = minf(100.0, needs[need] + gain)
 		if dev.data().stock >= 0.0:
 			dev.stock = maxf(0.0, dev.stock - def.use)

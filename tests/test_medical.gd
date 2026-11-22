@@ -281,6 +281,30 @@ func _initialize() -> void:
 	mira.body_temp = 37.0
 	mira.needs.water = 90.0
 
+	# 6h) Malnutrition (wiki Health and Safety 4.8)
+	mira.med = Medical.fresh()
+	_check("Start: Well-Fed", Medical.nutrition_stage(mira) == "Well-Fed")
+	Medical.nutrition_step(mira, 80.0)
+	_check("80 h without food: Malnourished, healing ×0.75", Medical.nutrition_stage(mira) == "Malnourished")
+	Medical.eat(mira, 30.0)
+	_check("A meal lowers StatFood (%.0f)" % float(mira.med.nutrition), float(mira.med.nutrition) < 80.0)
+	mira.med.nutrition = 700.0
+	_check("Starving", Medical.nutrition_stage(mira) == "Starving")
+	mira.med.nutrition = 1400.0
+	var h0: float = mira.health
+	mira.needs.food = 0.0
+	mira._update_body(1.0)
+	_check("Starved: deadly (%.1f health lost in 1 min)" % (h0 - mira.health), h0 - mira.health > 5.0)
+	mira.med = Medical.fresh()
+	mira.health = 100.0
+	mira.needs = {"food": 0.0, "water": 100.0, "sleep": 100.0, "hygiene": 90.0, "air": 100.0}
+	mira.body_temp = 37.0
+	mira.health = 90.0
+	h0 = mira.health
+	mira._update_body(10.0)
+	_check("An empty hunger bar alone does no damage (wiki) (%.1f → %.1f, %s)" % [h0, mira.health, str(mira.med.gas)], mira.health >= h0)
+	mira.needs.food = 90.0
+
 	# 7) Saving/loading and the character window
 	mira.med = Medical.fresh()
 	Medical.injure(mira, "burn", 0.4, "torso")
