@@ -138,6 +138,7 @@ func _fire(g: ShipGrid, dt: float) -> void:
 		var burn := minf(g.o2[i], 2.0 * dt)
 		g.o2[i] -= burn
 		g.co2[i] += burn
+		g.add_tox(i, burn * Config.FIRE_SMOKE)   # smoke and particulates
 		g.temp[i] = minf(300.0, g.temp[i] + 15.0 * dt)
 		if g.devices.has(i):
 			var dev: Device = g.devices[i]

@@ -58,6 +58,13 @@ const O2_LOW := 20.0         ## below: hypoxia (wiki) – warning, alarm, red in
 const O2_DANGER := 16.0
 const CO2_MAX := 0.5         ## target maximum: above it the air view turns yellow
 const CO2_BAD := 3.0         ## above: hypercapnia damage (the wiki names no value)
+## Contaminants (Ostranauts Contaminants Pressure Alarm, NH3 row): warning from 0.1 kPa, unsafe above 1 kPa
+const TOX_WARN := 0.1
+const TOX_UNSAFE := 1.0
+## Contaminant AtmoScrubber: kPa removed per game minute on its tile (our choice)
+const TOX_SCRUB_RATE := 0.5
+## Smoke: contaminants per kPa of O₂ burned by a fire (our choice)
+const FIRE_SMOKE := 0.05
 const BREATH_O2 := 0.12      ## kPa O2 per minute and person
 const DIFFUSION := 0.2       ## air exchange between tiles (per 1/3 minute)
 const DOOR_SLITS := 0.05     ## closed inner doors

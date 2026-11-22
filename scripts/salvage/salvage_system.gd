@@ -3,6 +3,8 @@
 ## unknown contents, scrap and old cables.
 extends Node
 
+## Share of wrecks with contaminated air (our choice)
+const CONTAMINATED_CHANCE := 0.3
 const NAMES := ["MV Kestrel", "Freighter Nansen-4", "Tanker Halcyon", "Mining Tug Ox-12",
 	"Shuttle Meridian", "Courier Pallas", "Prospector Vesna", "Supply Ship Hollis"]
 const DEVICE_POOL := ["generator", "battery", "o2gen", "scrubber", "bed", "food", "airtank", "locker", "pressure_locker", "water", "sink", "pump", "solar", "charger"]
@@ -105,6 +107,11 @@ func generate() -> bool:
 		var i := g.idx(p)
 		if g.holds_air(i):
 			g.o2[i] = 11.0; g.n2[i] = 55.0; g.co2[i] = 2.5
+	# Some wrecks carry leaked chemicals (H2SO4/NH3) in their air (chance and amount our choice)
+	if randf() < CONTAMINATED_CHANCE:
+		var kpa := randf_range(0.5, 3.0)
+		for p in inner:
+			g.add_tox(g.idx(p), kpa)
 	# spots along the walls, not in front of doors
 	var spots: Array[Vector2i] = []
 	for p in inner:

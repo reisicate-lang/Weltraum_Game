@@ -13,6 +13,16 @@ var cables := PackedByteArray()
 var o2 := PackedFloat32Array()
 var n2 := PackedFloat32Array()
 var co2 := PackedFloat32Array()
+## Contaminants in kPa (Ostranauts: H2SO4, NH3, particulates): smoke from fires, poisoned wrecks
+var tox := PackedFloat32Array()
+## Any contaminants aboard (the atmosphere only simulates them then)
+var tox_on := false
+
+## Release contaminants on a tile (kPa)
+func add_tox(i: int, kpa: float) -> void:
+	if kpa > 0.0 and holds_air(i):
+		tox[i] += kpa
+		tox_on = true
 var cond := PackedFloat32Array()
 var door_open_until := PackedFloat64Array()
 ## Zone: 0 = your ship, 1 = wreck, 2 = salvage line
@@ -36,7 +46,7 @@ func _init(w: int = Config.WORLD_W, h: int = Config.WORLD_H) -> void:
 	height = h
 	var n := w * h
 	tiles.resize(n); cables.resize(n)
-	o2.resize(n); n2.resize(n); co2.resize(n); door_open_until.resize(n)
+	o2.resize(n); n2.resize(n); co2.resize(n); tox.resize(n); door_open_until.resize(n)
 	cond.resize(n)
 	cond.fill(100.0)
 	zone.resize(n)
@@ -66,7 +76,7 @@ func set_tile(p: Vector2i, t: int) -> void:
 	fire[i] = 0
 	if t == Tile.SPACE:
 		cables[i] = 0
-		o2[i] = 0.0; n2[i] = 0.0; co2[i] = 0.0
+		o2[i] = 0.0; n2[i] = 0.0; co2[i] = 0.0; tox[i] = 0.0
 
 const MAX_DEVICE_LEN := 4
 
@@ -158,7 +168,7 @@ func apply_dock(dev: Device, d: Vector2i) -> void:
 	var inner := p - d
 	set_tile(inner, Tile.DOOR)
 	set_tile(p, Tile.DOOR)
-	o2[idx(p)] = o2[idx(inner)]; n2[idx(p)] = n2[idx(inner)]; co2[idx(p)] = co2[idx(inner)]
+	o2[idx(p)] = o2[idx(inner)]; n2[idx(p)] = n2[idx(inner)]; co2[idx(p)] = co2[idx(inner)]; tox[idx(p)] = tox[idx(inner)]
 	temp[idx(p)] = temp[idx(inner)]
 	put_device(dev)
 
@@ -175,7 +185,7 @@ func remove_dock(dev: Device) -> void:
 		var r := p - d + along * u
 		set_tile(r, Tile.FLOOR)
 		var b := idx(behind)
-		o2[idx(r)] = o2[b]; n2[idx(r)] = n2[b]; co2[idx(r)] = co2[b]; temp[idx(r)] = temp[b]
+		o2[idx(r)] = o2[b]; n2[idx(r)] = n2[b]; co2[idx(r)] = co2[b]; tox[idx(r)] = tox[b]; temp[idx(r)] = temp[b]
 
 ## Build a new docking port with outer door p (if it fits), otherwise null
 func build_dock(p: Vector2i, allow_foreign: bool = false) -> Device:
@@ -299,10 +309,10 @@ func door_open(i: int) -> bool:
 	return door_open_until[i] > GameState.time
 
 func pressure(i: int) -> float:
-	return o2[i] + n2[i] + co2[i]
+	return o2[i] + n2[i] + co2[i] + tox[i]
 
 func fill_air(i: int) -> void:
-	o2[i] = Config.AIR_O2; n2[i] = Config.AIR_N2; co2[i] = Config.AIR_CO2
+	o2[i] = Config.AIR_O2; n2[i] = Config.AIR_N2; co2[i] = Config.AIR_CO2; tox[i] = 0.0
 	temp[i] = Config.ROOM_TEMP
 
 func drop_items(p: Vector2i, type: String, qty: int, c: float, data = null) -> void:
@@ -325,7 +335,15 @@ func to_data() -> Dictionary:
 		pl.append([i, piles[i].to_data()])
 	return {"w": width, "h": height, "tiles": Array(tiles), "cables": Array(cables),
 		"o2": Array(o2), "n2": Array(n2), "co2": Array(co2), "cond": Array(cond), "zone": Array(zone), "temp": Array(temp), "devices": devs, "piles": pl,
-		"vents": _closed_vents(), "linked": linked.keys(), "barter": barter.keys(), "bulk": bulk, "temp_seal": temp_seal, "candles": candles, "scale": Config.GRID_SCALE}
+		"vents": _closed_vents(), "linked": linked.keys(), "barter": barter.keys(), "bulk": bulk, "temp_seal": temp_seal, "candles": candles, "scale": Config.GRID_SCALE, "tox": _tox_data()}
+
+## Contaminants saved sparsely: [[tile, kPa], ...] (older saves have none)
+func _tox_data() -> Array:
+	var out: Array = []
+	for i in tox.size():
+		if tox[i] > 0.0001:
+			out.append([i, tox[i]])
+	return out
 
 func _closed_vents() -> Array:
 	var out: Array = []
@@ -369,6 +387,10 @@ static func from_data(d: Dictionary) -> ShipGrid:
 		g.temp_seal[int(k)] = float(ts[k])
 	for cd in d.get("candles", []):
 		g.candles.append({"i": int(cd.i), "left": float(cd.left)})
+	for tx in d.get("tox", []):
+		if int(tx[0]) < g.tox.size():
+			g.tox[int(tx[0])] = float(tx[1])
+			g.tox_on = true
 	var bk: Dictionary = d.get("bulk", {})
 	for k in bk:
 		if not Bulk.good(String(k)).is_empty():   # goods of an earlier version are dropped

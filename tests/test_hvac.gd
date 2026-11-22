@@ -133,6 +133,47 @@ func _initialize() -> void:
 	_check("O₂ alarm without a working generator: alarm stays on", Hvac.active(al))
 	gen.broken = false
 
+	# 5b) Contaminants (Ostranauts Contaminant AtmoScrubber / Contaminants Pressure Alarm)
+	var IS2 = root.get_node("ItemSystem")
+	_check("Contaminant AtmoScrubber 4226 Cr, 10.5 kg; Contaminants Pressure Alarm 634 Cr (wiki)", IS2.device("tox_scrubber").item_value == 4226
+		and is_equal_approx(IS2.device("tox_scrubber").mass, 0.0105) and IS2.device("tox_alarm").item_value == 634 and IS2.device("tox_alarm").category == "sensor")
+	var AT = root.get_node("AtmosphereSystem")
+	var sc := _room_with("scrubber")
+	var ti: int = g.idx(sc.free)
+	g.add_tox(ti, 2.0)
+	AT.simulate(1.0)
+	var spread := 0
+	var total := 0.0
+	for i in sc.room.cells:
+		total += g.tox[i]
+		if i != ti and g.tox[i] > 0.0:
+			spread += 1
+	_check("Contaminants spread through the room (%d tiles, %.2f kPa in total)" % [spread, total], spread > 0 and absf(total - 2.0) < 0.05)
+	_check("Air view names them", String(AT.describe(ti)).contains("CONTAMINANTS"))
+	_fill(sc.room, "tox", 0.0)
+	var fire_i: int = sc.room.cells[0]
+	g.o2[fire_i] = 21.0
+	g.fire[fire_i] = 1
+	root.get_node("TemperatureSystem")._fire(g, 1.0)
+	g.fire[fire_i] = 0
+	_check("A fire makes smoke (%.3f kPa)" % g.tox[fire_i], g.tox[fire_i] > 0.0 and g.tox_on)
+	var tsc: Device = g.place_device("tox_scrubber", sc.free)
+	_fill(sc.room, "tox", 0.5)
+	_tick()
+	OX.step(0.5)
+	_check("Without an alarm the scrubber cleans its tile (%.2f kPa)" % g.tox[ti], tsc.powered and g.tox[ti] < 0.5)
+	var sc2 := _room_with("tox_scrubber")
+	var tal: Device = g.place_device("tox_alarm", sc2.free)
+	_fill(sc.room, "tox", 0.05)
+	_tick()
+	OX.step(0.5)
+	_check("Contaminants alarm, 0.05 kPa below 0.1: scrubber on standby", Hvac.controlled(tsc) and not Hvac.runs(tsc) and is_equal_approx(g.tox[ti], 0.05))
+	_fill(sc.room, "tox", 0.3)
+	_tick()
+	_check("0.3 kPa: alarm on, scrubber runs", Hvac.active(tal) and Hvac.runs(tsc))
+	_fill(sc.room, "tox", 0.0)
+	g.tox[ti] = 0.7
+
 	# 6) Saving/loading keeps the set points
 	SS.save_game()
 	SS.load_game(true)
@@ -142,6 +183,10 @@ func _initialize() -> void:
 		if g.devices[i].type == "thermostat":
 			found = Hvac.setpoint(g.devices[i])
 	_check("Saving/loading: thermostat set point 23 °C stays (%.1f)" % found, is_equal_approx(found, 23.0))
+	var tox_left := 0.0
+	for i in g.tox.size():
+		tox_left += g.tox[i]
+	_check("Saving/loading keeps contaminants (%.2f kPa)" % tox_left, is_equal_approx(tox_left, 0.7) and g.tox_on)
 
 	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

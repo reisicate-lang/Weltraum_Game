@@ -338,6 +338,19 @@
   },
   "dismantle_tool": "crowbar"
  },
+ "tox_scrubber": {
+  "uninstall_time": 3.5,
+  "dismantle_time": 5.0,
+  "dismantle": {
+   "plate": 1,
+   "motor": 1,
+   "filter": 1
+  },
+  "hp": 160,
+  "debris": {
+   "scrap": 2
+  }
+ },
  "scrubber": {
   "uninstall_time": 3.5,
   "dismantle_time": 5.0,
@@ -582,6 +595,17 @@
   }
  },
  "o2_alarm": {
+  "uninstall_time": 1.5,
+  "dismantle_time": 2.0,
+  "dismantle": {
+   "circuit": 1
+  },
+  "hp": 60,
+  "debris": {
+   "scrap": 1
+  }
+ },
+ "tox_alarm": {
   "uninstall_time": 1.5,
   "dismantle_time": 2.0,
   "dismantle": {

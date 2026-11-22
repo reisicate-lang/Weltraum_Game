@@ -125,6 +125,7 @@ func step(dt: float) -> void:
 				g.o2[j] -= g.o2[j] * f
 				g.n2[j] -= g.n2[j] * f
 				g.co2[j] -= g.co2[j] * f
+				g.tox[j] -= g.tox[j] * f
 			pump.store = minf(Config.AIRLOCK_STORE_MAX, pump.store + amount)
 		else:
 			var add := minf(amount, pump.store)

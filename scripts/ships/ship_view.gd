@@ -298,7 +298,9 @@ func _draw_air(g: ShipGrid, x0: int, y0: int, x1: int, y1: int) -> void:
 			var col := Color(0.44, 0.81, 0.56, 0.38)
 			if o2 < Config.O2_LOW:
 				col = Color(0.9, 0.33, 0.29, 0.3 + 0.35 * (1.0 - o2 / Config.O2_LOW))
-			elif o2 < Config.O2_OK or g.co2[i] > Config.CO2_MAX:
+			elif g.tox[i] > Config.TOX_UNSAFE:
+				col = Color(0.62, 0.35, 0.8, 0.55)   # contaminants: unsafe to breathe
+			elif o2 < Config.O2_OK or g.co2[i] > Config.CO2_MAX or g.tox[i] > Config.TOX_WARN:
 				col = Color(0.95, 0.78, 0.23, 0.45)
 			draw_rect(_rect(Vector2i(x, y)), col)
 	_draw_room_types(g)
@@ -545,7 +547,7 @@ func _draw_icon(dev: Device, r: Rect2, a: float) -> void:
 			draw_rect(Rect2(c - Vector2(u * 0.22, u * 0.36), Vector2(u * 0.44, u * 0.16)), Color(0.75, 0.77, 0.8, a))
 		"light":
 			draw_circle(c, u * 0.18, Color(1, 0.93, 0.6, a) if dev.powered else Color(0.4, 0.38, 0.3, a))
-		"o2_alarm", "co2_alarm", "thermostat":
+		"o2_alarm", "co2_alarm", "thermostat", "tox_alarm":
 			# Small wall unit: lamp red while the alarm calls for its machines
 			draw_rect(Rect2(c - Vector2(u * 0.22, u * 0.22), Vector2(u * 0.44, u * 0.44)), Color(0.1, 0.13, 0.12, a))
 			var lamp := Color(0.4, 0.4, 0.4, a) if not dev.powered else (Color(0.9, 0.33, 0.29, a) if Hvac.active(dev) else Color(0.44, 0.81, 0.56, a))
@@ -572,9 +574,9 @@ func _draw_icon(dev: Device, r: Rect2, a: float) -> void:
 				for k in 3:
 					var p := fmod(t * 0.7 + k / 3.0, 1.0)
 					draw_circle(c + Vector2(sin(k * 2.1) * u * 0.2, -u * 0.1 - p * u * 0.35), u * 0.05, Color(0.75, 0.94, 1, a * (1.0 - p)))
-		"scrubber", "heater":
+		"scrubber", "heater", "tox_scrubber":
 			var ang := t * 6.0 if dev.powered else 0.0
-			var col := Color(0.62, 0.7, 0.6, a) if dev.type == "scrubber" else Color(1, 0.5, 0.25, a)
+			var col := Color(0.62, 0.7, 0.6, a) if dev.type == "scrubber" else (Color(0.85, 0.75, 0.35, a) if dev.type == "tox_scrubber" else Color(1, 0.5, 0.25, a))
 			for k in 4:
 				draw_line(c, c + Vector2.from_angle(ang + k * PI / 2.0) * u * 0.32, col, 3.0)
 			draw_circle(c, u * 0.08, Color(0.16, 0.2, 0.16, a))

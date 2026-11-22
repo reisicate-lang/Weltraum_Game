@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="DeviceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ships/device_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "tox_scrubber"
+display_name = "Contaminant AtmoScrubber"
+description = "Kang LCR Series contaminant scrubber (Ostranauts): removes contaminants such as sulfuric acid, ammonia and smoke from the air by condensation with sorbents. Runs whenever there are contaminants, or on demand of a Contaminants Pressure Alarm in its room. Needs 1 kW."
+power = -1.0
+build_time = 5.0
+cost = {"plate": 2, "motor": 1, "filter": 2}
+item_value = 4226
+mass = 0.0105
+stock = -1.0
+stock_unit = ""
+capacity = 0.0
+storage = 0.0
+need = ""
+wears = true
+color = Color(0.3, 0.33, 0.2, 1)
+tech = "mechanical"
+category = "hvac"

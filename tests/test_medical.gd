@@ -173,6 +173,32 @@ func _initialize() -> void:
 	gs.time += 25.0 * 60.0
 	_check("After 24 h the concussion is over", not Medical.concussed(mira))
 
+	# 6e) Chemical Pneumonitis from contaminants (wiki First Aid 1, 3.4)
+	mira.med = Medical.fresh()
+	var g2 = mira.grid()
+	var mt: int = g2.idx(mira.tile())
+	g2.add_tox(mt, 2.0)
+	_check("Over 1 kPa contaminants: unsafe air", not mira.safe_air(mt))
+	mira._update_body(1.0)
+	_check("A minute of breathing it: no Pneumonitis yet", not mira.med.disease.has("pneumonitis"))
+	for k in 6:
+		mira._update_body(1.0)
+	_check("A few minutes: Chemical Pneumonitis", mira.med.disease.has("pneumonitis"))
+	g2.tox[mt] = 0.0
+	var p_pn: float = Medical.pain(mira)
+	mira.inv.add("pill_antibiotic", 1, 100.0)
+	Medical.treat(mira)
+	_check("Pain +10; antibiotics are not wasted on it (pain %.0f)" % p_pn, p_pn >= 10.0 and mira.inv.count("pill_antibiotic") == 1)
+	Medical.step(mira, 60.0, false)
+	_check("Coughing blood (%.2f %% lost in 1 h)" % mira.med.blood, mira.med.blood > 0.0)
+	gs.time += 40.0 * 60.0
+	Medical.step(mira, 1.0, false)
+	_check("After 40 h it is still there", mira.med.disease.has("pneumonitis"))
+	gs.time += 33.0 * 60.0
+	Medical.step(mira, 1.0, false)
+	_check("After 72 h away from the gas it is over", not mira.med.disease.has("pneumonitis"))
+	mira.inv.take("pill_antibiotic", 1)
+
 	# 7) Saving/loading and the character window
 	mira.med = Medical.fresh()
 	Medical.injure(mira, "burn", 0.4, "torso")

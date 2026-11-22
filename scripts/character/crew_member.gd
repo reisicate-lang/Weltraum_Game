@@ -85,7 +85,7 @@ func can_reach(p: Vector2i) -> bool:
 	return absi(t.x - p.x) <= 1 and absi(t.y - p.y) <= 1
 
 func safe_air(i: int) -> bool:
-	return grid().holds_air(i) and grid().o2[i] >= Config.O2_DANGER and grid().fire[i] == 0 and grid().temp[i] < 50.0
+	return grid().holds_air(i) and grid().o2[i] >= Config.O2_DANGER and grid().fire[i] == 0 and grid().temp[i] < 50.0 and grid().tox[i] <= Config.TOX_UNSAFE
 
 ## Take the suit off only at a locker of your own ship in breathable air (not in a stale wreck)
 func _safe_locker(d: Device) -> bool:
@@ -430,6 +430,10 @@ func _update_body(dt: float) -> void:
 	if needs.water <= 0.0: damage += 4.0
 	if needs.air < 25.0: damage += 600.0
 	if not in_suit and g.holds_air(i) and g.co2[i] > Config.CO2_BAD: damage += 3.0
+	# Contaminants burn the airways (wiki Venus/First Aid): unsafe air hurts, exposure brings Pneumonitis
+	if not in_suit and g.holds_air(i) and g.tox[i] > Config.TOX_WARN:
+		Medical.expose(self, g.tox[i], dt)
+		if g.tox[i] > Config.TOX_UNSAFE: damage += 2.0
 	# Body temperature: cold (without a suit), heat from fire
 	var tt: float = g.temp[i] if g.holds_air(i) else Config.SPACE_TEMP
 	if in_suit or suit != null:

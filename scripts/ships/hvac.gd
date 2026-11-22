@@ -8,11 +8,11 @@
 class_name Hvac
 extends RefCounted
 
-const DEFAULTS := {"o2_alarm": 20.0, "co2_alarm": 0.5, "thermostat": 21.0}
-const STEPS := {"o2_alarm": 0.5, "co2_alarm": 0.1, "thermostat": 1.0}
-const LIMITS := {"o2_alarm": [5.0, 40.0], "co2_alarm": [0.1, 5.0], "thermostat": [10.0, 30.0]}
-const UNITS := {"o2_alarm": "kPa O₂", "co2_alarm": "kPa CO₂", "thermostat": "°C"}
-const MACHINES := {"o2_alarm": ["o2gen"], "co2_alarm": ["scrubber"], "thermostat": ["heater"]}
+const DEFAULTS := {"o2_alarm": 20.0, "co2_alarm": 0.5, "thermostat": 21.0, "tox_alarm": 0.1}
+const STEPS := {"o2_alarm": 0.5, "co2_alarm": 0.1, "thermostat": 1.0, "tox_alarm": 0.05}
+const LIMITS := {"o2_alarm": [5.0, 40.0], "co2_alarm": [0.1, 5.0], "thermostat": [10.0, 30.0], "tox_alarm": [0.05, 1.0]}
+const UNITS := {"o2_alarm": "kPa O₂", "co2_alarm": "kPa CO₂", "thermostat": "°C", "tox_alarm": "kPa contaminants"}
+const MACHINES := {"o2_alarm": ["o2gen"], "co2_alarm": ["scrubber"], "thermostat": ["heater"], "tox_alarm": ["tox_scrubber"]}
 ## Recompute rooms at most this often (game minutes)
 const PERIOD := 0.25
 ## Alarm toast without a working machine in the room: at most every 30 game minutes
@@ -112,7 +112,7 @@ static func update(g: ShipGrid, force: bool = false) -> void:
 			match t:
 				"o2_alarm":
 					on = r < sp if not on else r < sp + 1.0
-				"co2_alarm":
+				"co2_alarm", "tox_alarm":
 					on = r > sp if not on else r > sp * 0.5
 				"thermostat":
 					on = r < sp - 0.5 if not on else r < sp + 0.5
@@ -139,6 +139,8 @@ static func _average(g: ShipGrid, cells: Array, t: String) -> float:
 				s += g.o2[i]
 			"co2_alarm":
 				s += g.co2[i]
+			"tox_alarm":
+				s += g.tox[i]
 			"thermostat":
 				s += g.temp[i]
 	return s / maxf(1.0, cells.size())

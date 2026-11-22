@@ -64,6 +64,19 @@ Parts used to manage atmosphere once compartments are airtight (wiki: System_Com
 - Wall vents to share air between connected rooms
 - Optional: Contaminant AtmoScrubber + Contaminants Pressure Alarm + Gas Canister
 
+### Contaminant items (wiki item pages)
+| Item | Base Price | Damaged | Mass | Notes |
+|---|---|---|---|---|
+| Contaminant AtmoScrubber (Kang LCR Series) | 4226 | 845 | 10.5 | HVAC; removes contaminants such as sulfuric acid by condensation with sorbents (sodium carbonate, water); common on Venusian aerostats; repair Screwdriver/Drill + Soldering Iron; Powered, Signalable |
+| Contaminants Pressure Alarm (Kang Industrial) | 634 | – | 0.5 | Sensors; wall-mounted, needs a conduit; detects H2SO4 or particulates |
+| Gas Canister | 410 | 53 | 70.0 | LifeSupport; generic mixed-gas canister for temporary and waste gas storage |
+
+Contaminants Pressure Alarm thresholds:
+| Contaminant | Safe | Alert (Warning) | Alert (Unsafe) |
+|---|---|---|---|
+| Sulfuric acid (H2SO4) | < 0.0001 kPa | 0.0001–1 kPa | > 1 kPa |
+| Ammonia (NH3) | < 0.1 kPa | 0.1–1 kPa | > 1 kPa |
+
 ## 4 Space Suit Atmosphere Management
 Airtight suits hold their own internal atmosphere until the helmet or suit is removed.
 - **Pressure Suit:** traps a small volume of the room's air when sealed (helmet on). O2 depletes and CO2 builds up → "refresh" often in a safe compartment by taking the helmet off and putting it back on.

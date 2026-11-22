@@ -37,7 +37,20 @@ const FILTHY_AT := 5.0
 const GASTRO_PER_H := 0.04
 const PNEUMONIA_PER_H := 0.1
 const DISEASE_HOURS := 48.0
-const DISEASE_NAMES := {"gastro": "Gastroenteritis", "pneumonia": "Pneumonia"}
+const DISEASE_NAMES := {"gastro": "Gastroenteritis", "pneumonia": "Pneumonia", "pneumonitis": "Chemical Pneumonitis"}
+## Chemical Pneumonitis (wiki: inhaled NH3/H2SO4, much more dangerous than pneumonia; severe
+## coughing, dyspnea, coughing blood, pain +10). Not cured by antibiotics: it heals after a while
+## away from the gas, twice as fast in a medical bed. Dose, duration and effects our choice.
+const PNEUMONITIS_DOSE := 10.0       ## kPa × minutes of breathing contaminants
+const PNEUMONITIS_HOURS := 72.0
+const PNEUMONITIS_BLOOD := 0.5       ## blood lost per hour (coughing blood)
+
+## Breathing contaminants for dt minutes at kPa
+static func expose(c: CrewMember, kpa: float, dt: float) -> void:
+	c.med.tox_dose = float(c.med.get("tox_dose", 0.0)) + kpa * dt
+	if float(c.med.tox_dose) >= PNEUMONITIS_DOSE:
+		catch(c, "pneumonitis")
+		c.med.disease.pneumonitis.since = GameState.time   # still breathing it: no healing
 
 ## Concussion (wiki 3.1): temporary Insomniac, Obtuse, Oblivious; 80 % headache, 60 % dizzy.
 ## In this game: sleep recovery ×0.75 (Insomniac), Piloting −0.1 (Oblivious), headache pain +10,
@@ -51,7 +64,7 @@ static func concussed(c: CrewMember) -> bool:
 
 static func fresh() -> Dictionary:
 	return {"wounds": [], "blood": 0.0, "infection": 0.0, "crippled": [], "pain_until": 0.0, "pain_f": 0.0, "abx_until": 0.0,
-		"nano_until": 0.0, "nano_tail": 0.0, "disease": {}}
+		"nano_until": 0.0, "nano_tail": 0.0, "disease": {}, "tox_dose": 0.0}
 
 ## Asleep in a powered medical bed?
 static func on_medbed(c: CrewMember) -> bool:
@@ -83,7 +96,7 @@ static func nano_first_aid(c: CrewMember) -> bool:
 static func catch(c: CrewMember, id: String) -> void:
 	if c.med.disease.has(id):
 		return
-	c.med.disease[id] = {"stage": 2 if id == "pneumonia" else 1, "since": GameState.time}
+	c.med.disease[id] = {"stage": 2 if id in ["pneumonia", "pneumonitis"] else 1, "since": GameState.time}
 	GameState.toast("%s has caught %s." % [c.display_name, DISEASE_NAMES[id]], "bad")
 
 static func open(w: Dictionary) -> bool:
@@ -142,6 +155,8 @@ static func pain(c: CrewMember) -> float:
 	var pn = c.med.disease.get("pneumonia")
 	if pn is Dictionary and int(pn.stage) >= 3:
 		p += 10.0   # wiki: severe pneumonia pain +10
+	if c.med.disease.has("pneumonitis"):
+		p += 10.0   # wiki: severe pneumonitis pain +10
 	var f := 0.0
 	if GameState.time < float(c.med.pain_until):
 		f += float(c.med.pain_f)
@@ -191,8 +206,21 @@ static func step(c: CrewMember, dt: float, sleeping: bool) -> float:
 	for w in m.wounds:
 		if w.part == "torso" and open(w) and float(w.infect) >= 0.25 and randf() < PNEUMONIA_PER_H * h:
 			catch(c, "pneumonia")
+	# Contaminant dose wears off away from the gas (our choice: 0.1 kPa·min per minute)
+	m.tox_dose = maxf(0.0, float(m.get("tox_dose", 0.0)) - 0.1 * dt)
 	for id in m.disease.keys():
 		var dz: Dictionary = m.disease[id]
+		if id == "pneumonitis":
+			if bed:
+				dz.since = float(dz.since) - dt   # medical bed: heals twice as fast
+			if GameState.time - float(dz.since) > PNEUMONITIS_HOURS * 60.0:
+				m.disease.erase(id)
+				GameState.toast("%s is over the %s." % [c.display_name, DISEASE_NAMES[id]])
+				continue
+			m.blood = clampf(float(m.blood) + PNEUMONITIS_BLOOD * h, 0.0, 100.0)   # coughing blood
+			if not sleeping:
+				c.needs.sleep -= Config.NEEDS.sleep.decay * 0.5 * h                # dyspnea: tires
+			continue
 		if antibiotics(c) or GameState.time - float(dz.since) > DISEASE_HOURS * 60.0:
 			m.disease.erase(id)
 			GameState.toast("%s is over the %s." % [c.display_name, DISEASE_NAMES[id]])
@@ -298,7 +326,7 @@ static func treat(c: CrewMember) -> PackedStringArray:
 		if w.kind == "fracture" and not w.splint and take(c, ITEMS.splint):
 			w.splint = true
 			done.append("splinted the %s" % w.part)
-	var infected: bool = float(m.infection) >= 35.0 or not (m.get("disease", {}) as Dictionary).is_empty()
+	var infected: bool = float(m.infection) >= 35.0 or (m.get("disease", {}) as Dictionary).keys().any(func(k): return k != "pneumonitis")
 	for w in m.wounds:
 		infected = infected or float(w.infect) >= 0.25
 	if infected and not antibiotics(c) and take(c, ITEMS.antibiotic):

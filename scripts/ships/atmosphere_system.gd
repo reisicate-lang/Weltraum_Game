@@ -24,7 +24,7 @@ const E_VAC := 3     ## vacuum edge (leak to space)
 const MAX_SUBSTEPS := 4
 
 ## Gas lost to space (kPa sums) since the start of the game or in the last step
-var vented := {"o2": 0.0, "n2": 0.0, "co2": 0.0}
+var vented := {"o2": 0.0, "n2": 0.0, "co2": 0.0, "tox": 0.0}
 var last_vented := 0.0
 
 var _acc := 0.0
@@ -153,6 +153,14 @@ func simulate(dt: float) -> void:
 	last_vented = 0.0
 	for k in n:
 		_substep(g, steps / n)
+	# Contaminants only cost time while there are any; tiny traces are cleared
+	if g.tox_on:
+		var sum := 0.0
+		for i in _air_cells:
+			sum += g.tox[i]
+		if sum < 0.0001:
+			g.tox.fill(0.0)
+			g.tox_on = false
 
 func _substep(g: ShipGrid, s: float) -> void:
 	var k_free := minf(0.2, Config.DIFFUSION * s)
@@ -167,6 +175,11 @@ func _substep(g: ShipGrid, s: float) -> void:
 	var d_n2 := PackedFloat32Array()
 	var d_co2 := PackedFloat32Array()
 	d_o2.resize(n); d_n2.resize(n); d_co2.resize(n)
+	var tx := g.tox_on
+	var tox := g.tox.duplicate() if tx else PackedFloat32Array()
+	var d_tox := PackedFloat32Array()
+	if tx:
+		d_tox.resize(n)
 	var vac := {}
 	for p in _vac_cell.size():
 		vac[_vac_cell[p]] = _vac_n[p]
@@ -179,6 +192,9 @@ func _substep(g: ShipGrid, s: float) -> void:
 		d_n2[i] -= f; d_n2[j] += f
 		f = (co2[i] - co2[j]) * k_free
 		d_co2[i] -= f; d_co2[j] += f
+		if tx:
+			f = (tox[i] - tox[j]) * k_free
+			d_tox[i] -= f; d_tox[j] += f
 	for p in _dyn_a.size():
 		var i := _dyn_a[p]
 		var j := _dyn_b[p]
@@ -193,16 +209,22 @@ func _substep(g: ShipGrid, s: float) -> void:
 			d_n2[i] -= f; d_n2[j] += f
 			f = (co2[i] - co2[j]) * k
 			d_co2[i] -= f; d_co2[j] += f
+			if tx:
+				f = (tox[i] - tox[j]) * k
+				d_tox[i] -= f; d_tox[j] += f
 	for i in _air_cells:
 		var a := maxf(0.0, o2[i] + d_o2[i])
 		var b := maxf(0.0, n2[i] + d_n2[i])
 		var c := maxf(0.0, co2[i] + d_co2[i])
+		var t := maxf(0.0, tox[i] + d_tox[i]) if tx else 0.0
 		if vac.has(i):
 			var kp := pow(keep, vac[i])
-			vented.o2 += a * (1.0 - kp); vented.n2 += b * (1.0 - kp); vented.co2 += c * (1.0 - kp)
-			last_vented += (a + b + c) * (1.0 - kp)
-			a *= kp; b *= kp; c *= kp
+			vented.o2 += a * (1.0 - kp); vented.n2 += b * (1.0 - kp); vented.co2 += c * (1.0 - kp); vented.tox += t * (1.0 - kp)
+			last_vented += (a + b + c + t) * (1.0 - kp)
+			a *= kp; b *= kp; c *= kp; t *= kp
 		g.o2[i] = a; g.n2[i] = b; g.co2[i] = c
+		if tx:
+			g.tox[i] = t
 
 # ---------------- Rooms and vacuum paths ----------------
 
@@ -321,6 +343,8 @@ func describe(i: int) -> String:
 	if not g.holds_air(i):
 		return ""
 	var text := "O₂ %.1f kPa · CO₂ %.2f kPa · pressure %d kPa" % [g.o2[i], g.co2[i], int(g.pressure(i))]
+	if g.tox[i] >= 0.001:
+		text += " · CONTAMINANTS %.3f kPa%s" % [g.tox[i], " (unsafe)" if g.tox[i] > Config.TOX_UNSAFE else ""]
 	var r := room_of(i)
 	if r >= 0:
 		var leak := room_leak(r)
