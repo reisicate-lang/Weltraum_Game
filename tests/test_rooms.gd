@@ -122,6 +122,10 @@ func _initialize() -> void:
 	_is("Basic Quarters with a Bulkhead Bin as the storage bin", ["bed", "bulkhead_bin", "light"], "basic_quarters", 1.8, 4, 2)
 	_is("6 racks: Cargo Room", ["rack", "rack", "rack", "rack", "rack", "rack"], "cargo", 1.2, 3, 2)
 	_check("Racks and bins take hauled items", Config.STORAGE.has("rack") and Config.STORAGE.has("bulkhead_bin"))
+	# Cargo Web (wiki: 174 Cr, 2.5 kg, exterior cargo)
+	_check("Cargo Web: 174 Cr, 2.5 kg (wiki), storage", IS2.device("cargo_web").item_value == 174 and is_equal_approx(IS2.device("cargo_web").mass, 0.0025) and IS2.device("cargo_web").storage > 0.0)
+	var webs := ["cargo_web", "cargo_web", "cargo_web", "cargo_web", "cargo_web", "cargo_web"]
+	_is("6 cargo webs, unpressurized: Cargo Space (Exterior)", webs, "cargo_exterior", 1.05, 3, 2, false)
 
 	print("%d OK, %d failed" % [ok_count, fail_count])
 	quit()

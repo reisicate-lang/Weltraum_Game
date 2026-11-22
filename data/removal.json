@@ -686,6 +686,17 @@
    "scrap": 1
   }
  },
+ "cargo_web": {
+  "uninstall_time": 1.5,
+  "dismantle_time": 2.0,
+  "dismantle": {
+   "pipe": 1
+  },
+  "hp": 60,
+  "debris": {
+   "scrap": 1
+  }
+ },
  "bulkhead_bin": {
   "uninstall_time": 2.7,
   "dismantle_time": 3.8,

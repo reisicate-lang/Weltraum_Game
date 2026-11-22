@@ -76,6 +76,24 @@ func _initialize() -> void:
 	DS.strike()
 	_check("Strike while paused: stays paused", TS.speed_index == 0)
 
+	# Cargo Web outside the hull catches a strike (wiki Micrometeorite / Cargo Web)
+	var outer := Vector2i(-1, -1)
+	for i in g.tiles.size():
+		if g.tiles[i] == ShipGrid.Tile.WALL and not g.foreign(i):
+			for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+				var q: Vector2i = g.pos(i) + d * 2
+				if g.get_tile(g.pos(i) + d) == ShipGrid.Tile.SPACE and g.get_tile(q) == ShipGrid.Tile.SPACE and outer.x < 0:
+					outer = g.pos(i) + d
+	g.set_tile(outer, ShipGrid.Tile.FLOOR)
+	var web: Device = g.place_device("cargo_web", outer)
+	web.inv.add("pipe", 2, 100.0)
+	var conds0: float = Array(g.cond).reduce(func(a, b): return a + b, 0.0)
+	_check("Cargo web outside the hull is exposed", DS.exposed(g, outer))
+	DS._hit_shield(g, web)
+	_check("Strike on the cargo web: web damaged (%d %%), hull intact" % int(web.cond), web.cond < 100.0 and web.damaged and is_equal_approx(Array(g.cond).reduce(func(a, b): return a + b, 0.0), conds0))
+	g.remove_device(web)
+	g.set_tile(outer, ShipGrid.Tile.SPACE)
+
 	# Hypoxia (wiki: below 20 kPa) only warns; suffocation starts below 16 kPa
 	mira.pos = Vector2(root.get_node("ShipSystem").spawn_point()) + Vector2(0.5, 0.5)
 	var mt: int = g.idx(mira.tile())

@@ -83,6 +83,9 @@
   "medbed": [
    "bed"
   ],
+  "cargo_web": [
+   "exterior_cargo"
+  ],
   "rack_1x2": [
    "cargo_container"
   ],

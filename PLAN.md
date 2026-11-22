@@ -130,6 +130,7 @@ und werden Schritt für Schritt übertragen.
 - [x] Medizinbett, Nanorobotic First Aid, Gastroenteritis und Lungenentzündung nach Wiki
 - [x] Wunden und Erste Hilfe nach Wiki (Kern): Wunden je Körperteil, Blut, Infektion, verkrüppelte Gliedmaßen, Selbstbehandlung, Pillen; Notiz docs/ostranauts/ostranauts-first-aid.md
 - [x] Halvorson Fire Extinguisher nach Wiki: tragbar, Löschen ×3, Nahkampfwaffe
+- [x] Cargo Web nach Wiki (Außenlager, Cargo Space (Exterior), fängt Mikrometeoriten ab)
 - [x] Übersichtskarte des Sonnensystems im Cockpit (Umlaufbahnen, Kurslinie der Fernreise, Klick auf eine Welt)
 - [x] Wake Zones nach Wiki (500 km um Stationen, Fernreise erst außerhalb); Fehler behoben: Toast-Timer auf bereits gelöschte Meldung
 - [x] Sonnensystem erweitert: Regionen Mars, Gürtel, Jupiter, Saturn mit eigenen Orten und Entwürfen; Fernreise mit Zeitraffer

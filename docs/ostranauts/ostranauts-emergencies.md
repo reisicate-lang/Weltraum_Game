@@ -10,6 +10,21 @@ Related: ostranauts-ideal-atmosphere.md (airtight hull, finding breaches), ostra
 - Strong enough to damage **Wall and Floor tiles**, conduits and other equipment in the way → hull breaches, power outages, other issues.
 - Protection: **Whipple Framework** (micrometeorite shield; Sundries Kiosk on OKLG, VNCA Mall); **additional wall layers** reduce the chance of a breach; **exterior equipment** (Cargo Netting, Cargo Pods …) can prevent a breach.
 
+## 1a Cargo Web (wiki page "Cargo Web")
+"Cargo Web, or Cargo Net is a non-airtight floor tile, suitable for storage." Halvorson's "Charlotte" cargo webbing: vinyl straps for light-weight, rapid-deployment cargo or, on K-Leg, "economic personnel transport". **Not recommended for cargo vulnerable to radiation exposure and unplanned hyper-velocity impact.**
+| Stat | Intact | Damaged |
+|---|---|---|
+| Category | Hull | Hull |
+| Base Price | 174.0 | 121.00 |
+| Max. Damage | 5 | 7 |
+| Install / Uninstall / Dismantle Progress | 40 | 30 |
+| Max. Repair Progress | 200 | – |
+| Mass | 2.5 | – |
+| Scrap | Trash 1 | |
+| Repair | Screwdriver/Drill + Welder, no materials | |
+Conditions: CargoWeb Halvorson CheckRoom HiddenInv NonHighlightable Installed Solid Flexible Fragile. Install menu: FURN → Cargo → Other.
+Counts as an exterior cargo container for the room type Cargo Space (Exterior), see ostranauts-rooms.md. Storage volume not stated (this game: 400 L, our choice).
+
 ## 2 Oxygen Candle
 "An emergency, single-use device that, once activated by a spring-actuated hammer, chemically generates oxygen from Lithium perchlorate (LiClO4). Most effective in small, stable compartments."
 | Stat | Value |

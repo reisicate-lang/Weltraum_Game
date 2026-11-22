@@ -104,7 +104,10 @@ const DIRTY_RECOVERY := 0.5
 const HYGIENE_PACK_GAIN := 70.0
 const SUIT_LOCKERS := ["locker", "pressure_locker"]
 ## Storage furniture the crew hauls loose items into (crate; Ostranauts Rack and Bulkhead Bin)
-const STORAGE := ["crate", "rack", "rack_1x2", "rack_1x4", "bulkhead_bin"]
+const STORAGE := ["crate", "rack", "rack_1x2", "rack_1x4", "bulkhead_bin", "cargo_web"]
+## Exterior equipment that catches a micrometeorite before it reaches the hull (Ostranauts
+## Micrometeorite: cargo netting, cargo pods …)
+const METEOR_SHIELDS := ["cargo_web", "cargo_pod", "cargo_pod_climate", "cargo_pod_radiation", "cargo_pod_specialty"]
 
 ## Airlock
 const AIRLOCK_MAX_SIZE := 12 * GRID_SCALE * GRID_SCALE

@@ -41,7 +41,16 @@ func strike() -> void:
 			if g.get_tile(p + d) == ShipGrid.Tile.SPACE:
 				hull.append(p)
 				break
-	if hull.is_empty():
+	# Exterior equipment (cargo webs, cargo pods) catches strikes before they reach the hull
+	var shields: Array[Device] = []
+	for j in g.devices:
+		var sd: Device = g.devices[j]
+		if sd.type in Config.METEOR_SHIELDS and not g.foreign(j) and not sd.broken and exposed(g, sd.pos):
+			shields.append(sd)
+	if hull.is_empty() and shields.is_empty():
+		return
+	if randi() % (hull.size() + shields.size()) < shields.size():
+		_hit_shield(g, shields.pick_random())
 		return
 	var p: Vector2i = hull.pick_random()
 	var i := g.idx(p)
@@ -76,6 +85,34 @@ func strike() -> void:
 		QuestSystem.claim_damage("Hull breach")
 	else:
 		GameState.toast("Micrometeorite impact! The hull is damaged.", "bad")
+
+## Outside the hull: a neighbouring tile is open space
+static func exposed(g: ShipGrid, p: Vector2i) -> bool:
+	for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+		if g.get_tile(p + d) == ShipGrid.Tile.SPACE:
+			return true
+	return false
+
+## A strike on exterior equipment: it takes the damage, the hull stays intact; cargo in it
+## is damaged too (wiki Cargo Web: not for cargo vulnerable to hyper-velocity impact)
+func _hit_shield(g: ShipGrid, dev: Device) -> void:
+	if TimeSystem.speed_index > 1:
+		TimeSystem.set_speed(1)
+	effects.append({"pos": dev.pos, "start": Time.get_ticks_msec()})
+	dev.cond = maxf(0.0, dev.cond - randf_range(35.0, 80.0))
+	dev.damaged = true
+	if dev.cond <= 0.0:
+		dev.broken = true
+	var hit := 0
+	if dev.inv != null:
+		for it in dev.inv.items:
+			if randf() < 0.5:
+				it.cond = maxf(0.0, float(it.cond) - randf_range(20.0, 60.0))
+				hit += 1
+	for c in CrewSystem.crew:
+		if c.grid() == g and (c.tile() - dev.pos).length() <= 2.0 * Config.GRID_SCALE and randf() < 0.5:
+			Medical.injure(c, "cut", randf_range(0.25, 0.6))
+	GameState.toast("Micrometeorite hit the %s outside – the hull is intact%s." % [dev.data().display_name, ", %d stacks of cargo damaged" % hit if hit > 0 else ""], "bad")
 
 func needs_repair(p: Vector2i) -> bool:
 	var g := ShipSystem.grid

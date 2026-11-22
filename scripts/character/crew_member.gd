@@ -797,6 +797,9 @@ func _finish_haul() -> void:
 		var targets: Array = []
 		for dev in g.devices.values():
 			if dev.type in Config.STORAGE and g.zone[g.idx(dev.pos)] == 0:
+				# A cargo web outside the hull only with a working suit
+				if not suit_ok() and not safe_air(g.idx(dev.pos)):
+					continue
 				for t in carry:
 					if dev.inv.room(t) > 0:
 						targets.append(dev.pos)
