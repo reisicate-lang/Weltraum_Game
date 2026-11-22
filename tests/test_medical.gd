@@ -157,6 +157,40 @@ func _initialize() -> void:
 	Medical.step(mira, 1.0, false)
 	_check("Pneumonia: antibiotics cure it", not mira.med.disease.has("pneumonia"))
 
+	# 6c2) Cholera and Hepatitis in stages (wiki 3.4)
+	mira.med = Medical.fresh()
+	mira.needs.water = 100.0
+	Medical.catch(mira, "cholera")
+	Medical.step(mira, 60.0, false)
+	var w1: float = 100.0 - mira.needs.water
+	_check("Cholera stage 1: indicator only, no extra thirst", int(mira.med.disease.cholera.stage) == 1)
+	gs.time += 13.0 * 60.0
+	mira.needs.water = 100.0
+	Medical.step(mira, 60.0, false)
+	_check("Cholera stage 2: hydration rate +2.5 (%.1f extra thirst in 1 h, stage 1: %.1f)" % [100.0 - mira.needs.water, w1], int(mira.med.disease.cholera.stage) == 2 and is_zero_approx(w1) and (100.0 - mira.needs.water) > 1.0)
+	mira.inv.add("pill_antibiotic", 1, 100.0)
+	Medical.treat(mira)
+	Medical.step(mira, 1.0, false)
+	_check("Antibiotics cure Cholera", not mira.med.disease.has("cholera"))
+	mira.med = Medical.fresh()
+	var p_h0: float = Medical.pain(mira)
+	Medical.catch(mira, "hepatitis")
+	gs.time += 25.0 * 60.0
+	Medical.step(mira, 1.0, false)
+	_check("Hepatitis stage 2: pain +10", int(mira.med.disease.hepatitis.stage) == 2 and is_equal_approx(Medical.pain(mira) - p_h0, 10.0))
+	mira.inv.add("pill_antibiotic", 1, 100.0)
+	Medical.treat(mira)
+	Medical.step(mira, 1.0, false)
+	_check("Hepatitis stage 2: antibiotics no longer help (none taken)", mira.med.disease.has("hepatitis") and mira.inv.count("pill_antibiotic") == 1)
+	gs.time += 24.0 * 60.0
+	Medical.step(mira, 1.0, false)
+	_check("Stage 3 (severe): pain +15", int(mira.med.disease.hepatitis.stage) == 3 and is_equal_approx(Medical.pain(mira) - p_h0, 15.0))
+	gs.time += 100.0 * 60.0
+	Medical.step(mira, 1.0, false)
+	_check("After 144 h Hepatitis is over", not mira.med.disease.has("hepatitis"))
+	mira.inv.take("pill_antibiotic", 1)
+	mira.med = Medical.fresh()
+
 	# 6d) Concussion (wiki): a hard blow to the head
 	mira.med = Medical.fresh()
 	var SKC = root.get_node("SkillSystem")

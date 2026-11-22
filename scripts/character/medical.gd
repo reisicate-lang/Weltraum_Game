@@ -37,7 +37,38 @@ const FILTHY_AT := 5.0
 const GASTRO_PER_H := 0.04
 const PNEUMONIA_PER_H := 0.1
 const DISEASE_HOURS := 48.0
-const DISEASE_NAMES := {"gastro": "Gastroenteritis", "pneumonia": "Pneumonia", "pneumonitis": "Chemical Pneumonitis"}
+const DISEASE_NAMES := {"gastro": "Gastroenteritis", "pneumonia": "Pneumonia", "pneumonitis": "Chemical Pneumonitis",
+	"cholera": "Cholera", "hepatitis": "Hepatitis"}
+## Staged diseases (wiki 3.4): stage k lasts until hour STAGES[id][k-1] after catching, then over.
+## Cholera: 1 indicator, 2 diarrhea/nausea/vomiting, infection +1, infection rate +5, hydration +2.5,
+## 3 severe: infection rate +15, hydration +5. Hepatitis: 1 indicator, 2 pain +10, infection rate +14,
+## fatigue +0.25, 3 severe: nausea, vomiting, diarrhea, headache, pain +15, infection rate +15,
+## 4 pain +10, infection rate +12. Antibiotics cure Cholera and Hepatitis stage 1 (wiki).
+## Stage durations, how they are caught and "infection rate" as +0.1 infection per hour per point
+## are our own choice (the wiki says Cholera is food/water-borne and does not say how Hepatitis spreads).
+const STAGES := {"cholera": [12.0, 36.0, 72.0], "hepatitis": [24.0, 48.0, 96.0, 144.0]}
+const STAGE_FX := {
+	"cholera": [{}, {"infect": 5.0, "thirst": 2.5, "sick": true}, {"infect": 15.0, "thirst": 5.0, "sick": true}],
+	"hepatitis": [{}, {"infect": 14.0, "pain": 10.0, "fatigue": 0.25}, {"infect": 15.0, "pain": 15.0, "sick": true}, {"infect": 12.0, "pain": 10.0}]}
+const CHOLERA_PER_H := 0.01       ## Filthy: dirty hands on food and water
+const HEPATITIS_PER_H := 0.02     ## per infected open wound (blood-borne)
+
+## Current stage of a staged disease (0 = over)
+static func stage_of(id: String, dz: Dictionary) -> int:
+	var hrs := (GameState.time - float(dz.since)) / 60.0
+	var b: Array = STAGES[id]
+	for k in b.size():
+		if hrs < float(b[k]):
+			return k + 1
+	return 0
+
+## Do antibiotics help against this disease now? (not Pneumonitis, Hepatitis only in stage 1)
+static func abx_cures(id: String, dz: Dictionary) -> bool:
+	if id == "pneumonitis":
+		return false
+	if id == "hepatitis":
+		return int(dz.get("stage", 1)) <= 1
+	return true
 ## Chemical Pneumonitis (wiki: inhaled NH3/H2SO4, much more dangerous than pneumonia; severe
 ## coughing, dyspnea, coughing blood, pain +10). Not cured by antibiotics: it heals after a while
 ## away from the gas, twice as fast in a medical bed. Dose, duration and effects our choice.
@@ -97,6 +128,9 @@ static func catch(c: CrewMember, id: String) -> void:
 	if c.med.disease.has(id):
 		return
 	c.med.disease[id] = {"stage": 2 if id in ["pneumonia", "pneumonitis"] else 1, "since": GameState.time}
+	if STAGES.has(id):
+		GameState.toast("%s feels slightly off (%s, stage 1)." % [c.display_name, DISEASE_NAMES[id]], "bad")
+		return
 	GameState.toast("%s has caught %s." % [c.display_name, DISEASE_NAMES[id]], "bad")
 
 static func open(w: Dictionary) -> bool:
@@ -157,6 +191,10 @@ static func pain(c: CrewMember) -> float:
 		p += 10.0   # wiki: severe pneumonia pain +10
 	if c.med.disease.has("pneumonitis"):
 		p += 10.0   # wiki: severe pneumonitis pain +10
+	for id in STAGES:
+		var dz = c.med.disease.get(id)
+		if dz is Dictionary and int(dz.stage) >= 1:
+			p += float((STAGE_FX[id][int(dz.stage) - 1] as Dictionary).get("pain", 0.0))
 	var f := 0.0
 	if GameState.time < float(c.med.pain_until):
 		f += float(c.med.pain_f)
@@ -203,9 +241,13 @@ static func step(c: CrewMember, dt: float, sleeping: bool) -> float:
 		m.disease = {}
 	if c.needs.hygiene < FILTHY_AT and not c.traits.has("iron_stomach") and randf() < GASTRO_PER_H * 0.5 * (2.0 if c.traits.has("weak_stomach") else 1.0) * h:
 		catch(c, "gastro")
+	if c.needs.hygiene < FILTHY_AT and randf() < CHOLERA_PER_H * h:
+		catch(c, "cholera")
 	for w in m.wounds:
 		if w.part == "torso" and open(w) and float(w.infect) >= 0.25 and randf() < PNEUMONIA_PER_H * h:
 			catch(c, "pneumonia")
+		if open(w) and float(w.infect) >= 0.25 and randf() < HEPATITIS_PER_H * h:
+			catch(c, "hepatitis")
 	# Contaminant dose wears off away from the gas (our choice: 0.1 kPa·min per minute)
 	m.tox_dose = maxf(0.0, float(m.get("tox_dose", 0.0)) - 0.1 * dt)
 	for id in m.disease.keys():
@@ -220,6 +262,26 @@ static func step(c: CrewMember, dt: float, sleeping: bool) -> float:
 			m.blood = clampf(float(m.blood) + PNEUMONITIS_BLOOD * h, 0.0, 100.0)   # coughing blood
 			if not sleeping:
 				c.needs.sleep -= Config.NEEDS.sleep.decay * 0.5 * h                # dyspnea: tires
+			continue
+		if STAGES.has(id):
+			var st := stage_of(id, dz)
+			if st == 0 or (antibiotics(c) and abx_cures(id, dz)):
+				m.disease.erase(id)
+				GameState.toast("%s is over the %s." % [c.display_name, DISEASE_NAMES[id]])
+				continue
+			if st > int(dz.stage):
+				GameState.toast("%s: %s, stage %d." % [c.display_name, DISEASE_NAMES[id], st], "bad")
+			dz.stage = st
+			var fx: Dictionary = STAGE_FX[id][st - 1]
+			if fx.is_empty():
+				continue                                   # indicator stage, no effect
+			body_gain += (1.0 + float(fx.get("infect", 0.0)) * 0.1) / BODY_INFECT
+			c.needs.water -= Config.NEEDS.water.decay * float(fx.get("thirst", 0.0)) * h
+			if bool(fx.get("sick", false)):
+				c.needs.hygiene -= 5.0 * h                 # diarrhea
+				c.needs.food -= Config.NEEDS.food.decay * 0.5 * h   # vomiting
+			if not sleeping:
+				c.needs.sleep -= Config.NEEDS.sleep.decay * float(fx.get("fatigue", 0.0)) * h
 			continue
 		if antibiotics(c) or GameState.time - float(dz.since) > DISEASE_HOURS * 60.0:
 			m.disease.erase(id)
@@ -326,7 +388,7 @@ static func treat(c: CrewMember) -> PackedStringArray:
 		if w.kind == "fracture" and not w.splint and take(c, ITEMS.splint):
 			w.splint = true
 			done.append("splinted the %s" % w.part)
-	var infected: bool = float(m.infection) >= 35.0 or (m.get("disease", {}) as Dictionary).keys().any(func(k): return k != "pneumonitis")
+	var infected: bool = float(m.infection) >= 35.0 or (m.get("disease", {}) as Dictionary).keys().any(func(k): return abx_cures(k, m.disease[k]))
 	for w in m.wounds:
 		infected = infected or float(w.infect) >= 0.25
 	if infected and not antibiotics(c) and take(c, ITEMS.antibiotic):
@@ -368,7 +430,10 @@ static func status(c: CrewMember) -> PackedStringArray:
 			cs.append("dizzy")
 		head.append(" + ".join(cs))
 	for id in m.get("disease", {}):
-		head.append(String(DISEASE_NAMES[id]) + (" (severe)" if int(m.disease[id].stage) >= 3 else ""))
+		if STAGES.has(id):
+			head.append("%s (stage %d)" % [DISEASE_NAMES[id], int(m.disease[id].stage)])
+		else:
+			head.append(String(DISEASE_NAMES[id]) + (" (severe)" if int(m.disease[id].stage) >= 3 else ""))
 	if not head.is_empty():
 		out.append(", ".join(head))
 	for w in m.wounds:

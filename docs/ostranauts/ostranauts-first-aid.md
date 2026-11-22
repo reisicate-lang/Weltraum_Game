@@ -78,6 +78,16 @@ Limb infection: < 0.25 minor, 0.25–0.5 moderate, > 0.5 severe.
 ### 3.4 Disease
 Pneumonia (stages 1–3: cough, pain +10, infection), Pneumonitis from NH3/H2SO4 (severe coughing, dyspnea, coughing blood), Gastroenteritis (Iron Stomach counters it; 50 % from "Filthy" hygiene), Cholera, Hepatitis (stages with pain and infection rates).
 
+Disease stages from the wiki table:
+| Disease | Stage 1 | Stage 2 | Stage 3 (severe) | Stage 4 |
+|---|---|---|---|---|
+| Pneumonia | indicator, no effect | coughing, infection stat +1, infection heal −0.625, 75 % feverish | severe coughing, pain +10, infection stat +1, infection heal −0.833, defense −0.125, 75 % feverish | – |
+| Pneumonitis (NH3 or H2SO4) | severe coughing, dyspnea, defense −0.075, 75 % feverish | (severe) coughing blood, dyspnea, pain +10, defense −0.125, 75 % feverish | – | – |
+| Gastroenteritis (Iron Stomach counters; 50 % from "Filthy") | diarrhea, infection stat +1, infection rate +20 | – | – | – |
+| Cholera (food/water-borne bacteria, "implemented?") | indicator, no effect | diarrhea, nausea, vomiting, infection stat +1, infection rate +5, hydration rate +2.5 | diarrhea, nausea, vomiting, infection stat +1, infection rate +15, hydration rate +5 | – |
+| Hepatitis (how contracted not stated) | indicator, no effect | infection stat +1, pain +10, infection rate +14, fatigue rate +0.25 | 40 % nausea, vomiting, diarrhea, headache, infection stat +1, pain +15, infection rate +15 | infection stat +1, pain +10, infection rate +12 |
+Harmful gases: NH3 poisoning (stage 2–3) and H2SO4 poisoning (stage 2) → Chemical Pneumonitis +100 %, trait Chronic Emphysema +100 %.
+
 ### 3.5 Traits
 Fast Healer: wound +0.025, blood +0.0089, infection +0.2 · Slow Healer: the opposite · Micro-g Hypovolemic: wound −0.5 %, blood −0.44 %, infection −0.05 % · Immunosuppressed: infection −0.2.
 Unconscious: wound heal +0.05, infection heal +0.2, blood heal +0.0089, food/hydration −0.5, defense −1.0, piloting −0.1.
