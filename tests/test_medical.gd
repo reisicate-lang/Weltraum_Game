@@ -233,6 +233,28 @@ func _initialize() -> void:
 	_check("After 72 h away from the gas it is over", not mira.med.disease.has("pneumonitis"))
 	mira.inv.take("pill_antibiotic", 1)
 
+	# 6f) Gas hazards (wiki Health and Safety 4.9 and 2.1)
+	mira.med = Medical.fresh()
+	_check("CO₂ 0.4 kPa: no condition", is_zero_approx(Medical.gas_hazards(mira, 0.4, 0.0, 21.0, false)) and mira.med.gas.is_empty())
+	Medical.gas_hazards(mira, 1.5, 0.0, 21.0, false)
+	_check("CO₂ 1.5 kPa: Mild Hypercapnia (%s)" % str(mira.med.gas), mira.med.gas == ["Mild Hypercapnia"])
+	Medical.gas_hazards(mira, 6.0, 0.0, 21.0, false)
+	_check("CO₂ 6 kPa: Severe Hypercapnia, dizzy", mira.med.gas == ["Severe Hypercapnia"] and is_equal_approx(Medical.move_factor(mira), 0.75))
+	_check("CO₂ over 9 kPa: lethal (%.0f per hour)" % Medical.gas_hazards(mira, 9.5, 0.0, 21.0, false), Medical.gas_hazards(mira, 9.5, 0.0, 21.0, false) >= 600.0)
+	_check("In a working suit: nothing", is_zero_approx(Medical.gas_hazards(mira, 9.5, 2.0, 0.0, true)) and mira.med.gas.is_empty())
+	Medical.gas_hazards(mira, 0.0, 0.2, 21.0, false)
+	_check("Contaminants 0.2 kPa: Burning Throat and Eyes", mira.med.gas == ["Burning Throat and Eyes"])
+	_check("Contaminants over 1 kPa: Lethal Inhalation", Medical.gas_hazards(mira, 0.0, 1.5, 21.0, false) >= 300.0 and mira.med.gas == ["Lethal Inhalation"])
+	var pe: float = Medical.pain(mira)
+	Medical.gas_hazards(mira, 0.0, 0.0, 1.0, false)
+	_check("O₂ under 3 kPa without a suit: Ebullism, pain +10", mira.med.gas.has("Ebullism") and is_equal_approx(Medical.pain(mira) - pe, 10.0))
+	Medical.gas_hazards(mira, 0.0, 0.0, 21.0, false)
+	_check("Ebullism lingers after getting to air", Medical.ebullism(mira) and mira.med.gas == ["Ebullism"])
+	gs.time += 31.0
+	Medical.gas_hazards(mira, 0.0, 0.0, 21.0, false)
+	_check("After 30 minutes it has passed", not Medical.ebullism(mira) and mira.med.gas.is_empty())
+	mira.med = Medical.fresh()
+
 	# 7) Saving/loading and the character window
 	mira.med = Medical.fresh()
 	Medical.injure(mira, "burn", 0.4, "torso")

@@ -76,6 +76,57 @@ const PNEUMONITIS_DOSE := 10.0       ## kPa × minutes of breathing contaminants
 const PNEUMONITIS_HOURS := 72.0
 const PNEUMONITIS_BLOOD := 0.5       ## blood lost per hour (coughing blood)
 
+## Gas hazards (Ostranauts Health and Safety 2.1 and 4.9). Thresholds and names from the wiki;
+## the wiki gives effects only for the deadly stages, the damage per hour below is our choice.
+## CO₂ poisoning: Malaise 0.5, Mild Hypercapnia 1, Moderate 2, Advanced 3.066, Severe 5.066 (dizzy),
+## Critical 8 (muscle tremors), Lethal > 9 (asphyxiating, death soon).
+## Contaminants (NH3 rows): Stinging Throat and Eyes 0.003, Burning Throat and Eyes 0.05,
+## Lethal Inhalation > 1 (death imminent). O₂ below 3 kPa (Void Atmo): Gasping, Ebullism (pain +10).
+const CO2_STAGES := [[9.0, "Lethal Hypercapnia", 600.0], [8.0, "Critical Hypercapnia", 60.0], [5.066, "Severe Hypercapnia", 10.0],
+	[3.066, "Advanced Hypercapnia", 3.0], [2.0, "Moderate Hypercapnia", 0.0], [1.0, "Mild Hypercapnia", 0.0], [0.5, "Malaise", 0.0]]
+const TOX_STAGES := [[1.0, "Lethal Inhalation", 300.0], [0.05, "Burning Throat and Eyes", 2.0], [0.003, "Stinging Throat and Eyes", 0.0]]
+const VOID_O2 := 3.0
+const EBULLISM_MINUTES := 30.0
+## Stages that raise an alarm toast
+const GAS_ALERT := ["Lethal Hypercapnia", "Critical Hypercapnia", "Severe Hypercapnia", "Advanced Hypercapnia", "Lethal Inhalation", "Burning Throat and Eyes", "Ebullism"]
+
+## Current gas conditions and damage per hour; c.med.gas lists the condition names (worst first)
+static func gas_hazards(c: CrewMember, co2: float, tox: float, o2: float, in_suit: bool) -> float:
+	var names: Array = []
+	var dmg := 0.0
+	if not in_suit:
+		if o2 < VOID_O2:
+			c.med.ebullism_until = GameState.time + EBULLISM_MINUTES
+		for st in CO2_STAGES:
+			if co2 > float(st[0]):
+				names.append(st[1])
+				dmg += float(st[2])
+				break
+		for st in TOX_STAGES:
+			if tox > float(st[0]):
+				names.append(st[1])
+				dmg += float(st[2])
+				break
+	if ebullism(c):
+		names.push_front("Ebullism")
+	names.sort_custom(func(a, b): return _gas_rank(a) < _gas_rank(b))
+	c.med.gas = names
+	return dmg
+
+static func _gas_rank(n: String) -> int:
+	var k := GAS_ALERT.find(n)
+	return k if k >= 0 else 99
+
+static func ebullism(c: CrewMember) -> bool:
+	return GameState.time < float(c.med.get("ebullism_until", -1.0))
+
+## Severe Hypercapnia and worse: dizzy
+static func gas_dizzy(c: CrewMember) -> bool:
+	for n in c.med.get("gas", []):
+		if String(n) in ["Severe Hypercapnia", "Critical Hypercapnia", "Lethal Hypercapnia"]:
+			return true
+	return false
+
 ## Breathing contaminants for dt minutes at kPa
 static func expose(c: CrewMember, kpa: float, dt: float) -> void:
 	c.med.tox_dose = float(c.med.get("tox_dose", 0.0)) + kpa * dt
@@ -191,6 +242,8 @@ static func pain(c: CrewMember) -> float:
 		p += 10.0   # wiki: severe pneumonia pain +10
 	if c.med.disease.has("pneumonitis"):
 		p += 10.0   # wiki: severe pneumonitis pain +10
+	if ebullism(c):
+		p += 10.0   # wiki: ebullism (space without suit) pain +10
 	for id in STAGES:
 		var dz = c.med.disease.get(id)
 		if dz is Dictionary and int(dz.stage) >= 1:
@@ -333,7 +386,7 @@ static func work_factor(c: CrewMember) -> float:
 
 ## Movement factor: crippled legs −50 % each (wiki)
 static func move_factor(c: CrewMember) -> float:
-	var f := 0.75 if concussed(c) and bool(c.med.concussion.get("dizzy", false)) else 1.0
+	var f := 0.75 if (concussed(c) and bool(c.med.concussion.get("dizzy", false))) or gas_dizzy(c) else 1.0
 	for p in c.med.crippled:
 		if "leg" in String(p):
 			f *= 0.5
@@ -429,6 +482,8 @@ static func status(c: CrewMember) -> PackedStringArray:
 		if bool(m.concussion.get("dizzy", false)):
 			cs.append("dizzy")
 		head.append(" + ".join(cs))
+	for n in m.get("gas", []):
+		head.append(String(n))
 	for id in m.get("disease", {}):
 		if STAGES.has(id):
 			head.append("%s (stage %d)" % [DISEASE_NAMES[id], int(m.disease[id].stage)])

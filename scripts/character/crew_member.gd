@@ -85,7 +85,7 @@ func can_reach(p: Vector2i) -> bool:
 	return absi(t.x - p.x) <= 1 and absi(t.y - p.y) <= 1
 
 func safe_air(i: int) -> bool:
-	return grid().holds_air(i) and grid().o2[i] >= Config.O2_DANGER and grid().fire[i] == 0 and grid().temp[i] < 50.0 and grid().tox[i] <= Config.TOX_UNSAFE
+	return grid().holds_air(i) and grid().o2[i] >= Config.O2_DANGER and grid().fire[i] == 0 and grid().temp[i] < 50.0 and grid().tox[i] <= Config.TOX_UNSAFE and grid().co2[i] <= Config.CO2_BAD
 
 ## Take the suit off only at a locker of your own ship in breathable air (not in a stale wreck)
 func _safe_locker(d: Device) -> bool:
@@ -429,11 +429,11 @@ func _update_body(dt: float) -> void:
 	if needs.food <= 0.0: damage += 2.0
 	if needs.water <= 0.0: damage += 4.0
 	if needs.air < 25.0: damage += 600.0
-	if not in_suit and g.holds_air(i) and g.co2[i] > Config.CO2_BAD: damage += 3.0
-	# Contaminants burn the airways (wiki Venus/First Aid): unsafe air hurts, exposure brings Pneumonitis
-	if not in_suit and g.holds_air(i) and g.tox[i] > Config.TOX_WARN:
-		Medical.expose(self, g.tox[i], dt)
-		if g.tox[i] > Config.TOX_UNSAFE: damage += 2.0
+	# Gas hazards (Ostranauts Health and Safety 2.1, 4.9): hypercapnia, contaminants, ebullism
+	var air_in := g.holds_air(i)
+	damage += Medical.gas_hazards(self, g.co2[i] if air_in else 0.0, g.tox[i] if air_in else 0.0, g.o2[i] if air_in else 0.0, in_suit)
+	if not in_suit and air_in and g.tox[i] > Config.TOX_WARN:
+		Medical.expose(self, g.tox[i], dt)   # breathing contaminants brings Pneumonitis
 	# Body temperature: cold (without a suit), heat from fire
 	var tt: float = g.temp[i] if g.holds_air(i) else Config.SPACE_TEMP
 	if in_suit or suit != null:
@@ -472,6 +472,8 @@ func _update_body(dt: float) -> void:
 		unconscious = false
 		GameState.toast(display_name + " is conscious again.")
 	_warn("air", needs.air < 40.0, display_name + " can barely breathe!", needs.air > 95.0)
+	var gs: Array = med.get("gas", [])
+	_warn("gas", not gs.is_empty() and String(gs[0]) in Medical.GAS_ALERT, display_name + ": " + (String(gs[0]) if not gs.is_empty() else "") + "! Get to clean air or into a suit.", gs.is_empty())
 	_warn("health", health < 30.0, display_name + " is in very bad shape.", health > 50.0)
 	_warn("cold", body_temp < 35.5, display_name + " is freezing. A heater or a thermal jacket helps.", body_temp > 36.5)
 	if suit != null:

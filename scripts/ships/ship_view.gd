@@ -298,8 +298,8 @@ func _draw_air(g: ShipGrid, x0: int, y0: int, x1: int, y1: int) -> void:
 			var col := Color(0.44, 0.81, 0.56, 0.38)
 			if o2 < Config.O2_LOW:
 				col = Color(0.9, 0.33, 0.29, 0.3 + 0.35 * (1.0 - o2 / Config.O2_LOW))
-			elif g.tox[i] > Config.TOX_UNSAFE:
-				col = Color(0.62, 0.35, 0.8, 0.55)   # contaminants: unsafe to breathe
+			elif g.tox[i] > Config.TOX_UNSAFE or g.co2[i] > Config.CO2_BAD:
+				col = Color(0.62, 0.35, 0.8, 0.55)   # contaminants or CO₂: unsafe to breathe
 			elif o2 < Config.O2_OK or g.co2[i] > Config.CO2_MAX or g.tox[i] > Config.TOX_WARN:
 				col = Color(0.95, 0.78, 0.23, 0.45)
 			draw_rect(_rect(Vector2i(x, y)), col)

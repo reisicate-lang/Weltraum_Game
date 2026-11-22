@@ -54,3 +54,6 @@ Reference data for first aid (injuries, blood loss and infection thresholds, cri
 
 Reference data for asteroid mining (tethering, mining tools/explosives, mineral values and weights, kiosk reputation):
 @docs/ostranauts/ostranauts-asteroid-mining.md
+
+Reference data for health and safety (gas pressure, body temperature, G-force, malnutrition, CO2/H2SO4/NH3 gas hazard stages):
+@docs/ostranauts/ostranauts-health-safety.md

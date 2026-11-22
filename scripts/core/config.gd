@@ -57,7 +57,8 @@ const O2_LOW := 20.0         ## below: hypoxia (wiki) – warning, alarm, red in
 ## 16 and 20 kPa the hypoxia only warns: a ship that just lost a bit of air must not kill.
 const O2_DANGER := 16.0
 const CO2_MAX := 0.5         ## target maximum: above it the air view turns yellow
-const CO2_BAD := 3.0         ## above: hypercapnia damage (the wiki names no value)
+## CO₂ above this is unsafe (Ostranauts Health and Safety 4.9.1: safe < 0.3, warning 0.3–3, unsafe > 3)
+const CO2_BAD := 3.0
 ## Contaminants (Ostranauts Contaminants Pressure Alarm, NH3 row): warning from 0.1 kPa, unsafe above 1 kPa
 const TOX_WARN := 0.1
 const TOX_UNSAFE := 1.0
